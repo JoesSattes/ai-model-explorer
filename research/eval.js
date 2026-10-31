@@ -72,7 +72,9 @@ for (const line of lines) {
     const nonexp = r.lists.filter(l => !l.expert);
     const subl = new Set(), outer = new Set();
     for (const O of nonexp) { if (O.inner) continue; const ins = []; for (let i = 0; i < O.n; i++) { const a = nonexp.filter(L => L.inner && L.path.startsWith(O.path + "." + i + ".") && L.path.split(".").length === O.path.split(".").length + 2); ins.push(a); }
-      if (ins.every(a => a.length === 1) && ins.every(a => a[0].n <= 4 && new Set(a[0].types).size === a[0].n)) { ins.forEach(a => subl.add(a[0].path)); outer.add(O.path); } }
+      const short = ins.every(a => a.length >= 1 && a.every(L => L.n <= 4)) && new Set(ins.flatMap(a => a.map(L => L.n))).size === 1;
+      const hetero = ins.every(a => a.length === 1 && new Set(a[0].types).size === a[0].n), multi = ins.every(a => a.length >= 2);
+      if (short && (hetero || multi)) { ins.forEach(a => a.forEach(L => subl.add(L.path))); outer.add(O.path); } }
     const gtL = nonexp.filter(l => (l.inner || outer.has(l.path)) && !subl.has(l.path)).filter(l => { const pre = l.path + ".0."; const mods = new Set(Object.keys(r.tensors).filter(n => n.startsWith(pre)).map(n => n.slice(0, n.lastIndexOf(".")))); return mods.size >= 2; });
     const predS = I.comps.flatMap(c => c.stacks); const pmap = new Map(predS.map(s => [back ? back[s.items[0] + ".x"] ? null : null : s.path, s]));
     const pathOf = s => { if (!back) return s.path; const any = Object.keys(back).find(o => o.startsWith(s.path + ".")); const real = back[any]; return real.split(".").slice(0, s.path.split(".").length).join("."); };
