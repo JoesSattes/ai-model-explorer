@@ -1,0 +1,504 @@
+{
+ "models": 510,
+ "macro_acc": 0.9448668793286482,
+ "failed": 0,
+ "acc_w": 0.9944652351892544,
+ "acc_n": 0.9562464828362408,
+ "f1": {
+  "attn": 0.9619075635382729,
+  "cross": 0.82445449184195,
+  "ffn": 0.9684493175206982,
+  "moe": 0.9985132322331253,
+  "ssm": 0.8320171108917407,
+  "conv": 0.8295908951091973,
+  "rnn": 0.34688346883468835,
+  "mod": 0.4210526315789473,
+  "embed": 0.7467238503693113,
+  "norm": 0.990152287603197,
+  "head": 0.46358847226526184,
+  "adapter": 0.3720190779014309
+ },
+ "wacc": {
+  "attn": 0.9972547307146583,
+  "cross": 0.9140781339009499,
+  "ffn": 0.9964850328084309,
+  "moe": 1,
+  "ssm": 0.7359491307762956,
+  "conv": 0.9640050970677408,
+  "rnn": 1,
+  "mod": 0.9180542224241747,
+  "embed": 0.4206210080342576,
+  "norm": 0.3519332218635801,
+  "head": 0.963709932286415,
+  "adapter": 0.30636964869230837
+ },
+ "lists": {
+  "gt": 1248,
+  "hit": 1230,
+  "pred": 1346,
+  "cnt": 1230,
+  "types": 1230,
+  "typesExact": 1138
+ },
+ "hp": {
+  "d": [
+   433,
+   467,
+   0.927
+  ],
+  "layers": [
+   406,
+   441,
+   0.921
+  ],
+  "heads": [
+   322,
+   445,
+   0.724
+  ],
+  "vocab": [
+   188,
+   359,
+   0.524
+  ],
+  "kv_heads": [
+   158,
+   226,
+   0.699
+  ],
+  "head_dim": [
+   101,
+   152,
+   0.664
+  ],
+  "experts": [
+   71,
+   73,
+   0.973
+  ],
+  "ffn": [
+   304,
+   336,
+   0.905
+  ]
+ },
+ "params": {
+  "n": 510,
+  "exact": 510
+ },
+ "topConf": [
+  [
+   "embed→head",
+   0.37
+  ],
+  [
+   "ssm→attn",
+   0.06
+  ],
+  [
+   "ssm→ffn",
+   0.03
+  ],
+  [
+   "embed→other",
+   0.02
+  ],
+  [
+   "adapter→other",
+   0.01
+  ],
+  [
+   "head→embed",
+   0.01
+  ],
+  [
+   "ssm→conv",
+   0.01
+  ],
+  [
+   "ffn→cross",
+   0.01
+  ],
+  [
+   "ffn→other",
+   0.01
+  ],
+  [
+   "adapter→head",
+   0
+  ],
+  [
+   "head→other",
+   0
+  ],
+  [
+   "adapter→embed",
+   0
+  ],
+  [
+   "ffn→attn",
+   0
+  ],
+  [
+   "cross→attn",
+   0
+  ],
+  [
+   "attn→cross",
+   0
+  ]
+ ],
+ "hp1": {
+  "d": [
+   271,
+   285,
+   0.951
+  ],
+  "layers": [
+   260,
+   270,
+   0.963
+  ],
+  "heads": [
+   193,
+   272,
+   0.71
+  ],
+  "vocab": [
+   97,
+   211,
+   0.46
+  ],
+  "kv_heads": [
+   88,
+   136,
+   0.647
+  ],
+  "head_dim": [
+   48,
+   84,
+   0.571
+  ],
+  "experts": [
+   53,
+   55,
+   0.964
+  ],
+  "ffn": [
+   177,
+   188,
+   0.941
+  ]
+ },
+ "hpSrc": {
+  "heads:prior": [
+   257,
+   331,
+   0.776
+  ],
+  "heads:q/k-norm width": [
+   65,
+   94,
+   0.691
+  ],
+  "head_dim:q/k-norm width": [
+   39,
+   63,
+   0.619
+  ],
+  "heads:none": [
+   0,
+   20,
+   0
+  ],
+  "head_dim:prior": [
+   62,
+   84,
+   0.738
+  ],
+  "head_dim:none": [
+   0,
+   5,
+   0
+  ]
+ },
+ "header": {
+  "medianKB": 37.20703125,
+  "p95KB": 131.849609375,
+  "maxKB": 355.5380859375,
+  "medianRatio": 0.00004713446231720786
+ },
+ "ms": {
+  "median": 90.370421,
+  "p95": 413.504361,
+  "max": 1397.011074
+ },
+ "listsPR": {
+  "recall": 0.9855769230769231,
+  "precision": 0.9138187221396731,
+  "countExact": 1,
+  "typesExact": 0.9252032520325203
+ },
+ "families": {
+  "encoder": 370,
+  "decoder": 84,
+  "unknown": 2,
+  "prefix-lm": 44,
+  "encoder-decoder": 7,
+  "transducer": 1,
+  "diffusion": 2
+ },
+ "labels": {},
+ "topConfN": [
+  [
+   "attn→conv",
+   1387,
+   [
+    "cvt:cvt.encoder.stages.0.layers.0.attention.attention.convolution_projection_query.convolution_projection.convolution.weight",
+    "cvt:cvt.encoder.stages.0.layers.0.attention.attention.convolution_projection_key.convolution_projection.convolution.weight",
+    "cvt:cvt.encoder.stages.0.layers.0.attention.attention.convolution_projection_value.convolution_projection.convolution.weight",
+    "efficientloftr:local_feature_transformer.layers.0.self_attention.aggregation.q_aggregation.weight"
+   ]
+  ],
+  [
+   "ssm→attn",
+   1130,
+   [
+    "glm5_next:model.language_model.layers.0.self_attn.q_proj.weight",
+    "glm5_next:model.language_model.layers.0.self_attn.k_proj.weight",
+    "glm5_next:model.language_model.layers.0.self_attn.v_proj.weight",
+    "glm5_next:model.language_model.layers.0.self_attn.conv1d.weight"
+   ]
+  ],
+  [
+   "cross→attn",
+   850,
+   [
+    "blt:model.local_decoder.cross_attn_layers.0.q_proj.weight",
+    "blt:model.local_decoder.cross_attn_layers.0.k_proj.weight",
+    "blt:model.local_decoder.cross_attn_layers.0.v_proj.weight",
+    "blt:model.local_decoder.cross_attn_layers.0.o_proj.weight"
+   ]
+  ],
+  [
+   "attn→norm",
+   809,
+   [
+    "ibert:ibert.encoder.layer.0.attention.self.query_activation.x_min",
+    "ibert:ibert.encoder.layer.0.attention.self.query_activation.x_max",
+    "ibert:ibert.encoder.layer.0.attention.self.query_activation.act_scaling_factor",
+    "ibert:ibert.encoder.layer.0.attention.self.key_activation.x_min"
+   ]
+  ],
+  [
+   "ffn→other",
+   772,
+   [
+    "albert:albert.encoder.albert_layer_groups.0.albert_layers.0.ffn.bias",
+    "cvt:cvt.encoder.stages.0.layers.0.intermediate.dense.weight",
+    "cvt:cvt.encoder.stages.0.layers.0.intermediate.dense.bias",
+    "cvt:cvt.encoder.stages.0.layers.0.output.dense.weight"
+   ]
+  ],
+  [
+   "attn→cross",
+   684,
+   [
+    "florence2:model.vision_tower.blocks.2.0.channel_block.channel_attn.qkv.weight",
+    "florence2:model.vision_tower.blocks.2.0.channel_block.channel_attn.qkv.bias",
+    "florence2:model.vision_tower.blocks.2.0.channel_block.channel_attn.proj.weight",
+    "florence2:model.vision_tower.blocks.2.0.channel_block.channel_attn.proj.bias"
+   ]
+  ],
+  [
+   "attn→ssm",
+   676,
+   [
+    "edgetam_video:spatial_perceiver.layers.0.self_attention.q_proj.weight",
+    "edgetam_video:spatial_perceiver.layers.0.self_attention.k_proj.weight",
+    "edgetam_video:spatial_perceiver.layers.0.self_attention.v_proj.weight",
+    "edgetam_video:spatial_perceiver.layers.0.self_attention.o_proj.weight"
+   ]
+  ],
+  [
+   "ffn→head",
+   635,
+   [
+    "blt:model.local_encoder.layers.0.mlp.up_proj.weight",
+    "canine:initial_char_encoder.layer.0.intermediate.dense.bias",
+    "canine:final_char_encoder.layer.0.intermediate.dense.bias",
+    "cohere2_vision:model.vision_tower.head.mlp.fc1.weight"
+   ]
+  ],
+  [
+   "attn→head",
+   346,
+   [
+    "blt:model.local_encoder.layers.0.self_attn.q_proj.weight",
+    "blt:model.local_encoder.layers.0.self_attn.k_proj.weight",
+    "blt:model.local_encoder.layers.0.self_attn.v_proj.weight",
+    "blt:model.local_encoder.layers.0.self_attn.o_proj.weight"
+   ]
+  ],
+  [
+   "ffn→conv",
+   302,
+   [
+    "d_fine:model.encoder.aifi.0.layers.0.mlp.layers.1.weight",
+    "d_fine:model.encoder.aifi.0.layers.0.mlp.layers.1.bias",
+    "deimv2:model.encoder.aifi.0.layers.0.mlp.layers.1.weight",
+    "deimv2:model.encoder.aifi.0.layers.0.mlp.layers.1.bias"
+   ]
+  ],
+  [
+   "embed→head",
+   289,
+   [
+    "afmoe:model.embed_tokens.weight",
+    "aimv2:text_model.embeddings.position_embedding.weight",
+    "align:text_model.embeddings.token_type_embeddings.weight",
+    "altclip:text_model.roberta.embeddings.token_type_embeddings.weight"
+   ]
+  ],
+  [
+   "attn→other",
+   252,
+   [
+    "albert:albert.encoder.albert_layer_groups.0.albert_layers.0.attention.query.bias",
+    "albert:albert.encoder.albert_layer_groups.0.albert_layers.0.attention.key.bias",
+    "albert:albert.encoder.albert_layer_groups.0.albert_layers.0.attention.value.bias",
+    "albert:albert.encoder.albert_layer_groups.0.albert_layers.0.attention.dense.bias"
+   ]
+  ],
+  [
+   "ffn→norm",
+   200,
+   [
+    "apertus:model.layers.0.mlp.act_fn.alpha_p",
+    "apertus:model.layers.0.mlp.act_fn.alpha_n",
+    "apertus:model.layers.1.mlp.act_fn.alpha_p",
+    "apertus:model.layers.1.mlp.act_fn.alpha_n"
+   ]
+  ],
+  [
+   "attn→ffn",
+   198,
+   [
+    "bridgetower:vision_model.visual.transformer.resblocks.0.mlp.c_fc.weight",
+    "bridgetower:vision_model.visual.transformer.resblocks.0.mlp.c_fc.bias",
+    "bridgetower:vision_model.visual.transformer.resblocks.0.mlp.c_proj.weight",
+    "bridgetower:vision_model.visual.transformer.resblocks.0.mlp.c_proj.bias"
+   ]
+  ],
+  [
+   "norm→head",
+   185,
+   [
+    "aimv2:vision_model.embeddings.rms_norm.weight",
+    "aimv2:vision_model.rms_norm.weight",
+    "aimv2_vision_model:embeddings.rms_norm.weight",
+    "aimv2_vision_model:rms_norm.weight"
+   ]
+  ],
+  [
+   "embed→other",
+   172,
+   [
+    "bros:bbox_embeddings.bbox_projection.weight",
+    "canine:char_embeddings.HashBucketCodepointEmbedder_0.weight",
+    "canine:char_embeddings.HashBucketCodepointEmbedder_1.weight",
+    "canine:char_embeddings.HashBucketCodepointEmbedder_2.weight"
+   ]
+  ],
+  [
+   "ffn→attn",
+   148,
+   [
+    "florence2:model.vision_tower.blocks.0.0.spatial_block.ffn.fc1.weight",
+    "florence2:model.vision_tower.blocks.0.0.spatial_block.ffn.fc1.bias",
+    "florence2:model.vision_tower.blocks.0.0.spatial_block.ffn.fc2.weight",
+    "florence2:model.vision_tower.blocks.0.0.spatial_block.ffn.fc2.bias"
+   ]
+  ],
+  [
+   "embed→attn",
+   140,
+   [
+    "gemma3n_audio:conformer.0.attention.attn.relative_position_embedding.pos_proj.weight",
+    "gemma3n_audio:conformer.1.attention.attn.relative_position_embedding.pos_proj.weight",
+    "gemma3n_audio:conformer.2.attention.attn.relative_position_embedding.pos_proj.weight",
+    "gemma3n_audio:conformer.3.attention.attn.relative_position_embedding.pos_proj.weight"
+   ]
+  ],
+  [
+   "ffn→cross",
+   136,
+   [
+    "evolla:model.layers.3.adapter.ff.fc1.weight",
+    "evolla:model.layers.3.adapter.ff.fc2.weight",
+    "evolla:model.layers.7.adapter.ff.fc1.weight",
+    "evolla:model.layers.7.adapter.ff.fc2.weight"
+   ]
+  ],
+  [
+   "embed→conv",
+   129,
+   [
+    "cvt:cvt.encoder.stages.0.embedding.convolution_embeddings.projection.weight",
+    "cvt:cvt.encoder.stages.0.embedding.convolution_embeddings.projection.bias",
+    "cvt:cvt.encoder.stages.1.embedding.convolution_embeddings.projection.weight",
+    "cvt:cvt.encoder.stages.1.embedding.convolution_embeddings.projection.bias"
+   ]
+  ],
+  [
+   "ffn→rnn",
+   120,
+   [
+    "ibert:ibert.encoder.layer.0.intermediate.dense.weight",
+    "ibert:ibert.encoder.layer.0.intermediate.dense.bias",
+    "ibert:ibert.encoder.layer.0.output.dense.weight",
+    "ibert:ibert.encoder.layer.0.output.dense.bias"
+   ]
+  ],
+  [
+   "ssm→conv",
+   120,
+   [
+    "minimax:model.layers.1.self_attn.qkv_proj.weight",
+    "minimax:model.layers.1.self_attn.out_proj.weight",
+    "minimax:model.layers.1.self_attn.output_gate.weight",
+    "minimax:model.layers.3.self_attn.qkv_proj.weight"
+   ]
+  ],
+  [
+   "ssm→ffn",
+   96,
+   [
+    "xlstm:backbone.blocks.0.ffn.proj_up_gate.weight",
+    "xlstm:backbone.blocks.0.ffn.proj_up.weight",
+    "xlstm:backbone.blocks.0.ffn.proj_down.weight",
+    "xlstm:backbone.blocks.1.ffn.proj_up_gate.weight"
+   ]
+  ],
+  [
+   "adapter→other",
+   87,
+   [
+    "cohere2_vision:model.multi_modal_projector.linear_1.weight",
+    "cohere2_vision:model.multi_modal_projector.linear_1.bias",
+    "cohere_compass_vision:merger.linear_fc1.weight",
+    "cohere_compass_vision:merger.linear_fc1.bias"
+   ]
+  ],
+  [
+   "adapter→head",
+   85,
+   [
+    "cohere_compass_vision:deepstack_merger_list.0.linear_fc1.weight",
+    "cohere_compass_vision:deepstack_merger_list.0.linear_fc1.bias",
+    "cohere_compass_vision:deepstack_merger_list.0.linear_fc2.weight",
+    "cohere_compass_vision:deepstack_merger_list.0.linear_fc2.bias"
+   ]
+  ]
+ ]
+}

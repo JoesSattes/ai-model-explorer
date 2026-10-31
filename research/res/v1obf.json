@@ -1,0 +1,236 @@
+{
+ "models": 510,
+ "macro_acc": 0,
+ "failed": 0,
+ "acc_w": 0,
+ "acc_n": 0,
+ "f1": {
+  "attn": 0,
+  "cross": 0,
+  "ffn": 0,
+  "moe": 0,
+  "ssm": 0,
+  "conv": 0,
+  "rnn": 0,
+  "mod": 0,
+  "embed": 0,
+  "norm": 0,
+  "head": 0,
+  "adapter": 0
+ },
+ "wacc": {
+  "attn": 0,
+  "cross": 0,
+  "ffn": 0,
+  "moe": 0,
+  "ssm": 0,
+  "conv": 0,
+  "rnn": 0,
+  "mod": 0,
+  "embed": 0,
+  "norm": 0,
+  "head": 0,
+  "adapter": 0
+ },
+ "lists": {
+  "gt": 0,
+  "hit": 0,
+  "pred": 0,
+  "cnt": 0,
+  "types": 0,
+  "typesExact": 0
+ },
+ "hp": {},
+ "params": {
+  "n": 0,
+  "exact": 0
+ },
+ "topConf": [
+  [
+   "moe→other",
+   90.07
+  ],
+  [
+   "ffn→other",
+   5.49
+  ],
+  [
+   "attn→other",
+   2.94
+  ],
+  [
+   "embed→other",
+   0.68
+  ],
+  [
+   "head→other",
+   0.39
+  ],
+  [
+   "ssm→other",
+   0.36
+  ],
+  [
+   "adapter→other",
+   0.03
+  ],
+  [
+   "cross→other",
+   0.03
+  ],
+  [
+   "conv→other",
+   0.01
+  ],
+  [
+   "norm→other",
+   0
+  ],
+  [
+   "mod→other",
+   0
+  ],
+  [
+   "rnn→other",
+   0
+  ]
+ ],
+ "hp1": {},
+ "hpSrc": {},
+ "header": {
+  "medianKB": 37.20703125,
+  "p95KB": 131.849609375,
+  "maxKB": 355.5380859375,
+  "medianRatio": 0.00004713446231720786
+ },
+ "listsPR": {
+  "recall": null,
+  "precision": null,
+  "countExact": null,
+  "typesExact": null
+ },
+ "families": {},
+ "labels": {},
+ "topConfN": [
+  [
+   "attn→other",
+   91223,
+   [
+    "gpt-sw3:transformer.h.0.attn.c_attn.weight",
+    "gpt-sw3:transformer.h.0.attn.c_attn.bias",
+    "gpt-sw3:transformer.h.0.attn.c_proj.weight",
+    "gpt-sw3:transformer.h.0.attn.c_proj.bias"
+   ]
+  ],
+  [
+   "norm→other",
+   75633,
+   [
+    "gpt-sw3:transformer.h.0.ln_1.weight",
+    "gpt-sw3:transformer.h.0.ln_1.bias",
+    "gpt-sw3:transformer.h.0.ln_2.weight",
+    "gpt-sw3:transformer.h.0.ln_2.bias"
+   ]
+  ],
+  [
+   "ffn→other",
+   47931,
+   [
+    "gpt-sw3:transformer.h.0.mlp.c_fc.weight",
+    "gpt-sw3:transformer.h.0.mlp.c_fc.bias",
+    "gpt-sw3:transformer.h.0.mlp.c_proj.weight",
+    "gpt-sw3:transformer.h.0.mlp.c_proj.bias"
+   ]
+  ],
+  [
+   "moe→other",
+   20148,
+   [
+    "afmoe:model.layers.1.mlp.expert_bias",
+    "afmoe:model.layers.1.mlp.router.gate.weight",
+    "afmoe:model.layers.1.mlp.shared_experts.gate_proj.weight",
+    "afmoe:model.layers.1.mlp.shared_experts.up_proj.weight"
+   ]
+  ],
+  [
+   "ssm→other",
+   6403,
+   [
+    "bamba:model.layers.0.mamba.dt_bias",
+    "bamba:model.layers.0.mamba.A_log",
+    "bamba:model.layers.0.mamba.D",
+    "bamba:model.layers.0.mamba.conv1d.weight"
+   ]
+  ],
+  [
+   "conv→other",
+   5544,
+   [
+    "align:vision_model.encoder.blocks.0.depthwise_conv.depthwise_conv.weight",
+    "align:vision_model.encoder.blocks.0.projection.project_conv.weight",
+    "align:vision_model.encoder.blocks.1.depthwise_conv.depthwise_conv.weight",
+    "align:vision_model.encoder.blocks.1.projection.project_conv.weight"
+   ]
+  ],
+  [
+   "cross→other",
+   5124,
+   [
+    "bart:model.decoder.layers.0.encoder_attn.k_proj.weight",
+    "bart:model.decoder.layers.0.encoder_attn.k_proj.bias",
+    "bart:model.decoder.layers.0.encoder_attn.v_proj.weight",
+    "bart:model.decoder.layers.0.encoder_attn.v_proj.bias"
+   ]
+  ],
+  [
+   "embed→other",
+   2422,
+   [
+    "gpt-sw3:transformer.wte.weight",
+    "gpt-sw3:transformer.wpe.weight",
+    "afmoe:model.embed_tokens.weight",
+    "aimv2:vision_model.embeddings.patch_embed.weight"
+   ]
+  ],
+  [
+   "head→other",
+   905,
+   [
+    "afmoe:lm_head.weight",
+    "aimv2:vision_model.head.cls_token",
+    "aimv2:vision_model.head.output_proj.weight",
+    "aimv2:vision_model.head.output_proj.bias"
+   ]
+  ],
+  [
+   "adapter→other",
+   325,
+   [
+    "audioflamingo3:model.multi_modal_projector.linear_1.weight",
+    "audioflamingo3:model.multi_modal_projector.linear_1.bias",
+    "audioflamingo3:model.multi_modal_projector.linear_2.weight",
+    "audioflamingo3:model.multi_modal_projector.linear_2.bias"
+   ]
+  ],
+  [
+   "mod→other",
+   166,
+   [
+    "focalnet:focalnet.encoder.stages.0.layers.0.modulation.projection_in.weight",
+    "focalnet:focalnet.encoder.stages.0.layers.0.modulation.projection_in.bias",
+    "focalnet:focalnet.encoder.stages.0.layers.0.modulation.projection_context.weight",
+    "focalnet:focalnet.encoder.stages.0.layers.0.modulation.projection_context.bias"
+   ]
+  ],
+  [
+   "rnn→other",
+   64,
+   [
+    "bark:codec_model.encoder.layers.13.lstm.weight_ih_l0",
+    "bark:codec_model.encoder.layers.13.lstm.weight_hh_l0",
+    "bark:codec_model.encoder.layers.13.lstm.bias_ih_l0",
+    "bark:codec_model.encoder.layers.13.lstm.bias_hh_l0"
+   ]
+  ]
+ ]
+}
