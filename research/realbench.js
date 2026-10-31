@@ -53,6 +53,7 @@ for (const line of fs.readFileSync(args[0], "utf8").split("\n")) {
   row.diffusers = !!mi;
   row.family = I.family; row.comps = I.comps.map(c => `${c.role}:${c.id}:${c.d}:${c.stacks.map(s => s.n + "x" + s.types.map(t => t.label).join("/")).join(",")}`);
   row.labels = [...new Set(I.comps.flatMap(c => c.stacks.flatMap(s => s.types.map(t => t.label))))];
+  row.pred = {d: I.hp.d, layers: I.hp.layers, experts: I.hp.experts || null, heads: I.hp.heads || null, kv: I.hp.kv_heads || null, vocab: I.hp.vocab || null, ncomps: I.comps.length};
   row.edges = I.edges.length;
   // hyperparameters: manifest only, then fused with the configuration
   const H = hp(cfg); row.mt = H.model_type;

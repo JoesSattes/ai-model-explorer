@@ -6,6 +6,8 @@
 \usepackage{courier}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{float}
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage{caption}
@@ -46,7 +48,7 @@ This paper asks how much of a model's architecture can be recovered from the man
 
 Our starting point is that a manifest carries two kinds of evidence. The name tree shows structure: integer-indexed lists are stacks of blocks, identical subtrees are identical block types, and the module that owns a stack marks a component. The shapes show function. All blocks in a stack share a residual width $d$. An attention region is a set of projections that leave $d$ and one that returns to it. A mixture of experts is a set of tensors whose leading dimension equals the output size of a router. A selective state-space mixer is a depthwise convolution next to a few per-head vectors. Two components are connected where the output width of one equals the input width of the other. Names help to break ties, but, as Section~\ref{sec:results} shows, most of the work survives when every name is replaced by a random token.
 
-The paper makes three contributions. First, we define manifest-only architecture recovery, give a representation of a model's anatomy that is useful to engineers, and analyse which of its properties shapes cannot identify (Section~\ref{sec:problem}). Second, we describe a recovery algorithm that combines module-tree structure with shape algebra and width matching, handles six quantized storage layouts, and fuses non-identifiable fields from the configuration while checking it against the weights (Sections~\ref{sec:system} and~\ref{sec:method}). Third, we evaluate it on 510 architectures with independent ground truth\RBintro{} and release it as a bilingual web tool (Sections~\ref{sec:tool}--\ref{sec:cases}).
+The paper makes three contributions. First, we define manifest-only architecture recovery, give a representation of a model's anatomy that is useful to engineers, and analyse which of its properties shapes cannot identify (Section~\ref{sec:problem}). Second, we describe a recovery algorithm that combines module-tree structure with shape algebra and width matching, handles six quantized storage layouts, and fuses non-identifiable fields from the configuration while checking it against the weights (Section~\ref{sec:method}). Third, we evaluate it on 510 architectures with independent ground truth\RBintro{} and release it as a bilingual web tool (Sections~\ref{sec:tool}--\ref{sec:cases}). The appendix lists the result for every model.
 
 \section{Related work}
 \label{sec:related}
@@ -59,7 +61,12 @@ Architecture recovery has been studied mostly as an attack. Side-channel methods
 
 The shape rules encode the signatures of attention and its variants, including grouped-query~\citep{ainslie2023gqa} and latent attention~\citep{deepseekv2}, sparse mixtures of experts~\citep{shazeer2017moe,fedus2022switch}, selective state-space and linear-attention mixers~\citep{gu2023mamba,dao2024mamba2,yang2025gateddeltanet} and their hybrids~\citep{nemotronh2025}, conformers~\citep{gulati2020conformer,rekesh2023fastconformer}, transducers~\citep{graves2012rnnt,xu2023tdt}, diffusion transformers~\citep{peebles2023dit} and tabular in-context learners~\citep{hollmann2025tabpfn,qu2025tabicl}. The storage rules cover GPTQ~\citep{frantar2023gptq}, AWQ~\citep{lin2024awq}, FP8~\citep{micikevicius2022fp8}, MXFP4~\citep{rouhani2023mx}, NVFP4~\citep{nvidia2025nvfp4} and the MLX and bitsandbytes layouts.
 
-\section{Problem formulation}
+\section{Method}
+\label{sec:method}
+
+This section defines the problem, gives an overview of the system, and then describes the recovery algorithm and the configuration fusion step in turn.
+
+\subsection{Problem formulation}
 \label{sec:problem}
 
 A manifest is a set $\mathcal{M}=\{(n_i, s_i, \tau_i)\}$ of tensor names (dot-separated paths), shapes and storage dtypes. A configuration $\mathcal{C}$, a nested key--value tree, may also be available. The goal is an anatomy $\mathcal{A}$ with four levels. At the top are components, such as a vision tower, a projector, a language backbone or a prediction network, each with a residual width $d$, a modality and a role, and connected by directed edges that form the data path. Each component contains stacks of repeated blocks, and each block is assigned a block type. Each block type is divided into regions, labelled with one of nine roles: attention, cross-attention, feed-forward, mixture of experts, SSM or linear attention, convolution module, adaLN modulation, recurrent cell and norm. Tensors outside blocks are labelled input stem, output head or adapter. Finally, the anatomy carries logical shapes under quantized storage and derived quantities: parameters, stored bytes, KV-cache bytes per token and active parameters per token. Every architectural field records where it came from: measured from the manifest, read from $\mathcal{C}$ and checked against the manifest, or estimated.
@@ -70,7 +77,7 @@ Some properties leave no trace in shapes. The most important is the split of att
 
 These limits shape the design. The algorithm reports such fields only as estimates, the interface labels them as estimates, and when a configuration exists the fields are read from it and checked against the shapes (Section~\ref{sec:fusion}). The evaluation measures both how often the estimate is right and how much the configuration adds.
 
-\section{System overview}
+\subsection{System overview}
 \label{sec:system}
 
 \begin{figure}[t]
@@ -106,12 +113,12 @@ These limits shape the design. The algorithm reports such fields only as estimat
 \label{fig:workflow}
 \end{figure}
 
-Figure~\ref{fig:workflow} shows the workflow. Given a repository id, the explorer lists the repository and decides which files describe the weights. Safetensors files are preferred. Their shard indexes are read per folder, so a diffusers repository with \tn{transformer/}, \tn{text\_encoder/} and \tn{vae/} folders yields one name prefix per component. For each safetensors file, two range requests fetch the length and the header; up to eight files are read in parallel. If a repository only has PyTorch zip checkpoints, the reader fetches the last 64\,KB of the file to find the zip central directory, then fetches only the \tn{data.pkl} record and interprets it with a restricted unpickler that rebuilds names, shapes and dtypes without resolving any Python callable. The configuration is fetched alongside. The manifest then passes through the recovery algorithm of Section~\ref{sec:method} and the result through configuration fusion. Each step is shown to the user as it happens (``reading header 3 of 12, 41\,KB so far''), and the final anatomy is cached in the browser.
+Figure~\ref{fig:workflow} shows the workflow. Given a repository id, the explorer lists the repository and decides which files describe the weights. Safetensors files are preferred. Their shard indexes are read per folder, so a diffusers repository with \tn{transformer/}, \tn{text\_encoder/} and \tn{vae/} folders yields one name prefix per component. For each safetensors file, two range requests fetch the length and the header; up to eight files are read in parallel. If a repository only has PyTorch zip checkpoints, the reader fetches the last 64\,KB of the file to find the zip central directory, then fetches only the \tn{data.pkl} record and interprets it with a restricted unpickler that rebuilds names, shapes and dtypes without resolving any Python callable. The configuration is fetched alongside. The manifest then passes through the recovery algorithm of Section~\ref{sec:recovery} and the result through configuration fusion (Section~\ref{sec:fusion}). Each step is shown to the user as it happens (``reading header 3 of 12, 41\,KB so far''), and the final anatomy is cached in the browser.
 
-\section{Recovering the anatomy}
-\label{sec:method}
+\subsection{Recovery algorithm}
+\label{sec:recovery}
 
-The rules in this section read only shapes, dtypes and the structure of the name tree. A small lexicon of name fragments (\tn{attn}, \tn{mlp}, \tn{experts} and similar) breaks ties that shapes leave open. It can be switched off, and Section~\ref{sec:results} reports results with and without it. Algorithm~\ref{alg:main} summarizes the procedure.
+The rules in this subsection read only shapes, dtypes and the structure of the name tree. A small lexicon of name fragments (\tn{attn}, \tn{mlp}, \tn{experts} and similar) breaks ties that shapes leave open. It can be switched off, and Section~\ref{sec:results} reports results with and without it. Algorithm~\ref{alg:main} summarizes the procedure.
 
 \begin{algorithm}[t]
 \caption{Manifest-only anatomy recovery with configuration fusion}
@@ -138,15 +145,15 @@ The rules in this section read only shapes, dtypes and the structure of the name
 \end{algorithmic}
 \end{algorithm}
 
-\subsection{Normalizing storage}
+\subsubsection{Normalizing storage}
 Quantized checkpoints store one logical weight as several tensors. We group tensors by module and recognize the layout from dtypes and shape ratios before looking at names. NVFP4 stores a \tn{U8} tensor of shape $[o, i/2]$, an FP8 scale tensor $[o, i/16]$ and a scalar second-level scale, so the logical shape is $[o, i]$ and the group size follows from the ratio. FP8 stores an FP8 weight with a scalar, per-channel $[o,1]$ or block scale. GPTQ stores an \tn{I32} tensor $[i/8, o]$ with scales $[i/g, o]$; AWQ packs the other axis, and the two are told apart by the axis the scales share. MXFP4, MLX and bitsandbytes layouts follow the same pattern. Auxiliary tensors count toward stored bytes but not toward parameters.
 
-\subsection{Blocks from the module tree}
+\subsubsection{Blocks from the module tree}
 Names form a tree. A node whose children are all integers, or keys such as \tn{expert\_0}, \tn{expert\_1}, is a list. An item is composite if its subtree holds at least two modules with parameters; this separates blocks from \tn{nn.Sequential} wrappers around single layers. Expert lists are lists inside an item of another list whose items are identical two- or three-matrix MLPs without norms, usually beside a router whose first dimension equals the number of items. Stacked experts appear instead as 3-D tensors $[E, \cdot, \cdot]$ with one trailing dimension equal to the block width. Block lists are the innermost composite lists that are not expert lists, with one correction for sub-layers: when every item of an outer list holds short inner lists of equal length, as in T5's \tn{block.$i$.layer.$j$} or LongCat's two attention and two MLP sub-layers per layer, the inner items are sub-layers and the outer items are the blocks.
 
 Each block list belongs to the module that owns it, raised through its ancestors while no other stack lives there and, in multi-folder repositories, never above the folder. These owners become components, so that embeddings and heads next to an \tn{encoder} wrapper join the right component. Within a list, each block gets a signature, the sorted multiset of (relative path with indices masked, tensor rank) pairs, and identical signatures form a block type. In a hybrid stack such as Nemotron-H~\citep{nemotronh2025} this gives one type each for the Mamba-2, MoE and attention layers, and the sequence of types is the layer pattern.
 
-\subsection{Regions by shape algebra}
+\subsubsection{Regions by shape algebra}
 
 \begin{table}[t]
 \centering
@@ -173,7 +180,7 @@ For each block type we analyse one representative block. Its residual width $d$ 
 
 Four refinements matter in practice. A child that holds two sub-modules of different confident roles, such as an attention and an MLP inside one ``inducing block'', is split. Two half feed-forwards in sibling modules ($[f,d]$ in \tn{intermediate} and $[d,f]$ in \tn{output}) are paired. If a region is weak in the usual layout but becomes attention when every matrix is transposed, the weights are stored as $[\text{in},\text{out}]$, as GPT-2's \tn{Conv1D} layers are. Finally, a list whose items map $d$ to another width and never return to $d$ is not a residual stack: its items are read as per-layer prediction heads, such as the box MLPs of DETR-style detectors, or as projectors when the output width belongs to another component, as with the DeepStack mergers of Qwen3-VL.
 
-\subsection{Stems, heads and the data path}
+\subsubsection{Stems, heads and the data path}
 Outside blocks, a matrix $[V,d]$ with $V>d$ is a token table and its twin an untied output head. A vector of length $V$ is the head's bias, and a small table beside a token table or a convolutional stem is a position or type embedding. A chain of matrices whose free input width equals the width $d_X$ of one component, or $k^2 d_X$ for $k\in\{2,3,4\}$ after pixel shuffling, and whose free output width equals the width $d_Y$ of another, becomes an adapter with edges $X\to\text{adapter}\to Y$.
 
 Three further patterns become components of their own. A transducer has a label embedding $[V, h_p]$ next to a recurrent cell, an encoder projection $[j, d_{\text{enc}}]$ and an output $[V', j]$ with $V\le V'\le V+16$; the excess $V'-V$ is the number of duration bins of a token-and-duration transducer~\citep{xu2023tdt}. A diffusion denoiser has a timestep MLP from a sinusoidal width (128, 256 or 320) to a width $t$ that feeds the modulation matrices in its blocks. A group of square maps $[C,C]$ with an aggregation matrix $[C, rC]$ is a message-passing layer with $r$ reducers. The backbone is the largest component that owns a token table or output head, and the family (decoder, prefix LM, encoder--decoder, transducer, diffusion denoiser, encoder) follows from the components and edges.
@@ -345,7 +352,7 @@ Kumo Relational$^\dagger$ & encoder & 29\,M & 24\,KB & rows $\to$ message passin
 \label{tab:cases}
 \end{table}
 
-Table~\ref{tab:cases} lists eight models released in 2026 that we studied in detail. They were not in the corpus, but they were not held out from development either: we studied them while extending the rules, and several parts of Section~\ref{sec:method}, including transducer joints, timestep embedders, message-passing layers and adapter components, were written because of them. Every change was checked on the full corpus for regressions. The case studies therefore show that the representation is rich enough for these architectures, while the unbiased accuracy estimate is the one in Section~\ref{sec:results}.
+Table~\ref{tab:cases} lists eight models released in 2026 that we studied in detail. They were not in the corpus, but they were not held out from development either: we studied them while extending the rules, and several parts of Section~\ref{sec:recovery}, including transducer joints, timestep embedders, message-passing layers and adapter components, were written because of them. Every change was checked on the full corpus for regressions. The case studies therefore show that the representation is rich enough for these architectures, while the unbiased accuracy estimate is the one in Section~\ref{sec:results}.
 
 The Super VL backbone mixes three block types in one list, and the recovered type sequence reproduces the configuration's \tn{layers\_block\_type} exactly. The projector's input width, 5120, is four times the vision width, and the algorithm reports a $2\times2$ merge, matching the configuration's \tn{downsample\_ratio} of 0.5. Experts hold 112.7\,B of the 121.5\,B parameters. With the configured top-22 routing this gives 13.6\,B active parameters per token, including the vision tower and both embedding tables, against the 12\,B in the model's name. Only 8 of the 88 layers keep a KV cache, each with two key--value heads, so the cache costs 8\,KB per token in BF16, an eleventh of what it would be if every layer used the same attention.
 
@@ -372,18 +379,99 @@ A tensor manifest is small, safe and almost always available, and it carries mor
 \bibliography{refs}
 
 \appendix
+
 \section{Corpus construction}
-The model class for each configuration type is chosen in this order: image-text-to-text, multimodal LM, speech sequence-to-sequence, sequence-to-sequence LM, TDT, RNN-T, causal LM, CTC, masked LM, image classification, text-to-waveform, object detection, base model. Instantiation uses \tn{\_from\_config} under \tn{torch.device("meta")} with a 90-second limit. Of the 240 types that do not instantiate, 177 are sub-configurations without a model class of their own, such as vision or audio towers registered separately, and the rest fail on required sub-configurations or optional dependencies. Manifests are deduplicated by the exact list of names and shapes.
+\label{app:corpus}
+The model class for each configuration type is chosen in this order: image-text-to-text, multimodal LM, speech sequence-to-sequence, sequence-to-sequence LM, TDT, RNN-T, causal LM, CTC, masked LM, image classification, text-to-waveform, object detection, base model. Instantiation uses \tn{\_from\_config} under \tn{torch.device("meta")} with a 90-second limit. Of the 240 types that do not instantiate, 177 are sub-configurations without a model class of their own, such as vision or audio towers registered separately, and the rest fail on required sub-configurations or optional dependencies. Manifests are deduplicated by the exact list of names and shapes, and tied parameters are kept once under the name PyTorch reports first.
+
+Each record stores the manifest (name, dtype and shape of every tensor), the per-tensor ground-truth role, the module lists with their item classes, the parameter total, and the serialized configuration. Table~\ref{tab:families} gives the families our method assigns, which approximates the composition of the corpus; ``encoder'' covers bidirectional encoders, vision backbones and decoders with tied embeddings, which are indistinguishable from the manifest alone (Section~\ref{sec:ident}).
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrrrrrrr}
+\toprule
+& encoder & decoder & prefix LM & enc--dec & transducer & diffusion & unknown \\
+\midrule
+Models & 356 & 93 & 46 & 8 & 3 & 2 & 2 \\
+\bottomrule
+\end{tabular}
+\caption{Families assigned to the 510 corpus models.}
+\label{tab:families}
+\end{table}
+
+\section{Ground-truth labelling}
+\label{app:gt}
+A tensor's label comes from the classes of the modules on its path. If any ancestor class matches the MoE pattern, the label is mixture of experts. Otherwise the nearest ancestor whose lower-cased class name matches one of the patterns in Table~\ref{tab:suffix}, tried in the order shown, gives the label; an attention match whose module path contains \tn{encoder\_attn} or \tn{cross\_attn} becomes cross-attention. Tensors that no class matches fall back to their module name: \tn{lm\_head}, \tn{classifier}, \tn{score} or \tn{joint} give head; \tn{fc$n$}, \tn{mlp}, \tn{dense}, \tn{w$n$}, \tn{c\_fc} and \tn{c\_proj} give feed-forward; \tn{conv}, \tn{patch} or \tn{subsampl} outside the layer lists give input stem; \tn{merger}, \tn{projector} or \tn{connector} give adapter. Everything else is \emph{other} and is excluded from scoring.
+
+\begin{table}[h]
+\centering
+\footnotesize
+\begin{tabular}{@{}lp{12.4cm}@{}}
+\toprule
+Label & Class-name pattern (suffix of the lower-cased class name) \\
+\midrule
+MoE (any ancestor) & \tn{sparsemoeblock}, \tn{moeblock}, \tn{sparsemoe}, \tn{moe}, \tn{moelayer}, \tn{experts}, \tn{expert}, \tn{router}, \tn{topkrouter}, \tn{moegate}, \tn{sparsemlp}, \tn{routedexperts} \\
+head & \tn{predictionheadtransform}, \tn{lmpredictionhead}, \tn{predictionhead}, \tn{lmhead}, \tn{pooler}, \tn{classificationhead}, \tn{mlmhead}, \tn{predictions} \\
+attention & \tn{selfoutput}, \tn{attentionoutput} \\
+norm & \tn{rmsnorm}, \tn{layernorm}, \tn{groupnorm}, \tn{batchnorm1d/2d}, \tn{norm} \\
+cross-attention & \tn{crossattention}, \tn{encdecattention}, \tn{crossattn} \\
+SSM / linear attn. & \tn{mamba(2)mixer}, \tn{mixer}, \tn{mamba}, \tn{ssm}, \tn{deltanet}, \tn{gateddeltanet}, \tn{linearattention}, \tn{lightningattention}, \tn{rwkv*}, \tn{recurrentblock}, \tn{rglru}, \tn{xlstm*}, \tn{retention}, \tn{hgrn}, \tn{gla} \\
+attention & \tn{attention}, \tn{attn}, \tn{selfattention}, \tn{multiheadattention}, \tn{sdpaattention} \\
+recurrent cell & \tn{lstm}, \tn{gru}, \tn{rnn}, \tn{lstmcell} \\
+adaLN modulation & \tn{adalayernorm*}, \tn{adaln*}, \tn{modulation}, \tn{timestepembedding}, \tn{timestepembedder} \\
+convolution module & \tn{convolutionmodule}, \tn{convmodule}, \tn{conformerconvolution*}, \tn{convblock}, \tn{depthwiseconv*} \\
+feed-forward & \tn{mlp}, \tn{feedforward}, \tn{ffn}, \tn{intermediate}, \tn{output}, \tn{swiglu}, \tn{geglu}, \tn{densereludense}, \tn{densegatedactdense} \\
+input stem & \tn{embedding(s)}, \tn{embed}, \tn{patchembed*} \\
+\bottomrule
+\end{tabular}
+\caption{Class-name patterns used for the ground truth, in the order they are tried.}
+\label{tab:suffix}
+\end{table}
+
+\section{Lexicon and thresholds}
+\label{app:rules}
+The optional lexicon consists of eight name patterns, one per region role, plus patterns for the query, key, value, output, gate, up and down projections inside a region. It is consulted in four places only: to pick between two region labels whose shape signatures are equally strong; to tell a token table from an untied output head when both have shape $[V,d]$ and neither position nor nesting decides; to accept a recurrent cell, which additionally requires \tn{ih}/\tn{hh} or a cell name; and to name loose projectors whose shapes match two components. In the shapes-only condition all four fall back to shape rules or to the label \emph{other}.
+
+The numeric thresholds are the following. Depthwise convolutions count as SSM convolutions up to kernel size 8 and as conformer convolutions above it or when pointwise convolutions are present. Per-head gates have at most 64 rows. A fused feed-forward requires $f>1.3d$. A router may have up to eight more rows than there are experts. Cross-attention requires two projections from a foreign width of at least 128. adaLN requires a conditioning width of at least 32. Adapters allow pixel-shuffle factors $k\in\{2,3,4\}$. A transducer joint may have up to 16 outputs more than the label table. Without a configuration, the head size is 128 for $d\ge2048$ and 64 otherwise. A multi-token-prediction layer is the last item of a stack that holds a $[d,2d]$ matrix and at least two more width-$d$ vectors than the item before it.
 
 \section{Synthetic quantized storage}
 \label{app:quant}
-The rewrite applies to every 2-D tensor named \tn{*.weight} whose input dimension is a multiple of 32 and output dimension a multiple of 8, excluding embeddings, heads and norms. NVFP4 replaces $[o,i]$ by \tn{U8} $[o,i/2]$, \tn{F8\_E4M3} $[o,i/16]$ and two \tn{F32} scalars. FP8 uses \tn{F8\_E4M3} $[o,i]$ and \tn{F32} $[o,1]$. GPTQ uses \tn{qweight} as \tn{I32} $[i/8,o]$, \tn{qzeros} $[i/128,o/8]$, \tn{scales} as \tn{F16} $[i/128,o]$ and \tn{g\_idx} $[i]$. Under name hashing these suffixes are hashed too, so recognition relies on dtypes and shape ratios.
+The rewrite applies to every 2-D tensor named \tn{*.weight} whose input dimension is a multiple of 32 and output dimension a multiple of 8, excluding embeddings, heads and norms. NVFP4 replaces $[o,i]$ by \tn{U8} $[o,i/2]$, \tn{F8\_E4M3} $[o,i/16]$ and two \tn{F32} scalars. FP8 uses \tn{F8\_E4M3} $[o,i]$ and \tn{F32} $[o,1]$. GPTQ uses \tn{qweight} as \tn{I32} $[i/8,o]$, \tn{qzeros} $[i/128,o/8]$, \tn{scales} as \tn{F16} $[i/128,o]$ and \tn{g\_idx} $[i]$. Under name hashing these suffixes are hashed too, so recognition relies on dtypes and shape ratios. On real checkpoints the loader also handles MXFP4 (\tn{\_blocks} and \tn{\_scales} pairs), MLX (\tn{U32} words with \tn{scales} and \tn{biases}), and bitsandbytes NF4, whose state tensors are stored under \tn{<module>.weight.*}.
 
-\section{Additional interface view}
+\section{Corpus results per model}
+\label{app:corpus-results}
+Table~\ref{tab:conf} lists the most frequent confusions and Table~\ref{tab:corpus-all} the role accuracy of every corpus model, with and without names.
+
+\input{appendix/app_conf}
+\input{appendix/app_corpus_all}
+
+\section{Hub benchmark: all checkpoints}
+\label{app:hub}
+The benchmark page is \url{https://joessattes.github.io/ai-model-explorer/bench.html}; its model list is in \tn{bench/models.js} in the repository, and the export analysed here is \tn{research/data/hub-bench-191.jsonl.gz}. Table~\ref{tab:hub-fail} lists the repositories that could not be read and Table~\ref{tab:hub-all} the result for each of the 191 that could. Header sizes are those of the original run, before the loader learned to skip duplicate files, so they are larger than necessary for the few repositories that ship several copies of the same weights.
+
+\input{appendix/app_hub_fail}
+\input{appendix/app_hub_all}
+
+\section{Additional interface views}
+\label{app:views}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{fig/ui_cur_supervl.png}
+\caption{Summary strip for Nemotron 3.5 Super VL: weights, file size, layers and vocabulary, with the family and modality tags.}
+\end{figure}
+
 \begin{figure}[h]
 \centering
 \includegraphics[width=\linewidth]{fig/ui_anatomy_fasth3.png}
 \caption{Anatomy view of the FastH3 Omni FP8 denoiser (reconstructed manifest): a two-block token refiner and a 50-block DiT backbone. The head geometry is measured from per-head norms, and the FP8 storage of 300 tensors is shown with logical and stored sizes.}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{fig/ui_report_fasth3.png}
+\caption{Report view for the same model: where parameters, compute and memory traffic go, with generated observations.}
 \end{figure}
 
 \end{document}

@@ -1,0 +1,210 @@
+\scriptsize\setlength{\tabcolsep}{2.5pt}
+\begin{longtable}{@{}llrrclrrrr@{}}
+\caption{All 191 checkpoints read from the Hub, by group. \emph{Params} is our logical count and \emph{Hub} the count on the model page; the next column marks agreement ($=$), a difference ($\ne$, explained in Section~\ref{sec:hub}) or a diffusers pipeline whose Hub count equals our denoiser (den). $d$ and layers are for the backbone. \emph{Roles} is role accuracy against labels transferred from the corpus, where the model type is in the corpus.}\label{tab:hub-all}\\
+\toprule Repository & Storage & Params & Hub & & Family & $d$ & Layers & Header (KB) & Roles \\ \midrule\endfirsthead
+\toprule Repository & Storage & Params & Hub & & Family & $d$ & Layers & Header (KB) & Roles \\ \midrule\endhead
+\bottomrule\endfoot
+\multicolumn{10}{@{}l}{\textbf{Dense LM} (45)} \\
+{\tiny\texttt{Qwen/Qwen2.5-72B}} &  & 72.7\,B & 72.7\,B & = & dec & 8192 & 80 & 109 & 100 \\
+{\tiny\texttt{deepseek-ai/DeepSeek-R1-Distill-Llama-70B}} &  & 70.6\,B & 70.6\,B & = & dec & 8192 & 80 & 83 & 100 \\
+{\tiny\texttt{unsloth/Llama-3.3-70B-Instruct}} &  & 70.6\,B & 70.6\,B & = & dec & 8192 & 80 & 83 & 100 \\
+{\tiny\texttt{Qwen/QwQ-32B}} &  & 32.8\,B & 32.8\,B & = & dec & 5120 & 64 & 87 & 100 \\
+{\tiny\texttt{Qwen/Qwen3-32B}} &  & 32.8\,B & 32.8\,B & = & dec & 5120 & 64 & 80 & 100 \\
+{\tiny\texttt{unsloth/gemma-3-27b-it}} &  & 27.4\,B & 27.4\,B & = & enc & 5376 & 62 & 163 &  \\
+{\tiny\texttt{mistralai/Devstral-Small-2505}} &  & 23.6\,B & 23.6\,B & = & dec & 5120 & 40 & 41 & 100 \\
+{\tiny\texttt{mistralai/Mistral-Small-24B-Instruct-2501}} &  & 23.6\,B & 23.6\,B & = & dec & 5120 & 40 & 41 & 100 \\
+{\tiny\texttt{microsoft/phi-4}} &  & 14.7\,B & 14.7\,B & = & dec & 5120 & 40 & 28 & 100 \\
+{\tiny\texttt{mistralai/Mistral-Nemo-Instruct-2407}} &  & 12.2\,B & 12.2\,B & = & dec & 5120 & 40 & 41 & 100 \\
+{\tiny\texttt{THUDM/glm-4-9b-chat-hf}} &  & 9.40\,B & 9.40\,B & = & dec & 4096 & 40 & 50 & 100 \\
+{\tiny\texttt{unsloth/gemma-2-9b}} &  & 9.24\,B & 9.24\,B & = & enc & 3584 & 42 & 53 & 100 \\
+{\tiny\texttt{internlm/internlm3-8b-instruct}} &  & 8.80\,B & 8.80\,B & = & dec & 4096 & 48 & 49 &  \\
+{\tiny\texttt{Qwen/Qwen3-8B}} &  & 8.19\,B & 8.19\,B & = & dec & 4096 & 36 & 45 & 100 \\
+{\tiny\texttt{ibm-granite/granite-3.3-8b-instruct}} &  & 8.17\,B & 8.17\,B & = & enc & 4096 & 40 & 41 & 100 \\
+{\tiny\texttt{swiss-ai/Apertus-8B-2509}} &  & 8.05\,B & 8.05\,B & = & dec & 4096 & 32 & 49 & 100 \\
+{\tiny\texttt{nvidia/Llama-3.1-Nemotron-Nano-8B-v1}} &  & 8.03\,B & 8.03\,B & = & dec & 4096 & 32 & 33 & 100 \\
+{\tiny\texttt{unsloth/Meta-Llama-3.1-8B}} &  & 8.03\,B & 8.03\,B & = & dec & 4096 & 32 & 33 & 100 \\
+{\tiny\texttt{Qwen/Qwen2.5-7B}} &  & 7.62\,B & 7.62\,B & = & dec & 3584 & 28 & 38 & 100 \\
+{\tiny\texttt{Qwen/Qwen2.5-Coder-7B-Instruct}} &  & 7.62\,B & 7.62\,B & = & dec & 3584 & 28 & 38 & 100 \\
+{\tiny\texttt{deepseek-ai/DeepSeek-R1-Distill-Qwen-7B}} &  & 7.62\,B & 7.62\,B & = & dec & 3584 & 28 & 38 & 100 \\
+{\tiny\texttt{tiiuae/Falcon3-7B-Base}} &  & 7.46\,B & 7.46\,B & = & dec & 3072 & 28 & 29 & 100 \\
+{\tiny\texttt{allenai/OLMo-2-1124-7B}} &  & 7.30\,B & 7.30\,B & = & dec & 4096 & 32 & 40 & 100 \\
+{\tiny\texttt{unsloth/mistral-7b-v0.3}} &  & 7.25\,B & 7.25\,B & = & enc & 4096 & 32 & 33 & 98 \\
+{\tiny\texttt{mistralai/Mistral-7B-v0.1}} &  & 7.24\,B & 7.24\,B & = & dec & 4096 & 32 & 33 & 100 \\
+{\tiny\texttt{tiiuae/falcon-7b}} &  & 7.22\,B & 7.22\,B & = & dec & 4544 & 32 & 23 & 100 \\
+{\tiny\texttt{Qwen/Qwen3-4B}} &  & 4.02\,B & 4.02\,B & = & enc & 2560 & 36 & 45 & 100 \\
+{\tiny\texttt{microsoft/Phi-4-mini-instruct}} &  & 3.84\,B & 3.84\,B & = & enc & 3072 & 32 & 22 & 100 \\
+{\tiny\texttt{microsoft/Phi-3-mini-4k-instruct}} &  & 3.82\,B & 3.82\,B & = & dec & 3072 & 32 & 22 & 100 \\
+{\tiny\texttt{unsloth/Llama-3.2-3B}} &  & 3.21\,B & 3.21\,B & = & enc & 3072 & 28 & 29 & 100 \\
+{\tiny\texttt{HuggingFaceTB/SmolLM3-3B}} &  & 3.08\,B & 3.08\,B & = & enc & 2048 & 36 & 37 & 100 \\
+{\tiny\texttt{microsoft/phi-2}} &  & 2.78\,B & 2.78\,B & = & dec & 2560 & 32 & 49 & 100 \\
+{\tiny\texttt{unsloth/gemma-2-2b}} &  & 2.61\,B & 2.61\,B & = & enc & 2304 & 26 & 33 & 100 \\
+{\tiny\texttt{HuggingFaceTB/SmolLM2-1.7B}} &  & 1.71\,B & 1.71\,B & = & enc & 2048 & 24 & 25 & 100 \\
+{\tiny\texttt{openai-community/gpt2-xl}} &  & 1.61\,B & 1.61\,B & = & enc & 1600 & 48 & 57 &  \\
+{\tiny\texttt{EleutherAI/pythia-1.4b}} &  & 1.52\,B & 1.52\,B & = & dec & 2048 & 24 & 41 & 92 \\
+{\tiny\texttt{facebook/opt-1.3b}} &  & 1.42\,B & -- &  & dec & 2048 & 24 & 136 & 100 \\
+{\tiny\texttt{unsloth/Llama-3.2-1B}} &  & 1.24\,B & 1.24\,B & = & enc & 2048 & 16 & 16 & 100 \\
+{\tiny\texttt{LiquidAI/LFM2-1.2B}} &  & 1.17\,B & 1.17\,B & = & enc & 2048 & 16 & 16 & 100 \\
+{\tiny\texttt{unsloth/gemma-3-1b-it}} &  & 1000\,M & 1000\,M & = & enc & 1152 & 26 & 38 & 100 \\
+{\tiny\texttt{Qwen/Qwen3-0.6B}} &  & 752\,M & 752\,M & = & dec & 1024 & 28 & 35 & 100 \\
+{\tiny\texttt{bigscience/bloom-560m}} &  & 559\,M & 559\,M & = & enc & 1024 & 24 & 30 &  \\
+{\tiny\texttt{Qwen/Qwen2.5-0.5B}} &  & 494\,M & 494\,M & = & enc & 896 & 24 & 32 & 100 \\
+{\tiny\texttt{baidu/ERNIE-4.5-0.3B-PT}} &  & 361\,M & 361\,M & = & enc & 1024 & 18 & 18 & 100 \\
+{\tiny\texttt{openai-community/gpt2}} &  & 137\,M & 137\,M & = & enc & 768 & 12 & 14 &  \\
+\multicolumn{10}{@{}l}{\textbf{MoE LM} (24)} \\
+{\tiny\texttt{moonshotai/Kimi-K2-Instruct}} & FP8 & 1.03\,T & 1.03\,T & = & dec & 7168 & 61 & 16.9\,M &  \\
+{\tiny\texttt{deepseek-ai/DeepSeek-R1}} & FP8 & 684\,B & 684\,B & = & dec & 7168 & 61 & 11.3\,M &  \\
+{\tiny\texttt{deepseek-ai/DeepSeek-V3}} & FP8 & 684\,B & 684\,B & = & dec & 7168 & 61 & 11.3\,M &  \\
+{\tiny\texttt{deepseek-ai/DeepSeek-V3.1}} & FP8 & 684\,B & 685\,B & = & dec & 7168 & 61 & 11.3\,M &  \\
+{\tiny\texttt{meituan-longcat/LongCat-Flash-Chat}} &  & 562\,B & 562\,B & = & dec & 6144 & 28 & 5.3\,M &  \\
+{\tiny\texttt{Qwen/Qwen3-Coder-480B-A35B-Instruct}} &  & 480\,B & 480\,B & = & dec & 6144 & 62 & 3.6\,M &  \\
+{\tiny\texttt{zai-org/GLM-4.5}} &  & 358\,B & 358\,B & = & dec & 5120 & 92 & 5.3\,M &  \\
+{\tiny\texttt{Qwen/Qwen3-235B-A22B}} &  & 235\,B & 235\,B & = & dec & 4096 & 94 & 4.4\,M &  \\
+{\tiny\texttt{MiniMaxAI/MiniMax-M2}} & FP8 & 229\,B & 229\,B & = & dec & 3072 & 62 & 12.0\,M &  \\
+{\tiny\texttt{openai/gpt-oss-120b}} & MXFP4 & 117\,B & 117\,B & = & dec & 2880 & 36 & 76 & 100 \\
+{\tiny\texttt{zai-org/GLM-4.5-Air}} &  & 110\,B & 110\,B & = & dec & 4096 & 46 & 2.2\,M &  \\
+{\tiny\texttt{unsloth/Llama-4-Scout-17B-16E-Instruct}} &  & 109\,B & 109\,B & = & prefix & 5120 & 48 & 148 &  \\
+{\tiny\texttt{Qwen/Qwen3-Next-80B-A3B-Instruct}} &  & 81.3\,B & 81.3\,B & = & dec & 2048 & 48 & 9.0\,M &  \\
+{\tiny\texttt{tencent/Hunyuan-A13B-Instruct}} &  & 80.4\,B & 80.4\,B & = & enc & 4096 & 32 & 792 &  \\
+{\tiny\texttt{mistralai/Mixtral-8x7B-v0.1}} &  & 46.7\,B & 46.7\,B & = & dec & 4096 & 32 & 125 &  \\
+{\tiny\texttt{microsoft/Phi-3.5-MoE-instruct}} &  & 41.9\,B & 41.9\,B & = & dec & 4096 & 32 & 244 &  \\
+{\tiny\texttt{Qwen/Qwen3-30B-A3B}} &  & 30.5\,B & 30.5\,B & = & dec & 2048 & 48 & 2.2\,M &  \\
+{\tiny\texttt{baidu/ERNIE-4.5-21B-A3B-PT}} &  & 21.9\,B & 21.9\,B & = & dec & 2560 & 28 & 667 &  \\
+{\tiny\texttt{openai/gpt-oss-20b}} & MXFP4 & 20.9\,B & 20.9\,B & = & dec & 2880 & 24 & 51 & 100 \\
+{\tiny\texttt{moonshotai/Moonlight-16B-A3B}} &  & 16.0\,B & 16.0\,B & = & dec & 2048 & 27 & 640 &  \\
+{\tiny\texttt{deepseek-ai/DeepSeek-V2-Lite}} &  & 15.7\,B & 15.7\,B & = & dec & 2048 & 27 & 643 &  \\
+{\tiny\texttt{Qwen/Qwen1.5-MoE-A2.7B}} &  & 14.3\,B & 14.3\,B & = & dec & 2048 & 24 & 563 &  \\
+{\tiny\texttt{allenai/OLMoE-1B-7B-0924}} &  & 6.92\,B & 6.92\,B & = & dec & 2048 & 16 & 389 &  \\
+{\tiny\texttt{ibm-granite/granite-3.1-3b-a800m-instruct}} &  & 3.30\,B & 3.30\,B & = & enc & 1536 & 32 & 34 & 100 \\
+\multicolumn{10}{@{}l}{\textbf{SSM / hybrid} (9)} \\
+{\tiny\texttt{nvidia/NVIDIA-Nemotron-Nano-9B-v2}} &  & 8.89\,B & 8.89\,B & = & dec & 4480 & 56 & 37 &  \\
+{\tiny\texttt{nvidia/Nemotron-H-8B-Base-8K}} &  & 8.10\,B & 8.10\,B & = & dec & 4096 & 52 & 34 &  \\
+{\tiny\texttt{tiiuae/Falcon-H1-7B-Base}} &  & 7.59\,B & 7.59\,B & = & dec & 3072 & 44 & 83 & 100 \\
+{\tiny\texttt{tiiuae/falcon-mamba-7b}} &  & 7.27\,B & 7.27\,B & = & enc & 4096 & 64 & 70 & 100 \\
+{\tiny\texttt{ibm-granite/granite-4.0-h-tiny}} &  & 6.94\,B & 6.94\,B & = & enc & 1536 & 40 & 66 &  \\
+{\tiny\texttt{NX-AI/xLSTM-7b}} &  & 6.87\,B & 6.87\,B & = & dec & 4096 & 32 & 56 & 37 \\
+{\tiny\texttt{state-spaces/mamba-2.8b-hf}} &  & 2.77\,B & 2.77\,B & = & enc & 2560 & 64 & 69 & 100 \\
+{\tiny\texttt{Zyphra/Zamba2-2.7B}} &  & 2.66\,B & 2.66\,B & = & enc & 128 & 5 & 58 & 4 \\
+{\tiny\texttt{RWKV/v6-Finch-1B6-HF}} &  & 1.60\,B & -- &  & dec & 2048 & 24 & 142 &  \\
+\multicolumn{10}{@{}l}{\textbf{Encoder} (7)} \\
+{\tiny\texttt{FacebookAI/xlm-roberta-large}} &  & 561\,M & 561\,M & = & enc & 1024 & 24 & 48 & 100 \\
+{\tiny\texttt{answerdotai/ModernBERT-large}} &  & 396\,M & 396\,M & = & enc & 1024 & 28 & 18 & 100 \\
+{\tiny\texttt{FacebookAI/roberta-large}} &  & 355\,M & 355\,M & = & enc & 1024 & 24 & 47 & 100 \\
+{\tiny\texttt{microsoft/deberta-v3-base}} &  & 186\,M & -- &  & enc & 768 & 12 & 106 & 100 \\
+{\tiny\texttt{google-bert/bert-base-uncased}} &  & 110\,M & 110\,M & = & enc & 768 & 12 & 23 & 100 \\
+{\tiny\texttt{distilbert/distilbert-base-uncased}} &  & 67.0\,M & 67.0\,M & = & enc & 768 & 6 & 12 & 100 \\
+{\tiny\texttt{albert/albert-base-v2}} &  & 11.8\,M & 11.8\,M & = & ? & -- & -- & 4 & 45 \\
+\multicolumn{10}{@{}l}{\textbf{Embedding} (10)} \\
+{\tiny\texttt{Qwen/Qwen3-Embedding-8B}} &  & 7.57\,B & 7.57\,B & = & enc & 4096 & 36 & 43 &  \\
+{\tiny\texttt{Qwen/Qwen3-Embedding-0.6B}} &  & 596\,M & 596\,M & = & enc & 1024 & 28 & 33 &  \\
+{\tiny\texttt{Qwen/Qwen3-Reranker-0.6B}} &  & 596\,M & 596\,M & = & enc & 1024 & 28 & 34 & 100 \\
+{\tiny\texttt{BAAI/bge-m3}} &  & 568\,M & -- &  & enc & 1024 & 24 & 138 &  \\
+{\tiny\texttt{intfloat/multilingual-e5-large}} &  & 560\,M & 560\,M & = & enc & 1024 & 24 & 44 &  \\
+{\tiny\texttt{BAAI/bge-large-en-v1.5}} &  & 335\,M & 335\,M & = & enc & 1024 & 24 & 44 &  \\
+{\tiny\texttt{Alibaba-NLP/gte-multilingual-base}} &  & 305\,M & 305\,M & = & enc & 768 & 12 & 15 &  \\
+{\tiny\texttt{nomic-ai/nomic-embed-text-v1.5}} &  & 137\,M & 137\,M & = & enc & 768 & 12 & 11 &  \\
+{\tiny\texttt{sentence-transformers/all-mpnet-base-v2}} &  & 109\,M & 109\,M & = & enc & 768 & 12 & 21 &  \\
+{\tiny\texttt{sentence-transformers/all-MiniLM-L6-v2}} &  & 22.7\,M & 22.7\,M & = & enc & 384 & 6 & 11 &  \\
+\multicolumn{10}{@{}l}{\textbf{Seq2seq} (6)} \\
+{\tiny\texttt{facebook/nllb-200-distilled-600M}} &  & 1.40\,B & -- &  & enc-dec & 1024 & 12 & 160 & 100 \\
+{\tiny\texttt{google/mt5-base}} &  & 967\,M & -- &  & prefix & 768 & 12 & 155 & 100 \\
+{\tiny\texttt{facebook/m2m100\_418M}} &  & 877\,M & -- &  & enc-dec & 1024 & 12 & 171 & 100 \\
+{\tiny\texttt{google/flan-t5-large}} &  & 783\,M & 783\,M & = & prefix & 1024 & 24 & 67 & 100 \\
+{\tiny\texttt{facebook/bart-large-cnn}} &  & 406\,M & 406\,M & = & enc & 1024 & 12 & 59 & 100 \\
+{\tiny\texttt{google-t5/t5-base}} &  & 223\,M & 223\,M & = & enc & 768 & 12 & 30 & 100 \\
+\multicolumn{10}{@{}l}{\textbf{Speech / audio} (23)} \\
+{\tiny\texttt{Qwen/Qwen2.5-Omni-7B}} &  & 10.7\,B & 10.7\,B & = & diff & 3584 & 28 & 301 &  \\
+{\tiny\texttt{Qwen/Qwen2-Audio-7B-Instruct}} &  & 8.40\,B & 8.40\,B & = & prefix & 4096 & 32 & 104 &  \\
+{\tiny\texttt{kyutai/stt-2.6b-en}} &  & 2.71\,B & 2.62\,B & $\ne$ & enc & 2048 & 48 & 75 &  \\
+{\tiny\texttt{microsoft/VibeVoice-1.5B}} &  & 2.70\,B & 2.70\,B & = & diff & 1536 & 28 & 155 &  \\
+{\tiny\texttt{ResembleAI/chatterbox}} &  & 2.67\,B & -- &  & prefix & 1024 & 30 & 749 &  \\
+{\tiny\texttt{facebook/seamless-m4t-v2-large}} &  & 2.31\,B & 2.31\,B & = & enc & 1024 & 24 & 272 & 96 \\
+{\tiny\texttt{nari-labs/Dia-1.6B-0626}} &  & 1.61\,B & 1.61\,B & = & enc-dec & 2048 & 18 & 41 & 100 \\
+{\tiny\texttt{openai/whisper-large-v3}} &  & 1.54\,B & 1.54\,B & = & enc & 1280 & 32 & 293 &  \\
+{\tiny\texttt{openai/whisper-large-v3-turbo}} &  & 809\,M & 809\,M & = & enc & 1280 & 4 & 67 & 100 \\
+{\tiny\texttt{distil-whisper/distil-large-v3}} &  & 756\,M & 756\,M & = & enc & 1280 & 2 & 123 &  \\
+{\tiny\texttt{facebook/musicgen-small}} &  & 591\,M & 591\,M & = & enc & 1024 & 24 & 77 &  \\
+{\tiny\texttt{facebook/wav2vec2-large-xlsr-53}} &  & 317\,M & -- &  & enc & 1024 & 24 & 181 & 100 \\
+{\tiny\texttt{facebook/hubert-large-ls960-ft}} &  & 315\,M & -- &  & enc & 1024 & 24 & 178 & 100 \\
+{\tiny\texttt{microsoft/wavlm-large}} &  & 315\,M & -- &  & enc & 1024 & 24 & 178 &  \\
+{\tiny\texttt{openai/whisper-small}} &  & 242\,M & 242\,M & = & enc & 768 & 12 & 54 & 100 \\
+{\tiny\texttt{laion/clap-htsat-unfused}} &  & 154\,M & -- &  & enc & 768 & 12 & 157 & 100 \\
+{\tiny\texttt{microsoft/speecht5\_tts}} &  & 146\,M & -- &  & enc & 768 & 12 & 146 & 100 \\
+{\tiny\texttt{facebook/wav2vec2-base-960h}} &  & 94.4\,M & 94.4\,M & = & enc & 768 & 12 & 25 & 100 \\
+{\tiny\texttt{MIT/ast-finetuned-audioset-10-10-0.4593}} &  & 86.6\,M & 86.6\,M & = & enc & 768 & 12 & 28 &  \\
+{\tiny\texttt{UsefulSensors/moonshine-base}} &  & 61.5\,M & 61.5\,M & = & enc & 416 & 8 & 24 & 100 \\
+{\tiny\texttt{openai/whisper-tiny}} &  & 37.8\,M & 37.8\,M & = & enc & 384 & 4 & 19 & 100 \\
+{\tiny\texttt{facebook/encodec\_24khz}} &  & 23.3\,M & 23.3\,M & = & enc & 64 & 4 & 26 &  \\
+{\tiny\texttt{speechbrain/spkrec-ecapa-voxceleb}} &  & 20.8\,M & -- &  & enc & 128 & 7 & 126 &  \\
+\multicolumn{10}{@{}l}{\textbf{Vision} (19)} \\
+{\tiny\texttt{google/siglip-so400m-patch14-384}} &  & 878\,M & 878\,M & = & enc & 1152 & 27 & 106 & 96 \\
+{\tiny\texttt{facebook/sam-vit-huge}} &  & 641\,M & 641\,M & = & enc & 1280 & 32 & 67 & 100 \\
+{\tiny\texttt{openai/clip-vit-large-patch14}} &  & 428\,M & 428\,M & = & enc & 768 & 12 & 70 &  \\
+{\tiny\texttt{google/siglip2-base-patch16-224}} &  & 375\,M & 375\,M & = & enc & 768 & 12 & 48 & 92 \\
+{\tiny\texttt{Intel/dpt-large}} &  & 342\,M & 342\,M & = & enc & 1024 & 24 & 54 &  \\
+{\tiny\texttt{depth-anything/Depth-Anything-V2-Large-hf}} &  & 335\,M & 335\,M & = & enc & 1024 & 24 & 59 &  \\
+{\tiny\texttt{facebook/dinov2-large}} &  & 304\,M & 304\,M & = & enc & 1024 & 24 & 47 &  \\
+{\tiny\texttt{IDEA-Research/grounding-dino-base}} &  & 233\,M & 233\,M & = & enc & 512 & 24 & 163 &  \\
+{\tiny\texttt{facebook/sam2.1-hiera-large}} &  & 224\,M & 224\,M & = & enc & 144 & 48 & 106 & 95 \\
+{\tiny\texttt{facebook/mask2former-swin-large-coco-panoptic}} &  & 216\,M & -- &  & enc & 768 & 24 & 240 &  \\
+{\tiny\texttt{google/owlv2-base-patch16-ensemble}} &  & 155\,M & 155\,M & = & enc & 512 & 12 & 50 &  \\
+{\tiny\texttt{facebook/convnext-base-224}} &  & 88.6\,M & -- &  & enc & 512 & 36 & 145 &  \\
+{\tiny\texttt{microsoft/swin-base-patch4-window7-224}} &  & 87.8\,M & 87.8\,M & = & enc & 512 & 24 & 55 &  \\
+{\tiny\texttt{google/vit-base-patch16-224}} &  & 86.6\,M & 86.6\,M & = & enc & 768 & 12 & 23 &  \\
+{\tiny\texttt{nvidia/segformer-b5-finetuned-ade-640-640}} &  & 84.7\,M & -- &  & enc & 320 & 53 & 366 &  \\
+{\tiny\texttt{PekingU/rtdetr\_r50vd}} &  & 43.0\,M & 43.0\,M & = & enc & 256 & 48 & 96 & 84 \\
+{\tiny\texttt{facebook/detr-resnet-50}} &  & 41.6\,M & 41.6\,M & = & enc & 256 & 13 & 62 &  \\
+{\tiny\texttt{microsoft/resnet-50}} &  & 25.6\,M & 25.6\,M & = & enc & 256 & 48 & 41 & 100 \\
+{\tiny\texttt{timm/efficientnet\_b0.ra\_in1k}} &  & 5.33\,M & 5.33\,M & = & enc & 480 & 16 & 32 &  \\
+\multicolumn{10}{@{}l}{\textbf{Vision--language} (18)} \\
+{\tiny\texttt{Qwen/Qwen3-VL-235B-A22B-Instruct}} &  & 236\,B & 236\,B & = & prefix & 4096 & 94 & 174 &  \\
+{\tiny\texttt{zai-org/GLM-4.5V}} &  & 108\,B & 108\,B & = & prefix & 4096 & 46 & 2.4\,M &  \\
+{\tiny\texttt{Qwen/Qwen2.5-VL-72B-Instruct}} &  & 73.4\,B & 73.4\,B & = & prefix & 8192 & 80 & 151 &  \\
+{\tiny\texttt{Qwen/Qwen3-VL-30B-A3B-Instruct}} &  & 31.1\,B & 31.1\,B & = & prefix & 2048 & 48 & 107 &  \\
+{\tiny\texttt{moonshotai/Kimi-VL-A3B-Instruct}} &  & 16.4\,B & 16.4\,B & = & prefix & 2048 & 27 & 765 &  \\
+{\tiny\texttt{nvidia/NVIDIA-Nemotron-Nano-12B-v2-VL-BF16}} &  & 13.2\,B & 13.2\,B & = & prefix & 5120 & 62 & 95 &  \\
+{\tiny\texttt{mistral-community/pixtral-12b}} &  & 12.7\,B & 12.7\,B & = & prefix & 5120 & 40 & 76 &  \\
+{\tiny\texttt{unsloth/Llama-3.2-11B-Vision-Instruct}} &  & 10.7\,B & 10.7\,B & = & enc-dec & 4096 & 40 & 116 &  \\
+{\tiny\texttt{Qwen/Qwen2.5-VL-7B-Instruct}} &  & 8.29\,B & 8.29\,B & = & prefix & 3584 & 28 & 79 &  \\
+{\tiny\texttt{llava-hf/llava-onevision-qwen2-7b-ov-hf}} &  & 8.03\,B & 8.03\,B & = & prefix & 3584 & 28 & 99 &  \\
+{\tiny\texttt{allenai/Molmo-7B-D-0924}} &  & 8.02\,B & 8.02\,B & = & prefix & 3584 & 28 & 79 &  \\
+{\tiny\texttt{OpenGVLab/InternVL3-8B-hf}} &  & 7.94\,B & 7.94\,B & = & prefix & 3584 & 28 & 97 &  \\
+{\tiny\texttt{llava-hf/llava-1.5-7b-hf}} &  & 7.06\,B & 7.06\,B & = & prefix & 4096 & 32 & 90 &  \\
+{\tiny\texttt{microsoft/Phi-4-multimodal-instruct}} &  & 6.40\,B & 5.57\,B & $\ne$ & enc & 3072 & 32 & 368 &  \\
+{\tiny\texttt{deepseek-ai/Janus-Pro-7B}} &  & 4.99\,B & -- &  & enc & 4096 & 20 & 249 &  \\
+{\tiny\texttt{unsloth/gemma-3-4b-it}} &  & 4.30\,B & 4.30\,B & = & enc & 2560 & 34 & 116 &  \\
+{\tiny\texttt{HuggingFaceTB/SmolVLM2-2.2B-Instruct}} &  & 2.25\,B & 2.25\,B & = & prefix & 2048 & 24 & 83 &  \\
+{\tiny\texttt{lerobot/smolvla\_base}} &  & 450\,M & 450\,M & $\ne$ & prefix & 960 & 16 & 72 &  \\
+\multicolumn{10}{@{}l}{\textbf{Image / video gen.} (14)} \\
+{\tiny\texttt{Qwen/Qwen-Image}} &  & 28.8\,B & 20.4\,B & den & diff & 3584 & 28 & 321 &  \\
+{\tiny\texttt{HiDream-ai/HiDream-I1-Full}} &  & 22.8\,B & 17.1\,B & den & enc & 4096 & 24 & 338 &  \\
+{\tiny\texttt{hunyuanvideo-community/HunyuanVideo}} &  & 20.7\,B & 12.8\,B & den & diff & 4096 & 32 & 229 &  \\
+{\tiny\texttt{Wan-AI/Wan2.2-TI2V-5B-Diffusers}} &  & 11.4\,B & 5.00\,B & den & enc & 4096 & 24 & 134 &  \\
+{\tiny\texttt{Wan-AI/Wan2.1-T2V-1.3B-Diffusers}} &  & 7.23\,B & 1.42\,B & den & enc & 4096 & 24 & 132 &  \\
+{\tiny\texttt{Lightricks/LTX-Video}} &  & 7.10\,B & 1.92\,B & den & diff & 4096 & 24 & 2.9\,M &  \\
+{\tiny\texttt{THUDM/CogVideoX-2b}} &  & 6.67\,B & 1.69\,B & den & enc & 4096 & 24 & 159 &  \\
+{\tiny\texttt{PixArt-alpha/PixArt-Sigma-XL-2-1024-MS}} &  & 5.46\,B & 611\,M & den & diff & 4096 & 24 & 120 &  \\
+{\tiny\texttt{Efficient-Large-Model/Sana\_1600M\_1024px\_diffusers}} &  & 5.32\,B & -- &  & diff & 2304 & 26 & 282 &  \\
+{\tiny\texttt{playgroundai/playground-v2.5-1024px-aesthetic}} &  & 3.47\,B & 2.57\,B & den & enc-dec & 1280 & 32 & 1.3\,M &  \\
+{\tiny\texttt{stabilityai/sdxl-turbo}} &  & 3.47\,B & 2.57\,B & den & enc-dec & 1280 & 32 & 1.4\,M &  \\
+{\tiny\texttt{stabilityai/stable-diffusion-xl-base-1.0}} &  & 3.47\,B & 2.57\,B & den & enc-dec & 1280 & 32 & 1.8\,M &  \\
+{\tiny\texttt{stable-diffusion-v1-5/stable-diffusion-v1-5}} &  & 1.37\,B & 860\,M & den & enc & 768 & 12 & 846 &  \\
+{\tiny\texttt{facebook/DiT-XL-2-256}} &  & 833\,M & -- &  & enc & 1152 & 28 & 346 &  \\
+\multicolumn{10}{@{}l}{\textbf{Time series / tabular} (6)} \\
+{\tiny\texttt{google/timesfm-2.0-500m-pytorch}} &  & 499\,M & 499\,M & = & enc & 1280 & 50 & 89 &  \\
+{\tiny\texttt{amazon/chronos-bolt-base}} &  & 205\,M & 205\,M & = & enc & 768 & 12 & 31 & 100 \\
+{\tiny\texttt{Salesforce/moirai-1.1-R-base}} &  & 91.4\,M & 91.4\,M & = & enc & 768 & 12 & 18 &  \\
+{\tiny\texttt{amazon/chronos-t5-small}} &  & 46.2\,M & 46.2\,M & = & enc & 512 & 6 & 15 & 95 \\
+{\tiny\texttt{Prior-Labs/TabPFN-v2-clf}} &  & 7.24\,M & -- &  & enc & 768 & 12 & 92 &  \\
+{\tiny\texttt{ibm-granite/granite-timeseries-ttm-r2}} &  & 805\,K & 805\,K & = & enc & 48 & 6 & 19 &  \\
+\multicolumn{10}{@{}l}{\textbf{Quantized release} (10)} \\
+{\tiny\texttt{nvidia/DeepSeek-R1-0528-FP4}} & NVFP4 & 684\,B & 397\,B & = & dec & 7168 & 61 & 20.4\,M &  \\
+{\tiny\texttt{Qwen/Qwen3-30B-A3B-GPTQ-Int4}} & GPTQ & 30.5\,B & 30.5\,B & = & dec & 2048 & 48 & 8.7\,M &  \\
+{\tiny\texttt{Qwen/Qwen3-8B-FP8}} & FP8 & 8.19\,B & 8.19\,B & = & dec & 4096 & 36 & 76 & 100 \\
+{\tiny\texttt{mlx-community/Qwen3-8B-4bit}} & MLX & 8.19\,B & 8.19\,B & = & dec & 4096 & 36 & 101 &  \\
+{\tiny\texttt{nvidia/Qwen3-8B-FP4}} & NVFP4 & 8.19\,B & 4.72\,B & $\ne$ & dec & 4096 & 36 & 131 &  \\
+{\tiny\texttt{unsloth/Qwen3-8B-bnb-4bit}} & NF4 & 8.19\,B & 8.41\,B & $\ne$ & dec & 4096 & 36 & 193 &  \\
+{\tiny\texttt{RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8}} & FP8 & 8.03\,B & 8.03\,B & = & dec & 4096 & 32 & 83 &  \\
+{\tiny\texttt{nvidia/Llama-3.1-8B-Instruct-FP4}} & NVFP4 & 8.03\,B & 4.54\,B & $\ne$ & dec & 4096 & 32 & 109 &  \\
+{\tiny\texttt{Qwen/Qwen2.5-7B-Instruct-AWQ}} & AWQ & 7.62\,B & 7.62\,B & = & dec & 3584 & 28 & 80 &  \\
+{\tiny\texttt{unsloth/Llama-3.2-1B-Instruct-bnb-4bit}} & NF4 & 1.24\,B & 1.27\,B & $\ne$ & enc & 2048 & 16 & 81 &  \\
+\end{longtable}
