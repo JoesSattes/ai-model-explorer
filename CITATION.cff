@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use AI Model Explorer, please cite it as below."
+title: "AI Model Explorer"
+type: software
+authors:
+  - family-names: Singkul
+    given-names: Sattaya
+    website: "https://joessattes.github.io/Sattaya-AI-Website/"
+repository-code: "https://github.com/JoesSattes/ai-model-explorer"
+url: "https://joessattes.github.io/ai-model-explorer/"
+license: MIT
+date-released: 2026-10-31
+keywords: [AI model explorer, model visualization, TFLite, LiteRT, edge AI, quantization, transformer, Hugging Face]
