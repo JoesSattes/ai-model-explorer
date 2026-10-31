@@ -1,5 +1,6 @@
 // Baselines used in the paper (shared by eval.js and realbench.js): the explorer's previous name rules (v1), v1 with a
 // MoE label, llama.cpp's tensor-name mapping, and the layer-index regex for stacks.
+// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026 (paper/).
 "use strict";
 const fs = require("fs"), path = require("path"), vm = require("vm");
 // v1 baseline: the explorer's previous regex placement

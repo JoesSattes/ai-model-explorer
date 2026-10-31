@@ -241,6 +241,8 @@ footer{padding:44px 0 40px;color:var(--soft);font-size:14.5px;border-top:1px sol
 footer .fname{font-size:40px;font-weight:700;letter-spacing:-.03em;color:var(--ink);margin-bottom:10px}
 footer .fl{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}footer a{color:var(--ink)}
 .credit a{color:var(--ink)}
+footer .cite{margin-top:16px;max-width:860px}footer .cite summary{cursor:pointer;color:var(--ink);font-weight:600}footer .citeref{margin:10px 0 8px;color:var(--soft)}
+footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,127,127,.25));border-radius:10px;padding:12px 14px;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);white-space:pre-wrap;word-break:break-word;margin-bottom:8px}
 @media (max-width:1100px){.hgrid{grid-template-columns:1fr}.iogrid{grid-template-columns:1fr 1fr}.iomid{grid-column:1/-1;order:-1}.ionums{grid-column:1/-1}.xdg,.agrid{grid-template-columns:1fr}.cgrid{grid-template-columns:1fr 1fr}.qplay,.rgrid{grid-template-columns:1fr}#cur{grid-template-columns:1fr}}
 @media (max-width:760px){
   nav.top .wrap{gap:12px;padding:0 16px}nav.top a.l,#navModel{display:none}.wrap{padding:0 16px}section{padding:56px 0 8px}
@@ -342,6 +344,17 @@ footer .fl{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}footer a{color:v
   <div class="credit">© 2026 <a href="https://joessattes.github.io/Sattaya-AI-Website/" rel="author">Sattaya Singkul</a> · <a href="https://github.com/JoesSattes/ai-model-explorer/blob/main/LICENSE" rel="license">MIT License</a></div>
   <p style="margin-top:8px" data-i="footer"></p>
   <div class="fl"><a href="https://joessattes.github.io/Sattaya-AI-Website/">Portfolio — Sattaya Singkul</a><a href="https://github.com/JoesSattes/ai-model-explorer">GitHub</a><a href="https://github.com/JoesSattes/ai-model-explorer/tree/main/paper">Paper</a><a href="llms.txt">llms.txt</a></div>
+  <details class="cite" id="cite"><summary data-i="cite_t">Cite this work</summary>
+    <p class="citeref">Sattaya Singkul. 2026. <i>Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy</i>. Preprint.</p>
+    <pre id="citeBib">@misc{singkul2026reading,
+  title  = {Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy},
+  author = {Singkul, Sattaya},
+  year   = {2026},
+  note   = {Preprint},
+  url    = {https://github.com/JoesSattes/ai-model-explorer/tree/main/paper}
+}</pre>
+    <button class="btn sm" id="copyBib" data-i="cite_copy">Copy BibTeX</button>
+  </details>
 </div></footer>
 
 <div id="cfgDlg"><div class="box"><div style="display:flex;justify-content:space-between;align-items:center"><h3 data-i="cfg_title">Paste config.json</h3><button class="btn sm" id="cfgClose">✕</button></div>
@@ -492,6 +505,7 @@ window.I18N = {
   e_blocked: ["<b>หน้านี้ต่อ Hugging Face ไม่ได้</b> — หน้า artifact บล็อกการเชื่อมต่อออกไปเว็บอื่น · ทางเลือก: กด “วาง config.json” แล้ววางเนื้อหา config.json จากหน้า repo หรือเปิด <span class=\"mono\">site/index.html</span> จาก repo บนเครื่องตัวเอง", "<b>This page can't reach Hugging Face</b> — the artifact frame blocks outside connections. Instead: press “Paste config.json” and paste the repo's config.json, or open <span class=\"mono\">site/index.html</span> from the repo locally."],
   e_read: ["อ่านไม่ได้:", "Could not read:"], e_cfg: ["config นี้ยังไม่รองรับ: ", "Config not supported yet: "],
   loading: ["กำลังโหลด…", "Loading…"], cfg_title: ["วาง config.json", "Paste config.json"], cfg_help: ["เปิดหน้า repo บน Hugging Face → Files → config.json → คัดลอกทั้งหมดมาวาง", "Open the repo on Hugging Face → Files → config.json → copy everything and paste it here."], cfg_go: ["สร้างโมเดล", "Build"],
+  cite_t: ["อ้างอิงงานนี้", "Cite this work"], cite_copy: ["คัดลอก BibTeX", "Copy BibTeX"], cite_fail: ["คัดลอกไม่ได้ — เลือกข้อความเอง", "Could not copy — select the text"],
   footer: ["ทำสำหรับ “Squeeze Until It Breaks” · AI Expo Thailand 2026 · Sattaya Singkul · template Whisper วิเคราะห์จากกราฟ .tflite ของสถาปัตยกรรมจริงด้วย weight สุ่ม: ขนาด dtype op และความเร็วเป็นของจริง ความแม่นยำไม่ใช่", "Built for “Squeeze Until It Breaks” · AI Expo Thailand 2026 · Sattaya Singkul · The Whisper template comes from the real architecture's .tflite graph with random weights: sizes, dtypes, ops and speeds are real, accuracy is not."],
 
   hero_h1: ["AI Model Explorer", "AI Model Explorer"],
@@ -784,6 +798,7 @@ if (typeof module !== "undefined") module.exports = {graphFromTflite, graphFromT
 <script>// infer.js — recover a model's anatomy from its weight manifest alone (tensor names, shapes, dtypes).
 // No weights are downloaded and no model code is run. Works in the browser and in Node.
 // (c) 2026 Sattaya Singkul · MIT
+// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026 (paper/).
 "use strict";
 (function (root) {
 const prod = s => (s || []).reduce((a, b) => a * b, 1);
@@ -1423,6 +1438,7 @@ if (typeof module !== "undefined") module.exports = api; else root.ArchInfer = a
 </script>
 <script>// loaders.js — read only what describes a model: safetensors headers and PyTorch checkpoint indexes, via HTTP Range.
 // Weights are never downloaded. (c) 2026 Sattaya Singkul · MIT
+// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026 (paper/).
 "use strict";
 (function (root) {
 const rangeGet = async (url, a, b) => { const r = await fetch(url, {headers: {Range: `bytes=${a}-${b}`}}); if (r.status === 401 || r.status === 403) throw new Error("gated repository: accept its license on Hugging Face first"); if (!r.ok && r.status !== 206) throw new Error(`HTTP ${r.status}`); return new Uint8Array(await r.arrayBuffer()); };
@@ -2646,6 +2662,7 @@ function wire() {
   $("#hf").addEventListener("keydown", e => { if (e.key === "Enter") $("#hfGo").click(); });
   $("#cfgOpen").onclick = () => $("#cfgDlg").classList.add("open"); $("#cfgClose").onclick = () => $("#cfgDlg").classList.remove("open");
   $("#cfgGo").onclick = () => { try { const cfg = JSON.parse($("#cfgTxt").value); const r = tensorsFromConfig(cfg); $("#cfgDlg").classList.remove("open"); addOwn({tensors: r.tensors, meta: r.meta, cfg, kind: "config", label: (cfg._name_or_path || r.meta.model_type || "config") + "", noteKey: "n_cfg", noteVars: {mt: r.meta.model_type}}, r.meta.model_type); } catch (e) { $("#cfgErr").textContent = t("e_cfg") + e.message; } };
+  $("#copyBib").onclick = async () => { try { await navigator.clipboard.writeText($("#citeBib").textContent); $("#copyBib").textContent = t("copied"); } catch (e) { $("#copyBib").textContent = t("cite_fail"); } setTimeout(() => $("#copyBib").textContent = t("cite_copy"), 1800); };
   $("#copyMd").onclick = async () => { try { await navigator.clipboard.writeText(S.md); $("#copyMd").textContent = t("copied"); } catch (e) { $("#copyMd").textContent = t("copy_fail"); } setTimeout(() => $("#copyMd").textContent = t("copy_md"), 1800); };
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), {threshold: 0, rootMargin: "0px 0px -6% 0px"}); $$(".reveal").forEach(el => io.observe(el));
   addEventListener("hashchange", () => { const h = location.hash.slice(1); if (h && MODELS.some(m => m.id === h) && (!S.M || S.M.id !== h)) setModel(h, true); });

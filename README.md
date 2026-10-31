@@ -66,6 +66,19 @@ To reproduce the paper's numbers: `python research/build_corpus.py corpus.jsonl`
 with `--obf --nolex`, `--quant nvfp4|fp8|gptq`, `--cfg`, or a baseline: `--v1` (name rules), `--v1moe` (name rules with an MoE label)
 or `--gguf` (llama.cpp's tensor-name table, built by `python research/gguf_baseline.py`).
 
+## Citation
+If you use AI Model Explorer or its recovery method, please cite the paper ([PDF](paper/manifest-anatomy-singkul-2026.pdf)):
+
+```bibtex
+@misc{singkul2026reading,
+  title  = {Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy},
+  author = {Singkul, Sattaya},
+  year   = {2026},
+  note   = {Preprint},
+  url    = {https://github.com/JoesSattes/ai-model-explorer/tree/main/paper}
+}
+```
+
 ## Credits
 Created by **[Sattaya Singkul](https://joessattes.github.io/Sattaya-AI-Website/)** for the workshop *Squeeze Until It Breaks — A Hands-On Edge Inference Contest*, AI Expo Thailand 2026.
 

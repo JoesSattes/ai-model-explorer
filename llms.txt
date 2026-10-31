@@ -38,3 +38,5 @@ Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Co
 - Paper (LaTeX + PDF): https://github.com/JoesSattes/ai-model-explorer/tree/main/paper
 - Hub benchmark: https://joessattes.github.io/ai-model-explorer/bench.html
 - License: MIT, Copyright (c) 2026 Sattaya Singkul
+
+Cite: Sattaya Singkul. 2026. Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy. Preprint. https://github.com/JoesSattes/ai-model-explorer/tree/main/paper
