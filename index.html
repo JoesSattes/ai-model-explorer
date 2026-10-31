@@ -945,7 +945,7 @@ function classify0(names, T, d, ctx) {
     }
   }
   // modulation (adaLN): one matrix producing k×d
-  if (M.length === 1) { const [o, i] = T[M[0]].shape; if (o % d === 0 && (i === d ? [6, 9, 12, 18].includes(o / d) : o / d >= 2 && o / d <= 24 && i < d)) { ev.push(`[${o}×${i}] = ${o / d}×d shift/scale/gate`); return {kind: "mod", ev}; }
+  if (M.length === 1) { const [o, i] = T[M[0]].shape; if (o % d === 0 && (i === d ? [6, 9, 12, 18].includes(o / d) : o / d >= 2 && o / d <= 24 && i < d && i >= 32)) { ev.push(`[${o}×${i}] = ${o / d}×d shift/scale/gate`); return {kind: "mod", ev}; }
     if (i === d) return {kind: "half_up", f: o, ev: [`d ${d} → ${o}`]}; if (o === d) return {kind: "half_down", f: i, ev: [`${i} → d ${d}`]}; }
   return {kind: "other", ev};
 }
@@ -1029,6 +1029,18 @@ function infer(manifest, opts = {}) {
     const ty = st.types[st.typeOf[k]], map = new Map(); ty.regions.forEach(rg => rg.rel.forEach(r => map.set(r, rg)));
     findNode(R, p).all.forEach(x => { const rg = map.get(rel(x, p)); out.tensors[x] = {comp: C.id, stack: st.path, block: k, kind: rg ? rg.kind : "other", region: rg ? rg.key : null, role: rg ? roleOf(x, rg, T, lex) : null}; });
   });
+  // a list whose items never return to their own width is not a residual stack: per-layer prediction heads (box MLPs,
+  // hypernetworks) or a list of projectors into another component (DeepStack mergers). The list is kept; its tensors are relabelled.
+  for (const C of comps) for (const st of C.stacks) {
+    if (st.types.length !== 1) continue; const d = st.types[0].d, ns = findNode(R, st.items[0]).all, M2 = ns.filter(n => T[n].shape.length === 2);
+    if (!M2.length || M2.length > 4) continue;
+    const ins = new Set(M2.map(n => T[n].shape[1])), freeOut = [...new Set(M2.map(n => T[n].shape[0]))].filter(w => !ins.has(w));
+    if (freeOut.length !== 1 || freeOut[0] === d || M2.some(n => T[n].shape[0] === d && T[n].shape[1] !== d)) continue;
+    const proj = comps.some(c => c !== C && (c.d === freeOut[0] || [4, 9, 16].some(k => c.d * k === d))) || /merger|projector/i.test(lex ? st.path : "");
+    st.items.forEach(p => findNode(R, p).all.forEach(x => { const t = out.tensors[x]; if (!(t.kind === "norm" && T[x].shape.length === 1 && !M2.some(m => x.startsWith(modOf0(m) + ".")))) t.kind = proj ? "adapter" : "head"; }));
+    st.types[0].label = proj ? "Projector" : "Head MLP";
+    ev.push(`${st.path}: items map ${d} → ${freeOut[0]} and never return to ${d}, read as ${proj ? "projectors" : "per-layer prediction heads"}`);
+  }
   for (const X of [...comps]) {
     const Y = comps.find(c => c !== X && (!c.path || X.path.startsWith(c.path + ".")));
     if (!Y || !X.stacks.every(st => st.types.every(t => t.label === "Conv" || t.label === "Block"))) continue;
@@ -1084,7 +1096,7 @@ function infer(manifest, opts = {}) {
     Object.assign(t, isHead ? {kind: "head", role: "logits"} : {kind: "embed", role: "tokens"});
   }
   // lexical cleanup for loose tensors the shapes could not place
-  if (lex) for (const [n, t] of Object.entries(out.tensors)) if (t.block == null && (t.kind === "other" || t.kind === "adapter")) {
+  if (lex) for (const [n, t] of Object.entries(out.tensors)) if (t.block == null && (t.kind === "other" || t.kind === "adapter" || t.kind === "head" && t.role === "pool/proj" && /merger|projector|multi_modal|mm_proj|connector/i.test(n))) {
     if (/(^|\.)(lm_head|classifier|score|qa_outputs|proj_out|head|joint)/i.test(n)) t.kind = "head";
     else if (/merger|projector|multi_modal|mm_proj|adapter|connector|mlp1/i.test(n)) t.kind = "adapter";
     else if (/embed|wte|wpe|position|pos_emb|token_type|cls_token|mask_token/i.test(n) && t.kind === "other") t.kind = "embed";
@@ -1125,7 +1137,7 @@ function infer(manifest, opts = {}) {
     const M2 = ns.filter(n => T[n].shape.length === 2); if (!M2.length) continue;
     const outsW = new Set(M2.map(n => T[n].shape[0])), insW = new Set(M2.map(n => T[n].shape[1]));
     const src = [...insW].find(w => !outsW.has(w)) || T[M2[0]].shape[1], dst = [...outsW].find(w => !insW.has(w)) || T[M2[M2.length - 1]].shape[0];
-    const from = comps.find(c => c.d === src) || comps.find(c => [4, 9, 16].some(k => c.d * k === src)), to = comps.find(c => c.d === dst && c !== from);
+    const from = comps.find(c => c.d === src && c.d !== dst) || comps.find(c => c.d !== dst && [4, 9, 16].some(k => c.d * k === src)) || comps.find(c => c.d === src), to = comps.find(c => c.d === dst && c !== from);
     if (!from || !to) continue;
     const merge = src !== from.d ? Math.round(Math.sqrt(src / from.d)) : 1;
     const A = {id: key || "(adapter)", path: key, stacks: [], d: dst, params: 0, bytes: 0, ev: [`maps ${from.id} (${from.d}${merge > 1 ? ` ×${merge}² merged = ${src}` : ""}) → ${to.id} (${dst})`], adapter: true, merge};
