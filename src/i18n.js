@@ -1,6 +1,7 @@
 // UI strings, Thai + English. t("key", {vars}) returns the current language.
 window.I18N = {
 
+
   nav_arch: ["โครงสร้าง", "Anatomy"],
   arch_eyebrow: ["01 · โครงสร้างอัตโนมัติ", "01 · Automatic anatomy"],
   arch_h2: ["อ่านโครงสร้างจากชื่อและ shape ของ weight อย่างเดียว", "The architecture, read off the weights' names and shapes"],
@@ -141,6 +142,25 @@ window.I18N = {
   e_read: ["อ่านไม่ได้:", "Could not read:"], e_cfg: ["config นี้ยังไม่รองรับ: ", "Config not supported yet: "],
   loading: ["กำลังโหลด…", "Loading…"], cfg_title: ["วาง config.json", "Paste config.json"], cfg_help: ["เปิดหน้า repo บน Hugging Face → Files → config.json → คัดลอกทั้งหมดมาวาง", "Open the repo on Hugging Face → Files → config.json → copy everything and paste it here."], cfg_go: ["สร้างโมเดล", "Build"],
   footer: ["ทำสำหรับ “Squeeze Until It Breaks” · AI Expo Thailand 2026 · Sattaya Singkul · template Whisper วิเคราะห์จากกราฟ .tflite ของสถาปัตยกรรมจริงด้วย weight สุ่ม: ขนาด dtype op และความเร็วเป็นของจริง ความแม่นยำไม่ใช่", "Built for “Squeeze Until It Breaks” · AI Expo Thailand 2026 · Sattaya Singkul · The Whisper template comes from the real architecture's .tflite graph with random weights: sizes, dtypes, ops and speeds are real, accuracy is not."],
+
+  hero_h1: ["AI Model Explorer", "AI Model Explorer"],
+  hero_sub: ["เปิดดูโครงสร้างของโมเดลใดก็ได้บน Hugging Face: มีกี่ส่วน แต่ละส่วนทำอะไร ใหญ่แค่ไหน โดยไม่ต้องดาวน์โหลด weight", "Open any Hugging Face model and see its parts, what each one does and how big it is, without downloading the weights."],
+  how_read: ["<b>อ่านอะไรบ้าง</b> header ของ safetensors (ชื่อ, shape, dtype ของทุก tensor) กับ config.json รวมกันปกติไม่ถึง 200 KB ส่วนไฟล์ .pt อ่านแค่สารบัญ ทุกอย่างประมวลผลในเบราว์เซอร์", "<b>What it reads</b> The safetensors header (every tensor's name, shape and dtype) and config.json, usually under 200 KB together; for .pt files only the index. Everything runs in your browser."],
+  pick_own: ["repo บน Hugging Face", "Hugging Face repo"],
+  lib_search: ["ค้นหาโมเดล", "Search models"], lib_count: ["{n} โมเดล", "{n} models"], lib_none: ["ไม่พบโมเดลที่ตรงกับคำค้น", "No model matches."],
+  cat_all: ["ทั้งหมด", "All"], cat_speech: ["เสียง", "Speech"], cat_language: ["ภาษา", "Language"], cat_vision: ["ภาพ + ภาษา", "Vision"], cat_embed: ["embedding และตาราง", "Embedding & tables"], cat_gen: ["สร้างวิดีโอ", "Generation"], cat_prec: ["เทียบ precision", "Precision rehearsal"], cat_own: ["ที่คุณเปิด", "Yours"],
+  src_rec: ["สร้างจาก source", "rebuilt"], src_header: ["header จริง", "header"],
+  arch_h2: ["โครงสร้างของโมเดล", "Anatomy"],
+  arch_lead: ["แต่ละกล่องคือหนึ่งส่วนของโมเดล เรียงตามทางที่ข้อมูลไหล แถบสีคือชนิดของแต่ละ layer คลิกกล่องเพื่อดูว่าข้างในมีอะไร และค่าแต่ละค่ามาจากไหน", "Each box is one part of the model, in the order data flows through it. The strip shows the type of every layer. Click a box to see what is inside and where each value comes from."],
+  hp_check: ["config ตรงกับ weight", "config vs weights"],
+  srct_cfg: ["config", "config"], srct_meas: ["วัดจาก weight", "measured"], srct_est: ["ประมาณการ", "estimated"], srct_ok: ["ตรงกัน", "consistent"], srct_bad: ["ไม่ตรงกัน", "mismatch"],
+  srcd_cfg: ["อ่านจาก config.json แล้วตรวจกับ shape ของ weight", "Read from config.json and checked against the weight shapes"],
+  srcd_meas: ["คำนวณจากชื่อและ shape ของ tensor โดยตรง", "Computed directly from tensor names and shapes"],
+  srcd_est: ["shape บอกได้แค่ heads × head_dim จึงประมาณจากขนาดที่พบบ่อย (128 เมื่อ d ≥ 2048 ไม่งั้น 64) ใส่ config.json เพื่อให้ได้ค่าจริง", "Shapes fix only heads × head_dim, so this uses the common head size (128 when d ≥ 2048, otherwise 64). Provide config.json for the exact value."],
+  srcd_ok: ["heads × head_dim ใน config เท่ากับความกว้างของ projection ใน weight", "heads × head_dim in the config equals the projection width in the weights"],
+  srcd_bad: ["config กับ weight ไม่ตรงกัน มักเป็น attention แบบพิเศษ เช่น MLA ที่ head_dim ของ q/k ต่างจาก v", "The config and the weights disagree, usually a special attention such as MLA where the q/k head size differs from v"],
+  brand: ["AI Model Explorer", "AI Model Explorer"],
+  grp_Attention: ["attention (รวม DiT)", "attention (incl. DiT)"], grp_SSM: ["SSM / linear attention", "SSM / linear attention"], grp_MoE: ["mixture of experts", "mixture of experts"], grp_Conformer: ["conformer", "conformer"], grp_Other: ["อื่นๆ (FFN, conv, RNN)", "other (FFN, conv, RNN)"]
 };
 window.LANG = (() => { try { return localStorage.getItem("mx_lang") || "th"; } catch (e) { return "th"; } })();
 window.t = (k, v) => { const e = I18N[k]; let s = e ? e[LANG === "en" ? 1 : 0] : k; if (v) Object.entries(v).forEach(([a, b]) => s = s.split("{" + a + "}").join(b)); return s; };

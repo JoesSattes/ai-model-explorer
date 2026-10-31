@@ -325,9 +325,12 @@ function metaFromIR(I, cfg, name) {
   const mod = S0.fam === "transducer" ? "audio" : modOf(tw && S0.fam !== "transducer" ? tw : B);
   const pattern = B.stacks ? B.stacks.map(s => s.typeOf.map(i => s.types[i].label)).flat() : [];
   const runs = []; pattern.forEach(l => { const r = runs[runs.length - 1]; if (r && r[0] === l) r[1]++; else runs.push([l, 1]); });
-  return {name, family: fam, modality: mod === "latent" ? "latent" : mod === "image" ? "image" : mod === "audio" ? "audio" : mod === "video" ? "image" : mod === "features" ? "features" : "text",
-    d: B.d || hp.d, encD: tw ? tw.d : null, heads: g("num_attention_heads") || hp.heads, kv_heads: g("num_key_value_heads") || hp.kv_heads, heads_exact: !!g("num_attention_heads") || hp.head_dim_from === "q/k-norm width",
-    vocab: hp.vocab || g("vocab_size"), tie: hp.tie != null ? hp.tie : g("tie_word_embeddings") !== false, ffn: hp.ffn || g("intermediate_size"), experts: hp.experts || 0, topk: g("num_experts_per_tok", "moe_topk", "top_k") || null,
+  // provenance of each architectural field: measured from the weights, read from config.json, or estimated
+  const F = cfg ? ArchInfer.fuseConfig(I, cfg) : null, fz = F && B.id ? F[B.id] : null, perHead = hp.head_dim_from === "q/k-norm width";
+  const src = {heads: fz && fz.heads ? "config" : perHead ? "measured" : hp.heads ? "estimate" : null, topk: fz && fz.topk ? "config" : null};
+  return {name, family: fam, src, fused: fz, fusedAll: F, modality: mod === "latent" ? "latent" : mod === "image" ? "image" : mod === "audio" ? "audio" : mod === "video" ? "image" : mod === "features" ? "features" : "text",
+    d: B.d || hp.d, encD: tw ? tw.d : null, heads: fz && fz.heads || hp.heads, kv_heads: fz && fz.kv_heads || hp.kv_heads, head_dim: fz && fz.head_dim || hp.head_dim, heads_exact: src.heads !== "estimate",
+    vocab: hp.vocab || g("vocab_size"), tie: hp.tie != null ? hp.tie : g("tie_word_embeddings") !== false, ffn: hp.ffn || g("intermediate_size"), experts: hp.experts || 0, topk: fz && fz.topk || g("num_experts_per_tok", "moe_topk", "top_k") || null,
     layers: S0.decoder ? {enc: S0.encoder ? S0.encoder.layers : 0, dec: B.layers} : {enc: B.layers}, layer_pattern: runs.length > 1 ? runs.map(([l, n]) => (n > 1 ? n + "×" : "") + l).slice(0, 8).join(" · ") + (runs.length > 8 ? " …" : "") : null,
     nmels: mod === "audio" ? 128 : null, seqEnc: mod === "audio" ? 1500 : null, irFamily: I.family, quant: I.quant, joint: I.joint || null, timestep: I.timestep || null, model_type: cfg && cfg.model_type || null};
 }
