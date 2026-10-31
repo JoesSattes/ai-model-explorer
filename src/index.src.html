@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Model Explorer — see inside any AI model, part by part | Sattaya Singkul</title>
+<meta name="description" content="Free interactive AI model explorer. Load a .tflite file, a Hugging Face repo or a config.json and see any architecture — Whisper, Llama, GPT-2, BERT, ViT — split into parts with real weights, compute, TFLite ops and precision. Thai and English. By Sattaya Singkul.">
+<meta name="keywords" content="AI model explorer, model visualization, transformer explainer, TFLite analyzer, LiteRT, edge AI, on-device AI, quantization, int8, int4, Whisper, Llama, GPT-2, BERT, ViT, Hugging Face, safetensors, model architecture, Sattaya Singkul, ภาษาไทย, AI Expo Thailand">
+<meta name="author" content="Sattaya Singkul">
+<meta name="creator" content="Sattaya Singkul">
+<meta name="copyright" content="© 2026 Sattaya Singkul">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0b1020">
+<link rel="canonical" href="https://joessattes.github.io/ai-model-explorer/">
+<link rel="author" href="https://joessattes.github.io/Sattaya-AI-Website/">
+<link rel="license" href="https://joessattes.github.io/ai-model-explorer/LICENSE">
+<link rel="alternate" type="text/plain" title="LLM summary" href="https://joessattes.github.io/ai-model-explorer/llms.txt">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b1020'/%3E%3Crect x='10' y='18' width='12' height='28' rx='3' fill='%235b6bf0'/%3E%3Crect x='26' y='12' width='12' height='40' rx='3' fill='%23e5007d'/%3E%3Crect x='42' y='22' width='12' height='20' rx='3' fill='%23ff7cc4'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AI Model Explorer">
+<meta property="og:title" content="AI Model Explorer — see inside any AI model, part by part">
+<meta property="og:description" content="Load a .tflite, a Hugging Face repo or a config.json. See any architecture split into parts with real weights, compute, ops and precision. By Sattaya Singkul.">
+<meta property="og:url" content="https://joessattes.github.io/ai-model-explorer/">
+<meta property="og:image" content="https://joessattes.github.io/ai-model-explorer/og.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="AI Model Explorer: Whisper split into audio, spectrogram, encoder, decoder and logits with real numbers">
+<meta property="og:locale" content="th_TH"><meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AI Model Explorer — see inside any AI model, part by part">
+<meta name="twitter:description" content="Any architecture, split into parts with real weights, compute, ops and precision. Thai + English. By Sattaya Singkul.">
+<meta name="twitter:image" content="https://joessattes.github.io/ai-model-explorer/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+ {"@type":"WebApplication","@id":"https://joessattes.github.io/ai-model-explorer/#app","name":"AI Model Explorer","alternateName":["Model Explorer","AI Model Explorer by Sattaya Singkul"],"url":"https://joessattes.github.io/ai-model-explorer/","applicationCategory":"DeveloperApplication","operatingSystem":"Any (web browser)","browserRequirements":"Requires JavaScript","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"inLanguage":["th","en"],
+  "description":"Interactive explorer that splits any AI model architecture (encoder-decoder, decoder-only LLM, encoder-only) into its parts and shows real weights, compute, TFLite ops and precision. Accepts .tflite files, Hugging Face repositories (safetensors header) and config.json. Built for on-device / edge AI optimization and quantization.",
+  "featureList":["Analyze .tflite (LiteRT) graphs in the browser","Read Hugging Face safetensors headers without downloading weights","Build a model from config.json","Big-picture view with play-through of each part's input and output","Layer map drawn to scale","Weights, compute, TFLite op count, precision and fragility lenses","Quantization playground","Thai and English"],
+  "author":{"@id":"https://joessattes.github.io/Sattaya-AI-Website/#person"},"creator":{"@id":"https://joessattes.github.io/Sattaya-AI-Website/#person"},"copyrightHolder":{"@id":"https://joessattes.github.io/Sattaya-AI-Website/#person"},"copyrightYear":2026,"license":"https://opensource.org/licenses/MIT",
+  "keywords":"AI model explorer, model visualization, TFLite, LiteRT, edge AI, quantization, Whisper, Llama, Hugging Face","screenshot":"https://joessattes.github.io/ai-model-explorer/og.png"},
+ {"@type":"Person","@id":"https://joessattes.github.io/Sattaya-AI-Website/#person","name":"Sattaya Singkul","alternateName":"Jo","url":"https://joessattes.github.io/Sattaya-AI-Website/","jobTitle":"AI Solution Engineer","knowsAbout":["Speech AI","Edge AI","On-device inference","Model quantization"],"sameAs":["https://joessattes.github.io/Sattaya-AI-Website/","https://github.com/JoesSattes"]},
+ {"@type":"SoftwareSourceCode","name":"AI Model Explorer source","codeRepository":"https://github.com/JoesSattes/ai-model-explorer","programmingLanguage":"JavaScript","license":"https://opensource.org/licenses/MIT","author":{"@id":"https://joessattes.github.io/Sattaya-AI-Website/#person"}},
+ {"@type":"FAQPage","mainEntity":[
+  {"@type":"Question","name":"What does AI Model Explorer do?","acceptedAnswer":{"@type":"Answer","text":"It splits an AI model into its parts — input, embedding, encoder or decoder layers, attention, feed-forward, output head — and shows the real weights, compute, TFLite op count and precision of each part, with a play-through of what goes in and comes out."}},
+  {"@type":"Question","name":"Which models can it read?","acceptedAnswer":{"@type":"Answer","text":"Any .tflite (LiteRT) file, any Hugging Face repository with safetensors weights (only the header is read), or a pasted config.json for common families such as Llama, Qwen, Gemma, Mistral, GPT-2, BERT, ViT, Whisper, BART and T5."}},
+  {"@type":"Question","name":"Does my model leave my computer?","acceptedAnswer":{"@type":"Answer","text":"No. Files are parsed in the browser. For Hugging Face repositories only the safetensors header (tensor names, shapes and dtypes) is requested."}},
+  {"@type":"Question","name":"Who made it?","acceptedAnswer":{"@type":"Answer","text":"Sattaya Singkul, for the workshop “Squeeze Until It Breaks” at AI Expo Thailand 2026. MIT licensed."}}]}
+]}
+</script>
+<style>
+:root{--bg:#0b1020;--glass:rgba(255,255,255,.045);--glass2:rgba(255,255,255,.075);--line:rgba(255,255,255,.10);--line2:rgba(255,255,255,.18);--ink:#f4f5f8;--soft:#b9c0d4;--dim:#7d86a0;--red:#e60012;--red-l:#ff5a67;--mag:#e5007d;--mag-l:#ff7cc4;--blue:#5b6bf0;--blue-l:#a3abfa;--ok:#4ade80;
+  --sans:"IBM Plex Sans Thai","Noto Sans Thai","Sarabun","Leelawadee UI","Thonburi",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"JetBrains Mono","SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.55;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(900px 600px at 85% -10%,rgba(229,0,125,.18),transparent 60%),radial-gradient(800px 600px at -10% 30%,rgba(91,107,240,.16),transparent 60%),linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px) 0 0/48px 48px,linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px) 0 0/48px 48px}
+main,header,nav,footer{position:relative;z-index:1}
+a{color:inherit}
+.wrap{max-width:1360px;margin:0 auto;padding:0 32px}
+.mono{font-family:var(--mono)}
+.xk{font:500 11.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--mag-l)}
+h2.sec{font-size:clamp(28px,3.3vw,44px);font-weight:700;letter-spacing:-.02em;line-height:1.12;margin:10px 0 12px}
+p.lead{color:var(--soft);font-size:17.5px;max-width:860px}
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.btn{display:inline-flex;align-items:center;gap:8px;font:600 14.5px var(--sans);color:var(--ink);background:var(--glass2);border:1px solid var(--line2);border-radius:999px;padding:10px 18px;cursor:pointer;transition:.2s;text-decoration:none;white-space:nowrap}
+.btn:hover{border-color:var(--mag-l)}
+.btn.primary{background:linear-gradient(90deg,var(--red),var(--mag));border:0;box-shadow:0 8px 30px rgba(229,0,125,.35)}
+.btn.sm{padding:7px 14px;font-size:13.5px}
+.chip{display:inline-flex;align-items:center;gap:6px;font:500 13px var(--mono);padding:5px 12px;border-radius:999px;background:var(--glass2);border:1px solid var(--line);color:var(--soft);cursor:pointer;transition:.2s;white-space:nowrap}
+.chip.on{background:var(--ink);color:#0b1020;border-color:var(--ink)}
+.chip:disabled{opacity:.3;cursor:not-allowed}
+section{padding:96px 0 26px}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .7s ease,transform .7s ease}.reveal.in{opacity:1;transform:none}
+.flowline{stroke-dasharray:6 7;animation:dash 1.1s linear infinite}@keyframes dash{to{stroke-dashoffset:-26}}
+/* nav */
+nav.top{position:fixed;top:0;left:0;right:0;z-index:20;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);background:rgba(11,16,32,.7);border-bottom:1px solid var(--line)}
+nav.top .wrap{display:flex;align-items:center;gap:20px;height:58px}
+.brand{font-weight:700;display:flex;align-items:center;gap:10px;text-decoration:none;white-space:nowrap}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--mag));box-shadow:0 0 14px var(--mag)}
+nav.top a.l{font-size:14px;color:var(--soft);text-decoration:none}nav.top a.l:hover{color:var(--ink)}
+nav.top .sp{flex:1}
+#navModel{font:500 12.5px var(--mono);color:var(--soft);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lang{display:flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden}.lang button{font:600 12.5px var(--mono);background:none;border:0;color:var(--soft);padding:6px 11px;cursor:pointer}.lang button.on{background:var(--ink);color:#0b1020}
+/* hero */
+.hero{min-height:100vh;padding-top:96px;position:relative;display:flex;align-items:center}
+#heroCv{position:absolute;inset:0;width:100%;height:100%;opacity:.8}
+.hero .wrap{position:relative;z-index:2;width:100%}
+.hgrid{display:grid;grid-template-columns:1.25fr 1fr;gap:36px;align-items:start}
+.hero h1{font-size:clamp(40px,5.6vw,78px);line-height:1.02;letter-spacing:-.03em;font-weight:800}
+.hero h1 .g{background:linear-gradient(90deg,var(--red),var(--mag) 55%,var(--blue-l));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .sub{font-size:18.5px;color:var(--soft);margin:18px 0 22px;max-width:680px}
+.pk{margin-top:14px}.mrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}
+.mchip{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;background:var(--glass2);border:1px solid var(--line2);border-radius:14px;padding:9px 14px;color:var(--ink);cursor:pointer;transition:.2s;font-family:var(--sans)}
+.mchip b{font-size:14.5px}.mchip span{font-size:12px;color:var(--dim)}.mchip:hover{border-color:var(--mag-l)}.mchip.on{border-color:var(--mag-l);background:rgba(229,0,125,.16);box-shadow:0 0 0 1px var(--mag-l) inset}
+.own{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.own input{font:500 13px var(--mono);background:var(--glass2);color:var(--ink);border:1px solid var(--line2);border-radius:10px;padding:9px 11px;flex:1;min-width:220px}
+#ownNote{font-size:13.5px;color:var(--soft);margin-top:8px;min-height:18px}
+#cur{padding:22px 24px}#cur h3{font-size:22px;margin:4px 0 10px;word-break:break-word}
+.tags{display:flex;gap:6px;flex-wrap:wrap}.tag{font:600 11.5px var(--mono);padding:4px 10px;border-radius:999px;color:#fff}.tag.ghost{background:transparent;border:1px solid var(--line2);color:var(--soft)}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.kpi{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:12px 14px}.kpi b{display:block;font:700 24px var(--mono)}.kpi span{font-size:12.5px;color:var(--dim)}
+.note{font-size:13px;color:var(--dim);margin-top:12px}
+/* big picture */
+.xbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.xsay{font-size:13.5px;color:var(--soft);margin-left:6px}
+.ov{margin-top:14px;padding:14px 16px 10px}
+.hscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+#xsvg{width:100%;height:auto;display:block;min-width:1080px}
+#xsvg .xh{font:700 15.5px var(--sans);fill:var(--ink)}#xsvg .xt{font:600 14px var(--sans);fill:var(--ink)}#xsvg .xm{font:700 14.5px var(--mono);fill:var(--ink)}#xsvg .xs{font:500 11.5px var(--mono);fill:var(--dim)}
+#xsvg .xr{fill:rgba(255,255,255,.04);stroke:rgba(255,255,255,.2)}
+#xsvg .xbox,#xsvg .xnav{cursor:pointer}#xsvg .xbox:hover>rect{stroke:#fff}
+#xsvg.playing .xbox:not(.sel){opacity:.5;transition:opacity .4s}
+.zs{opacity:0;animation:zin .45s forwards}@keyframes zin{to{opacity:1}}
+.playbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+#bDots{display:flex;gap:5px;flex:1;min-width:160px}#bDots i{flex:1;height:5px;border-radius:3px;background:var(--line);cursor:pointer;max-width:70px}#bDots i.done{background:rgba(229,0,125,.5)}#bDots i.on{background:linear-gradient(90deg,var(--red),var(--mag))}
+#xio{margin-top:12px;padding:18px 20px;min-height:160px}
+.iok{font:500 11.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mag-l);margin-bottom:8px}
+.iogrid{display:grid;grid-template-columns:220px 1fr 220px 260px;gap:18px;align-items:center}
+.ioside{text-align:center}.iov{width:100%;max-width:220px;height:auto;background:rgba(0,0,0,.25);border-radius:12px;margin-top:6px}
+.ioshape{font:600 13px var(--mono);color:var(--blue-l);margin-top:6px}
+.iomid h3{font-size:22px;margin-bottom:6px}.iomid p{color:var(--soft);font-size:15px}.ioarrow{display:none}
+.ionums{font-size:13px}
+.x3row{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:5px 0;border-top:1px solid rgba(255,255,255,.06)}.x3row span{color:var(--dim);flex:none}.x3row b{font:500 12.5px var(--mono);text-align:right;word-break:break-word}
+.x3opt{margin-top:10px;background:rgba(230,0,18,.08);border:1px solid rgba(230,0,18,.4);border-radius:10px;padding:9px 11px;font-size:13.5px}.x3opt b{display:block;font:600 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--red-l);margin-bottom:3px}
+.xstrip{display:flex;gap:3px;align-items:flex-end;padding:10px 2px 2px;border-top:1px solid var(--line);margin-top:6px}.xstrip .xk{margin-right:10px;align-self:center;white-space:nowrap}
+.xsb{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;cursor:pointer;padding:2px 1px;border-radius:6px;min-width:24px}.xsb i{display:block;width:15px;border-radius:3px;opacity:.75}.xsb span{font:500 10px var(--mono);color:var(--dim)}.xsb.on{background:rgba(255,255,255,.08)}.xsb.on i{opacity:1}.xsb.on span{color:var(--ink)}
+.xdet{margin-top:12px;padding:18px 20px}
+.xempty{color:var(--soft);font-size:15px;text-align:center;padding:8px}
+.xdh{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.xdh h3{font-size:23px;margin:3px 0}.xdh p{color:var(--soft);font-size:15px}
+.xdg{display:grid;grid-template-columns:1fr 290px;gap:18px;margin-top:10px}.xdg>div{min-width:0}
+.xsteps svg{width:100%;height:auto;display:block}.xsteps .xt{font:600 14.5px var(--sans);fill:var(--ink)}.xsteps .xm{font:700 14px var(--mono);fill:var(--ink)}.xsteps .xs{font:500 11.5px var(--mono);fill:var(--dim)}
+.xstep{cursor:help}.xstep:hover rect{stroke:#fff}.xhov{font-size:14px;color:var(--soft);min-height:40px;margin-top:8px}
+/* map */
+#mapSvg{width:100%;height:auto;display:block;min-width:960px}#mapSvg .blk{cursor:pointer}#mapSvg .blk:hover rect{stroke:#fff}
+#mapSvg .mt{font:700 18px var(--sans);fill:var(--ink)}#mapSvg .ms{font:500 12px var(--mono);fill:var(--dim)}#mapSvg .mm{font:600 13px var(--mono);fill:var(--soft)}
+#mapNote{color:var(--dim);font-size:13.5px;margin-top:10px}
+.slider{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--soft)}input[type=range]{accent-color:var(--mag)}
+/* concepts */
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:26px}
+.ccard{padding:20px;display:flex;flex-direction:column;gap:10px}
+.ccard canvas,.ccard svg{width:100%;height:150px;border-radius:12px;background:rgba(0,0,0,.25)}
+.ccard h4{font-size:20px}.ccard p{font-size:14.5px;color:var(--soft)}
+.qplay{grid-column:1/-1;display:grid;grid-template-columns:1.6fr 1fr;gap:22px;padding:22px}
+#qCv{width:100%;height:280px;border-radius:12px;background:rgba(0,0,0,.28)}
+.qstat{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.fact{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:10px 12px}.fact b{display:block;font:700 21px var(--mono)}.fact span{font-size:12.5px;color:var(--dim)}
+/* report */
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.rgrid>div{min-width:0}
+.ins{display:flex;gap:12px;align-items:flex-start;padding:11px 13px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid var(--line);margin-bottom:9px;font-size:14.5px}
+.ins i{flex:none;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:13px}
+.opbar{display:flex;align-items:center;gap:10px;margin:5px 0}.opbar .k{width:170px;flex:none;font-size:12.5px}.opbar .v{height:12px;border-radius:3px;max-width:calc(100% - 230px)}
+table.t{width:100%;border-collapse:collapse;font-size:13.5px}table.t th{text-align:left;color:var(--dim);font-weight:500;padding:7px 8px;border-bottom:1px solid var(--line)}table.t td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.05);font-family:var(--mono)}
+/* dialog */
+#cfgDlg{position:fixed;inset:0;z-index:60;display:none;background:rgba(3,6,14,.75);backdrop-filter:blur(6px)}#cfgDlg.open{display:grid;place-items:center}
+#cfgDlg .box{width:min(720px,94vw);padding:22px;background:#121831}#cfgDlg textarea{width:100%;height:280px;margin:12px 0;background:#0a0f20;color:var(--ink);border:1px solid var(--line2);border-radius:10px;padding:12px;font:12.5px var(--mono)}
+#cfgErr{color:var(--red-l);font-size:13px;min-height:18px}
+footer{padding:50px 0 44px;color:var(--dim);font-size:13.5px;border-top:1px solid var(--line);margin-top:60px}
+footer .fl{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}footer a{color:var(--soft)}
+.credit{color:var(--soft)}.credit a{color:var(--mag-l)}
+@media (max-width:1100px){.hgrid{grid-template-columns:1fr}.iogrid{grid-template-columns:1fr 1fr}.iomid{grid-column:1/-1;order:-1}.ionums{grid-column:1/-1}.xdg{grid-template-columns:1fr}.cgrid{grid-template-columns:1fr 1fr}.qplay,.rgrid{grid-template-columns:1fr}}
+@media (max-width:760px){
+  nav.top .wrap{gap:10px;padding:0 14px}nav.top a.l,#navModel{display:none}.wrap{padding:0 18px}section{padding:80px 0 18px}
+  .hero{min-height:auto;padding:84px 0 30px}.hero .sub{font-size:16.5px}.kpi b{font-size:20px}
+  .cgrid{grid-template-columns:1fr}.iogrid{grid-template-columns:1fr 1fr;gap:10px}.iov{max-width:100%}.xdh{flex-direction:column}.opbar .k{width:120px}.opbar .v{max-width:calc(100% - 170px)}
+  #xsvg{min-width:980px}#mapSvg{min-width:900px}
+}
+</style>
+</head>
+<body>
+<nav class="top"><div class="wrap">
+  <a class="brand" href="#top"><span class="dot"></span><span data-i="brand">Model Explorer</span></a>
+  <a class="l" href="#big" data-i="nav_big">Big picture</a><a class="l" href="#map" data-i="nav_map">Layer map</a><a class="l" href="#concepts" data-i="nav_concepts">Concepts</a><a class="l" href="#report" data-i="nav_report">Report</a>
+  <span class="sp"></span><span id="navModel"></span>
+  <div class="lang" role="group" aria-label="Language"><button data-lang="th">TH</button><button data-lang="en">EN</button></div>
+</div></nav>
+
+<header class="hero" id="top">
+  <canvas id="heroCv" aria-hidden="true"></canvas>
+  <div class="wrap"><div class="hgrid">
+    <div>
+      <div class="eyebrow" data-i="hero_eyebrow">Squeeze Until It Breaks · AI Expo Thailand 2026</div>
+      <h1 data-ih="hero_h1">See inside a model, part by part, before you squeeze it.</h1>
+      <p class="sub" data-i="hero_sub">Pick an analyzed template or bring your own model.</p>
+      <div id="picker"></div>
+      <div class="pk"><div class="xk" data-i="pick_own">Or use your own</div>
+        <div class="own">
+          <label class="btn sm" for="file">⬆ <span data-i="upload">Upload .tflite</span></label><input type="file" id="file" accept=".tflite" multiple hidden>
+          <button class="btn sm" id="cfgOpen">{ } <span data-i="paste_cfg">Paste config.json</span></button>
+        </div>
+        <div class="own"><input id="hf" data-iph="hf_ph" placeholder="Hugging Face repo" autocomplete="off"><button class="btn sm" id="hfGo" data-i="load">Load</button></div>
+        <div id="ownNote"></div>
+      </div>
+    </div>
+    <div class="glass" id="cur"></div>
+  </div></div>
+</header>
+
+<main>
+<section id="big"><div class="wrap">
+  <div class="reveal"><div class="eyebrow" data-i="big_eyebrow">01 · The big picture</div>
+  <h2 class="sec" id="bigH2"></h2>
+  <p class="lead" data-i="big_lead"></p></div>
+  <div class="xbar"><span class="xk" data-i="lens">lens</span>
+    <button class="chip" data-xl="weights" data-i="lens_weights">Weights</button><button class="chip" data-xl="compute" data-i="lens_compute">Compute</button><button class="chip" data-xl="ops" data-i="lens_ops">TFLite ops</button><button class="chip" data-xl="precision" data-i="lens_precision">Precision</button><button class="chip" data-xl="fragility" data-i="lens_fragility">Fragility</button>
+    <span class="xsay" id="lensSay"></span></div>
+  <div class="glass ov"><div class="hscroll"><svg id="xsvg" viewBox="0 0 1600 520" role="img" aria-label="Model parts overview"></svg></div><div class="xstrip hscroll" id="xstrip"></div></div>
+  <div class="playbar"><button class="btn primary" id="bPlay" data-i="play">▶ Play</button><button class="btn sm" id="bPrev" data-i="prev">‹ Prev</button><button class="btn sm" id="bNext" data-i="next">Next ›</button><div id="bDots"></div>
+    <label class="slider"><span data-i="tokens_per">tokens per sentence</span> <input type="range" id="tok" min="5" max="150" value="40"> <b class="mono" id="tokV">40</b></label></div>
+  <div class="glass" id="xio"></div>
+  <div class="glass xdet" id="xdetail"></div>
+</div></section>
+
+<section id="map"><div class="wrap">
+  <div class="reveal"><div class="eyebrow" data-i="map_eyebrow">02 · The layer map</div><h2 class="sec" data-i="map_h2"></h2><p class="lead" data-i="map_lead"></p></div>
+  <div class="xbar"><button class="chip" data-ml="size" data-i="map_size">Size</button><button class="chip" data-ml="read" data-i="map_read">Bytes read</button><button class="chip" data-ml="prec" data-i="map_prec">Precision</button><button class="chip" data-ml="frag" data-i="map_frag">Fragility</button>
+    <span style="flex:1"></span><label class="slider"><span data-i="tokens_per">tokens per sentence</span> <input type="range" id="tok2" min="5" max="150" value="40"> <b class="mono" id="tokV2">40</b></label></div>
+  <div class="glass" style="margin-top:12px;padding:18px 20px 14px"><div class="hscroll"><svg id="mapSvg" viewBox="0 0 1280 300"></svg></div></div>
+  <p id="mapNote"></p>
+</div></section>
+
+<section id="concepts"><div class="wrap">
+  <div class="reveal"><div class="eyebrow" data-i="c_eyebrow"></div><h2 class="sec" data-i="c_h2"></h2><p class="lead" data-i="c_lead"></p></div>
+  <span id="cFfnD" hidden>1024</span><span id="cFfnF" hidden>4096</span>
+  <div class="cgrid">
+    <div class="glass ccard"><canvas id="cSpec" width="600" height="300"></canvas><h4 id="c1t"></h4><p id="c1p"></p></div>
+    <div class="glass ccard"><svg id="cAttn" viewBox="0 0 600 300"></svg><h4 data-i="c_attn_t"></h4><p id="c2p"></p></div>
+    <div class="glass ccard"><svg id="cFfn" viewBox="0 0 600 300"></svg><h4 data-i="c_ffn_t"></h4><p id="c3p"></p></div>
+    <div class="glass ccard"><svg id="cKv" viewBox="0 0 600 300"></svg><h4 data-i="c_kv_t"></h4><p id="c4p"></p></div>
+    <div class="glass ccard"><svg id="cTie" viewBox="0 0 600 300"></svg><h4 data-i="c_tie_t"></h4><p id="c5p"></p></div>
+    <div class="glass ccard"><svg id="cSeam" viewBox="0 0 600 300"></svg><h4 data-i="c_seam_t"></h4><p id="c6p"></p></div>
+    <div class="glass qplay">
+      <div><canvas id="qCv" width="1200" height="560"></canvas></div>
+      <div><div class="eyebrow" data-i="q_eyebrow"></div><h4 style="font-size:24px;margin:8px 0 10px" data-i="q_h"></h4>
+        <label class="slider" style="margin:10px 0"><span data-i="q_bits">bits</span> <input type="range" id="qBits" min="2" max="8" value="4"> <b id="qBitsV" class="mono">4</b></label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><button class="chip" id="qOut"></button><button class="chip" id="qBlock"></button><button class="chip" id="qNew" data-i="q_new"></button></div>
+        <div class="qstat"><div class="fact"><b id="qLev">15</b><span data-i="q_levels"></span></div><div class="fact"><b id="qErr">–</b><span data-i="q_err"></span></div><div class="fact"><b id="qZero">–</b><span data-i="q_zero"></span></div><div class="fact"><b id="qSize">–</b><span data-i="q_bytes"></span></div></div>
+        <p style="color:var(--soft);font-size:14px;margin-top:12px" data-i="q_help"></p></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="report"><div class="wrap">
+  <div class="reveal"><div class="eyebrow" data-i="r_eyebrow"></div><h2 class="sec" data-i="r_h2"></h2><p class="lead" data-i="r_lead"></p></div>
+  <div class="rgrid"><div><div class="xk" style="margin-bottom:10px" data-i="r_insights"></div><div id="rIns"></div></div><div><div class="xk" style="margin-bottom:10px" data-i="r_ops"></div><div id="rOps"></div></div></div>
+  <div class="xbar" style="margin-top:20px"><span style="flex:1"></span><button class="btn sm" id="copyMd" data-i="copy_md"></button></div>
+  <div class="glass" style="padding:14px 16px;margin-top:10px" id="rTable"></div>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <div class="credit">© 2026 <a href="https://joessattes.github.io/Sattaya-AI-Website/" rel="author">Sattaya Singkul</a> · <a href="https://github.com/JoesSattes/ai-model-explorer/blob/main/LICENSE" rel="license">MIT License</a></div>
+  <p style="margin-top:8px" data-i="footer"></p>
+  <div class="fl"><a href="https://joessattes.github.io/Sattaya-AI-Website/">Portfolio — Sattaya Singkul</a><a href="https://github.com/JoesSattes/ai-model-explorer">GitHub</a><a href="llms.txt">llms.txt</a></div>
+</div></footer>
+
+<div id="cfgDlg"><div class="box glass"><div style="display:flex;justify-content:space-between;align-items:center"><h3 data-i="cfg_title">Paste config.json</h3><button class="btn sm" id="cfgClose">✕</button></div>
+  <p style="color:var(--soft);font-size:14px;margin-top:6px" data-i="cfg_help"></p><textarea id="cfgTxt" spellcheck="false" placeholder='{"model_type": "qwen2", "hidden_size": 896, ...}'></textarea><div id="cfgErr"></div><button class="btn primary" id="cfgGo" data-i="cfg_go">Build</button></div></div>
+
+<noscript><div class="wrap" style="padding:40px 0"><h2>AI Model Explorer</h2><p>An interactive tool by Sattaya Singkul that splits any AI model — Whisper, Llama, GPT-2, BERT, ViT and more — into its parts and shows real weights, compute, TFLite ops and precision. JavaScript is required.</p></div></noscript>
+
+<script>/*I18N*/</script>
+<script>/*ENUMS*/</script>
+<script>/*ANALYZER*/</script>
+<script>/*GRAPH*/</script>
+<script>/*MODEL*/</script>
+<script>/*DATA*/</script>
+<script>/*PREGRAPHS*/</script>
+<script>/*TEMPLATES*/</script>
+<script>/*APP*/</script>
+</body>
+</html>
