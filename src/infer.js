@@ -200,7 +200,9 @@ function infer(manifest, opts = {}) {
   const sub = new Set();
   for (const O of blockLists) { if (inner.includes(O)) continue; const its = [...O.kids.values()];
     const ins = its.map(it => inner.filter(L => L.path.startsWith(it.path + ".") && L.parent === it));
-    if (ins.every(a => a.length === 1) && ins.every(a => a[0].kids.size <= 4 && new Set([...a[0].kids.values()].map(sigOf)).size === a[0].kids.size)) { ins.forEach(a => sub.add(a[0])); inner.push(O); } }
+    const short = ins.every(a => a.length >= 1 && a.every(L => L.kids.size <= 4)) && new Set(ins.flatMap(a => a.map(L => L.kids.size))).size === 1;
+    const hetero = ins.every(a => a.length === 1 && new Set([...a[0].kids.values()].map(sigOf)).size === a[0].kids.size), multi = ins.every(a => a.length >= 2);
+    if (short && (hetero || multi)) { ins.forEach(a => a.forEach(L => sub.add(L))); inner.push(O); } }
   inner = inner.filter(L => !sub.has(L));
   // homes: the module that owns a stack; stage lists (lists of items that themselves hold stacks) fold into their parent
   const homeOf = L => { let h = L.parent; while (h && h.parent && (isInt(h.tok) || lists.includes(h))) h = h.parent; return h; };
@@ -324,7 +326,7 @@ function infer(manifest, opts = {}) {
   for (const [n, t] of Object.entries(out.tensors)) if (t.block == null && T[n].shape.length === 1 && vocabs.has(T[n].shape[0]) && t.kind === "norm") Object.assign(t, {kind: "head", role: "bias"});
   // non-block modules can still be recognised by shape: recurrent cells, attention pools, adaLN heads
   for (const [m, ns] of byMod) { if (ns.some(n => out.tensors[n].block != null)) continue; const C = comps.find(c => c.id === out.tensors[ns[0]].comp);
-    const c = classify(ns, T, C ? C.d : widthOf(ns, T), {lex}); if (c.kind === "rnn" || c.kind === "mod" || c.kind === "ssm") ns.forEach(n => out.tensors[n].kind = c.kind); }
+    const c = classify(ns, T, C ? C.d : -1, {lex}); if (c.kind === "rnn" || c.kind === "mod" || c.kind === "ssm") ns.forEach(n => out.tensors[n].kind = c.kind); }
   // adapters between components: a chain of matrices whose free input width matches one component (or k² × it, after
   // pixel-shuffle merging) and whose free output width matches another
   const adGroups = new Map();
