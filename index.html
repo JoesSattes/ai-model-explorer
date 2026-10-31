@@ -801,7 +801,13 @@ const LEX = { // optional name priors; used only to break ties the shapes cannot
 const AUX = /(^|[._])(weight_scale_2|weight_scale_inv|weight_scale|input_scale|output_scale|k_scale|v_scale|scales|qzeros|g_idx|absmax|quant_map|nested_absmax|nested_quant_map|quant_state(\.\w+)?|weight_zero_point|weight_global_scale|input_global_scale|weight_shape|_amax|biases|SCB|weight_format|zeros)$/;
 function normalize(manifest) {
   const T = {}, groups = {};
-  for (const [n, v] of Object.entries(manifest)) { if (n === "__metadata__" || !v || !v.shape) continue; const i = n.lastIndexOf("."); const mod = i < 0 ? "" : n.slice(0, i), leaf = n.slice(i + 1); (groups[mod] || (groups[mod] = {}))[leaf] = v; }
+  for (const [n, v] of Object.entries(manifest)) { if (n === "__metadata__" || !v || !v.shape) continue;
+    const bq = n.match(/^(.*)\.weight\.(absmax|quant_map|nested_absmax|nested_quant_map|quant_state(?:\..+)?)$/); // bitsandbytes keeps its state under <module>.weight.*
+    if (bq) { (groups[bq[1]] || (groups[bq[1]] = {}))[bq[2].replace(/^quant_state\..*/, "quant_state")] = v; continue; }
+    const i = n.lastIndexOf("."); const mod = i < 0 ? "" : n.slice(0, i), leaf = n.slice(i + 1); (groups[mod] || (groups[mod] = {}))[leaf] = v; }
+  // residual width guess for un-shaping bitsandbytes weights: the commonest length of 1-D float tensors
+  const vl = {}; for (const [n, v] of Object.entries(manifest)) if (v && v.shape && v.shape.length === 1 && /F/.test(v.dtype) && v.shape[0] >= 64 && !/\.weight\./.test(n) && !AUX.test(n)) vl[v.shape[0]] = (vl[v.shape[0]] || 0) + 1;
+  const dGuess = +(Object.entries(vl).sort((a, b) => b[1] - a[1])[0] || [0])[0];
   const out = {}, quant = {};
   for (const [mod, g] of Object.entries(groups)) {
     const P = m => mod ? mod + "." + m : m;
@@ -828,7 +834,8 @@ function normalize(manifest) {
       if (w.dtype === "U8" && sc && /F8/.test(sc.dtype) && sc.shape.length === w.shape.length) { shape = [...w.shape.slice(0, -1), w.shape[w.shape.length - 1] * 2]; qq = q("nvfp4", 4, {group: Math.round(shape[shape.length - 1] / sc.shape[sc.shape.length - 1])}); }
       else if (/F8/.test(w.dtype)) { const n = sc ? prod(sc.shape) : 0; qq = q("fp8", 8, {scale: !sc ? "none" : n === 1 ? "per-tensor" : sc.shape.length === 2 && sc.shape[1] > 1 ? "block" : "per-channel"}); }
       else if (w.dtype === "U32" && g.scales && g.biases) { const per = 32 * w.shape[w.shape.length - 1] / (g.scales.shape[g.scales.shape.length - 1] * 64); const bits = [2, 3, 4, 6, 8].includes(per) ? per : 4; shape = [...w.shape.slice(0, -1), w.shape[w.shape.length - 1] * 32 / bits]; qq = q("mlx", bits, {group: 64}); }
-      else if ((w.dtype === "U8" || w.dtype === "I8") && g.absmax) { shape = [prod(w.shape) * 2]; qq = q("bnb4", 4, {}); }
+      else if ((w.dtype === "U8" || w.dtype === "I8") && g.absmax) { const L = prod(w.shape) * 2; // nf4/fp4: two values per byte; the shape lives in quant_state, outside the header
+        shape = dGuess && L % dGuess === 0 ? (/(down_proj|down|o_proj|out_proj|fc2|wo|w2|c_proj|dense_4h_to_h|dense)$/.test(mod) ? [dGuess, L / dGuess] : [L / dGuess, dGuess]) : [L]; qq = q("bnb4", 4, {}); }
       else if (w.dtype === "I8" && g.SCB) qq = q("int8", 8, {});
       else if (w.dtype === "I8" || w.dtype === "U8") { if (sc || g.scales) qq = q("int8", 8, {}); }
       out[P("weight")] = {shape, dtype: w.dtype, bytes: bytesOf(["weight", ...aux]), q: qq, src: aux.map(P)}; used.add("weight"); aux.forEach(k => used.add(k));
@@ -870,7 +877,7 @@ function classify(names, T, d, ctx) {
   let r = classify0(names, T, d, ctx);
   const weak = /^(other|half_up|half_down)$/.test(r.kind) || r.kind === "ffn" && mats(names, T).length === 2 && mats(names, T).some(n => T[n].shape[0] === d && T[n].shape[1] >= 2.5 * d && T[n].shape[1] % d === 0 && T[n].shape[1] / d === 3);
   if (weak && mats(names, T).length) {
-    const Tt = Object.assign({}, T); names.forEach(n => { const v = T[n]; if (v.shape.length === 2) Tt[n] = Object.assign({}, v, {shape: [v.shape[1], v.shape[0]]}); });
+    const Tt = Object.create(T); names.forEach(n => { const v = T[n]; if (v.shape.length === 2) Tt[n] = Object.assign({}, v, {shape: [v.shape[1], v.shape[0]]}); });
     const r2 = classify0(names, Tt, d, Object.assign({}, ctx));
     if (!/^(other|half_up|half_down)$/.test(r2.kind) && (r2.kind !== "ffn" || r.kind !== "ffn")) { r = r2; r.ev.push("weights stored transposed [in, out]"); r.transposed = true; }
   }
@@ -930,7 +937,8 @@ function classify0(names, T, d, ctx) {
   }
   // attention: several projections leave d and one projection returns to d
   if (outs.length >= 1 && M.length >= 2) {
-    const o = outs.find(n => M.some(m => m !== n && T[m].shape[0] === T[n].shape[1])) || outs[0], x = T[o].shape[1];
+    const fed = n => M.some(m => m !== n && T[m].shape[0] === T[n].shape[1]); // prefer the output fed by a non-square input: k/v can be [d, d] when kv width equals d (Qwen3-0.6B)
+    const o = outs.find(n => T[n].shape[1] !== d && fed(n)) || outs.find(fed) || outs[0], x = T[o].shape[1];
     const inp = M.filter(n => n !== o);
     // per-head norms (q_norm / k_norm) live in modules that hold no matrix; biases share a module with their weight and are skipped
     const matMods = new Set(names.filter(n => T[n].shape.length >= 2).map(modOf0));
@@ -1090,7 +1098,7 @@ function infer(manifest, opts = {}) {
     const s = T[n].shape, twins = Object.entries(T).filter(([m, v]) => m !== n && v.shape[0] === s[0] && v.shape[1] === s[1] && !out.tensors[m].block);
     let isHead;
     if (lex && /lm_head|output|head|proj_out|classifier|logits/i.test(n)) isHead = true;
-    else if (lex && /embed|wte|tok|word/i.test(n)) isHead = false;
+    else if (lex && /embed|wte|tok|word|shared/i.test(n)) isHead = false;
     else if (twins.length) isHead = n.split(".").length < twins[0][0].split(".").length || n > twins[0][0];
     else isHead = false;
     Object.assign(t, isHead ? {kind: "head", role: "logits"} : {kind: "embed", role: "tokens"});
@@ -1190,14 +1198,23 @@ function infer(manifest, opts = {}) {
     const names = Object.entries(out.tensors).filter(([, t]) => t.comp === C.id).map(([n]) => n);
     names.forEach(n => { C.params += prod(T[n].shape); C.bytes += T[n].bytes; });
     const stemConv = names.filter(n => out.tensors[n].kind === "conv" && out.tensors[n].block == null).map(n => T[n].shape);
-    C.hasEmbed = names.some(n => out.tensors[n].kind === "embed" && T[n].shape.length === 2 && T[n].shape[0] >= 1000);
+    // a component fed by a conv stem (audio frames, image patches) has no token table: its [n, d] tables are positions
+    C.hasEmbed = !names.some(n => out.tensors[n].kind === "conv" && out.tensors[n].role === "stem" && T[n].shape.length >= 3) && names.some(n => out.tensors[n].kind === "embed" && T[n].shape.length === 2 && T[n].shape[0] >= 1000);
     C.hasHead = names.some(n => out.tensors[n].kind === "head" && out.tensors[n].role === "logits");
     C.inProj = names.filter(n => out.tensors[n].block == null && T[n].shape.length === 2 && T[n].shape[0] === C.d && T[n].shape[1] !== C.d).map(n => T[n].shape[1]);
     C.modality = C.adapter || C.graph ? "features" : C.joint || C.pred ? "labels" : modalityOf(stemConv, names.map(n => T[n].shape), C);
     if (out.timestep && C.stacks.some(st => st.types.some(t => t.regions.some(r => r.kind === "mod")))) C.modality = "latent";
     const kinds = {}; names.forEach(n => { const k = out.tensors[n].kind; kinds[k] = (kinds[k] || 0) + prod(T[n].shape); }); C.kinds = kinds;
     // parallel sibling lists of equal length (XLM: attentions.#, ffns.#) describe the same layers
-    const seenL = new Set(); C.layers = 0; for (const st of C.stacks) { const key = st.path.slice(0, st.path.lastIndexOf(".")) + "#" + st.n; if (seenL.has(key)) continue; seenL.add(key); C.layers += st.n; }
+    // a multi-token-prediction layer stored as the last item of the stack (DeepSeek-V3, GLM-4.5): one extra block of its own type
+    // that also holds a [d, 2d] projection joining the hidden state with the next token's embedding
+    for (const st of C.stacks) { if (st.n < 4) continue; const num = p => +p.slice(p.lastIndexOf(".") + 1) || 0;
+      const ord = st.items.map((p, i) => i).sort((a, b) => num(st.items[a]) - num(st.items[b])), k = ord[ord.length - 1], t = st.typeOf[k];
+      const it = findNode(R, st.items[k]), prev = findNode(R, st.items[ord[ord.length - 2]]); const d0 = st.types[t].d || C.d;
+      const join = nd => nd && nd.all.some(n => T[n].shape.length === 2 && T[n].shape[0] === d0 && T[n].shape[1] === 2 * d0);
+      const nv = nd => nd ? nd.all.filter(n => T[n].shape.length === 1 && T[n].shape[0] === d0).length : 0;
+      if (join(it) && !join(prev) && nv(it) >= nv(prev) + 2) { st.mtp = 1; st.mtpItem = st.items[k]; ev.push(`${st.items[k]}: extra layer with a [${d0}×${2 * d0}] projection, read as a multi-token-prediction head`); } }
+    const seenL = new Set(); C.layers = 0; for (const st of C.stacks) { const key = st.path.slice(0, st.path.lastIndexOf(".")) + "#" + st.n; if (seenL.has(key)) continue; seenL.add(key); C.layers += st.n - (st.mtp || 0); }
     const dv = {}; C.stacks.forEach(st => st.types.forEach(t => { if (t.d) dv[t.d] = (dv[t.d] || 0) + t.count; })); const dm = Object.entries(dv).sort((a, b) => b[1] - a[1])[0]; if (dm) C.d = +dm[0];
     C.pattern = C.stacks.map(s => s.typeOf.map(i => (s.types[i].label || "?")[0]).join("")).join(" | ");
   }
@@ -1393,7 +1410,7 @@ function fuseConfig(I, cfg) {
     if (!best) continue;
     const o = best.o, H = num(o, ["num_attention_heads", "n_head", "num_heads", "encoder_attention_heads", "attention_heads", "decoder_attention_heads"]);
     const KV = num(o, ["num_key_value_heads", "num_kv_heads", "n_kv_heads", "multi_query_group_num"]), hd = num(o, ["head_dim", "attention_head_dim", "kv_channels", "qk_head_dim"]);
-    const rec = {path: best.path || "(root)", heads: H, kv_heads: KV || H, head_dim: hd || (H && at ? at.x / H : null), topk: num(o, ["num_experts_per_tok", "moe_topk", "top_k", "num_selected_experts"]) || (C.role === "backbone" ? topAll : null)};
+    const rec = {path: best.path || "(root)", heads: H, kv_heads: KV || (o.multi_query === true ? 1 : H), head_dim: hd || (H && at ? at.x / H : null), topk: num(o, ["num_experts_per_tok", "moe_topk", "top_k", "num_selected_experts"]) || (C.role === "backbone" ? topAll : null)};
     if (at && H && rec.head_dim) { const h = rec.head_dim; rec.checked = true; rec.consistent = H * h === at.x && (!at.kv || at.kv === at.x || rec.kv_heads * h === at.kv); }
     out[C.id] = rec;
   }
@@ -1408,7 +1425,7 @@ if (typeof module !== "undefined") module.exports = api; else root.ArchInfer = a
 // Weights are never downloaded. (c) 2026 Sattaya Singkul · MIT
 "use strict";
 (function (root) {
-const rangeGet = async (url, a, b) => { const r = await fetch(url, {headers: {Range: `bytes=${a}-${b}`}}); if (!r.ok && r.status !== 206) throw new Error(`HTTP ${r.status}`); return new Uint8Array(await r.arrayBuffer()); };
+const rangeGet = async (url, a, b) => { const r = await fetch(url, {headers: {Range: `bytes=${a}-${b}`}}); if (r.status === 401 || r.status === 403) throw new Error("gated repository: accept its license on Hugging Face first"); if (!r.ok && r.status !== 206) throw new Error(`HTTP ${r.status}`); return new Uint8Array(await r.arrayBuffer()); };
 const utf8 = new TextDecoder();
 
 // ---------------- safetensors: 8-byte little-endian length, then the JSON header
@@ -1527,12 +1544,23 @@ async function hfManifest(repo, files, prog = () => {}, opt = {}) {
   const conc = opt.conc || 6;
   const base = `https://huggingface.co/${repo}/resolve/main/`;
   const folder = n => n.includes("/") ? n.slice(0, n.lastIndexOf("/")) : "";
-  const skip = n => /(^|\/)(consolidated|optimizer|training_args|scheduler|rng_state)/i.test(n) || /^(\.|original\/)/.test(n);
+  // skip optimizer/training files, per-language adapters (MMS ships 1,000+ of them) and alternate-precision duplicates
+  const skip = n => /(^|\/)(consolidated|optimizer|training_args|scheduler|rng_state|adapter[._])/i.test(n) || /^(\.|original\/)/.test(n);
+  const getJSON = async u => { const r = await fetch(u); const t = await r.text();
+    if (!r.ok) throw new Error(r.status === 401 || r.status === 403 || /^Access to/.test(t) ? "gated repository: accept its license on Hugging Face first" : `HTTP ${r.status}`);
+    try { return JSON.parse(t); } catch (e) { throw new Error(/^Access to/.test(t) ? "gated repository: accept its license on Hugging Face first" : "unreadable index file"); } };
+  // a diffusers repo (model_index.json) is described by its component folders; single-file copies and LoRAs at the root are skipped
+  if (opt.only && opt.only.length) files = files.filter(f => opt.only.includes(folder(f.n)));
+  else files = files.filter(f => !/(^|\/)[^/]*lora[^/]*\.safetensors$/i.test(f.n) || files.every(g => /lora/i.test(g.n) || !/\.safetensors$/.test(g.n)));
   const jobs = [], seen = new Set();
-  for (const ix of files.filter(f => /\.safetensors\.index\.json$/.test(f.n) && !skip(f.n))) {
-    prog("index", ix.n); const j = await (await fetch(base + ix.n)).json(), dir = folder(ix.n);
+  for (const ix of files.filter(f => /\.safetensors\.index\.json$/.test(f.n) && !skip(f.n) && !/\.(fp16|bf16|fp32)\.safetensors\.index\.json$/.test(f.n) || /\.(fp16|bf16)\.safetensors\.index\.json$/.test(f.n) && !files.some(g => g.n === f.n.replace(/\.(fp16|bf16)\.safetensors/, ".safetensors")))) {
+    prog("index", ix.n); const j = await getJSON(base + ix.n), dir = folder(ix.n);
     for (const sh of [...new Set(Object.values(j.weight_map || {}))]) { const n = dir ? dir + "/" + sh : sh; seen.add(n); jobs.push({n, prefix: dir, kind: "st"}); } }
-  const loose = files.filter(f => /\.safetensors$/.test(f.n) && !seen.has(f.n) && !skip(f.n));
+  let loose = files.filter(f => /\.safetensors$/.test(f.n) && !seen.has(f.n) && !skip(f.n));
+  // a folder with both x.safetensors and x.fp16.safetensors describes the same weights twice: keep one
+  loose = loose.filter(f => !(/\.(fp16|bf16|fp32)\.safetensors$/.test(f.n) && loose.some(g => g !== f && g.n === f.n.replace(/\.(fp16|bf16|fp32)\.safetensors$/, ".safetensors"))));
+  { const byDir = {}; loose.forEach(f => (byDir[folder(f.n)] = byDir[folder(f.n)] || []).push(f)); // never read more than 32 loose files per folder
+    loose = Object.values(byDir).flatMap(g => g.length > 32 ? g.sort((a, b) => b.size - a.size).slice(0, 4) : g); }
   const rootLoose = loose.filter(f => !folder(f.n));
   loose.forEach(f => jobs.push({n: f.n, prefix: folder(f.n) || (rootLoose.length > 1 ? f.n.replace(/\.safetensors$/, "").replace(/[^\w]+/g, "_") : ""), kind: "st"}));
   if (!jobs.length) {
@@ -2584,11 +2612,12 @@ async function hfLoad(input) {
   if (info.error) throw new Error(info.error);
   const files = (info.siblings || []).map(s => ({n: s.rfilename, size: s.size || 0})), tfl = files.filter(f => /\.tflite$/i.test(f.n));
   const total = files.reduce((a, f) => a + f.size, 0);
+  let mi = null; if (files.some(f => f.n === "model_index.json")) try { mi = await (await fetch(base + "model_index.json")).json(); } catch (e) {}
   let cfg = null; const cfgF = files.find(f => f.n === "config.json"); if (cfgF) try { busy(t("st_cfg"), "config.json"); cfg = await (await fetch(base + "config.json")).json(); } catch (e) {}
   if (tfl.length) { const pick = tfl.filter(f => /enc|dec/i.test(f.n)).slice(0, 2), chosen = pick.length ? pick : tfl.slice(0, 1), gs = [];
     for (const f of chosen) { busy(t("st_tflite"), `${f.n} (${fB(f.size)})`); gs.push(graphFromTflite(parseTflite(await (await fetch(base + f.n)).arrayBuffer()), /enc/i.test(f.n) ? "encoder" : /dec/i.test(f.n) ? "decoder" : "model", f.n)); }
     return {graphs: gs, kind: "ops", meta: {name: repo, family: chosen.length > 1 ? "encdec" : "decoder", modality: "text", tie: true}, label: repo, noteKey: "n_upload"}; }
-  const mf = await Loaders.hfManifest(repo, files, (st, n, i, k, rd) => busy(st === "index" ? t("st_index") : t(st === "pt" ? "st_pt" : "st_header", {i, n: k}), st === "index" ? n : `${n} · ${fB(rd)} ${t("st_sofar")}`), {prefer: cfg && cfg.default_size});
+  const mf = await Loaders.hfManifest(repo, files, (st, n, i, k, rd) => busy(st === "index" ? t("st_index") : t(st === "pt" ? "st_pt" : "st_header", {i, n: k}), st === "index" ? n : `${n} · ${fB(rd)} ${t("st_sofar")}`), {prefer: cfg && cfg.default_size, only: mi ? Object.entries(mi).filter(([k, v]) => !k.startsWith("_") && Array.isArray(v) && v[0]).map(([k]) => k) : null});
   if (!mf) { if (cfg) { const r = tensorsFromConfig(cfg); return {tensors: r.tensors, meta: {...r.meta, name: repo}, cfg, kind: "config", label: repo, noteKey: "n_cfg", noteVars: {mt: r.meta.model_type}}; } throw new Error("no .tflite / .safetensors / .pt / config.json"); }
   const {tensors, read} = mf, jobs = {length: mf.nfiles};
   busy(t("st_infer"), `${Object.keys(tensors).length} tensors`);

@@ -37,7 +37,7 @@ async function one(cat, repo) {
   for (const n of ["config.json", "model_index.json", "params.json"]) if (has(n)) try { cfgs[n] = await getJSON(base + n); } catch (e) {}
   for (const f of files) if (/^[\w.-]+\/config\.json$/.test(f.n) && Object.keys(cfgs).length < 10) try { cfgs[f.n] = await getJSON(base + f.n); } catch (e) {}
   setRow(repo, "headers", "run");
-  const mf = await Loaders.hfManifest(repo, files, (st, n, i, k) => setRow(repo, st === "index" ? "index" : `header ${i}/${k}`, "run"), {prefer: cfgs["config.json"] && cfgs["config.json"].default_size, conc: 8});
+  const mf = await Loaders.hfManifest(repo, files, (st, n, i, k) => setRow(repo, st === "index" ? "index" : `header ${i}/${k}`, "run"), {prefer: cfgs["config.json"] && cfgs["config.json"].default_size, conc: 8, only: cfgs["model_index.json"] ? Object.entries(cfgs["model_index.json"]).filter(([k, v]) => !k.startsWith("_") && Array.isArray(v) && v[0]).map(([k]) => k) : null});
   const t1 = performance.now();
   if (!mf) throw new Error("no safetensors / pt weights");
   const man = {}; for (const [n, v] of Object.entries(mf.tensors)) man[n] = [v.dtype, v.shape];

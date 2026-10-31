@@ -1,0 +1,808 @@
+{
+ "exported": 201,
+ "read": 191,
+ "failedFetch": 10,
+ "inferErrors": [],
+ "storedVsHub": {
+  "n": 158,
+  "exact": 140,
+  "miss": [
+   [
+    "MiniMaxAI/MiniMax-M2",
+    228703644928,
+    228689764864
+   ],
+   [
+    "Qwen/Qwen2.5-7B-Instruct-AWQ",
+    1963340288,
+    7615616512
+   ],
+   [
+    "Qwen/Qwen3-30B-A3B-GPTQ-Int4",
+    4665391104,
+    30532122624
+   ],
+   [
+    "Qwen/Qwen3-8B-FP8",
+    8191159296,
+    8190735360
+   ],
+   [
+    "RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8",
+    8030261696,
+    8030261248
+   ],
+   [
+    "deepseek-ai/DeepSeek-R1",
+    684531386000,
+    684489845504
+   ],
+   [
+    "deepseek-ai/DeepSeek-V3",
+    684531386000,
+    684489845504
+   ],
+   [
+    "kyutai/stt-2.6b-en",
+    2713270113,
+    2617118720
+   ],
+   [
+    "lerobot/smolvla_base",
+    450046248,
+    450046176
+   ],
+   [
+    "microsoft/Phi-4-multimodal-instruct",
+    6404932576,
+    5574460384
+   ],
+   [
+    "mlx-community/Qwen3-8B-4bit",
+    1280062464,
+    8190735360
+   ],
+   [
+    "moonshotai/Kimi-K2-Instruct",
+    1026470731056,
+    1026408235864
+   ],
+   [
+    "nvidia/Llama-3.1-8B-Instruct-FP4",
+    4976807936,
+    4540600320
+   ],
+   [
+    "nvidia/Qwen3-8B-FP4",
+    5151962112,
+    4717851648
+   ],
+   [
+    "openai/gpt-oss-120b",
+    63081444672,
+    116829156672
+   ],
+   [
+    "openai/gpt-oss-20b",
+    11956805184,
+    20914757184
+   ],
+   [
+    "unsloth/Llama-3.2-1B-Instruct-bnb-4bit",
+    764588593,
+    1266351458
+   ],
+   [
+    "unsloth/Qwen3-8B-bnb-4bit",
+    4826915169,
+    8408369922
+   ]
+  ]
+ },
+ "diffusersVsHub": [
+  [
+   "Efficient-Large-Model/Sana_1600M_1024px_diffusers",
+   5321947395,
+   null
+  ],
+  [
+   "HiDream-ai/HiDream-I1-Full",
+   22770485475,
+   17105733184
+  ],
+  [
+   "Lightricks/LTX-Video",
+   7104890033,
+   1923385472
+  ],
+  [
+   "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+   5456820615,
+   610856096
+  ],
+  [
+   "Qwen/Qwen-Image",
+   28849460275,
+   20430401088
+  ],
+  [
+   "THUDM/CogVideoX-2b",
+   6671678435,
+   1693783872
+  ],
+  [
+   "Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
+   7226799667,
+   1418996800
+  ],
+  [
+   "Wan-AI/Wan2.2-TI2V-5B-Diffusers",
+   11385386716,
+   4999787712
+  ],
+  [
+   "facebook/DiT-XL-2-256",
+   833480327,
+   null
+  ],
+  [
+   "hunyuanvideo-community/HunyuanVideo",
+   20695738643,
+   12821012544
+  ],
+  [
+   "playgroundai/playground-v2.5-1024px-aesthetic",
+   3468837867,
+   2567463684
+  ],
+  [
+   "stabilityai/sdxl-turbo",
+   3468837867,
+   2567463684
+  ],
+  [
+   "stabilityai/stable-diffusion-xl-base-1.0",
+   3468837867,
+   2567463684
+  ],
+  [
+   "stable-diffusion-v1-5/stable-diffusion-v1-5",
+   1372318477,
+   859520964
+  ]
+ ],
+ "quantized": [
+  {
+   "repo": "MiniMaxAI/MiniMax-M2",
+   "fmt": "fp8",
+   "logical": 228689764864,
+   "hub": 228689764864,
+   "ratio": 1
+  },
+  {
+   "repo": "Qwen/Qwen2.5-7B-Instruct-AWQ",
+   "fmt": "awq",
+   "logical": 7615616512,
+   "hub": 7615616512,
+   "ratio": 1
+  },
+  {
+   "repo": "Qwen/Qwen3-30B-A3B-GPTQ-Int4",
+   "fmt": "gptq",
+   "logical": 30532122624,
+   "hub": 30532122624,
+   "ratio": 1
+  },
+  {
+   "repo": "Qwen/Qwen3-8B-FP8",
+   "fmt": "fp8",
+   "logical": 8190735360,
+   "hub": 8190735360,
+   "ratio": 1
+  },
+  {
+   "repo": "RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8",
+   "fmt": "fp8",
+   "logical": 8030261248,
+   "hub": 8030261248,
+   "ratio": 1
+  },
+  {
+   "repo": "deepseek-ai/DeepSeek-R1",
+   "fmt": "fp8",
+   "logical": 684489845504,
+   "hub": 684489845504,
+   "ratio": 1
+  },
+  {
+   "repo": "deepseek-ai/DeepSeek-V3",
+   "fmt": "fp8",
+   "logical": 684489845504,
+   "hub": 684489845504,
+   "ratio": 1
+  },
+  {
+   "repo": "deepseek-ai/DeepSeek-V3.1",
+   "fmt": "fp8",
+   "logical": 684489845504,
+   "hub": 684531386000,
+   "ratio": 1
+  },
+  {
+   "repo": "mlx-community/Qwen3-8B-4bit",
+   "fmt": "mlx",
+   "logical": 8190735360,
+   "hub": 8190735360,
+   "ratio": 1
+  },
+  {
+   "repo": "moonshotai/Kimi-K2-Instruct",
+   "fmt": "fp8",
+   "logical": 1026408235864,
+   "hub": 1026408235864,
+   "ratio": 1
+  },
+  {
+   "repo": "nvidia/DeepSeek-R1-0528-FP4",
+   "fmt": "nvfp4",
+   "logical": 684489845628,
+   "hub": 396767013632,
+   "ratio": 1.725
+  },
+  {
+   "repo": "nvidia/Llama-3.1-8B-Instruct-FP4",
+   "fmt": "nvfp4",
+   "logical": 8030261248,
+   "hub": 4540600320,
+   "ratio": 1.769
+  },
+  {
+   "repo": "nvidia/Qwen3-8B-FP4",
+   "fmt": "nvfp4",
+   "logical": 8190735360,
+   "hub": 4717851648,
+   "ratio": 1.736
+  },
+  {
+   "repo": "openai/gpt-oss-120b",
+   "fmt": "mxfp4",
+   "logical": 116829156672,
+   "hub": 116829156672,
+   "ratio": 1
+  },
+  {
+   "repo": "openai/gpt-oss-20b",
+   "fmt": "mxfp4",
+   "logical": 20914757184,
+   "hub": 20914757184,
+   "ratio": 1
+  },
+  {
+   "repo": "unsloth/Llama-3.2-1B-Instruct-bnb-4bit",
+   "fmt": "bnb4",
+   "logical": 1235814400,
+   "hub": 1266351458,
+   "ratio": 0.976
+  },
+  {
+   "repo": "unsloth/Qwen3-8B-bnb-4bit",
+   "fmt": "bnb4",
+   "logical": 8190735360,
+   "hub": 8408369922,
+   "ratio": 0.974
+  }
+ ],
+ "hp": {
+  "d": {
+   "n": 155,
+   "manifest": 148,
+   "fused": 148
+  },
+  "layers": {
+   "n": 154,
+   "manifest": 143,
+   "fused": 143
+  },
+  "heads": {
+   "n": 149,
+   "manifest": 115,
+   "fused": 144
+  },
+  "ffn": {
+   "n": 112,
+   "manifest": 101,
+   "fused": 101
+  },
+  "vocab": {
+   "n": 145,
+   "manifest": 133,
+   "fused": 133
+  },
+  "kv_heads": {
+   "n": 94,
+   "manifest": 71,
+   "fused": 92
+  },
+  "head_dim": {
+   "n": 56,
+   "manifest": 47,
+   "fused": 54
+  },
+  "experts": {
+   "n": 31,
+   "manifest": 31,
+   "fused": 31
+  }
+ },
+ "hpMiss": [
+  [
+   "IDEA-Research/grounding-dino-base",
+   "d",
+   256,
+   512,
+   512
+  ],
+  [
+   "IDEA-Research/grounding-dino-base",
+   "layers",
+   6,
+   24,
+   24
+  ],
+  [
+   "IDEA-Research/grounding-dino-base",
+   "heads",
+   8,
+   2,
+   2
+  ],
+  [
+   "IDEA-Research/grounding-dino-base",
+   "ffn",
+   2048,
+   512,
+   512
+  ],
+  [
+   "NX-AI/xLSTM-7b",
+   "heads",
+   8,
+   null,
+   null
+  ],
+  [
+   "NX-AI/xLSTM-7b",
+   "head_dim",
+   512,
+   null,
+   null
+  ],
+  [
+   "PekingU/rtdetr_r50vd",
+   "layers",
+   6,
+   48,
+   48
+  ],
+  [
+   "PekingU/rtdetr_r50vd",
+   "ffn",
+   1024,
+   null,
+   null
+  ],
+  [
+   "Zyphra/Zamba2-2.7B",
+   "d",
+   2560,
+   128,
+   128
+  ],
+  [
+   "Zyphra/Zamba2-2.7B",
+   "layers",
+   54,
+   5,
+   5
+  ],
+  [
+   "Zyphra/Zamba2-2.7B",
+   "heads",
+   32,
+   null,
+   null
+  ],
+  [
+   "Zyphra/Zamba2-2.7B",
+   "kv_heads",
+   32,
+   null,
+   null
+  ],
+  [
+   "Zyphra/Zamba2-2.7B",
+   "head_dim",
+   80,
+   null,
+   null
+  ],
+  [
+   "Zyphra/Zamba2-2.7B",
+   "ffn",
+   10240,
+   2560,
+   2560
+  ],
+  [
+   "albert/albert-base-v2",
+   "d",
+   768,
+   null,
+   null
+  ],
+  [
+   "albert/albert-base-v2",
+   "layers",
+   12,
+   null,
+   null
+  ],
+  [
+   "albert/albert-base-v2",
+   "heads",
+   12,
+   null,
+   null
+  ],
+  [
+   "albert/albert-base-v2",
+   "ffn",
+   3072,
+   null,
+   null
+  ],
+  [
+   "albert/albert-base-v2",
+   "vocab",
+   30000,
+   null,
+   null
+  ],
+  [
+   "allenai/Molmo-7B-D-0924",
+   "ffn",
+   37888,
+   null,
+   null
+  ],
+  [
+   "amazon/chronos-bolt-base",
+   "vocab",
+   2,
+   3072,
+   3072
+  ],
+  [
+   "amazon/chronos-t5-small",
+   "vocab",
+   4096,
+   null,
+   null
+  ],
+  [
+   "distil-whisper/distil-large-v3",
+   "layers",
+   32,
+   2,
+   2
+  ],
+  [
+   "facebook/detr-resnet-50",
+   "layers",
+   6,
+   13,
+   13
+  ],
+  [
+   "facebook/detr-resnet-50",
+   "ffn",
+   2048,
+   null,
+   null
+  ],
+  [
+   "facebook/encodec_24khz",
+   "d",
+   128,
+   64,
+   64
+  ],
+  [
+   "facebook/hubert-large-ls960-ft",
+   "vocab",
+   32,
+   null,
+   null
+  ],
+  [
+   "facebook/mask2former-swin-large-coco-panoptic",
+   "layers",
+   10,
+   24,
+   24
+  ],
+  [
+   "facebook/mask2former-swin-large-coco-panoptic",
+   "heads",
+   8,
+   3,
+   3
+  ],
+  [
+   "facebook/musicgen-small",
+   "vocab",
+   2048,
+   2049,
+   2049
+  ],
+  [
+   "facebook/seamless-m4t-v2-large",
+   "ffn",
+   8192,
+   4096,
+   4096
+  ],
+  [
+   "facebook/wav2vec2-base-960h",
+   "vocab",
+   32,
+   null,
+   null
+  ],
+  [
+   "facebook/wav2vec2-large-xlsr-53",
+   "vocab",
+   32,
+   null,
+   null
+  ],
+  [
+   "ibm-granite/granite-timeseries-ttm-r2",
+   "d",
+   192,
+   48,
+   48
+  ],
+  [
+   "ibm-granite/granite-timeseries-ttm-r2",
+   "layers",
+   2,
+   6,
+   6
+  ],
+  [
+   "microsoft/Phi-4-multimodal-instruct",
+   "ffn",
+   8192,
+   null,
+   null
+  ],
+  [
+   "microsoft/speecht5_tts",
+   "layers",
+   6,
+   12,
+   12
+  ],
+  [
+   "microsoft/speecht5_tts",
+   "vocab",
+   81,
+   320,
+   320
+  ],
+  [
+   "microsoft/swin-base-patch4-window7-224",
+   "d",
+   128,
+   512,
+   512
+  ],
+  [
+   "microsoft/wavlm-large",
+   "vocab",
+   32,
+   null,
+   null
+  ],
+  [
+   "nari-labs/Dia-1.6B-0626",
+   "d",
+   1024,
+   2048,
+   2048
+  ],
+  [
+   "nari-labs/Dia-1.6B-0626",
+   "layers",
+   12,
+   18,
+   18
+  ],
+  [
+   "nari-labs/Dia-1.6B-0626",
+   "kv_heads",
+   16,
+   4,
+   4
+  ],
+  [
+   "nari-labs/Dia-1.6B-0626",
+   "ffn",
+   4096,
+   8192,
+   8192
+  ],
+  [
+   "nari-labs/Dia-1.6B-0626",
+   "vocab",
+   256,
+   9252,
+   9252
+  ],
+  [
+   "openai/whisper-large-v3-turbo",
+   "layers",
+   32,
+   4,
+   4
+  ],
+  [
+   "state-spaces/mamba-2.8b-hf",
+   "ffn",
+   5120,
+   null,
+   null
+  ],
+  [
+   "tiiuae/falcon-mamba-7b",
+   "ffn",
+   8192,
+   null,
+   null
+  ],
+  [
+   "unsloth/Llama-3.2-11B-Vision-Instruct",
+   "vocab",
+   128256,
+   128264,
+   128264
+  ],
+  [
+   "unsloth/mistral-7b-v0.3",
+   "vocab",
+   32768,
+   null,
+   null
+  ]
+ ],
+ "roles": {
+  "n": 82,
+  "macro": 0.9678661762873382,
+  "atLeast99": 71,
+  "low": [
+   [
+    "NX-AI/xLSTM-7b",
+    0.373
+   ],
+   [
+    "PekingU/rtdetr_r50vd",
+    0.842
+   ],
+   [
+    "Zyphra/Zamba2-2.7B",
+    0.042
+   ],
+   [
+    "albert/albert-base-v2",
+    0.45
+   ]
+  ]
+ },
+ "consistency": {
+  "checked": 143,
+  "consistent": 140,
+  "mismatch": [
+   "facebook/sam-vit-huge",
+   "ibm-granite/granite-4.0-h-tiny",
+   "microsoft/Phi-4-multimodal-instruct"
+  ]
+ },
+ "header": {
+  "medianKB": 79.046875,
+  "p95KB": 5398.046875,
+  "maxKB": 20848.2890625,
+  "totalMB": 161.286648,
+  "weightsTB": 12.101516978132
+ },
+ "ms": {
+  "median": 17.632877,
+  "p95": 1791.876072,
+  "max": 4209.814688
+ },
+ "downloads": 505345750,
+ "families": {
+  "encoder": 95,
+  "diffusion": 7,
+  "decoder": 62,
+  "prefix-lm": 19,
+  "unknown": 1,
+  "encoder-decoder": 7
+ },
+ "byCat": {
+  "emb": 10,
+  "gen": 14,
+  "llm": 45,
+  "enc": 7,
+  "vlm": 18,
+  "vision": 19,
+  "speech": 23,
+  "moe": 24,
+  "ssm": 9,
+  "ts": 6,
+  "quant": 10,
+  "s2s": 6
+ },
+ "fails": [
+  {
+   "repo": "CohereLabs/c4ai-command-r7b-12-2024",
+   "cat": "llm",
+   "err": "Unexpected token 'A', \"Access to \"... is not valid JSON"
+  },
+  {
+   "repo": "Helsinki-NLP/opus-mt-en-de",
+   "cat": "s2s",
+   "err": "not a zip-format PyTorch file (old pickle format is not supported)"
+  },
+  {
+   "repo": "NousResearch/Meta-Llama-3.1-405B",
+   "cat": "llm",
+   "err": "HTTP 401 "
+  },
+  {
+   "repo": "ai21labs/AI21-Jamba-Mini-1.7",
+   "cat": "ssm",
+   "err": "Unexpected token 'A', \"Access to \"... is not valid JSON"
+  },
+  {
+   "repo": "black-forest-labs/FLUX.1-schnell",
+   "cat": "gen",
+   "err": "Unexpected token 'A', \"Access to \"... is not valid JSON"
+  },
+  {
+   "repo": "facebook/mms-1b-all",
+   "cat": "speech",
+   "err": "HTTP 429"
+  },
+  {
+   "repo": "google/electra-base-discriminator",
+   "cat": "enc",
+   "err": "not a zip-format PyTorch file (old pickle format is not supported)"
+  },
+  {
+   "repo": "google/gemma-3-270m",
+   "cat": "llm",
+   "err": "HTTP 401"
+  },
+  {
+   "repo": "google/paligemma2-3b-pt-224",
+   "cat": "vlm",
+   "err": "Unexpected token 'A', \"Access to \"... is not valid JSON"
+  },
+  {
+   "repo": "pyannote/segmentation-3.0",
+   "cat": "speech",
+   "err": "HTTP 401"
+  }
+ ]
+}

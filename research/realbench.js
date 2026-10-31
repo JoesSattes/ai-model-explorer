@@ -36,14 +36,21 @@ for (const line of fs.readFileSync(args[0], "utf8").split("\n")) {
   if (!line.trim()) continue; const r = JSON.parse(line);
   if (!r.ok) { fails.push({repo: r.repo, cat: r.cat, err: r.err}); continue; }
   const man = JSON.parse(zlib.gunzipSync(Buffer.from(r.raw, "base64")).toString("utf8"));
-  const tensors = {}; for (const [n, [dtype, shape]] of Object.entries(man)) tensors[n] = {dtype, shape};
-  const cfgs = JSON.parse(r.cfgs || "{}"), cfg = cfgs["config.json"] || null;
+  const cfgs = JSON.parse(r.cfgs || "{}"), cfg = cfgs["config.json"] || null, mi = cfgs["model_index.json"] || null;
+  // exports made before the loader skipped duplicate files: apply the same rules here (alternate-precision copies,
+  // root-level single-file copies and LoRAs in diffusers repos)
+  const tops = new Set(Object.keys(man).map(n => n.split(".")[0]));
+  const comps = mi ? Object.entries(mi).filter(([k, v]) => !k.startsWith("_") && Array.isArray(v) && v[0]).map(([k]) => k) : null;
+  const dropTop = t => comps ? !comps.includes(t) && tops.size > 1 : /_(fp16|fp32|bf16)(_\d+_of_\d+)?$/.test(t) && [...tops].some(u => u !== t && !/_(fp16|fp32|bf16)/.test(u));
+  const tensors = {}; for (const [n, [dtype, shape]] of Object.entries(man)) if (!dropTop(n.split(".")[0])) tensors[n] = {dtype, shape};
   const row = {repo: r.repo, cat: r.cat, downloads: r.api.downloads, likes: r.api.likes, ntensors: Object.keys(tensors).length, headerBytes: r.read, nfiles: r.nfiles, weightBytes: r.api.weightBytes, apiTotal: r.api.total, apiParams: r.api.parameters};
   let I; const t0 = process.hrtime.bigint();
   try { I = infer(tensors, {lex: true}); } catch (e) { row.err = String(e.message); rows.push(row); continue; }
   row.ms = Number(process.hrtime.bigint() - t0) / 1e6;
   row.params = I.totals.params; row.bytes = I.totals.bytes; row.quant = I.quant && Object.keys(I.quant).length ? Object.keys(I.quant).join("+") : null;
-  const stored = Object.values(tensors).reduce((a, v) => a + prod(v.shape), 0); row.stored = stored;
+  row.stored = Object.values(tensors).reduce((a, v) => a + prod(v.shape), 0);
+  row.storedHub = Object.values(tensors).filter(v => v.shape.length > 0).reduce((a, v) => a + prod(v.shape), 0); // the Hub skips 0-d scalars
+  row.diffusers = !!mi;
   row.family = I.family; row.comps = I.comps.map(c => `${c.role}:${c.id}:${c.d}:${c.stacks.map(s => s.n + "x" + s.types.map(t => t.label).join("/")).join(",")}`);
   row.labels = [...new Set(I.comps.flatMap(c => c.stacks.flatMap(s => s.types.map(t => t.label))))];
   row.edges = I.edges.length;
@@ -64,8 +71,9 @@ for (const line of fs.readFileSync(args[0], "utf8").split("\n")) {
 
 // ---- summary
 const ok = rows.filter(r => !r.err), S = {exported: rows.length + fails.length, read: rows.length, failedFetch: fails.length, inferErrors: rows.filter(r => r.err).map(r => r.repo)};
-const unq = ok.filter(r => !r.quant);
-S.paramsExactVsHub = {n: unq.filter(r => r.apiTotal).length, exact: unq.filter(r => r.apiTotal && r.params === r.apiTotal).length, miss: unq.filter(r => r.apiTotal && r.params !== r.apiTotal).map(r => [r.repo, r.params, r.apiTotal])};
+const cmp = ok.filter(r => r.apiTotal && !r.diffusers);
+S.storedVsHub = {n: cmp.length, exact: cmp.filter(r => r.storedHub === r.apiTotal).length, miss: cmp.filter(r => r.storedHub !== r.apiTotal).map(r => [r.repo, r.storedHub, r.apiTotal])};
+S.diffusersVsHub = ok.filter(r => r.diffusers).map(r => [r.repo, r.params, r.apiTotal]);
 S.quantized = ok.filter(r => r.quant).map(r => ({repo: r.repo, fmt: r.quant, logical: r.params, hub: r.apiTotal, ratio: r.apiTotal ? +(r.params / r.apiTotal).toFixed(3) : null}));
 const hpAgg = {}; for (const r of ok) for (const [k, [g, p, pf]] of Object.entries(r.hp || {})) { const a = hpAgg[k] || (hpAgg[k] = {n: 0, manifest: 0, fused: 0}); a.n++; if (p === g) a.manifest++; if (pf === g) a.fused++; }
 S.hp = hpAgg; S.hpMiss = ok.flatMap(r => Object.entries(r.hp || {}).filter(([, [g, , pf]]) => pf !== g).map(([k, v]) => [r.repo, k, ...v]));
