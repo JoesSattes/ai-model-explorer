@@ -8,7 +8,7 @@ AI Model Explorer reads a model from three kinds of input and works out its anat
 - a Hugging Face repository — only the safetensors header is read (tensor names, shapes, dtypes; no weights downloaded);
 - a pasted `config.json` — the structure is synthesized for common families (Llama, Qwen, Gemma, Mistral, Phi, GPT-2, BERT, RoBERTa, ViT, Whisper, BART, T5).
 
-It recognises encoder–decoder (e.g. Whisper), decoder-only LLMs (e.g. Llama, GPT-2, Qwen) and encoder-only models (e.g. BERT, ViT), for text, audio and image.
+It recognises encoder–decoder (e.g. Whisper), encoder→LLM multimodal models (e.g. Qwen3-ASR, Qwen3.8), decoder-only LLMs (e.g. Llama, GPT-2, Qwen) and encoder-only models (e.g. BERT, ViT), for text, audio and image.
 
 ## What it shows
 - Big picture: the model as numbered parts (input → embedding → encoder/decoder stacks → output head), with a play-through that shows each part's input and output, a zoom into one layer, and the decoder's per-token loop.
@@ -19,6 +19,7 @@ It recognises encoder–decoder (e.g. Whisper), decoder-only LLMs (e.g. Llama, G
 
 ## Templates included
 - biodatlab/distill-whisper-th-medium (Thai speech recognition) — real .tflite graph of the architecture, 1,616 ops
+- Qwen/Qwen3-ASR-1.7B (audio encoder → LLM) and Qwen/Qwen3.8-27B (vision encoder → hybrid linear/full-attention LLM, 64 layers, MTP head) — structure built from the official config.json
 - meta-llama/Llama-3.2-1B, openai-community/gpt2, google-bert/bert-base-uncased, google/vit-base-patch16-224 — structure from the transformers implementation
 - Whisper rehearsal models in fp32, weight-only int8 and dynamic int4 for precision comparisons
 

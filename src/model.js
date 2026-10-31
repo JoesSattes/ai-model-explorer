@@ -75,11 +75,15 @@ function anatomyFromOps(graphs) {
 }
 
 // ------------------------------------------------------------------ from a tensor list (safetensors header / templates / config synthesis)
+const TOWER = /(^|\.)(encoder|audio_tower|audio_encoder|visual|vision_tower|vision_model|vision_encoder|image_encoder)\./;
 function tensorPlace(name, enc, dec) {
   const s = name.toLowerCase();
-  const comp = enc && dec ? (/(^|\.)encoder\./.test(s) ? "encoder" : /(^|\.)decoder\./.test(s) ? "decoder" : (/lm_head|proj_out/.test(s) ? "decoder" : "shared")) : enc ? "encoder" : "decoder";
+  const comp = enc && dec ? (TOWER.test(s) ? "encoder" : "decoder") : enc ? "encoder" : "decoder";
+  if (/(^|\.)mtp\./.test(s)) return {comp: "decoder", head: true, role: "mtp"};
+  if (comp === "encoder" && /merger|proj1|proj2|ln_post|multi_modal_projector|mm_projector|audio_projection|post_layernorm/.test(s) && !/\.(?:layers|blocks)\.\d+\./.test(s)) return {comp, head: true, role: /norm|ln_post/.test(s) ? "ln" : "proj"};
   const m = s.match(/\.(?:layers|layer|h|blocks|block)\.(\d+)\./);
   if (m) {
+    if (/linear_attn|\.mixer\.|deltanet|ssm/.test(s)) return {comp, layer: +m[1], region: "linear", role: /in_proj_qkv|in_proj\.|in_proj_qkvz/.test(s) ? "qkv" : /in_proj_ba|in_proj_[ab]\b|in_proj_z/.test(s) ? "gate" : /conv/.test(s) ? "conv" : /dt_bias|a_log|\.d$/.test(s) ? "state" : /norm/.test(s) ? "ln" : /out_proj/.test(s) ? "out" : "misc"};
     const region = /encoder_attn|crossattention|cross_attn|encdecattention/.test(s) ? "cross"
       : /mlp|intermediate|\.fc[12]\.|ffn|feed_forward|gate_proj|up_proj|down_proj|c_fc|(^|[^n]\.)output\.dense|final_layer_norm|post_attention_layernorm|ln_2|layernorm_after|output\.layernorm|block_sparse_moe|experts/.test(s) && !/attention\.output\.dense|attention\.output\.layernorm/.test(s) ? "ffn" : "self";
     const role = /norm|ln_\d/.test(s) ? "ln" : /c_attn|qkv|query_key_value|wqkv/.test(s) ? "qkv" : /q_proj|\.query\.|\.q\./.test(s) ? "q" : /k_proj|\.key\.|\.k\./.test(s) ? "k" : /v_proj|\.value\.|\.v\./.test(s) ? "v"
@@ -87,18 +91,20 @@ function tensorPlace(name, enc, dec) {
       : /o_proj|out_proj|c_proj|output\.dense|\.o\./.test(s) ? "out" : "misc";
     return {comp, layer: +m[1], region, role};
   }
-  const stem = /embed|wte|wpe|conv|patch|cls_token|position|token_type|feature_extractor|feature_projection|masked_spec|shared\.weight/.test(s) && !/lm_head|proj_out/.test(s);
+  const stem = /embed|wte|wpe|conv|patch|cls_token|position|pos_embed|token_type|feature_extractor|feature_projection|masked_spec|shared\.weight/.test(s) && !/lm_head|proj_out/.test(s);
   if (stem) return {comp, stem: true, role: /conv|patch|feature/.test(s) ? "conv" : /position|wpe|token_type|cls_token/.test(s) ? "pos" : /norm/.test(s) ? "ln" : "embed"};
   return {comp, head: true, role: /lm_head|proj_out/.test(s) ? "logits" : /pooler/.test(s) ? "pool" : /classifier|score/.test(s) ? "cls" : /norm|ln_f/.test(s) ? "ln" : "misc"};
 }
 function anatomyFromTensors(tensors, meta, est = "tensors") {
-  const names = Object.keys(tensors), enc = names.some(n => /(^|\.)encoder\./.test(n)) || meta.family === "encoder", dec = names.some(n => /(^|\.)decoder\./.test(n)) || meta.family === "decoder";
-  const both = names.some(n => /(^|\.)encoder\./.test(n)) && names.some(n => /(^|\.)decoder\./.test(n));
+  const names = Object.keys(tensors), lay = n => /\.(?:layers|layer|h|blocks|block)\.\d+\./.test(n);
+  const both = names.some(n => TOWER.test(n.toLowerCase()) && lay(n)) && names.some(n => !TOWER.test(n.toLowerCase()) && lay(n) && !/(^|\.)mtp\./.test(n));
+  const enc = both || meta.family === "encoder", dec = both || meta.family === "decoder";
   const A = {comps: {}, kind: est};
-  const seqEnc = meta.modality === "audio" ? (meta.seqEnc || 1500) : meta.modality === "image" ? (meta.patches || 196) + 1 : 128;
+  const seqEnc = meta.seqEnc || (meta.modality === "audio" ? 1500 : meta.modality === "image" ? (meta.patches || 196) + 1 : 128);
   const get = c => A.comps[c] || (A.comps[c] = {stem: {}, layers: [], head: {}});
   Object.entries(tensors).forEach(([n, v]) => {
     const pl = tensorPlace(n, both || (enc && meta.family !== "decoder"), both || meta.family === "decoder");
+    if (pl.layer == null && pl.head && pl.role === "mtp" && !both && meta.family === "encoder") pl.comp = "encoder";
     let comp = pl.comp === "shared" ? (both ? "decoder" : (meta.family === "decoder" ? "decoder" : "encoder")) : pl.comp;
     if (!both) comp = meta.family === "decoder" ? "decoder" : "encoder";
     const C = get(comp), d = DTN[v.dtype] || "fp32", pr = mprod(v.shape);
@@ -109,12 +115,17 @@ function anatomyFromTensors(tensors, meta, est = "tensors") {
     const passes = comp === "encoder" ? seqEnc : 1, isMat = v.shape.length >= 2 && !/norm|position|wpe|token_type|cls_token/.test(n.toLowerCase());
     p.flops += isMat ? (pl.role === "embed" ? v.shape[v.shape.length - 1] * passes : 2 * pr * passes) : pr * passes;
   });
+  // hybrid stacks: in a linear-attention layer the pre-norm belongs to the linear block, not to a phantom full-attention block
+  Object.values(A.comps).forEach(C => C.layers.forEach(L => { if (!L || !L.regions.linear || !L.regions.self) return;
+    if (!Object.keys(L.regions.self).some(r => /^(q|k|v|qkv|out)$/.test(r))) { const ln = L.regions.self.ln; if (ln) L.regions.linear.ln = L.regions.linear.ln ? merge(L.regions.linear.ln, ln) : ln; delete L.regions.self; } }));
   // attention core (no weights): scores + context
   Object.entries(A.comps).forEach(([c, C]) => C.layers.forEach(L => ["self", "cross"].forEach(r => { const R = L.regions[r]; if (!R) return;
-    const d = meta.d || 768, s = c === "encoder" ? seqEnc : 1, ctx = r === "cross" ? seqEnc : c === "encoder" ? seqEnc : 64;
+    const d = c === "encoder" ? (meta.encD || meta.d || 768) : (meta.d || 768), s = c === "encoder" ? seqEnc : 1, ctx = r === "cross" ? seqEnc : c === "encoder" ? seqEnc : 64;
     R.scores = Object.assign(part(), {has: true, est: true, flops: 2 * s * ctx * d}); R.softmax = Object.assign(part(), {has: true, est: true, flops: 5 * s * ctx * (meta.heads || 12)}); R.context = Object.assign(part(), {has: true, est: true, flops: 2 * s * ctx * d});
     if (c === "decoder" && r === "self") R.cache = Object.assign(part(), {has: true, est: true, flops: 2 * d});
     R.res = Object.assign(part(), {has: true, est: true, flops: s * d}); })));
+  Object.values(A.comps).forEach(C => C.layers.forEach(L => { const R = L.regions.linear; if (!R) return; const d = meta.d || 768;
+    R.state = R.state || part(); Object.assign(R.state, {has: true, est: true}); R.state.flops += 6 * d * 128; R.res = Object.assign(part(), {has: true, est: true, flops: d}); }));
   Object.values(A.comps).forEach(C => C.layers.forEach(L => { if (L.regions.ffn) { L.regions.ffn.act = Object.assign(part(), {has: true, est: true, flops: 0}); L.regions.ffn.res = Object.assign(part(), {has: true, est: true, flops: 0}); } }));
   // tied output head
   const D = A.comps.decoder;
@@ -206,7 +217,7 @@ function pipeline(M) {
   if (E) {
     cols.push({kind: mod === "image" ? "patch" : mod === "audio" ? "conv" : "embed_enc", part: E.stemTot, id: "e_stem", where: "encoder.stem"});
     cols.push({kind: "enc", stack: true, comp: "encoder", id: "e_stack"});
-    if (D) cols.push({kind: "kv", part: E.headTot, id: "e_head", where: "encoder.head"});
+    if (D) cols.push({kind: mt.family === "prefix" ? "proj" : "kv", part: E.headTot, id: "e_head", where: "encoder.head"});
     else { cols.push({kind: mod === "image" ? "cls_head" : "pool", part: E.headTot, id: "e_head", where: "encoder.head"}); cols.push({kind: mod === "image" ? "out_class" : "out_vec", io: true}); }
   }
   if (D) {

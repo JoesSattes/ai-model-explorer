@@ -13,6 +13,16 @@ const C = {red: "#e60012", redL: "#ff5a67", mag: "#e5007d", magL: "#ff7cc4", blu
 
 // ================================================================== models
 const MODELS = [];
+// models a visitor loaded are kept in this browser (IndexedDB) so the next visit opens them without re-analysis
+const DB = {
+  open() { return new Promise((res, rej) => { try { const r = indexedDB.open("mx-model-explorer", 1); r.onupgradeneeded = () => r.result.createObjectStore("models", {keyPath: "id"}); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); },
+  async tx(mode, fn) { const db = await this.open(); return new Promise((res, rej) => { const tx = db.transaction("models", mode), st = tx.objectStore("models"), out = fn(st); tx.oncomplete = () => res(out && out.result); tx.onerror = () => rej(tx.error); }); },
+  put(o) { return this.tx("readwrite", st => st.put(o)).catch(() => {}); },
+  all() { return this.tx("readonly", st => st.getAll()).catch(() => []); },
+  del(id) { return this.tx("readwrite", st => st.delete(id)).catch(() => {}); },
+};
+const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem("mx_" + k); localStorage.setItem("mx_" + k, v); } catch (e) { return null; } };
+function persist(def) { DB.put({id: def.id, label: def.label, short: def.short, kind: def.kind, graphs: def.graphs, tensors: def.tensors, meta: def.meta, noteKey: def.noteKey, noteVars: def.noteVars, savedAt: Date.now()}); }
 const S = {M: null, lens: "weights", el: 0, dl: 0, open: null, tokens: 40, step: -1, playing: false, zoom: false, mapLens: "size"};
 function register(def) { const i = MODELS.findIndex(m => m.id === def.id); if (i >= 0) MODELS[i] = def; else MODELS.push(def); renderPicker(); return def; }
 function build(def) {
@@ -42,19 +52,20 @@ function setModel(id, keepHash) {
   if (S.lens === "fragility" && !S.M.hasFrag) S.lens = "weights"; if (S.lens === "ops" && S.M.kind !== "ops") S.lens = "weights";
   if (S.mapLens === "frag" && !S.M.hasFrag) S.mapLens = "size";
   try { if (!keepHash && /^[\w-]+$/.test(def.id)) history.replaceState(null, "", "#" + def.id); } catch (e) {}
+  pref("last", def.id);
   renderAll();
 }
-const fam = M => M.A.comps.encoder && M.A.comps.decoder ? "encdec" : M.A.comps.decoder ? "decoder" : "encoder";
+const fam = M => M.A.comps.encoder && M.A.comps.decoder ? (M.meta.family === "prefix" ? "prefix" : "encdec") : M.A.comps.decoder ? "decoder" : "encoder";
 
 // ================================================================== hero + picker
 function renderPicker() {
   const box = $("#picker"); if (!box) return;
   const g = k => MODELS.filter(m => m.group === k);
-  const chip = m => `<button class="mchip${S.M && S.M.id === m.id ? " on" : ""}" data-m="${esc(m.id)}"><b>${esc(m.short || m.label)}</b><span>${esc(m.sub ? L2(...m.sub) : "")}</span></button>`;
+  const chip = m => `<button class="mchip${S.M && S.M.id === m.id ? " on" : ""}" data-m="${esc(m.id)}"><b>${esc(m.short || m.label)}</b><span>${esc(m.sub ? L2(...m.sub) : m.group === "own" ? (m.kind === "ops" || m.graphs ? ".tflite" : m.kind === "config" ? "config.json" : "safetensors") : "")}</span>${m.group === "own" ? `<i class="mx" data-del="${esc(m.id)}" title="${t("forget")}">×</i>` : ""}</button>`;
   box.innerHTML = `<div class="pk"><div class="xk">${t("pick_templates")}</div><div class="mrow">${g("tpl").map(chip).join("")}</div></div>
     ${g("prec").length ? `<div class="pk"><div class="xk">${t("pick_precision")}</div><div class="mrow">${g("prec").map(chip).join("")}</div></div>` : ""}
-    ${g("own").length ? `<div class="pk"><div class="xk">${t("pick_own")}</div><div class="mrow">${g("own").map(chip).join("")}</div></div>` : ""}`;
-  $$("#picker [data-m]").forEach(b => b.onclick = () => setModel(b.dataset.m));
+    ${g("own").length ? `<div class="pk"><div class="xk">${t("pick_mine")}</div><div class="mrow">${g("own").map(chip).join("")}</div></div>` : ""}`;
+  $$("#picker [data-m]").forEach(b => b.onclick = e => { if (e.target.dataset.del) { e.stopPropagation(); const id = e.target.dataset.del; DB.del(id); MODELS.splice(MODELS.findIndex(m => m.id === id), 1); if (S.M && S.M.id === id) setModel(MODELS[0].id); else renderPicker(); return; } setModel(b.dataset.m); });
 }
 function renderHero() {
   const M = S.M, A = M.A, tot = Object.values(A.comps).reduce((a, c) => merge(a, c.tot), part());
@@ -82,25 +93,26 @@ function renderHero() {
 // ================================================================== part texts (what goes in, what comes out, why it matters)
 function shapes(M) {
   const m = M.meta, d = m.d || 768, mod = m.modality, Se = mod === "audio" ? (m.seqEnc || 1500) : mod === "image" ? (m.patches || 196) + 1 : "n";
-  return {d, Se, V: m.vocab || "V", nm: m.nmels || 80, ff: m.ffn || 4 * d};
+  return {d, de: m.encD || d, Se, V: m.vocab || "V", nm: m.nmels || 80, ff: m.ffn || 4 * d, img: m.image || 224};
 }
 const EX = {audio: "วันนี้อากาศดีมาก", textDec: ["Edge", " AI", " runs", " on"], textDecNext: [" phones", " devices", " the", " CPU", " your"], textEnc: ["[CLS]", "edge", "ai", "is", "[MASK]", "[SEP]"], img: ["tabby cat", "tiger cat", "lynx", "fox", "dog"]};
 function partInfo(col, M) {
   const s = shapes(M), m = M.meta, nE = M.A.comps.encoder ? M.A.comps.encoder.layers.length : 0, nD = M.A.comps.decoder ? M.A.comps.decoder.layers.length : 0;
   const ffShare = (() => { const L = (M.A.comps.encoder || M.A.comps.decoder).layers[0]; return L && L.regions.ffn ? pct(L.regions.ffn._tot.params, L.tot.params) : "⅔"; })();
-  const dec1 = M.A.comps.encoder ? "[1, " + s.d + "]" : "[n, " + s.d + "]";
+  const pre = m.family === "prefix", dec1 = pre ? `[${m.modality === "audio" ? s.Se : "196"} + n, ${s.d}]` : M.A.comps.encoder ? "[1, " + s.d + "]" : "[n, " + s.d + "]";
   const P = {
     in_audio: {t: ["Audio", "Audio"], what: ["เสียง 16 kHz ยาวสูงสุด 30 วินาที = ตัวเลข 480,000 ค่า · ยังไม่มี weight", "16 kHz sound, up to 30 s = 480,000 numbers. No weights yet."], opt: ["เสียงโทรศัพท์ตัดความถี่เกิน 3.4 kHz ทิ้งตั้งแต่ตรงนี้", "A phone line throws away everything above 3.4 kHz right here."], i: null, o: ["wave", "[480,000]"]},
     in_text: {t: ["Text → tokens", "Text → tokens"], what: ["ตัดข้อความเป็น token แล้วแปลงเป็นเลข id จากพจนานุกรม " + (m.vocab ? m.vocab.toLocaleString() : "") + " คำ", "Cut the text into tokens and map each to an id from a " + (m.vocab ? m.vocab.toLocaleString() : "") + "-entry vocabulary."], opt: ["ภาษาไทยมักใช้ token มากกว่าอังกฤษหลายเท่า → ลำดับยาวขึ้น", "Thai often needs several times more tokens than English → longer sequences."], i: null, o: ["tokens", "[n]"]},
-    in_image: {t: ["Image", "Image"], what: ["ภาพสี 224×224 = ตัวเลข 150,528 ค่า", "A 224×224 colour image = 150,528 numbers."], opt: ["ความละเอียดภาพกำหนดจำนวน token ทั้งโมเดล", "Image resolution sets the token count for the whole model."], i: null, o: ["image", "[3, 224, 224]"]},
+    in_image: {t: ["Image", "Image"], what: [`ภาพสี ${s.img}×${s.img} = ตัวเลข ${(3 * s.img * s.img).toLocaleString()} ค่า`, `A ${s.img}×${s.img} colour image = ${(3 * s.img * s.img).toLocaleString()} numbers.`], opt: ["ความละเอียดภาพกำหนดจำนวน token ทั้งโมเดล", "Image resolution sets the token count for the whole model."], i: null, o: ["image", `[3, ${s.img}, ${s.img}]`]},
     mel: {t: ["Log-Mel", "Log-Mel"], what: [`ตัดเสียงเป็นช่วงละ 10 ms วัดพลังงานใน ${s.nm} ช่องความถี่ = “ภาพของเสียง”`, `Slice the sound into 10 ms frames and measure energy in ${s.nm} bands — a picture of sound.`], opt: ["คำนวณก่อนเข้าโมเดล ไม่มี weight", "Computed before the model. No weights."], i: ["wave", "[480,000]"], o: ["spec", `[${s.nm}, 3000]`]},
-    conv: {t: ["Conv stem", "Conv stem"], what: [`conv 2 ชั้นแปลงภาพเสียงเป็นเวกเตอร์ ${s.d} มิติ และลดเวลาครึ่งหนึ่ง 3000 → ${s.Se}`, `Two convolutions turn the spectrogram into ${s.d}-dim vectors and halve time: 3000 → ${s.Se}.`], opt: ["เล็กมาก (< 1%) — กันไว้ราคาถูก", "Tiny (< 1%) — cheap to protect."], i: ["spec", `[${s.nm}, 3000]`], o: ["mat", `[${s.Se}, ${s.d}]`]},
-    patch: {t: ["Patch embedding", "Patch embedding"], what: [`ตัดภาพเป็นช่อง 16×16 จำนวน ${m.patches || 196} ช่อง แต่ละช่องกลายเป็นเวกเตอร์ ${s.d} มิติ + [CLS]`, `Cut the image into ${m.patches || 196} 16×16 patches; each becomes a ${s.d}-dim vector, plus a [CLS] token.`], opt: ["conv เดียว เล็ก แต่เป็นด่านแรกที่เห็นภาพ", "One small conv — the first thing that sees pixels."], i: ["image", "[3, 224, 224]"], o: ["patches", `[${s.Se}, ${s.d}]`]},
+    conv: {t: ["Conv stem", "Conv stem"], what: [`conv แปลงภาพเสียงเป็นเวกเตอร์ ${s.de} มิติ และย่อเวลา 3000 → ${s.Se} ช่วง`, `Convolutions turn the spectrogram into ${s.de}-dim vectors and shrink time: 3000 → ${s.Se} steps.`], opt: ["เล็กมาก (< 1%) — กันไว้ราคาถูก", "Tiny (< 1%) — cheap to protect."], i: ["spec", `[${s.nm}, 3000]`], o: ["mat", `[${s.Se}, ${s.de}]`]},
+    patch: {t: ["Patch embedding", "Patch embedding"], what: [`ตัดภาพเป็นช่อง 16×16 จำนวน ${m.patches || 196} ช่อง แต่ละช่องกลายเป็นเวกเตอร์ ${s.de} มิติ`, `Cut the image into ${m.patches || 196} 16×16 patches; each becomes a ${s.de}-dim vector.`], opt: ["conv เดียว เล็ก แต่เป็นด่านแรกที่เห็นภาพ", "One small conv — the first thing that sees pixels."], i: ["image", `[3, ${s.img}, ${s.img}]`], o: ["patches", `[${s.Se}, ${s.de}]`]},
+    proj: {t: ["Projector", "Projector"], what: [m.modality === "image" ? `รวมช่องภาพ 2×2 เป็นหนึ่ง แล้วแปลงจาก ${s.de} เป็น ${s.d} มิติ (ขนาดของ LLM) → token ภาพ ${Math.round(s.Se / 4)} ตัว วางนำหน้าข้อความ` : `แปลงเวกเตอร์เสียงจาก ${s.de} เป็น ${s.d} มิติ (ขนาดของ LLM) → token เสียง ${s.Se} ตัว วางนำหน้า prompt`, m.modality === "image" ? `Merge 2×2 patches and map ${s.de} → ${s.d} dims (the LLM's width) → ${Math.round(s.Se / 4)} image tokens placed before the text.` : `Map the audio vectors ${s.de} → ${s.d} dims (the LLM's width) → ${s.Se} audio tokens placed before the prompt.`], opt: ["เล็ก แต่เป็นสะพานระหว่างสองโมเดล — error ตรงนี้ LLM ได้ยิน/เห็นผิดทั้งหมด", "Small, but it is the bridge between two models — an error here and the LLM hears or sees everything wrong."], i: ["mat2", `[${s.Se}, ${s.de}]`], o: ["mat", `[${m.modality === "image" ? Math.round(s.Se / 4) : s.Se}, ${s.d}]`]},
     embed_enc: {t: ["Token embedding", "Token embedding"], what: [`token id → หยิบแถวจากตาราง ${s.V}×${s.d} + ตำแหน่ง`, `token id → one row of a ${s.V}×${s.d} table, plus position.`], opt: ["ตารางใหญ่ แต่ขาเข้าอ่านแค่แถวเดียวต่อ token", "A big table, but only one row is read per token."], i: ["tokens", "[n]"], o: ["mat", `[n, ${s.d}]`]},
     embed_dec: {t: ["Token embedding", "Token embedding"], what: [`token id → หยิบแถวจากตาราง ${s.V}×${s.d}`, `token id → one row of the ${s.V}×${s.d} table.`], opt: [m.tie ? "ตารางเดียวกับ logits (tied) — เก็บครั้งเดียว" : "แยกจากตาราง logits", m.tie ? "Same table as the logits (tied) — stored once." : "Separate from the logits table."], i: ["tokens", "[n]"], o: ["mat", `[n, ${s.d}]`]},
-    enc: {t: [`Encoder × ${nE}`, `Encoder × ${nE}`], what: [`${nE} layer ซ้อนกัน แต่ละ layer = attention (ทุกตำแหน่งดูกันเอง) + feed-forward · รันครั้งเดียวต่อ input`, `${nE} stacked layers, each = attention (every position looks at every other) + feed-forward. Runs once per input.`], opt: [`ส่วนที่ใหญ่ที่สุดของ compute · feed-forward = ${ffShare} ของ weight ใน layer`, `Most of the compute. Feed-forward is ${ffShare} of each layer's weights.`], i: ["mat", `[${s.Se}, ${s.d}]`], o: ["mat2", `[${s.Se}, ${s.d}]`]},
+    enc: {t: [`${pre ? (m.modality === "image" ? "Vision" : "Audio") + " encoder" : "Encoder"} × ${nE}`, `${pre ? (m.modality === "image" ? "Vision" : "Audio") + " encoder" : "Encoder"} × ${nE}`], what: [`${nE} layer ซ้อนกัน แต่ละ layer = attention (ทุกตำแหน่งดูกันเอง) + feed-forward · รันครั้งเดียวต่อ input`, `${nE} stacked layers, each = attention (every position looks at every other) + feed-forward. Runs once per input.`], opt: [`compute หนักเพราะรันทั้ง input พร้อมกัน · feed-forward = ${ffShare} ของ weight ใน layer`, `Heavy compute: it runs the whole input at once. Feed-forward is ${ffShare} of each layer's weights.`], i: ["mat", `[${s.Se}, ${s.de}]`], o: ["mat2", `[${s.Se}, ${s.de}]`]},
     kv: {t: ["Encoder out → K/V", "Encoder out → K/V"], what: ["ผลของ encoder ถูกเก็บไว้เป็น Key/Value ให้ decoder ทุกชั้นมาอ่าน · คำนวณครั้งเดียว อ่านซ้ำทุก token", "The encoder output is kept as Keys/Values for every decoder layer. Made once, read every token."], opt: ["บีบแล้วไม่ช่วยเรื่องเวลา แต่ error ตรงนี้กระจายไปทุก token", "Squeezing it saves no time, but an error here spreads to every token."], i: ["mat2", `[${s.Se}, ${s.d}]`], o: ["kv", `${nD}×2×[${s.Se}, ${s.d}]`]},
-    dec: {t: [`Decoder × ${nD}`, `Decoder × ${nD}`], what: M.A.comps.encoder ? [`สร้างคำทีละ token: ดูคำที่เขียนแล้ว (KV cache) → ฟังเสียง/ข้อมูลจาก encoder (cross-attention) → feed-forward`, `Writes one token at a time: look at what's written (KV cache) → listen to the encoder (cross-attention) → feed-forward.`] : [`${nD} layer: attention ดูเฉพาะ token ก่อนหน้า (KV cache) + feed-forward · รันใหม่ทุก token`, `${nD} layers: attention over earlier tokens only (KV cache) + feed-forward. Runs again for every token.`], opt: ["รันทุก token → อ่าน weight ซ้ำหลายสิบรอบ · byte ต่อ weight กำหนดความเร็ว", "Runs every token → re-reads its weights dozens of times. Bytes per weight set the speed."], i: ["vec", dec1], o: ["vec2", "[1, " + s.d + "]"]},
+    dec: {t: [pre ? `LLM × ${nD}` : `Decoder × ${nD}`, pre ? `LLM × ${nD}` : `Decoder × ${nD}`], what: pre ? [`LLM อ่าน token ${m.modality === "image" ? "ภาพ" : "เสียง"} + prompt ทีเดียวทั้งก้อน (prefill) แล้วเขียนคำตอบทีละ token โดยจดทุกอย่างไว้ใน KV cache${m.layer_pattern ? " · layer เรียงแบบ " + m.layer_pattern : ""}`, `The LLM reads the ${m.modality === "image" ? "image" : "audio"} tokens + prompt in one go (prefill), then writes the answer one token at a time, keeping everything in the KV cache${m.layer_pattern ? " · layer pattern " + m.layer_pattern : ""}.`] : M.A.comps.encoder ? [`สร้างคำทีละ token: ดูคำที่เขียนแล้ว (KV cache) → ฟังเสียง/ข้อมูลจาก encoder (cross-attention) → feed-forward`, `Writes one token at a time: look at what's written (KV cache) → listen to the encoder (cross-attention) → feed-forward.`] : [`${nD} layer: attention ดูเฉพาะ token ก่อนหน้า (KV cache) + feed-forward · รันใหม่ทุก token`, `${nD} layers: attention over earlier tokens only (KV cache) + feed-forward. Runs again for every token.`], opt: ["รันทุก token → อ่าน weight ซ้ำหลายสิบรอบ · byte ต่อ weight กำหนดความเร็ว", "Runs every token → re-reads its weights dozens of times. Bytes per weight set the speed."], i: ["vec", dec1], o: ["vec2", "[1, " + s.d + "]"]},
     lmhead: {t: ["Norm → logits", "Norm → logits"], what: [`คูณเวกเตอร์กับตารางคำศัพท์ ${s.V}×${s.d} → คะแนนของทุกคำ แล้วเลือกคำถัดไป`, `Multiply by the ${s.V}×${s.d} vocabulary table → a score for every token, then pick the next one.`], opt: ["ก้อนเดียวที่ใหญ่สุดของฝั่ง decoder · ภาษาไทยมักพังที่นี่ก่อนเมื่อบีบ int4", "The single biggest block on the decoder side; Thai tends to break here first at int4."], i: ["vec2", "[1, " + s.d + "]"], o: ["probs", `[${s.V}]`]},
     pool: {t: ["Pooler / head", "Pooler / head"], what: ["สรุปทั้งลำดับเป็นเวกเตอร์เดียว (จาก [CLS]) ใช้ต่อกับงาน classify หรือค้นหา", "Summarize the whole sequence into one vector (from [CLS]) for classification or search."], opt: ["เล็ก", "Small."], i: ["mat2", `[n, ${s.d}]`], o: ["vec2", `[${s.d}]`]},
     cls_head: {t: ["Classifier", "Classifier"], what: [`เอาเวกเตอร์ [CLS] ไปคูณ → คะแนนของ ${m.labels || 1000} คลาส`, `Take the [CLS] vector → scores for ${m.labels || 1000} classes.`], opt: ["เล็ก", "Small."], i: ["mat2", `[${s.Se}, ${s.d}]`], o: ["probs_img", `[${m.labels || 1000}]`]},
@@ -197,12 +209,12 @@ function renderBig() {
     let o = ""; for (let k = 3; k >= 1; k--) o += `<rect x="${x + k * 7}" y="${y - k * 7}" width="${w}" height="${h}" rx="18" fill="${isE ? "#10162c" : "#1a1028"}" stroke="${col}" stroke-opacity="${.15 + .1 * (3 - k)}"/>`;
     const f = lensFill(Cc.layersTot, max);
     o += `<g class="${sel(c.id) ? "selstack" : ""}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="${isE ? "#121a36" : "#1d1230"}" stroke="${col}" stroke-width="${sel(c.id) ? 2.6 : 1.6}" ${sel(c.id) ? 'filter="url(#glow)"' : ""}/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="${f.fill}" opacity=".6"/></g>
-      <text x="${x + 18}" y="${y + 28}" class="xt">${isE ? "Encoder" : "Decoder"} ${t("layer")}</text>
+      <text x="${x + 18}" y="${y + 28}" class="xt">${S.M.meta.family === "prefix" ? (isE ? (S.M.meta.modality === "image" ? "Vision" : "Audio") : "LLM") : isE ? "Encoder" : "Decoder"} ${t("layer")}${Lx && Lx.regions.linear ? " · linear" : Lx && Cc.layers.some(L => L.regions.linear) ? " · full" : ""}</text>
       <g class="xnav" data-nav="${isE ? "e" : "d"}-"><rect x="${x + w - 128}" y="${y + 10}" width="26" height="26" rx="8" class="xr"/><text x="${x + w - 115}" y="${y + 28}" text-anchor="middle" class="xt">‹</text></g>
       <text x="${x + w - 72}" y="${y + 28}" text-anchor="middle" class="xm">${idx + 1} / ${n}</text>
       <g class="xnav" data-nav="${isE ? "e" : "d"}+"><rect x="${x + w - 42}" y="${y + 10}" width="26" height="26" rx="8" class="xr"/><text x="${x + w - 29}" y="${y + 28}" text-anchor="middle" class="xt">›</text></g>`;
     if (Lx) {
-      const regs = [["self", L2("Self-attention", "Self-attention"), isE ? "LN → Q K V → softmax → out ⊕" : L2("อ่าน + เขียน KV cache", "reads + writes KV cache")], ["cross", "Cross-attention", L2("ฟัง K/V จาก encoder", "listens to the encoder K/V")], ["ffn", "Feed-forward", Lx.regions.ffn && Lx.regions.ffn.gate ? "gate · up → act → down ⊕" : `LN → up → act → down ⊕`]].filter(r => Lx.regions[r[0]]);
+      const regs = [["linear", "Linear attention", L2("state ขนาดคงที่ · ไม่มี KV cache", "fixed-size state · no KV cache")], ["self", L2(Lx.regions.linear ? "Full attention" : "Self-attention", Lx.regions.linear ? "Full attention" : "Self-attention"), isE ? "LN → Q K V → softmax → out ⊕" : L2("อ่าน + เขียน KV cache", "reads + writes KV cache")], ["cross", "Cross-attention", L2("ฟัง K/V จาก encoder", "listens to the encoder K/V")], ["ffn", "Feed-forward", Lx.regions.ffn && Lx.regions.ffn.gate ? "gate · up → act → down ⊕" : `LN → up → act → down ⊕`]].filter(r => Lx.regions[r[0]]);
       const bh = regs.length === 3 ? 60 : 82, gap = regs.length === 3 ? 8 : 14; let yy = y + 46;
       if (S.zoom && S.zoom.comp === comp) o += zoomSteps(Lx, x, y, w, comp);
       else regs.forEach(([rk, title, cap]) => { o += box((isE ? "e_" : "d_") + rk, x + 16, yy, w - 32, bh, title, Lx.regions[rk]._tot, regMax, true, cap); yy += bh + gap; });
@@ -210,7 +222,7 @@ function renderBig() {
     o += `<text x="${x + w / 2}" y="${y + h + 22}" text-anchor="middle" class="xs">${esc(t("all_layers", {n, v: LENS[S.lens].unit(Cc.layersTot)}))}${isE ? "" : " " + t("per_token")}</text>${bar(x + 40, y + h + 30, w - 80, Cc.layersTot, max)}`;
     return o;
   };
-  const embBelow = F === "encdec";
+  const embBelow = F === "encdec" || F === "prefix";
   cols.forEach(c => {
     if (c.io) s += ioBox(c, {in_audio: "wave", in_text: "tokens", in_image: "image", mel: "spec", out_text: "text", out_vec: "vec2", out_class: "label"}[c.kind] || "mat");
     else if (c.stack) s += stack(c, c.comp === "encoder" ? E : D, c.comp === "encoder" ? Le : Ld, c.comp === "encoder" ? nE : nD, c.comp);
@@ -242,7 +254,7 @@ function zoomSteps(Lx, x, y, w, comp) { // the inside of one layer, drawn small 
   const rows = Object.entries(Lx.regions).map(([rk, R]) => [rk, (ORDER[rk] || []).flat().filter(r => R[r] && R[r].has)]).filter(r => r[1].length);
   let o = "", yy = y + 50; const rh = Math.min(62, (190 - 10 * rows.length) / rows.length);
   rows.forEach(([rk, roles], ri) => {
-    o += `<text x="${x + 18}" y="${yy + 12}" class="xs" fill="${C.soft}">${rk === "self" ? "self-attention" : rk === "cross" ? "cross-attention" : "feed-forward"}</text>`;
+    o += `<text x="${x + 18}" y="${yy + 12}" class="xs" fill="${C.soft}">${rk === "self" ? "self-attention" : rk === "cross" ? "cross-attention" : rk === "linear" ? "linear attention" : "feed-forward"}</text>`;
     const cw = (w - 36) / Math.max(roles.length, 5);
     roles.forEach((r, k) => { const bx = x + 18 + k * cw; o += `<g class="zs" style="animation-delay:${(ri * roles.length + k) * .18}s"><rect x="${bx}" y="${yy + 18}" width="${cw - 6}" height="${rh - 24}" rx="7" fill="rgba(255,255,255,.07)" stroke="${comp === "encoder" ? "#a3abfa" : "#ff7cc4"}" stroke-opacity=".6"/>
       <text x="${bx + (cw - 6) / 2}" y="${yy + 18 + (rh - 24) / 2 + 4}" text-anchor="middle" font-size="${cw < 70 ? 10 : 12}" fill="${C.ink}">${esc(stepName(r, true))}</text></g>`; });
@@ -320,17 +332,20 @@ const STEP = {
   conv: ["conv / patch", "แปลงสัญญาณดิบเป็นเวกเตอร์", "turn the raw signal into vectors"], embed: ["embedding", "token id → แถวในตาราง", "token id → a row of the table"], pos: ["+ position", "บอกตำแหน่ง", "add position"],
   mask: ["masks", "mask และตำแหน่งที่จะเขียนลง cache", "masks and the cache write position"], io: ["read caches", "อ่าน cache ที่ส่งเข้ามา", "read the incoming caches"], glue: ["glue", "ปรับรูปร่าง", "reshape glue"],
   crosskv: ["K/V proj", "แปลงผล encoder เป็น K,V ให้ decoder", "turn the encoder output into K,V for the decoder"], logits: ["logits", "คูณกับทั้งตารางคำศัพท์ → คะแนนทุกคำ", "multiply by the whole vocabulary → a score per token"],
+  state: ["state update", "อัปเดต state ขนาดคงที่แทนการเก็บ K,V ทุก token (Gated DeltaNet)", "update a fixed-size state instead of storing K,V for every token (Gated DeltaNet)"],
+  proj: ["projector", "แปลงเวกเตอร์ของ encoder ให้เป็นขนาดของ LLM", "map the encoder's vectors to the LLM's width"],
+  mtp: ["MTP head", "ทาย token ถัดๆ ไปล่วงหน้า ใช้เร่งด้วย speculative decoding", "drafts the next tokens ahead, for speculative decoding"],
   pool: ["pooler", "สรุปเป็นเวกเตอร์เดียว", "summarize into one vector"], cls: ["classifier", "คะแนนของแต่ละคลาส", "a score per class"], misc: ["other", "อื่นๆ", "other"], seam: ["seams", "QUANTIZE/DEQUANTIZE", "QUANTIZE/DEQUANTIZE"],
 };
 const stepName = (r, short) => (STEP[r] || [r])[0];
 const ORDER = {self: [["ln"], ["qkv", "q", "k", "v"], ["cache"], ["reshape"], ["scores"], ["softmax"], ["context"], ["out"], ["res"]], cross: [["ln"], ["q", "k", "v"], ["reshape"], ["scores"], ["softmax"], ["context"], ["out"], ["res"]],
-  ffn: [["ln"], ["gate", "fc1"], ["act"], ["fc2"], ["res"]], stem: [["conv"], ["embed"], ["glue"], ["pos"], ["ln"], ["mask"], ["io"]], head: [["ln"], ["crosskv"], ["logits"], ["pool"], ["cls"], ["glue"]]};
+  ffn: [["ln"], ["gate", "fc1"], ["act"], ["fc2"], ["res"]], linear: [["ln"], ["qkv"], ["gate"], ["conv"], ["state"], ["out"], ["res"]], stem: [["conv"], ["embed"], ["glue"], ["pos"], ["ln"], ["mask"], ["io"]], head: [["ln"], ["crosskv"], ["proj"], ["logits"], ["mtp"], ["pool"], ["cls"], ["glue"]]};
 function renderDetail() {
   const box = $("#xdetail"), id = S.open, M = S.M, E = M.A.comps.encoder, D = M.A.comps.decoder;
   if (!id) { box.innerHTML = `<div class="xempty">${t("click_hint")}</div>`; return; }
   let parts = null, order = null, crumb = "", title = "", what = "", opt = "";
-  const reg = id.match(/^([ed])_(self|cross|ffn)$/);
-  if (reg) { const Cc = reg[1] === "e" ? E : D, L = Cc.layers[reg[1] === "e" ? S.el : S.dl]; parts = L.regions[reg[2]] || {}; order = ORDER[reg[2]]; crumb = `${reg[1] === "e" ? "Encoder" : "Decoder"} › ${t("layer")} ${L.idx}`; title = reg[2] === "self" ? "Self-attention" : reg[2] === "cross" ? "Cross-attention" : "Feed-forward"; }
+  const reg = id.match(/^([ed])_(self|cross|ffn|linear)$/);
+  if (reg) { const Cc = reg[1] === "e" ? E : D, L = Cc.layers[reg[1] === "e" ? S.el : S.dl]; parts = L.regions[reg[2]] || {}; order = ORDER[reg[2]]; crumb = `${reg[1] === "e" ? "Encoder" : "Decoder"} › ${t("layer")} ${L.idx}`; title = reg[2] === "self" ? "Self-attention" : reg[2] === "cross" ? "Cross-attention" : reg[2] === "linear" ? "Linear attention" : "Feed-forward"; }
   else { const col = (LAY ? LAY.cols : []).find(c => c.id === id || c.kind === id); if (col) { const info = partInfo(col, M); title = info.title; what = info.what; opt = info.opt; if (col.part) { parts = col.id === "e_stem" ? E.stem : col.id === "e_head" ? E.head : col.id === "d_stem" ? D.stem : D.head; order = /stem/.test(col.id) ? ORDER.stem : ORDER.head; } crumb = col.comp || (col.where || "").split(".")[0]; }
     if (id === "d_stem") { parts = D.stem; order = ORDER.stem; title = "Token embedding"; crumb = "decoder"; } }
   const tot = parts ? sumParts(parts) : null;
@@ -373,7 +388,7 @@ function renderMap() {
     r.blocks.forEach(b => { const w = Math.max(2, wOf(b, r.c) * px - 2.5); let fill = col, op = 1;
       if (S.mapLens === "prec") fill = dtColor(b.p); if (S.mapLens === "frag") { const s = b.p._frag; const k = !(s > 0) ? -1 : (Math.log(s) - Math.log(fmn)) / ((Math.log(fmx) - Math.log(fmn)) || 1); fill = k < 0 ? "#2a3150" : `rgb(${Math.round(60 + 170 * k)},${Math.round(40 + 10 * (1 - k))},${Math.round(120 - 80 * k)})`; }
       out += `<g class="blk" data-c="${r.c}" data-l="${b.L ? b.L.idx : ""}" data-id="${b.id}"><title>${esc(b.id)} · ${fB(b.p.bytes)} · ${esc(dtLabel(b.p))}${b.p._frag != null ? " · int4 err " + (b.p._frag * 100).toFixed(1) + "%" : ""}</title>`;
-      if (b.L && (S.mapLens === "size" || S.mapLens === "read") && w > 8) { const att = (b.L.regions.self ? b.L.regions.self._tot.bytes : 0) + (b.L.regions.cross ? b.L.regions.cross._tot.bytes : 0), fa = b.p.bytes ? att / b.p.bytes : .33;
+      if (b.L && (S.mapLens === "size" || S.mapLens === "read") && w > 8) { const att = ["self", "cross", "linear"].reduce((a, r) => a + (b.L.regions[r] ? b.L.regions[r]._tot.bytes : 0), 0), fa = b.p.bytes ? att / b.p.bytes : .33;
         out += `<rect x="${x}" y="${y}" width="${w}" height="${h * fa}" rx="3" fill="${fill}" opacity=".55"/><rect x="${x}" y="${y + h * fa}" width="${w}" height="${h * (1 - fa)}" fill="${fill}"/>`; }
       else out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${fill}" opacity="${op}"/>`;
       out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="none" stroke="rgba(0,0,0,.3)"/>`;
@@ -453,10 +468,11 @@ function shareRows() {
   const A = S.M.A, E = A.comps.encoder, D = A.comps.decoder, rows = [], tk = S.tokens;
   const add = (name, p, per, c) => p && p.has && rows.push({name, p, per, c});
   const sumR = (Cc, r) => Cc.layers.reduce((a, L) => L.regions[r] ? merge(a, L.regions[r]._tot) : a, part());
-  if (E) { add("Encoder · " + (S.M.meta.modality === "audio" ? "conv stem" : S.M.meta.modality === "image" ? "patch embedding" : "embedding"), E.stemTot, "in", "e"); add(`Encoder · self-attention ×${E.layers.length}`, sumR(E, "self"), "in", "e"); add(`Encoder · feed-forward ×${E.layers.length}`, sumR(E, "ffn"), "in", "e"); add(D ? "Encoder · final norm / K,V" : "Encoder · head", E.headTot, "in", "e"); }
-  if (D) { add("Decoder · token embedding", D.stemTot, "tok", "d"); add(`Decoder · self-attention ×${D.layers.length}`, sumR(D, "self"), "tok", "d"); add(`Decoder · cross-attention ×${D.layers.length}`, sumR(D, "cross"), "tok", "d"); add(`Decoder · feed-forward ×${D.layers.length}`, sumR(D, "ffn"), "tok", "d"); add("Decoder · norm + logits", D.headTot, "tok", "d"); }
+  const nl = (Cc, r) => Cc.layers.filter(L => L.regions[r]).length;
+  if (E) { add("Encoder · " + (S.M.meta.modality === "audio" ? "conv stem" : S.M.meta.modality === "image" ? "patch embedding" : "embedding"), E.stemTot, "in", "e"); add(`Encoder · self-attention ×${nl(E, "self")}`, sumR(E, "self"), "in", "e"); add(`Encoder · feed-forward ×${nl(E, "ffn")}`, sumR(E, "ffn"), "in", "e"); add(D ? (S.M.meta.family === "prefix" ? "Encoder · projector" : "Encoder · final norm / K,V") : "Encoder · head", E.headTot, "in", "e"); }
+  if (D) { const dn = S.M.meta.family === "prefix" ? "LLM" : "Decoder"; add(`${dn} · token embedding`, D.stemTot, "tok", "d"); add(`${dn} · linear attention ×${nl(D, "linear")}`, sumR(D, "linear"), "tok", "d"); add(`${dn} · ${nl(D, "linear") ? "full" : "self"}-attention ×${nl(D, "self")}`, sumR(D, "self"), "tok", "d"); add(`${dn} · cross-attention ×${nl(D, "cross")}`, sumR(D, "cross"), "tok", "d"); add(`${dn} · feed-forward ×${nl(D, "ffn")}`, sumR(D, "ffn"), "tok", "d"); add(`${dn} · norm + logits${D.head.mtp ? " + MTP" : ""}`, D.headTot, "tok", "d"); }
   rows.forEach(r => r.read = r.p.bytes * (r.per === "tok" ? tk : 1));
-  if (D && D.headTot.shared) { const emb = rows.find(r => r.name.startsWith("Decoder · token")), lg = rows.find(r => r.name.startsWith("Decoder · norm")); const tw = D.stemTot.w.find(w => w.shape.length === 2 && w.shape[0] > 1000);
+  if (D && D.headTot.shared) { const emb = rows.find(r => / · token embedding/.test(r.name) && r.c === "d"), lg = rows.find(r => / · norm \+ logits/.test(r.name)); const tw = D.stemTot.w.find(w => w.shape.length === 2 && w.shape[0] > 1000);
     if (emb && lg && tw) { const tb = emb.p.bytes * (prod(tw.shape) / Math.max(1, emb.p.params)); emb.read = (emb.p.bytes - tb + tb / tw.shape[0]) * tk; lg.read = tb * tk; } }
   return rows;
 }
@@ -470,6 +486,12 @@ function insights() {
   const emb = (D || E).stemTot; if (emb.bytes / tot.bytes > .12) out.push([C.amber, "!", t("i_emb", {b: fB(emb.bytes), s: pct(emb.bytes, tot.bytes)})]);
   if (D && D.headTot.shared) out.push([C.ok, "✓", t("i_tied")]);
   if (M.meta.kv_heads && M.meta.heads && M.meta.kv_heads < M.meta.heads) out.push([C.ok, "✓", t("i_gqa", {kv: M.meta.kv_heads, h: M.meta.heads, x: M.meta.heads / M.meta.kv_heads})]);
+  if (M.meta.family === "prefix") out.push([C.blueL, "i", t("i_prefix")]);
+  if (D) { const lin = D.layers.filter(L => L.regions.linear).length, full = D.layers.filter(L => L.regions.self).length;
+    const kvB = D.layers.reduce((a, L) => { const R = L.regions.self; if (!R) return a; const k = R.k && R.k.w[0] ? R.k.w[0].shape[0] : 0, v = R.v && R.v.w[0] ? R.v.w[0].shape[0] : k; return a + (k + v) * 2; }, 0);
+    if (kvB) { const n = M.meta.ctx ? Math.min(M.meta.ctx, 131072) : 32768; out.push([C.amber, "!", t("i_kv", {b: fB(kvB), c: fB(kvB * n), n: n.toLocaleString()})]); }
+    if (lin) out.push([C.ok, "✓", t("i_hybrid", {l: lin, t: lin + full, f: full})]);
+    if (D.head.mtp) out.push([C.blueL, "i", t("i_mtp", {b: fB(D.head.mtp.bytes)})]); }
   const dts = tot.dt; if (Object.keys(dts).length > 1) out.push([C.amber, "!", t("i_mixed", {m: dtLabel(tot)})]);
   if (M.kind === "ops") { const ty = tot.types, n = tot.ops, sh = ["RESHAPE", "TRANSPOSE", "SLICE", "CONCATENATION", "PAD", "GATHER_ND", "SQUEEZE", "EXPAND_DIMS"].reduce((a, k) => a + (ty[k] || 0), 0);
     out.push([C.dim, "i", t("i_shape", {s: pct(sh, n)})]); const ln = ["MEAN", "SQUARED_DIFFERENCE", "RSQRT"].reduce((a, k) => a + (ty[k] || 0), 0); if (ln) out.push([C.blueL, "i", t("i_ln", {n: Object.values(A.comps).reduce((a, c) => a + c.layers.reduce((b, Lx) => b + Object.values(Lx.regions).reduce((cc, R) => cc + (R.ln ? R.ln.ops : 0), 0), 0) + (c.headTot && c.head.ln ? c.head.ln.ops : 0), 0)})]);
@@ -494,7 +516,7 @@ async function loadFiles(files) {
   try { const gs = []; for (const f of tfl) { const comp = /enc/i.test(f.name) ? "encoder" : /dec/i.test(f.name) ? "decoder" : (tfl.length === 1 ? "model" : "encoder"); gs.push(graphFromTflite(parseTflite(await f.arrayBuffer()), comp, f.name)); }
     const enc = gs.some(g => g.component === "encoder"), dec = gs.some(g => g.component !== "encoder");
     const meta = {name: tfl.map(f => f.name).join(" + "), family: enc && dec ? "encdec" : enc ? "encoder" : "decoder", modality: gs.some(g => g.nodes.some(n => n.t === "CONV_2D")) && enc ? "audio" : "text", d: null, tie: true};
-    const id = "up-" + Date.now(); register({id, label: meta.name, short: tfl.length > 1 ? "Uploaded (" + tfl.length + ")" : tfl[0].name, group: "own", graphs: gs, meta, note: () => t("n_upload")}); ownNote(""); setModel(id);
+    const id = "up-" + tfl.map(f => f.name + f.size).join("-").replace(/[^\w-]+/g, "-").slice(0, 60); const def = register({id, label: meta.name, short: tfl.length > 1 ? "Uploaded (" + tfl.length + ")" : tfl[0].name, group: "own", graphs: gs, meta, kind: "ops", noteKey: "n_upload", note: () => t("n_upload")}); def.M = null; persist(def); ownNote(t("saved_note")); setModel(id);
   } catch (e) { ownNote(`<b style="color:#ff5a67">${t("e_read")}</b> ${esc(e.message)}`); }
 }
 function ownNote(h) { $("#ownNote").innerHTML = h; }
@@ -507,21 +529,21 @@ async function hfLoad(input) {
   let cfg = null; if (files.some(f => f.n === "config.json")) try { cfg = await (await fetch(base + "config.json")).json(); } catch (e) {}
   if (tfl.length) { const pick = tfl.filter(f => /enc|dec/i.test(f.n)).slice(0, 2), chosen = pick.length ? pick : tfl.slice(0, 1), gs = [];
     for (const f of chosen) { ownNote(`${t("loading")} ${esc(f.n)} (${fB(f.size)})`); gs.push(graphFromTflite(parseTflite(await (await fetch(base + f.n)).arrayBuffer()), /enc/i.test(f.n) ? "encoder" : /dec/i.test(f.n) ? "decoder" : "model", f.n)); }
-    return {graphs: gs, meta: {name: repo, family: chosen.length > 1 ? "encdec" : "decoder", modality: "text", tie: true}, label: repo, note: () => t("n_upload")}; }
+    return {graphs: gs, kind: "ops", meta: {name: repo, family: chosen.length > 1 ? "encdec" : "decoder", modality: "text", tie: true}, label: repo, noteKey: "n_upload"}; }
   const head = async url => { const b = await (await fetch(url, {headers: {Range: "bytes=0-7"}})).arrayBuffer(); const n = Number(new DataView(b).getBigUint64(0, true)); return parseSafetensorsHeader(await (await fetch(url, {headers: {Range: `bytes=0-${8 + n - 1}`}})).arrayBuffer()); };
   let tensors = {}; const idx = files.find(f => f.n === "model.safetensors.index.json");
   if (idx) { const j = await (await fetch(base + idx.n)).json(); for (const sh of [...new Set(Object.values(j.weight_map))]) Object.assign(tensors, await head(base + sh)); }
-  else { const st = files.find(f => /\.safetensors$/.test(f.n)); if (!st) { if (cfg) { const r = tensorsFromConfig(cfg); return {tensors: r.tensors, meta: {...r.meta, name: repo}, kind: "config", label: repo, note: () => t("n_cfg", {mt: r.meta.model_type})}; } throw new Error("no .tflite / .safetensors / config.json"); } Object.assign(tensors, await head(base + st.n)); }
+  else { const st = files.find(f => /\.safetensors$/.test(f.n)); if (!st) { if (cfg) { const r = tensorsFromConfig(cfg); return {tensors: r.tensors, meta: {...r.meta, name: repo}, kind: "config", label: repo, noteKey: "n_cfg", noteVars: {mt: r.meta.model_type}}; } throw new Error("no .tflite / .safetensors / config.json"); } Object.assign(tensors, await head(base + st.n)); }
   let meta = metaFromTensors(tensors, repo); if (cfg) { try { const r = tensorsFromConfig(cfg); meta = {...meta, ...r.meta, name: repo}; } catch (e) {} }
-  const n = Object.keys(tensors).length; return {tensors, meta, label: repo, note: () => t("n_hf_st", {n})};
+  const n = Object.keys(tensors).length; return {tensors, meta, kind: "tensors", label: repo, noteKey: "n_hf_st", noteVars: {n}};
 }
-function addOwn(r, short) { const id = "own-" + (r.label || "m").replace(/[^\w-]+/g, "-").slice(0, 40); register({id, label: r.label, short: short || r.label.split("/").pop(), group: "own", ...r}); MODELS.find(m => m.id === id).M = null; setModel(id); }
+function addOwn(r, short) { const id = "own-" + (r.label || "m").replace(/[^\w-]+/g, "-").slice(0, 40); const def = register({id, label: r.label, short: short || r.label.split("/").pop(), group: "own", ...r, note: () => t(r.noteKey, r.noteVars)}); def.M = null; persist(def); ownNote(t("saved_note")); setModel(id); }
 
 // ================================================================== everything
 function renderAll() { applyI18n(); renderPicker(); renderHero(); renderBig(); buildPlay(); renderIO(); renderDetail(); renderMap(); renderConcepts(); renderReport(); if (window.qRelabel) qRelabel(); $("#tokV").textContent = S.tokens; $("#tokV2").textContent = S.tokens; }
 function wire() {
   $$("[data-lang]").forEach(b => b.onclick = () => { LANG = b.dataset.lang; try { localStorage.setItem("mx_lang", LANG); } catch (e) {} renderAll(); });
-  $$("[data-xl]").forEach(b => b.onclick = () => { S.lens = b.dataset.xl; renderBig(); renderDetail(); });
+  $$("[data-xl]").forEach(b => b.onclick = () => { S.lens = b.dataset.xl; pref("lens", S.lens); renderBig(); renderDetail(); });
   $$("[data-ml]").forEach(b => b.onclick = () => { S.mapLens = b.dataset.ml; renderMap(); });
   $("#bPlay").onclick = () => S.playing ? stopPlay() : startPlay();
   $("#bNext").onclick = () => { stopPlay(); if (!PLAY.length) buildPlay(); goStep(S.step + 1); };
@@ -532,7 +554,7 @@ function wire() {
   $("#hfGo").onclick = async () => { ownNote(t("loading")); try { const r = await hfLoad($("#hf").value); ownNote(""); addOwn(r); } catch (e) { ownNote(e.message === "BLOCKED" ? t("e_blocked") : `<b style="color:#ff5a67">${t("e_read")}</b> ${esc(e.message)}`); } };
   $("#hf").addEventListener("keydown", e => { if (e.key === "Enter") $("#hfGo").click(); });
   $("#cfgOpen").onclick = () => $("#cfgDlg").classList.add("open"); $("#cfgClose").onclick = () => $("#cfgDlg").classList.remove("open");
-  $("#cfgGo").onclick = () => { try { const cfg = JSON.parse($("#cfgTxt").value); const r = tensorsFromConfig(cfg); $("#cfgDlg").classList.remove("open"); addOwn({tensors: r.tensors, meta: r.meta, kind: "config", label: (cfg._name_or_path || r.meta.model_type || "config") + "", note: () => t("n_cfg", {mt: r.meta.model_type})}, r.meta.model_type); } catch (e) { $("#cfgErr").textContent = t("e_cfg") + e.message; } };
+  $("#cfgGo").onclick = () => { try { const cfg = JSON.parse($("#cfgTxt").value); const r = tensorsFromConfig(cfg); $("#cfgDlg").classList.remove("open"); addOwn({tensors: r.tensors, meta: r.meta, kind: "config", label: (cfg._name_or_path || r.meta.model_type || "config") + "", noteKey: "n_cfg", noteVars: {mt: r.meta.model_type}}, r.meta.model_type); } catch (e) { $("#cfgErr").textContent = t("e_cfg") + e.message; } };
   $("#copyMd").onclick = async () => { try { await navigator.clipboard.writeText(S.md); $("#copyMd").textContent = t("copied"); } catch (e) { $("#copyMd").textContent = t("copy_fail"); } setTimeout(() => $("#copyMd").textContent = t("copy_md"), 1800); };
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), {threshold: 0, rootMargin: "0px 0px -6% 0px"}); $$(".reveal").forEach(el => io.observe(el));
   addEventListener("hashchange", () => { const h = location.hash.slice(1); if (h && MODELS.some(m => m.id === h) && (!S.M || S.M.id !== h)) setModel(h, true); });
@@ -543,7 +565,9 @@ function wire() {
   const PG = window.PRE_GRAPHS || {}, RH = (typeof PRELOADED !== "undefined" && PRELOADED.rehearsal) || {}, TT = window.TEMPLATE_TENSORS || {};
   const wmeta = {name: "distill-whisper-th-medium", model_type: "whisper", family: "encdec", modality: "audio", d: 1024, heads: 16, kv_heads: 16, ffn: 4096, vocab: 51865, tie: true, nmels: 80, seqEnc: 1500};
   if (PG.medium_enc) register({id: "whisper-th-medium", label: "biodatlab/distill-whisper-th-medium", short: "Whisper medium (Thai)", sub: ["เสียง → ข้อความ · .tflite จริง", "speech → text · real .tflite"], group: "tpl", graphs: [PG.medium_enc, PG.medium_dec], meta: wmeta, note: () => t("n_whisper")});
-  const tpl = (id, key, short, sub) => { const T = TT[key]; if (T) register({id, label: T.meta.name, short, sub, group: "tpl", tensors: T.tensors, meta: T.meta, note: () => t("n_tensors", {name: T.meta.name})}); };
+  const tpl = (id, key, short, sub) => { const T = TT[key]; if (T) register({id, label: T.meta.name, short, sub, group: "tpl", tensors: T.tensors, meta: T.meta, note: () => t(/qwen3_5|qwen3_asr/.test(T.meta.model_type) ? "n_cfgtpl" : "n_tensors", {name: T.meta.name})}); };
+  tpl("qwen3-asr-1-7b", "qwen3_asr_17b", "Qwen3-ASR 1.7B", ["เสียง → LLM · ASR", "audio → LLM · ASR"]);
+  tpl("qwen3-8-27b", "qwen38_27b", "Qwen3.8 27B", ["ภาพ+ข้อความ · hybrid attention", "vision + text · hybrid attention"]);
   tpl("llama-3-2-1b", "llama32_1b", "Llama 3.2 1B", ["LLM · decoder-only", "LLM · decoder-only"]);
   tpl("gpt2", "gpt2", "GPT-2 small", ["LLM · decoder-only", "LLM · decoder-only"]);
   tpl("bert-base", "bert_base", "BERT base", ["ข้อความ · encoder-only", "text · encoder-only"]);
@@ -554,5 +578,9 @@ function wire() {
   if (PG.reh_int4_enc) register({id: "reh-int4", label: "Whisper rehearsal · dynamic int4", short: "dynamic int4", sub: ["int4", "int4"], group: "prec", graphs: [PG.reh_int4_enc, PG.reh_int4_dec], meta: rmeta, viz: RH.dyn_int4, note: () => t("n_reh_int4")});
 })();
 wire();
-const h0 = location.hash.slice(1); setModel(MODELS.some(m => m.id === h0) ? h0 : MODELS[0].id, true);
+S.lens = pref("lens") || "weights";
+const h0 = location.hash.slice(1), last = pref("last");
+setModel(MODELS.some(m => m.id === h0) ? h0 : MODELS.some(m => m.id === last) ? last : MODELS[0].id, true);
+DB.all().then(list => { (list || []).sort((a, b) => b.savedAt - a.savedAt).forEach(o => { if (!MODELS.some(m => m.id === o.id)) register({...o, group: "own", note: () => t(o.noteKey || "n_upload", o.noteVars)}); });
+  const want = MODELS.some(m => m.id === h0) ? h0 : last; if (want && S.M.id !== want && MODELS.some(m => m.id === want)) setModel(want, true); else renderPicker(); });
 })();
