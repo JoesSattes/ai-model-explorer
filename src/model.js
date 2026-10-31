@@ -332,5 +332,5 @@ function metaFromIR(I, cfg, name) {
     d: B.d || hp.d, encD: tw ? tw.d : null, heads: fz && fz.heads || hp.heads, kv_heads: fz && fz.kv_heads || hp.kv_heads, head_dim: fz && fz.head_dim || hp.head_dim, heads_exact: src.heads !== "estimate",
     vocab: hp.vocab || g("vocab_size"), tie: hp.tie != null ? hp.tie : g("tie_word_embeddings") !== false, ffn: hp.ffn || g("intermediate_size"), experts: hp.experts || 0, topk: fz && fz.topk || g("num_experts_per_tok", "moe_topk", "top_k") || null,
     layers: S0.decoder ? {enc: S0.encoder ? S0.encoder.layers : 0, dec: B.layers} : {enc: B.layers}, layer_pattern: runs.length > 1 ? runs.map(([l, n]) => (n > 1 ? n + "×" : "") + l).slice(0, 8).join(" · ") + (runs.length > 8 ? " …" : "") : null,
-    nmels: mod === "audio" ? 128 : null, seqEnc: mod === "audio" ? 1500 : null, irFamily: I.family, quant: I.quant, joint: I.joint || null, timestep: I.timestep || null, model_type: cfg && cfg.model_type || null};
+    nmels: mod === "audio" ? 128 : null, seqEnc: S0.fam === "transducer" ? 375 : mod === "audio" ? 1500 : null, irFamily: I.family, quant: I.quant, joint: I.joint || null, timestep: I.timestep || null, model_type: cfg && cfg.model_type || null};
 }

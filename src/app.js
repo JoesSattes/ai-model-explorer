@@ -10,6 +10,22 @@ const pct = (a, b) => b ? (a / b * 100).toFixed(a / b < .1 ? 1 : 0) + "%" : "0%"
 const L2 = (th, en) => LANG === "en" ? en : th;
 const DTC = {fp32: "#1b5fd1", fp16: "#7ea3e6", bf16: "#7ea3e6", int8: "#d4651c", int4: "#eba06d", uint8: "#d4651c", fp8: "#e8b48c"};
 const C = {red: "#c4242a", redL: "#c4242a", mag: "#d4651c", magL: "#d4651c", blue: "#1b5fd1", blueL: "#5d86d4", ok: "#247b50", amber: "#9a6200", ink: "#141414", soft: "#4d4d4a", dim: "#6b6b66"};
+const PAL = {
+  light: {ink: "#141414", soft: "#4d4d4a", dim: "#6b6b66", dim2: "#8a8a85", surf: "#ffffff", raised: "#f3f3f0", active: "#e7e7e3", line: "#d9d9d3",
+    enc: "#1b5fd1", dec: "#d4651c", ssm: "#1a8f6a", conf: "#b98900", neg: "#c4242a", ok: "#247b50", amber: "#9a6200", blueL: "#5d86d4",
+    ovRGB: "20,20,20", blRGB: "27,95,209", blLRGB: "93,134,212", okRGB: "36,123,80",
+    role: {backbone: ["#fbe9dd", "#7a3409"], encoder: ["#e3ecfb", "#123f8c"], adapter: ["#f4ecd6", "#5c4300"], graph: ["#dcf3e6", "#0f4a2c"], prediction: ["#f4ecd6", "#5c4300"], joint: ["#ffedea", "#831c1e"], aux: ["#efefeb", "#4d4d4a"]}},
+  dark: {ink: "#f4f5f8", soft: "#b9c0d4", dim: "#8f97b0", dim2: "#7d86a0", surf: "#121a2e", raised: "#18213a", active: "#222c48", line: "#2e3854",
+    enc: "#8b96fa", dec: "#ff6bb5", ssm: "#4ade80", conf: "#f5c443", neg: "#ff5a67", ok: "#4ade80", amber: "#f5c443", blueL: "#a3abfa",
+    ovRGB: "255,255,255", blRGB: "139,150,250", blLRGB: "163,171,250", okRGB: "74,222,128",
+    role: {backbone: ["#2a1630", "#ffb3d9"], encoder: ["#1a2147", "#c3c9ff"], adapter: ["#2b2614", "#f5d98a"], graph: ["#122b20", "#9cf0bd"], prediction: ["#2b2614", "#f5d98a"], joint: ["#2e1519", "#ffb0b6"], aux: ["#1c2438", "#b9c0d4"]}}};
+const K = {};
+function setTheme(th) {
+  th = th === "light" ? "light" : "dark"; document.documentElement.dataset.theme = th; Object.assign(K, PAL[th]);
+  Object.assign(C, {red: K.neg, redL: K.neg, mag: K.dec, magL: K.dec, blue: K.enc, blueL: K.blueL, ok: K.ok, amber: K.amber, ink: K.ink, soft: K.soft, dim: K.dim});
+  Object.keys(BLK).forEach(k => BLK[k] = /SSM/.test(k) ? K.ssm : /MoE/.test(k) ? K.dec : /Conformer|RNN/.test(k) ? K.conf : /Attention|Transformer|DiT|Cross/.test(k) ? K.enc : "#a9a9a3");
+  Object.assign(ROLE_C, K.role);
+}
 
 // ================================================================== models
 const MODELS = [];
@@ -109,7 +125,7 @@ function renderHero() {
     for (const p of P) { p.x += p.s; if (p.x > 1.02) { p.x = -.02; p.lane = Math.floor(Math.random() * 24); }
       const wave = (Math.sin(p.x * 18 + tt * 2 + p.o) * .5 + Math.sin(p.x * 7 - tt + p.o * .5) * .5) * (.12 + .1 * Math.sin(p.o * 3)); let px, py;
       if (p.x < gx) { px = p.x; py = .6 + wave * (1 - p.x / gx * .4); } else { const k = Math.min(1, (p.x - gx) / .08), colx = gx + .06 + p.lane * ((.96 - gx - .06) / 24); px = p.x * (1 - k) + colx * k; py = (.6 + wave * .6) * (1 - k) + (.28 + ((p.o * 97) % 1) * .6) * k; }
-      x.fillStyle = px < gx ? `rgba(93,134,212,${.2 + .5 * p.a})` : (p.lane < 20 ? `rgba(27,95,209,${.3 + .6 * p.a})` : `rgba(27,95,209,${.35 + .6 * p.a})`);
+      x.fillStyle = px < gx ? `rgba(${K.blLRGB},${.2 + .5 * p.a})` : (p.lane < 20 ? `rgba(${K.blRGB},${.3 + .6 * p.a})` : `rgba(${K.blRGB},${.35 + .6 * p.a})`);
       x.beginPath(); x.arc(px * W, py * H, (1 + p.a * 1.5) * devicePixelRatio, 0, 6.28); x.fill(); } })();
 })();
 
@@ -164,17 +180,17 @@ function partInfo(col, M) {
 function viz(kind, w = 210, h = 104) {
   let s = "", r = (i, j) => (Math.sin(i * 12.9898 + j * 78.233) * 43758.5453) % 1, ab = v => Math.abs(v);
   if (kind === "wave") { let d = ""; for (let i = 0; i <= 80; i++) { const x = 6 + i * (w - 12) / 80, a = Math.sin(i * .7) * Math.sin(i * .17) * h * .38; d += (i ? "L" : "M") + x.toFixed(1) + " " + (h / 2 + a).toFixed(1); } s = `<path d="${d}" stroke="${C.soft}" stroke-width="2" fill="none"/>`; }
-  else if (kind === "spec") { for (let i = 0; i < 26; i++) for (let j = 0; j < 12; j++) { const v = Math.max(0, Math.sin(i * .5 + j * .35) * .5 + .5 - j / 18); s += `<rect x="${4 + i * 7.9}" y="${h - 4 - (j + 1) * 8}" width="7.3" height="7.3" fill="rgba(93,134,212,${(.1 + v * .85).toFixed(2)})"/>`; } }
+  else if (kind === "spec") { for (let i = 0; i < 26; i++) for (let j = 0; j < 12; j++) { const v = Math.max(0, Math.sin(i * .5 + j * .35) * .5 + .5 - j / 18); s += `<rect x="${4 + i * 7.9}" y="${h - 4 - (j + 1) * 8}" width="7.3" height="7.3" fill="rgba(${K.blLRGB},${(.1 + v * .85).toFixed(2)})"/>`; } }
   else if (kind === "tokens" || kind === "text") {
     const toks = S.M.meta.modality === "audio" ? [EX.audio] : S.M.A.comps.decoder ? (kind === "text" ? [...EX.textDec, EX.textDecNext[0]] : EX.textDec) : EX.textEnc; let x = 6, y = 26;
     toks.forEach((tk, i) => { const tw = Math.max(26, tk.length * 8.4 + 14); if (x + tw > w) { x = 6; y += 32; } const last = kind === "text" && i === toks.length - 1;
-      s += `<rect x="${x}" y="${y - 17}" width="${tw}" height="24" rx="7" fill="${last ? "rgba(36,123,80,.14)" : "rgba(20,20,20,0.056)"}" stroke="${last ? C.ok : "rgba(20,20,20,0.160)"}"/><text x="${x + tw / 2}" y="${y}" text-anchor="middle" font-size="13" fill="${last ? C.ok : C.ink}">${esc(tk.trim() || "␣")}</text>`;
+      s += `<rect x="${x}" y="${y - 17}" width="${tw}" height="24" rx="7" fill="${last ? `rgba(${K.okRGB},.14)` : `rgba(${K.ovRGB},0.056)`}" stroke="${last ? C.ok : `rgba(${K.ovRGB},0.160)`}"/><text x="${x + tw / 2}" y="${y}" text-anchor="middle" font-size="13" fill="${last ? C.ok : C.ink}">${esc(tk.trim() || "␣")}</text>`;
       if (kind === "tokens" && S.M.meta.modality !== "audio") s += `<text x="${x + tw / 2}" y="${y + 18}" text-anchor="middle" font-size="9.5" fill="${C.dim}" font-family="var(--mono)">${Math.floor(ab(r(i, 3)) * 30000)}</text>`; x += tw + 6; });
     if (kind === "text" && S.M.meta.modality === "audio") s = `<text x="${w / 2}" y="${h / 2 + 8}" text-anchor="middle" font-size="22" font-weight="700" fill="${C.ok}">${EX.audio}</text>`; }
   else if (kind === "image" || kind === "patches") { for (let i = 0; i < 14; i++) for (let j = 0; j < 7; j++) { const v = .5 + .5 * Math.sin(i * .45 + j * .6), c2 = `hsl(${30 + v * 30},${40 + 30 * v}%,${25 + 35 * v}%)`; s += `<rect x="${w / 2 - 98 + i * 14}" y="${4 + j * 14}" width="${kind === "patches" ? 12.5 : 14}" height="${kind === "patches" ? 12.5 : 14}" fill="${c2}"/>`; } }
-  else if (kind === "mat" || kind === "mat2") { const cols = 30, rows = 9; for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) { const v = ab(r(i + (kind === "mat2" ? 7 : 0), j)); const c2 = kind === "mat2" ? `rgba(27,95,209,${(.15 + .8 * v).toFixed(2)})` : `rgba(27,95,209,${(.15 + .8 * v).toFixed(2)})`; s += `<rect x="${4 + i * 6.8}" y="${6 + j * 10.5}" width="6" height="9.5" rx="1.5" fill="${c2}"/>`; } }
-  else if (kind === "kv") { ["K", "V"].forEach((l, k) => { for (let i = 0; i < 13; i++) for (let j = 0; j < 7; j++) s += `<rect x="${8 + k * 104 + i * 7}" y="${18 + j * 11}" width="6.2" height="10" rx="1.5" fill="rgba(27,95,209,${(.2 + .75 * ab(r(i + k * 9, j))).toFixed(2)})"/>`; s += `<text x="${54 + k * 104}" y="13" text-anchor="middle" font-size="12" font-weight="700" fill="${C.ink}">${l}</text>`; }); }
-  else if (kind === "vec" || kind === "vec2") { for (let i = 0; i < 28; i++) { const v = ab(r(i + (kind === "vec2" ? 5 : 0), 2)); s += `<rect x="${6 + i * 7.2}" y="${h / 2 - 9}" width="6.4" height="18" rx="1.5" fill="${kind === "vec2" ? `rgba(27,95,209,${(.2 + .75 * v).toFixed(2)})` : `rgba(212,101,28,${(.2 + .75 * v).toFixed(2)})`}"/>`; } }
+  else if (kind === "mat" || kind === "mat2") { const cols = 30, rows = 9; for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) { const v = ab(r(i + (kind === "mat2" ? 7 : 0), j)); const c2 = kind === "mat2" ? `rgba(${K.blRGB},${(.15 + .8 * v).toFixed(2)})` : `rgba(${K.blRGB},${(.15 + .8 * v).toFixed(2)})`; s += `<rect x="${4 + i * 6.8}" y="${6 + j * 10.5}" width="6" height="9.5" rx="1.5" fill="${c2}"/>`; } }
+  else if (kind === "kv") { ["K", "V"].forEach((l, k) => { for (let i = 0; i < 13; i++) for (let j = 0; j < 7; j++) s += `<rect x="${8 + k * 104 + i * 7}" y="${18 + j * 11}" width="6.2" height="10" rx="1.5" fill="rgba(${K.blRGB},${(.2 + .75 * ab(r(i + k * 9, j))).toFixed(2)})"/>`; s += `<text x="${54 + k * 104}" y="13" text-anchor="middle" font-size="12" font-weight="700" fill="${C.ink}">${l}</text>`; }); }
+  else if (kind === "vec" || kind === "vec2") { for (let i = 0; i < 28; i++) { const v = ab(r(i + (kind === "vec2" ? 5 : 0), 2)); s += `<rect x="${6 + i * 7.2}" y="${h / 2 - 9}" width="6.4" height="18" rx="1.5" fill="${kind === "vec2" ? `rgba(${K.blRGB},${(.2 + .75 * v).toFixed(2)})` : `rgba(212,101,28,${(.2 + .75 * v).toFixed(2)})`}"/>`; } }
   else if (kind === "probs" || kind === "probs_img") { const lab = kind === "probs_img" ? EX.img : S.M.meta.modality === "audio" ? ["วันนี้", "วัน", "ทุก", "เมื่อ", "พรุ่ง"] : EX.textDecNext, pr = [.62, .14, .09, .05, .03];
     pr.forEach((v, i) => { s += `<text x="${w * .42}" y="${16 + i * 19}" text-anchor="end" font-size="12" fill="${i ? C.soft : C.ok}">${esc(lab[i].trim())}</text><rect x="${w * .45}" y="${6 + i * 19}" width="${v * w * .8}" height="13" rx="3" fill="${i ? C.mag : C.ok}" opacity="${i ? .55 : 1}"/><text x="${w * .45 + v * w * .8 + 4}" y="${16 + i * 19}" font-size="10" fill="${C.dim}" font-family="var(--mono)">${v.toFixed(2)}</text>`; }); }
   else if (kind === "label") s = `<text x="${w / 2}" y="${h / 2 + 8}" text-anchor="middle" font-size="22" font-weight="700" fill="${C.ok}">${EX.img[0]}</text>`;
@@ -190,13 +206,13 @@ const LENS = {
   fragility: {unit: p => p._frag != null ? (p._frag * 100).toFixed(1) + "% err" : "–", sub: () => "int4 alone", v: p => p._frag || 0},
 };
 function dtLabel(p) { const e = Object.entries(p.dt).sort((a, b) => b[1] - a[1]); if (!e.length) return p.shared ? t("tied_emb") : t("no_weights"); const tt = e.reduce((a, x) => a + x[1], 0); return e.map(([k, v]) => e.length > 1 ? `${k} ${Math.round(v / tt * 100)}%` : k).join(" · "); }
-function dtColor(p) { const e = Object.entries(p.dt).sort((a, b) => b[1] - a[1]); if (p.seams && !e.length) return "#c4242a"; return e.length ? DTC[e[0][0]] || "#8a8a85" : "#e7e7e3"; }
+function dtColor(p) { const e = Object.entries(p.dt).sort((a, b) => b[1] - a[1]); if (p.seams && !e.length) return K.neg; return e.length ? DTC[e[0][0]] || K.dim2 : K.active; }
 function lensFill(p, max) {
-  if (!p || !p.has) return {fill: "rgba(20,20,20,0.024)"};
+  if (!p || !p.has) return {fill: `rgba(${K.ovRGB},0.024)`};
   if (S.lens === "precision") return {fill: dtColor(p) + "33", stroke: dtColor(p)};
-  const k = max ? Math.min(1, LENS[S.lens].v(p) / max) : 0; return {fill: `rgba(27,95,209,${(.05 + .45 * Math.sqrt(k)).toFixed(3)})`};
+  const k = max ? Math.min(1, LENS[S.lens].v(p) / max) : 0; return {fill: `rgba(${K.blRGB},${(.05 + .45 * Math.sqrt(k)).toFixed(3)})`};
 }
-function bar(x, y, w, p, max) { if (!p || !p.has || S.lens === "precision") return ""; const k = max ? Math.min(1, LENS[S.lens].v(p) / max) : 0; return `<rect x="${x}" y="${y}" width="${w}" height="5" rx="2.5" fill="rgba(20,20,20,0.064)"/><rect x="${x}" y="${y}" width="${Math.max(2, w * k)}" height="5" rx="2.5" fill="#1b5fd1"/>`; }
+function bar(x, y, w, p, max) { if (!p || !p.has || S.lens === "precision") return ""; const k = max ? Math.min(1, LENS[S.lens].v(p) / max) : 0; return `<rect x="${x}" y="${y}" width="${w}" height="5" rx="2.5" fill="rgba(${K.ovRGB},0.064)"/><rect x="${x}" y="${y}" width="${Math.max(2, w * k)}" height="5" rx="2.5" fill="${K.enc}"/>`; }
 
 // every region kind the automatic recovery can name, in reading order inside a layer
 const REG = {
@@ -231,33 +247,33 @@ function renderBig() {
   const Le = E ? E.layers[S.el] : null, Ld = D ? D.layers[S.dl] : null;
   const regMax = Math.max(...[Le, Ld].filter(Boolean).flatMap(l => Object.values(l.regions).map(r => LENS[S.lens].v(r._tot) || 0)), 1e-9);
   const cur = S.step >= 0 && PLAY[S.step] ? PLAY[S.step] : null;
-  let s = `<defs><marker id="xa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8a8a85"/></marker>
-    <linearGradient id="rib" x1="0" x2="1"><stop offset="0" stop-color="#5d86d4" stop-opacity=".32"/><stop offset="1" stop-color="#1b5fd1" stop-opacity=".32"/></linearGradient>
-    <linearGradient id="ribd" x1="0" x2="1"><stop offset="0" stop-color="#d4651c" stop-opacity=".32"/><stop offset="1" stop-color="#d4651c" stop-opacity=".32"/></linearGradient>
+  let s = `<defs><marker id="xa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="${K.dim2}"/></marker>
+    <linearGradient id="rib" x1="0" x2="1"><stop offset="0" stop-color="${K.blueL}" stop-opacity=".32"/><stop offset="1" stop-color="${K.enc}" stop-opacity=".32"/></linearGradient>
+    <linearGradient id="ribd" x1="0" x2="1"><stop offset="0" stop-color="${K.dec}" stop-opacity=".32"/><stop offset="1" stop-color="${K.dec}" stop-opacity=".32"/></linearGradient>
     <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
   const num = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"];
   cols.forEach((c, i) => { const info = partInfo(c, M), cx = c.x + c.w / 2; const sh = info.o ? info.o[1] : "";
-    s += `<text x="${cx}" y="34" text-anchor="middle" class="xh">${num[i]} ${esc(info.title)}</text><text x="${cx}" y="54" text-anchor="middle" class="xs" fill="#5d86d4">${esc(sh)}</text>`; });
-  s += `<line x1="20" y1="68" x2="${W - 20}" y2="68" stroke="rgba(20,20,20,0.064)"/>`;
+    s += `<text x="${cx}" y="34" text-anchor="middle" class="xh">${num[i]} ${esc(info.title)}</text><text x="${cx}" y="54" text-anchor="middle" class="xs" fill="${K.blueL}">${esc(sh)}</text>`; });
+  s += `<line x1="20" y1="68" x2="${W - 20}" y2="68" stroke="rgba(${K.ovRGB},0.064)"/>`;
   // ribbons between neighbours in the main row
   for (let i = 0; i < cols.length - 1; i++) { const a = cols[i], b = cols[i + 1]; if (b.kind === "kv" && false) continue;
     const x1 = a.x + a.w, x2 = b.x, yy = y0 + 110, dec = (a.comp === "decoder" || a.kind === "lmhead" || a.kind === "dec" || b.kind === "dec" && F === "decoder" || a.kind === "embed_dec"), w = 16;
     if (a.kind === "kv" && b.kind === "dec") continue;
-    s += `<path d="M${x1} ${yy - w / 2} H${x2} V${yy + w / 2} H${x1}Z" fill="url(#${dec ? "ribd" : "rib"})"/><path d="M${x1} ${yy} H${x2}" stroke="#141414" stroke-opacity=".25" stroke-width="1.5" class="flowline"/>`; }
+    s += `<path d="M${x1} ${yy - w / 2} H${x2} V${yy + w / 2} H${x1}Z" fill="url(#${dec ? "ribd" : "rib"})"/><path d="M${x1} ${yy} H${x2}" stroke="${K.ink}" stroke-opacity=".25" stroke-width="1.5" class="flowline"/>`; }
   const sel = id => S.open === id || (cur && cur.id === id);
   const box = (id, x, y, w, h, title, p, mx, wide = false, cap = "") => { const f = lensFill(p, mx), u = p && p.has ? esc(LENS[S.lens].unit(p)) : "", sb = p && p.has ? esc(LENS[S.lens].sub(p) || "") : "";
     const inner = wide ? `<text x="${x + 14}" y="${y + 23}" class="xt">${esc(title)}</text><text x="${x + w - 14}" y="${y + 23}" text-anchor="end" class="xm">${u}</text><text x="${x + 14}" y="${y + 42}" class="xs">${esc(cap)}</text>${h >= 80 ? `<text x="${x + w - 14}" y="${y + 60}" text-anchor="end" class="xs">${sb}</text>` : ""}`
       : `<text x="${x + w / 2}" y="${y + 24}" text-anchor="middle" class="xt">${esc(title)}</text><text x="${x + w / 2}" y="${y + h - 32}" text-anchor="middle" class="xm">${u}</text>${sb.length * 6.6 < w ? `<text x="${x + w / 2}" y="${y + h - 17}" text-anchor="middle" class="xs">${sb}</text>` : ""}`;
-    return `<g class="xbox${sel(id) ? " sel" : ""}" data-x="${id}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="14" fill="${f.fill}" stroke="${f.stroke || "rgba(20,20,20,0.176)"}" stroke-width="${sel(id) ? 2.6 : 1.3}" ${sel(id) ? '' : ""}/>${inner}${bar(x + 12, y + h - 9, w - 24, p, mx)}</g>`; };
-  const ioBox = (c, v) => `<g class="xbox${sel(c.kind) ? " sel" : ""}" data-x="${c.kind}"><rect x="${c.x}" y="${y0 + 40}" width="${c.w}" height="140" rx="14" fill="rgba(20,20,20,0.032)" stroke="${sel(c.kind) ? "#d4651c" : "rgba(20,20,20,0.160)"}" stroke-width="${sel(c.kind) ? 2.6 : 1.3}"/>
+    return `<g class="xbox${sel(id) ? " sel" : ""}" data-x="${id}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="14" fill="${f.fill}" stroke="${f.stroke || `rgba(${K.ovRGB},0.176)`}" stroke-width="${sel(id) ? 2.6 : 1.3}" ${sel(id) ? '' : ""}/>${inner}${bar(x + 12, y + h - 9, w - 24, p, mx)}</g>`; };
+  const ioBox = (c, v) => `<g class="xbox${sel(c.kind) ? " sel" : ""}" data-x="${c.kind}"><rect x="${c.x}" y="${y0 + 40}" width="${c.w}" height="140" rx="14" fill="rgba(${K.ovRGB},0.032)" stroke="${sel(c.kind) ? K.dec : `rgba(${K.ovRGB},0.160)`}" stroke-width="${sel(c.kind) ? 2.6 : 1.3}"/>
       <g transform="translate(${c.x + 4},${y0 + 70}) scale(${(c.w - 8) / 210})">${viz(v).replace('class="iov"', "")}</g><text x="${c.x + c.w / 2}" y="${y0 + 200}" text-anchor="middle" class="xs">${t("no_weights")}</text></g>`;
   let zoomLayer = "";
   const stack = (c, Cc, Lx, n, comp) => {
     if (S.zoom && S.zoom.comp === comp && !c._z) { const zw = Math.max(c.w, 640); zoomLayer = stack({...c, _z: true, x: c.x + c.w / 2 - zw / 2, w: zw}, Cc, Lx, n, comp); return ""; }
-    const x = c.x, y = y0 - 10, w = c.w, h = 250, isE = comp === "encoder", col = isE ? "#1b5fd1" : "#d4651c", idx = isE ? S.el : S.dl;
-    let o = ""; for (let k = 3; k >= 1; k--) o += `<rect x="${x + k * 7}" y="${y - k * 7}" width="${w}" height="${h}" rx="18" fill="${isE ? "#f3f3f0" : "#f3f3f0"}" stroke="${col}" stroke-opacity="${.15 + .1 * (3 - k)}"/>`;
+    const x = c.x, y = y0 - 10, w = c.w, h = 250, isE = comp === "encoder", col = isE ? K.enc : K.dec, idx = isE ? S.el : S.dl;
+    let o = ""; for (let k = 3; k >= 1; k--) o += `<rect x="${x + k * 7}" y="${y - k * 7}" width="${w}" height="${h}" rx="18" fill="${isE ? K.raised : K.raised}" stroke="${col}" stroke-opacity="${.15 + .1 * (3 - k)}"/>`;
     const f = lensFill(Cc.layersTot, max);
-    o += `<g class="${sel(c.id) ? "selstack" : ""}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="${isE ? "#ffffff" : "#ffffff"}" stroke="${col}" stroke-width="${sel(c.id) ? 2.6 : 1.6}" ${sel(c.id) ? '' : ""}/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="${f.fill}" opacity=".6"/></g>
+    o += `<g class="${sel(c.id) ? "selstack" : ""}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="${isE ? K.surf : K.surf}" stroke="${col}" stroke-width="${sel(c.id) ? 2.6 : 1.6}" ${sel(c.id) ? '' : ""}/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="${f.fill}" opacity=".6"/></g>
       <text x="${x + 18}" y="${y + 28}" class="xt">${S.M.meta.family === "prefix" ? (isE ? (S.M.meta.modality === "image" ? "Vision" : "Audio") : "LLM") : S.M.meta.family === "diffusion" ? "DiT" : S.M.meta.family === "transducer" ? "Conformer" : isE ? "Encoder" : "Decoder"} ${t("layer")}${Lx && Lx.regions.moe ? " · MoE" : Lx && Lx.regions.linear ? " · SSM" : Lx && Cc.layers.some(L => L.regions.linear) ? " · attn" : ""}</text>
       <g class="xnav" data-nav="${isE ? "e" : "d"}-"><rect x="${x + w - 128}" y="${y + 10}" width="26" height="26" rx="8" class="xr"/><text x="${x + w - 115}" y="${y + 28}" text-anchor="middle" class="xt">‹</text></g>
       <text x="${x + w - 72}" y="${y + 28}" text-anchor="middle" class="xm">${idx + 1} / ${n}</text>
@@ -282,18 +298,18 @@ function renderBig() {
   if (D) {
     const dc = cols.find(c => c.kind === "dec"), hd = cols.find(c => c.kind === "lmhead"), out = cols.find(c => c.kind === "out_text");
     let emb = cols.find(c => c.kind === "embed_dec");
-    if (embBelow) { emb = {x: dc.x, w: Math.min(210, dc.w), id: "d_stem", below: true}; s += box("d_stem", emb.x, y0 + 296, emb.w, 64, L2("Token embed", "Token embed"), D.stemTot, max, true, "token id → vector"); s += `<path d="M${emb.x + 75} ${y0 + 296} V${y0 + 248}" stroke="#d4651c" stroke-width="2" class="flowline" marker-end="url(#xa)"/>`; }
-    const kv = cols.find(c => c.kind === "kv"); if (kv) s += `<path d="M${kv.x + kv.w} ${y0 + 110} C ${kv.x + kv.w + 30} ${y0 + 110}, ${dc.x - 30} ${y0 + 160}, ${dc.x} ${y0 + 160}" stroke="#1b5fd1" stroke-width="3" fill="none" stroke-dasharray="6 6" class="flowline" marker-end="url(#xa)"/>`;
+    if (embBelow) { emb = {x: dc.x, w: Math.min(210, dc.w), id: "d_stem", below: true}; s += box("d_stem", emb.x, y0 + 296, emb.w, 64, L2("Token embed", "Token embed"), D.stemTot, max, true, "token id → vector"); s += `<path d="M${emb.x + 75} ${y0 + 296} V${y0 + 248}" stroke="${K.dec}" stroke-width="2" class="flowline" marker-end="url(#xa)"/>`; }
+    const kv = cols.find(c => c.kind === "kv"); if (kv) s += `<path d="M${kv.x + kv.w} ${y0 + 110} C ${kv.x + kv.w + 30} ${y0 + 110}, ${dc.x - 30} ${y0 + 160}, ${dc.x} ${y0 + 160}" stroke="${K.enc}" stroke-width="3" fill="none" stroke-dasharray="6 6" class="flowline" marker-end="url(#xa)"/>`;
     const ex = emb.below ? emb.x + emb.w : emb.x + emb.w / 2, ey = emb.below ? y0 + 345 : y0 + 180;
-    s += emb.below ? `<path d="M${out.x + out.w / 2} ${y0 + 180} V${y0 + 345} H${ex + 3}" stroke="#d4651c" stroke-width="2" fill="none" stroke-dasharray="6 6" class="flowline loopline" marker-end="url(#xa)"/>`
-      : `<path d="M${out.x + out.w / 2} ${y0 + 180} V${y0 + 345} H${ex} V${ey + 4}" stroke="#d4651c" stroke-width="2" fill="none" stroke-dasharray="6 6" class="flowline loopline" marker-end="url(#xa)"/>`;
-    s += `<text x="${(out.x + ex) / 2 + 40}" y="${y0 + 338}" text-anchor="middle" class="xs" fill="#d4651c">${esc(t("next_token", {t: S.tokens}))}</text>`;
+    s += emb.below ? `<path d="M${out.x + out.w / 2} ${y0 + 180} V${y0 + 345} H${ex + 3}" stroke="${K.dec}" stroke-width="2" fill="none" stroke-dasharray="6 6" class="flowline loopline" marker-end="url(#xa)"/>`
+      : `<path d="M${out.x + out.w / 2} ${y0 + 180} V${y0 + 345} H${ex} V${ey + 4}" stroke="${K.dec}" stroke-width="2" fill="none" stroke-dasharray="6 6" class="flowline loopline" marker-end="url(#xa)"/>`;
+    s += `<text x="${(out.x + ex) / 2 + 40}" y="${y0 + 338}" text-anchor="middle" class="xs" fill="${K.dec}">${esc(t("next_token", {t: S.tokens}))}</text>`;
     if (D.headTot.shared) { const sx = emb.below ? emb.x + emb.w : emb.x + emb.w / 2 + 14, sy = emb.below ? y0 + 308 : y0 + 180;
-      s += emb.below ? `<path d="M${sx} ${sy} H${hd.x + hd.w / 2} V${y0 + 182}" stroke="#9a6200" stroke-width="1.6" stroke-dasharray="4 5" fill="none" marker-end="url(#xa)"/>` : `<path d="M${sx} ${sy} V${y0 + 290} H${hd.x + hd.w / 2} V${y0 + 182}" stroke="#9a6200" stroke-width="1.6" stroke-dasharray="4 5" fill="none" marker-end="url(#xa)"/>`;
-      s += `<text x="${(sx + hd.x + hd.w / 2) / 2}" y="${(emb.below ? sy : y0 + 290) - 7}" text-anchor="middle" class="xs" fill="#9a6200">${esc(t("tied_note"))}</text>`; }
+      s += emb.below ? `<path d="M${sx} ${sy} H${hd.x + hd.w / 2} V${y0 + 182}" stroke="${K.amber}" stroke-width="1.6" stroke-dasharray="4 5" fill="none" marker-end="url(#xa)"/>` : `<path d="M${sx} ${sy} V${y0 + 290} H${hd.x + hd.w / 2} V${y0 + 182}" stroke="${K.amber}" stroke-width="1.6" stroke-dasharray="4 5" fill="none" marker-end="url(#xa)"/>`;
+      s += `<text x="${(sx + hd.x + hd.w / 2) / 2}" y="${(emb.below ? sy : y0 + 290) - 7}" text-anchor="middle" class="xs" fill="${K.amber}">${esc(t("tied_note"))}</text>`; }
   }
   if (!D && (F === "diffusion" || F === "transducer")) { const a = cols[cols.length - 1], b = cols[F === "diffusion" ? 1 : 4] || cols[1]; if (a && b) { const ax = a.x + a.w / 2, bx = b.x + b.w / 2;
-    s += `<path d="M${ax} ${y0 + 180} V${y0 + 330} H${bx} V${y0 + 182}" stroke="#d4651c" stroke-width="2" fill="none" stroke-dasharray="6 6" class="flowline loopline" marker-end="url(#xa)"/><text x="${(ax + bx) / 2}" y="${y0 + 322}" text-anchor="middle" class="xs" fill="#d4651c">${esc(F === "diffusion" ? L2("ทำซ้ำทุกขั้น denoise (เช่น 8 หรือ 50 ขั้น)", "repeat for every denoising step (e.g. 8 or 50)") : L2("frame ถัดไป · ปล่อย label ได้หลายตัวต่อ frame", "next frame · may emit several labels per frame"))}</text>`; } }
+    s += `<path d="M${ax} ${y0 + 180} V${y0 + 330} H${bx} V${y0 + 182}" stroke="${K.dec}" stroke-width="2" fill="none" stroke-dasharray="6 6" class="flowline loopline" marker-end="url(#xa)"/><text x="${(ax + bx) / 2}" y="${y0 + 322}" text-anchor="middle" class="xs" fill="${K.dec}">${esc(F === "diffusion" ? L2("ทำซ้ำทุกขั้น denoise (เช่น 8 หรือ 50 ขั้น)", "repeat for every denoising step (e.g. 8 or 50)") : L2("frame ถัดไป · ปล่อย label ได้หลายตัวต่อ frame", "next frame · may emit several labels per frame"))}</text>`; } }
   LAY = {cols, y0, W, H};
   const svg = $("#xsvg"); if (!S.zoomAnim) svg.setAttribute("viewBox", S.zoom ? S.zoom.vb : `0 0 ${W} ${H}`); svg.innerHTML = s;
   svg.classList.toggle("playing", !!cur);
@@ -307,11 +323,11 @@ function zoomSteps(Lx, x, y, w, comp) { // the inside of one layer, drawn small 
   rows.forEach(([rk, roles], ri) => {
     o += `<text x="${x + 18}" y="${yy + 12}" class="xs" fill="${C.soft}">${esc(regTitle(rk, Lx).toLowerCase())}</text>`;
     const cw = (w - 36) / Math.max(roles.length, 5);
-    roles.forEach((r, k) => { const bx = x + 18 + k * cw; o += `<g class="zs" style="animation-delay:${(ri * roles.length + k) * .18}s"><rect x="${bx}" y="${yy + 18}" width="${cw - 6}" height="${rh - 24}" rx="7" fill="rgba(20,20,20,0.056)" stroke="${comp === "encoder" ? "#5d86d4" : "#d4651c"}" stroke-opacity=".6"/>
+    roles.forEach((r, k) => { const bx = x + 18 + k * cw; o += `<g class="zs" style="animation-delay:${(ri * roles.length + k) * .18}s"><rect x="${bx}" y="${yy + 18}" width="${cw - 6}" height="${rh - 24}" rx="7" fill="rgba(${K.ovRGB},0.056)" stroke="${comp === "encoder" ? K.blueL : K.dec}" stroke-opacity=".6"/>
       <text x="${bx + (cw - 6) / 2}" y="${yy + 18 + (rh - 24) / 2 + 4}" text-anchor="middle" font-size="${cw < 70 ? 10 : 12}" fill="${C.ink}">${esc(stepName(r, true))}</text></g>`; });
     yy += rh + 6;
   });
-  o += `<circle r="5" fill="#141414"><animateMotion dur="${1.6 * rows.length}s" repeatCount="indefinite" path="${rows.map((r, i) => `M${x + 18} ${y + 50 + 18 + (rh - 24) / 2 + i * (rh + 6)} H${x + 18 + r[1].length * (w - 36) / Math.max(r[1].length, 5) - 6}`).join(" ")}"/></circle>`;
+  o += `<circle r="5" fill="${K.ink}"><animateMotion dur="${1.6 * rows.length}s" repeatCount="indefinite" path="${rows.map((r, i) => `M${x + 18} ${y + 50 + 18 + (rh - 24) / 2 + i * (rh + 6)} H${x + 18 + r[1].length * (w - 36) / Math.max(r[1].length, 5) - 6}`).join(" ")}"/></circle>`;
   return o;
 }
 
@@ -413,11 +429,11 @@ function renderDetail() {
     const steps = order.map(g => g.filter(r => parts[r] && parts[r].has)).filter(g => g.length); Object.keys(parts).forEach(r => { if (r !== "_tot" && !order.flat().includes(r) && parts[r].has) steps.push([r]); });
     const mx = Math.max(...Object.entries(parts).filter(([k]) => k !== "_tot").map(([, p]) => LENS[S.lens].v(p) || 0), 1e-9);
     const colW = 140, bw = 124, bh = 92, gap = 14, W = Math.max(700, steps.length * colW + 40), rows = Math.max(...steps.map(g => g.length)), H = rows * (bh + gap) + 40, cy = H / 2 + 4;
-    svg = `<svg viewBox="0 0 ${W} ${H}" style="min-width:${Math.round(W * .8)}px"><defs><marker id="xa2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8a8a85"/></marker></defs>`;
+    svg = `<svg viewBox="0 0 ${W} ${H}" style="min-width:${Math.round(W * .8)}px"><defs><marker id="xa2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="${K.dim2}"/></marker></defs>`;
     steps.forEach((g, i) => { const x = 20 + i * colW, yA = cy - (g.length * (bh + gap) - gap) / 2;
-      if (i) svg += `<path d="M${x - colW + bw + 2} ${cy} H${x - 4}" stroke="#8a8a85" stroke-width="2" class="flowline" marker-end="url(#xa2)"/>`;
+      if (i) svg += `<path d="M${x - colW + bw + 2} ${cy} H${x - 4}" stroke="${K.dim2}" stroke-width="2" class="flowline" marker-end="url(#xa2)"/>`;
       g.forEach((r, k) => { const p = parts[r], y = yA + k * (bh + gap), f = lensFill(p, mx), nm = stepName(r), wt = p.w[0] ? p.w[0].shape.join("×") : (p.out ? `[${p.out.join(",")}]` : "");
-        svg += `<g class="xstep" data-r="${r}"><rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="12" fill="${f.fill}" stroke="${f.stroke || (p.seams ? "#c4242a" : "rgba(20,20,20,0.200)")}" stroke-width="1.4"/>
+        svg += `<g class="xstep" data-r="${r}"><rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="12" fill="${f.fill}" stroke="${f.stroke || (p.seams ? K.neg : `rgba(${K.ovRGB},0.200)`)}" stroke-width="1.4"/>
           <text x="${x + bw / 2}" y="${y + 22}" text-anchor="middle" class="xt" font-size="${nm.length > 14 ? 12.5 : 14.5}">${esc(nm)}</text><text x="${x + bw / 2}" y="${y + 40}" text-anchor="middle" class="xs">${esc(wt)}</text>
           <text x="${x + bw / 2}" y="${y + 62}" text-anchor="middle" class="xm" font-size="14">${esc(LENS[S.lens].unit(p))}</text><text x="${x + bw / 2}" y="${y + 78}" text-anchor="middle" class="xs">${p.ops ? p.ops + " op" + (p.ops > 1 ? "s" : "") : ""}${p.seams ? " · " + p.seams + " seam" : ""}</text></g>`; }); });
     svg += "</svg>";
@@ -434,6 +450,7 @@ function renderDetail() {
 // ================================================================== architecture card (automatic recovery from the weight manifest)
 const BLK = {SSM: "#1a8f6a", "SSM+MoE": "#1a8f6a", MoE: "#d4651c", Attention: "#1b5fd1", Transformer: "#1b5fd1", "Attn+MoE": "#d4651c", "Attn+Cross": "#1b5fd1", Conformer: "#b98900", DiT: "#1b5fd1", FFN: "#a9a9a3", RNN: "#b98900", Conv: "#a9a9a3", Block: "#a9a9a3"};
 const ROLE_C = {backbone: ["#fbe9dd", "#7a3409"], encoder: ["#e3ecfb", "#123f8c"], adapter: ["#f4ecd6", "#5c4300"], graph: ["#dcf3e6", "#0f4a2c"], prediction: ["#f4ecd6", "#5c4300"], joint: ["#ffedea", "#831c1e"], aux: ["#efefeb", "#4d4d4a"]};
+setTheme(document.documentElement.dataset.theme || "dark");
 const KIND_T = {attn: ["attention", "attention"], cross: ["cross-attention", "cross-attention"], ffn: ["feed-forward", "feed-forward"], moe: ["mixture of experts", "mixture of experts"], ssm: ["SSM / linear attention", "SSM / linear attention"], conv: ["conv module", "conv module"], mod: ["adaLN modulation", "adaLN modulation"], rnn: ["recurrent cell", "recurrent cell"], norm: ["norm", "norm"], other: ["อื่นๆ", "other"]};
 function renderArch() {
   const box = $("#archBox"); if (!box) return; const M = S.M, I = M.IR;
@@ -442,14 +459,14 @@ function renderArch() {
   const linked = c => I.edges.some(e => e.from === c.id) ? 1 : 0;
   const order = [...comps].sort((a, b) => { const r = c => ({encoder: 0, graph: 1, adapter: 2, backbone: 3, prediction: 4, aux: 5, joint: 6})[c.role] ?? 5; return r(a) - r(b) || linked(a) - linked(b) || a.params - b.params; });
   const tot = W - 40 - (bw * n + gap * (n - 1)); let x = 20 + tot / 2; const pos = {};
-  let svg = `<defs><marker id="aa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6b6b66"/></marker></defs>`;
+  let svg = `<defs><marker id="aa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="${K.dim}"/></marker></defs>`;
   order.forEach(c => { pos[c.id] = {x, w: bw}; x += bw + gap; });
   I.edges.forEach(e => { const a = pos[e.from], b = pos[e.to]; if (!a || !b) return; const x1 = a.x + a.w, x2 = b.x, my = y + bh / 2;
     const between = Object.values(pos).some(q => q.x > x1 && q.x + q.w < x2);
-    svg += x2 > x1 && !between ? `<path d="M${x1 + 2} ${my} H${x2 - 4}" stroke="#6b6b66" stroke-width="1.6" fill="none" marker-end="url(#aa)"/>` : x2 > x1 ? `<path d="M${a.x + a.w * .6} ${y} C ${a.x + a.w * .6} ${y - 30}, ${b.x + b.w * .4} ${y - 30}, ${b.x + b.w * .4} ${y - 3}" stroke="#6b6b66" stroke-width="1.6" fill="none" marker-end="url(#aa)"/>` : `<path d="M${a.x + a.w / 2} ${y} C ${a.x + a.w / 2} ${y - 30}, ${b.x + b.w / 2} ${y - 30}, ${b.x + b.w / 2} ${y - 3}" stroke="#6b6b66" stroke-width="1.6" fill="none" marker-end="url(#aa)"/>`; });
+    svg += x2 > x1 && !between ? `<path d="M${x1 + 2} ${my} H${x2 - 4}" stroke="${K.dim}" stroke-width="1.6" fill="none" marker-end="url(#aa)"/>` : x2 > x1 ? `<path d="M${a.x + a.w * .6} ${y} C ${a.x + a.w * .6} ${y - 30}, ${b.x + b.w * .4} ${y - 30}, ${b.x + b.w * .4} ${y - 3}" stroke="${K.dim}" stroke-width="1.6" fill="none" marker-end="url(#aa)"/>` : `<path d="M${a.x + a.w / 2} ${y} C ${a.x + a.w / 2} ${y - 30}, ${b.x + b.w / 2} ${y - 30}, ${b.x + b.w / 2} ${y - 3}" stroke="${K.dim}" stroke-width="1.6" fill="none" marker-end="url(#aa)"/>`; });
   const sel = S.archSel && comps.find(c => c.id === S.archSel) ? S.archSel : (comps.find(c => c.role === "backbone") || comps[0]).id; S.archSel = sel;
   order.forEach(c => { const p = pos[c.id], [bg, fg] = ROLE_C[c.role] || ROLE_C.aux, on = c.id === sel, labels = c.stacks.flatMap(st => st.typeOf.map(i => st.types[i].label)), rl = t("role_" + c.role);
-    svg += `<g class="acomp" data-c="${esc(c.id)}" tabindex="0" role="button" aria-label="${esc(rl + " " + c.id)}"><rect x="${p.x}" y="${y}" width="${p.w}" height="${bh}" rx="8" fill="#ffffff" stroke="${on ? "#141414" : "#d9d9d3"}" stroke-width="${on ? 2 : 1}"/>
+    svg += `<g class="acomp" data-c="${esc(c.id)}" tabindex="0" role="button" aria-label="${esc(rl + " " + c.id)}"><rect x="${p.x}" y="${y}" width="${p.w}" height="${bh}" rx="8" fill="${K.surf}" stroke="${on ? K.ink : K.line}" stroke-width="${on ? 2 : 1}"/>
       <rect x="${p.x + 16}" y="${y + 16}" width="${20 + rl.length * 9}" height="26" rx="13" fill="${bg}"/><text x="${p.x + 26}" y="${y + 34}" class="at" fill="${fg}">${esc(rl)}</text>
       <text x="${p.x + 16}" y="${y + 70}" class="am">${esc(c.id.length * 10 > p.w - 32 ? "…" + c.id.slice(-Math.floor((p.w - 44) / 10)) : c.id)}</text>
       <text x="${p.x + 16}" y="${y + 106}" class="ab">${esc(fP(c.params))}</text><text x="${p.x + p.w - 16}" y="${y + 106}" text-anchor="end" class="as">${esc(fB(c.bytes))}</text>
@@ -459,7 +476,7 @@ function renderArch() {
     else { const per = Math.floor((p.w - 32) / 8.4), words = String((c.ev || [])[0] || "").split(" ").flatMap(wd => wd.length > per ? wd.match(new RegExp(".{1," + (per - 1) + "}", "g")) : [wd]), lines = [""]; words.forEach(wd => { if ((lines[lines.length - 1] + " " + wd).length > per) lines.push(wd); else lines[lines.length - 1] += (lines[lines.length - 1] ? " " : "") + wd; });
       lines.slice(0, 4).forEach((ln, k) => svg += `<text x="${p.x + 16}" y="${y + 160 + k * 20}" class="as">${esc(k === 3 && lines.length > 4 ? ln + " …" : ln)}</text>`); }
     svg += `</g>`; });
-  const GRP = l => /SSM/.test(l) ? "SSM" : /MoE/.test(l) ? "MoE" : /Conformer/.test(l) ? "Conformer" : /Attention|Transformer|DiT|Cross/.test(l) ? "Attention" : "Other", GC = {Attention: "#1b5fd1", SSM: "#1a8f6a", MoE: "#d4651c", Conformer: "#b98900", Other: "#a9a9a3"};
+  const GRP = l => /SSM/.test(l) ? "SSM" : /MoE/.test(l) ? "MoE" : /Conformer/.test(l) ? "Conformer" : /Attention|Transformer|DiT|Cross/.test(l) ? "Attention" : "Other", GC = {Attention: K.enc, SSM: K.ssm, MoE: K.dec, Conformer: K.conf, Other: "#a9a9a3"};
   const used = [...new Set(comps.flatMap(c => c.stacks.flatMap(st => st.types.map(t2 => GRP(t2.label)))))];
   const C0 = comps.find(c => c.id === sel), m = M.meta, hp = Object.assign({}, I.hp || {}), fz = m.fusedAll && m.fusedAll[C0.id];
   const KC = {attn: "Attention", cross: "Attn+Cross", ffn: "FFN", moe: "MoE", ssm: "SSM", conv: "Conformer", mod: "DiT", rnn: "RNN"};
@@ -505,14 +522,14 @@ function renderMap() {
       <text x="16" y="${y + 62}" class="mm">${S.mapLens === "read" ? fB(tot) : S.mapLens === "frag" ? r.blocks.length + " blocks" : fB(r.blocks.reduce((a, b) => a + b.p.bytes, 0))}</text>`;
     let x = padL;
     r.blocks.forEach(b => { const w = Math.max(2, wOf(b, r.c) * px - 2.5); let fill = col, op = 1;
-      if (S.mapLens === "prec") fill = dtColor(b.p); if (S.mapLens === "frag") { const s = b.p._frag; const k = !(s > 0) ? -1 : (Math.log(s) - Math.log(fmn)) / ((Math.log(fmx) - Math.log(fmn)) || 1); fill = k < 0 ? "#e7e7e3" : `rgb(${Math.round(60 + 170 * k)},${Math.round(40 + 10 * (1 - k))},${Math.round(120 - 80 * k)})`; }
+      if (S.mapLens === "prec") fill = dtColor(b.p); if (S.mapLens === "frag") { const s = b.p._frag; const k = !(s > 0) ? -1 : (Math.log(s) - Math.log(fmn)) / ((Math.log(fmx) - Math.log(fmn)) || 1); fill = k < 0 ? K.active : `rgb(${Math.round(60 + 170 * k)},${Math.round(40 + 10 * (1 - k))},${Math.round(120 - 80 * k)})`; }
       out += `<g class="blk" data-c="${r.c}" data-l="${b.L ? b.L.idx : ""}" data-id="${b.id}"><title>${esc(b.id)} · ${fB(b.p.bytes)} · ${esc(dtLabel(b.p))}${b.p._frag != null ? " · int4 err " + (b.p._frag * 100).toFixed(1) + "%" : ""}</title>`;
       if (b.L && (S.mapLens === "size" || S.mapLens === "read") && w > 8) { const att = ["self", "cross", "linear"].reduce((a, r) => a + (b.L.regions[r] ? b.L.regions[r]._tot.bytes : 0), 0), fa = b.p.bytes ? att / b.p.bytes : .33;
         out += `<rect x="${x}" y="${y}" width="${w}" height="${h * fa}" rx="3" fill="${fill}" opacity=".55"/><rect x="${x}" y="${y + h * fa}" width="${w}" height="${h * (1 - fa)}" fill="${fill}"/>`; }
       else out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${fill}" opacity="${op}"/>`;
       out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="none" stroke="rgba(0,0,0,.3)"/>`;
       if (w > b.lab.length * 7.5) out += `<text x="${x + w / 2}" y="${y - 7}" text-anchor="middle" class="ms">${b.lab}</text>`;
-      if (S.mapLens === "frag" && b.p._frag > 0 && w > 30) out += `<text x="${x + w / 2}" y="${y + h / 2 + 5}" text-anchor="middle" class="mm" fill="#ffffff">${(b.p._frag * 100).toFixed(1)}</text>`;
+      if (S.mapLens === "frag" && b.p._frag > 0 && w > 30) out += `<text x="${x + w / 2}" y="${y + h / 2 + 5}" text-anchor="middle" class="mm" fill="#fff">${(b.p._frag * 100).toFixed(1)}</text>`;
       out += "</g>"; x += wOf(b, r.c) * px; });
     y += h + 40; });
   svg.setAttribute("viewBox", `0 0 1280 ${y}`); svg.innerHTML = out;
@@ -543,7 +560,7 @@ function renderConcepts() {
   for (let i = 0; i < cols; i++) buf.push(col(i));
   (function draw() { requestAnimationFrame(draw); tt++; x.clearRect(0, 0, cv.width, cv.height);
     if (S.c1 === "text") { const toks = LANG === "en" ? ["Edge", " AI", " on", " phones", "!"] : ["วัน", "นี้", "อา", "กาศ", "ดี"]; const k = Math.floor(tt / 40) % (toks.length + 2); x.font = "600 30px sans-serif";
-      let px = 30; toks.forEach((tk, i) => { const w = x.measureText(tk).width + 26; x.fillStyle = i < k ? "rgba(27,95,209,.25)" : "rgba(20,20,20,0.048)"; x.strokeStyle = i < k ? "#d4651c" : "rgba(20,20,20,0.160)"; x.beginPath(); x.roundRect(px, 90, w, 54, 10); x.fill(); x.stroke(); x.fillStyle = "#141414"; x.fillText(tk, px + 13, 127); if (i < k) { x.fillStyle = "#5d86d4"; x.font = "500 20px monospace"; x.fillText(String(1000 + i * 4137 % 30000), px + 8, 180); x.font = "600 30px sans-serif"; } px += w + 10; }); return; }
+      let px = 30; toks.forEach((tk, i) => { const w = x.measureText(tk).width + 26; x.fillStyle = i < k ? `rgba(${K.blRGB},.25)` : `rgba(${K.ovRGB},0.048)`; x.strokeStyle = i < k ? K.dec : `rgba(${K.ovRGB},0.160)`; x.beginPath(); x.roundRect(px, 90, w, 54, 10); x.fill(); x.stroke(); x.fillStyle = K.ink; x.fillText(tk, px + 13, 127); if (i < k) { x.fillStyle = K.blueL; x.font = "500 20px monospace"; x.fillText(String(1000 + i * 4137 % 30000), px + 8, 180); x.font = "600 30px sans-serif"; } px += w + 10; }); return; }
     if (S.c1 === "image") { const n = 14, sz = 260 / n, k = Math.floor(tt / 3) % (n * n + 30); for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { const v = .5 + .5 * Math.sin(i * .45 + j * .6); x.fillStyle = `hsl(${30 + v * 30},${40 + 30 * v}%,${25 + 35 * v}%)`; const id = j * n + i; x.fillRect(170 + i * sz + (id < k ? 1.5 : 0), 20 + j * sz + (id < k ? 1.5 : 0), sz - (id < k ? 3 : 0), sz - (id < k ? 3 : 0)); } return; }
     if (tt % 3 === 0) { buf.shift(); buf.push(col(tt / 3 + cols)); } const cw = cv.width / cols, ch = cv.height / rows;
     buf.forEach((c, i) => c.forEach((v, j) => { x.fillStyle = `rgba(${Math.round(91 + 140 * v)},${Math.round(107 - 60 * v)},${Math.round(240 - 115 * v)},${.15 + v * .85})`; x.fillRect(i * cw, cv.height - (j + 1) * ch, cw + .5, ch + .5); })); })();
@@ -557,7 +574,7 @@ function renderConcepts() {
   setInterval(() => { n = (n + 1) % 9; let s = `<text x="30" y="40" fill="${C.soft}" font-size="16">token ${n + 1}</text>`; for (let i = 0; i <= n; i++) s += `<rect x="${40 + i * 58}" y="80" width="50" height="60" rx="6" fill="${i === n ? C.amber : C.mag}" opacity="${i === n ? 1 : .55}"/><rect x="${40 + i * 58}" y="150" width="50" height="60" rx="6" fill="${i === n ? C.amber : C.mag}" opacity="${i === n ? 1 : .35}"/>`;
     K.innerHTML = s + `<text x="20" y="116" fill="${C.ink}" font-size="18" font-weight="700">K</text><text x="20" y="186" fill="${C.ink}" font-size="18" font-weight="700">V</text>`; }, 900);
   const T = $("#cTie"); let tp = 0;
-  setInterval(() => { tp = 1 - tp; T.innerHTML = `<rect x="200" y="70" width="200" height="160" rx="12" fill="#d4651c" opacity=".25" stroke="#d4651c"/>${Array.from({length: 10}, (_, i) => `<line x1="210" x2="390" y1="${86 + i * 15}" y2="${86 + i * 15}" stroke="#d4651c" stroke-opacity=".5"/>`).join("")}
+  setInterval(() => { tp = 1 - tp; T.innerHTML = `<rect x="200" y="70" width="200" height="160" rx="12" fill="${K.dec}" opacity=".25" stroke="${K.dec}"/>${Array.from({length: 10}, (_, i) => `<line x1="210" x2="390" y1="${86 + i * 15}" y2="${86 + i * 15}" stroke="${K.dec}" stroke-opacity=".5"/>`).join("")}
     ${tp ? `<rect x="205" y="131" width="190" height="12" fill="${C.amber}"/><path d="M60 137 H200" stroke="${C.amber}" stroke-width="3" class="flowline"/><text x="60" y="125" fill="${C.soft}" font-size="15">token id</text><text x="300" y="270" text-anchor="middle" fill="${C.amber}" font-size="17">in: 1 row</text>` : `<rect x="200" y="70" width="200" height="160" rx="12" fill="${C.amber}" opacity=".25"/><path d="M400 150 H540" stroke="${C.amber}" stroke-width="3" class="flowline"/><text x="470" y="135" fill="${C.soft}" font-size="15">scores</text><text x="300" y="270" text-anchor="middle" fill="${C.amber}" font-size="17">out: whole table</text>`}`; }, 1800);
   $("#cSeam").innerHTML = `<defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="${C.dim}"/></marker></defs>` + ["float", "QUANTIZE", "int8 op", "int8 op", "DEQUANTIZE", "float op"].map((tx, i) => { const c2 = tx.includes("QUANT") ? C.red : tx.startsWith("int") ? C.mag : C.blue, xx = 14 + i * 97;
     return `<rect x="${xx}" y="110" width="84" height="70" rx="10" fill="${c2}" fill-opacity=".2" stroke="${c2}"/><text x="${xx + 42}" y="150" text-anchor="middle" fill="${C.ink}" font-size="${tx.length > 8 ? 11.5 : 14}" font-weight="600">${tx}</text>` + (i < 5 ? `<path d="M${xx + 84} 145 H${xx + 97}" stroke="${C.dim}" stroke-width="2" marker-end="url(#ar2)"/>` : ""); }).join("");
@@ -568,7 +585,7 @@ function renderConcepts() {
   const gen = () => W = Array.from({length: 64}, () => gauss() * .08);
   const quant = (ws, b) => { const q = Math.pow(2, b - 1) - 1, g = block ? 32 : ws.length, out = []; for (let s = 0; s < ws.length; s += g) { const part = ws.slice(s, s + g), sc = Math.max(...part.map(Math.abs)) / q || 1; part.forEach(w => out.push(Math.round(w / sc) * sc)); } return out; };
   function draw() { const ws = W.slice(); if (outlier) ws[20] = .9; const qs = quant(ws, bits), err = Math.sqrt(ws.reduce((a, w, i) => a + (w - qs[i]) ** 2, 0) / ws.reduce((a, w) => a + w * w, 0)), zeros = qs.filter((v, i) => v === 0 && ws[i] !== 0).length;
-    const Wd = cv.width, Hd = cv.height, lim = outlier ? 1 : .3, Y = v => Hd / 2 - v / lim * (Hd * .42), X = i => 40 + i * (Wd - 80) / 63; x.clearRect(0, 0, Wd, Hd); x.strokeStyle = "rgba(20,20,20,0.064)"; x.lineWidth = 1;
+    const Wd = cv.width, Hd = cv.height, lim = outlier ? 1 : .3, Y = v => Hd / 2 - v / lim * (Hd * .42), X = i => 40 + i * (Wd - 80) / 63; x.clearRect(0, 0, Wd, Hd); x.strokeStyle = `rgba(${K.ovRGB},0.064)`; x.lineWidth = 1;
     const q = Math.pow(2, bits - 1) - 1, sc = Math.max(...ws.slice(0, block ? 32 : 64).map(Math.abs)) / q;
     for (let k = -q; k <= q; k++) { const yy = Y(k * sc); if (yy > 0 && yy < Hd) { x.beginPath(); x.moveTo(30, yy); x.lineTo(block ? Wd / 2 : Wd - 30, yy); x.stroke(); } }
     if (block) { const sc2 = Math.max(...ws.slice(32).map(Math.abs)) / q; for (let k = -q; k <= q; k++) { const yy = Y(k * sc2); if (yy > 0 && yy < Hd) { x.beginPath(); x.moveTo(Wd / 2, yy); x.lineTo(Wd - 30, yy); x.stroke(); } } }
@@ -649,13 +666,13 @@ async function loadFiles(files) {
       for (const [k, f] of sts.entries()) { busy(t("st_header", {i: k + 1, n: sts.length}), f.name); const h = new DataView(await f.slice(0, 8).arrayBuffer()), n = Number(h.getBigUint64(0, true));
         const j = JSON.parse(new TextDecoder().decode(await f.slice(8, 8 + n).arrayBuffer())); delete j.__metadata__; read += 8 + n; const pre = sts.length > 1 ? f.name.replace(/\.safetensors$/i, "").replace(/[^\w]+/g, "_") + "." : ""; for (const [k2, v] of Object.entries(j)) tensors[pre + k2] = v; }
       addOwn({tensors, cfg: null, meta: null, kind: "tensors", label: sts.map(f => f.name).join(" + "), noteKey: "n_hf_auto", noteVars: {n: Object.keys(tensors).length, r: fB(read), w: fB(sts.reduce((a, f) => a + f.size, 0)), f: sts.length}}, sts.length > 1 ? "Uploaded (" + sts.length + ")" : sts[0].name);
-    } catch (e) { ownNote(`<b style="color:#c4242a">${t("e_read")}</b> ${esc(e.message)}`); } return; }
+    } catch (e) { ownNote(`<b style="color:${K.neg}">${t("e_read")}</b> ${esc(e.message)}`); } return; }
   const tfl = [...files].filter(f => /\.tflite$/i.test(f.name)); if (!tfl.length) return; ownNote(t("loading"));
   try { const gs = []; for (const f of tfl) { const comp = /enc/i.test(f.name) ? "encoder" : /dec/i.test(f.name) ? "decoder" : (tfl.length === 1 ? "model" : "encoder"); gs.push(graphFromTflite(parseTflite(await f.arrayBuffer()), comp, f.name)); }
     const enc = gs.some(g => g.component === "encoder"), dec = gs.some(g => g.component !== "encoder");
     const meta = {name: tfl.map(f => f.name).join(" + "), family: enc && dec ? "encdec" : enc ? "encoder" : "decoder", modality: gs.some(g => g.nodes.some(n => n.t === "CONV_2D")) && enc ? "audio" : "text", d: null, tie: true};
     const id = "up-" + tfl.map(f => f.name + f.size).join("-").replace(/[^\w-]+/g, "-").slice(0, 60); const def = register({id, label: meta.name, short: tfl.length > 1 ? "Uploaded (" + tfl.length + ")" : tfl[0].name, group: "own", graphs: gs, meta, kind: "ops", noteKey: "n_upload", note: () => t("n_upload")}); def.M = null; persist(def); ownNote(t("saved_note")); setModel(id);
-  } catch (e) { ownNote(`<b style="color:#c4242a">${t("e_read")}</b> ${esc(e.message)}`); }
+  } catch (e) { ownNote(`<b style="color:${K.neg}">${t("e_read")}</b> ${esc(e.message)}`); }
 }
 function ownNote(h) { $("#ownNote").innerHTML = h; }
 async function hfLoad(input) {
@@ -703,6 +720,8 @@ function addOwn(r, short) { const id = "own-" + (r.label || "m").replace(/[^\w-]
 // ================================================================== everything
 function renderAll() { applyI18n(); renderPicker(); renderHero(); renderArch(); renderBig(); buildPlay(); renderIO(); renderDetail(); renderMap(); renderConcepts(); renderReport(); if (window.qRelabel) qRelabel(); $("#tokV").textContent = S.tokens; $("#tokV2").textContent = S.tokens; }
 function wire() {
+  { const tb = $("#themeBtn"); if (tb) { const lab = () => { const d = K.ink === PAL.dark.ink; tb.title = LANG === "th" ? (d ? "สลับเป็นธีมสว่าง" : "สลับเป็นธีมมืด") : (d ? "Switch to light theme" : "Switch to dark theme"); tb.setAttribute("aria-label", tb.title); };
+    lab(); tb.onclick = () => { const nt = K.ink === PAL.dark.ink ? "light" : "dark"; setTheme(nt); try { localStorage.setItem("mx_theme", nt); } catch (e) {} renderAll(); lab(); }; } }
   $$("[data-lang]").forEach(b => b.onclick = () => { LANG = b.dataset.lang; try { localStorage.setItem("mx_lang", LANG); } catch (e) {} renderAll(); });
   $$("[data-xl]").forEach(b => b.onclick = () => { S.lens = b.dataset.xl; pref("lens", S.lens); renderBig(); renderDetail(); });
   $$("[data-ml]").forEach(b => b.onclick = () => { S.mapLens = b.dataset.ml; renderMap(); });
@@ -712,7 +731,7 @@ function wire() {
   const tok = e => { S.tokens = +e.target.value; $("#tok").value = $("#tok2").value = S.tokens; renderBig(); renderMap(); renderReport(); $("#tokV").textContent = $("#tokV2").textContent = S.tokens; };
   $("#tok").oninput = tok; $("#tok2").oninput = tok;
   $("#file").onchange = e => loadFiles(e.target.files);
-  $("#hfGo").onclick = async () => { busy(t("loading"), ""); $("#hfGo").disabled = true; try { const r = await hfLoad($("#hf").value); ownNote(""); addOwn(r); } catch (e) { ownNote(e.message === "BLOCKED" ? t("e_blocked") : `<b style="color:#c4242a">${t("e_read")}</b> ${esc(e.message)}`); } finally { $("#hfGo").disabled = false; } };
+  $("#hfGo").onclick = async () => { busy(t("loading"), ""); $("#hfGo").disabled = true; try { const r = await hfLoad($("#hf").value); ownNote(""); addOwn(r); } catch (e) { ownNote(e.message === "BLOCKED" ? t("e_blocked") : `<b style="color:${K.neg}">${t("e_read")}</b> ${esc(e.message)}`); } finally { $("#hfGo").disabled = false; } };
   $("#hf").addEventListener("keydown", e => { if (e.key === "Enter") $("#hfGo").click(); });
   $("#cfgOpen").onclick = () => $("#cfgDlg").classList.add("open"); $("#cfgClose").onclick = () => $("#cfgDlg").classList.remove("open");
   $("#cfgGo").onclick = () => { try { const cfg = JSON.parse($("#cfgTxt").value); const r = tensorsFromConfig(cfg); $("#cfgDlg").classList.remove("open"); addOwn({tensors: r.tensors, meta: r.meta, cfg, kind: "config", label: (cfg._name_or_path || r.meta.model_type || "config") + "", noteKey: "n_cfg", noteVars: {mt: r.meta.model_type}}, r.meta.model_type); } catch (e) { $("#cfgErr").textContent = t("e_cfg") + e.message; } };
