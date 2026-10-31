@@ -38,7 +38,7 @@ From tensor names, shapes and dtypes alone it:
 ## How well it works
 | Benchmark | Result |
 |---|---|
-| 510 architectures from `transformers` (labels from module classes the method never sees) | 96.8% of tensors get the right role (macro); 95.0% with every name replaced by a random token; parameter totals exact for 510/510, also under NVFP4, FP8 and GPTQ |
+| 510 architectures from `transformers` (labels from module classes the method never sees) | 96.8% of tensors get the right role (macro) vs 82.3% for the best name-only baseline; 95.0% with every name replaced by a random token; parameter totals exact for 510/510, also under NVFP4, FP8 and GPTQ |
 | Same, head geometry | 73% from shapes alone; 96–98% with the config; 95% of configs agree with their weights |
 | 191 popular Hugging Face checkpoints (DeepSeek-V3, Kimi K2, Qwen3, Llama 3.3, gpt-oss, Gemma 3, Whisper, SAM, SDXL, Wan, …) | totals agree with the Hub's own count for 163 of 170; 4 of the 7 differences are the Hub counting packed 4-bit bytes; head count 97% with config; median 79 KB read per repo |
 
