@@ -5,6 +5,7 @@
 "use strict";
 const fs = require("fs"), zlib = require("zlib");
 const {infer, fuseConfig} = require("../src/infer.js");
+const BL = require("./baselines.js");
 const args = process.argv.slice(2), val = f => args.includes(f) ? args[args.indexOf(f) + 1] : null;
 const prod = s => s.reduce((a, b) => a * b, 1);
 const mask = n => n.split(".").map(t => /^\d+$/.test(t) ? "#" : t).join(".");
@@ -66,7 +67,11 @@ for (const line of fs.readFileSync(args[0], "utf8").split("\n")) {
   // roles against transferred ground truth
   const G = H.model_type && gtByType[H.model_type] || cfg && gtByType[cfg.model_type];
   if (G) { let w = 0, wc = 0, n = 0, cov = 0; for (const [nm, v] of Object.entries(tensors)) { const g = G.get(mask(nm)); n++; if (!g || g === "other") continue; cov++; const ww = prod(v.shape) || 1, p = I.tensors[nm] && normK(nm, I.tensors[nm].kind, I); w += ww; if (p === g) wc += ww; }
-    row.roles = {coverage: cov / n, acc: w ? wc / w : null}; }
+    row.roles = {coverage: cov / n, acc: w ? wc / w : null};
+    for (const [bn, fn] of [["v1moe", BL.v1moe], ["gguf", BL.ggufKinds]]) { const P = fn(tensors); let bw = 0, bc = 0, bcov = 0, bn2 = 0;
+      for (const [nm, v] of Object.entries(tensors)) { const g = G.get(mask(nm)); if (!g || g === "other") continue; const ww = prod(v.shape) || 1, p = P[nm] === "conv" && !/\.(layers|layer|h|blocks|block)\.\d+\./.test(nm) ? "embed" : P[nm]; bw += ww; bn2++; if (p && p !== "other") bcov++; if (p === g) bc += ww; }
+      row.roles[bn] = bw ? bc / bw : null; row.roles[bn + "_cov"] = bn2 ? bcov / bn2 : null; } }
+  { const st = BL.regexStacks(tensors).sort((a, b) => b.n - a.n); row.baseLayers = st.length ? st[0].n : null; }
   rows.push(row);
 }
 
@@ -76,6 +81,10 @@ const cmp = ok.filter(r => r.apiTotal && !r.diffusers);
 S.storedVsHub = {n: cmp.length, exact: cmp.filter(r => r.storedHub === r.apiTotal).length, miss: cmp.filter(r => r.storedHub !== r.apiTotal).map(r => [r.repo, r.storedHub, r.apiTotal])};
 S.diffusersVsHub = ok.filter(r => r.diffusers).map(r => [r.repo, r.params, r.apiTotal]);
 S.quantized = ok.filter(r => r.quant).map(r => ({repo: r.repo, fmt: r.quant, logical: r.params, hub: r.apiTotal, ratio: r.apiTotal ? +(r.params / r.apiTotal).toFixed(3) : null}));
+S.baseLayers = (() => { const rs = ok.filter(r => r.hp && r.hp.layers); return {n: rs.length, regex: rs.filter(r => r.baseLayers === r.hp.layers[0]).length, ours: rs.filter(r => r.hp.layers[1] === r.hp.layers[0]).length}; })();
+S.baseRoles = (() => { const rs = ok.filter(r => r.roles && r.roles.acc != null && r.roles.coverage >= .5); const m = k => rs.reduce((a, r) => a + (r.roles[k] || 0), 0) / (rs.length || 1);
+  const cov = rs.filter(r => (r.roles.gguf_cov || 0) >= .8), mc = k => cov.reduce((a, r) => a + (k === "acc" ? r.roles.acc : r.roles[k] || 0), 0) / (cov.length || 1);
+  return {n: rs.length, ours: m("acc") === 0 ? 0 : rs.reduce((a, r) => a + r.roles.acc, 0) / rs.length, v1moe: m("v1moe"), gguf: m("gguf"), ggufCovered: {n: cov.length, ours: mc("acc"), gguf: mc("gguf"), v1moe: mc("v1moe")}}; })();
 const hpAgg = {}; for (const r of ok) for (const [k, [g, p, pf]] of Object.entries(r.hp || {})) { const a = hpAgg[k] || (hpAgg[k] = {n: 0, manifest: 0, fused: 0}); a.n++; if (p === g) a.manifest++; if (pf === g) a.fused++; }
 S.hp = hpAgg; S.hpMiss = ok.flatMap(r => Object.entries(r.hp || {}).filter(([, [g, , pf]]) => pf !== g).map(([k, v]) => [r.repo, k, ...v]));
 const rl = ok.filter(r => r.roles && r.roles.acc != null && r.roles.coverage >= .5); S.roles = {n: rl.length, macro: rl.reduce((a, r) => a + r.roles.acc, 0) / (rl.length || 1), atLeast99: rl.filter(r => r.roles.acc >= .99).length, low: rl.filter(r => r.roles.acc < .9).map(r => [r.repo, +r.roles.acc.toFixed(3)])};

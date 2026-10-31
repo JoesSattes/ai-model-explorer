@@ -18,6 +18,20 @@ function v1kinds(tensors) {
     o[n] = k; }
   return o;
 }
+// v1 with a MoE label: the same rules, but expert, router and shared-expert tensors are labelled MoE (a fairer label space)
+function v1moe(tensors) { const o = v1kinds(tensors); for (const n of Object.keys(o)) if (/(^|\.)(experts?|block_sparse_moe|shared_experts?|router)(\.|$)|\.mlp\.gate\.(weight|bias)$|e_score_correction/.test(n)) o[n] = "moe"; return o; }
+// llama.cpp baseline: the Hugging Face module paths in gguf-py's tensor_mapping.py, looked up by name (union over architectures)
+const GG = (() => { const p = path.join(__dirname, "gguf_roles.json"); if (!fs.existsSync(p)) return null; const d = JSON.parse(fs.readFileSync(p, "utf8")), m = new Map();
+  for (const [, role, , pat] of d.patterns) { const k = pat.replace(/\{(bid|i|)\}/g, "#").split(".").map(t => /^\d+$/.test(t) ? "#" : t).join("."); if (!m.has(k)) m.set(k, role); } return m; })();
+function ggufKinds(tensors) { const o = {}, mk = n => n.split(".").map(t => /^\d+$/.test(t) ? "#" : t).join(".");
+  for (const n of Object.keys(tensors)) { const full = mk(n), parts = full.split("."), mod = parts.slice(0, -1).join(".");
+    let r = GG.get(full) || GG.get(mod);
+    if (!r && /\.experts\.#\./.test(mod)) r = GG.get(mod.replace(/\.experts\.#\./, ".experts.")); // convert_hf_to_gguf merges per-expert tensors before the lookup
+    o[n] = r || "other"; }
+  return o; }
+// stack baseline: every "<prefix>.(layers|layer|h|blocks|block|resblocks).<i>." is one stack of max(i)+1 identical blocks
+function regexStacks(tensors) { const st = new Map(); for (const n of Object.keys(tensors)) { const m = n.match(/^(.*?(?:^|\.)(?:layers|layer|h|blocks|block|resblocks))\.(\d+)\./); if (!m) continue; const p = m[1].replace(/^\./, ""); st.set(p, Math.max(st.get(p) || 0, +m[2] + 1)); }
+  return [...st].map(([path, n]) => ({path, n})); }
 const H = s => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return "t" + (h >>> 0).toString(36); };
 function obf(tensors) { const m = {}, back = {}; for (const [n, v] of Object.entries(tensors)) { const o = n.split(".").map(t => /^\d+$/.test(t) ? t : H(t)).join("."); m[o] = v; back[o] = n; } return {m, back}; }
 // synthetic quantized storage of a manifest (NVFP4 / FP8 / GPTQ) for every 2-D linear weight
@@ -47,13 +61,15 @@ for (const line of lines) {
   let pred, I = null;
   try {
     if (has("--v1")) pred = v1kinds(man);
+    else if (has("--v1moe")) pred = v1moe(man);
+    else if (has("--gguf")) pred = ggufKinds(man);
     else { const t0 = process.hrtime.bigint(); I = infer(man, {lex: !has("--nolex")}); agg.ms = agg.ms || []; agg.ms.push(Number(process.hrtime.bigint() - t0) / 1e6); pred = {}; for (const [n, t] of Object.entries(I.tensors)) pred[n] = t.kind; }
   } catch (e) { agg.fail.push(r.type + ": " + e.message); continue; }
   agg.models++; { const hb = Object.entries(r.tensors).reduce((a, [n, v]) => a + n.length + 40 + 6 * v.shape.length, 0) + 8, wb = Object.values(r.tensors).reduce((a, v) => a + prod(v.shape) * 2, 0); agg.hdr.push([hb, wb]); }
   const name = n => back ? back[n] : n;
   const P = {}; for (const [n, k] of Object.entries(pred)) P[name(n).replace(/\.qweight$/, ".weight")] = k;
   // quantized manifests: map back aux-free names
-  let mw = 0, mwc = 0;
+  let mw = 0, mwc = 0, covN = 0, covY = 0;
   // label space: an input stem (token/patch/position tables and conv stems outside the block stacks) counts as 'embed'
   const blockPaths = r.lists.filter(l => !l.expert).map(l => l.path + ".");
   const inBlock = n => blockPaths.some(p => n.startsWith(p));
@@ -62,11 +78,11 @@ for (const line of lines) {
     const g = {kind: norm(n, g0.kind)};
     if (g.kind === "other") continue; const w = prod(r.tensors[n].shape) || 1; let p = P[n] === undefined ? undefined : norm(n, P[n]);
     if (p === undefined && val("--quant")) p = P[n.replace(/weight$/, "weight")];
-    agg.w += w; agg.n++; mw += w; const ok = p === g.kind; if (ok) { agg.wc += w; agg.nc++; mwc += w; }
+    agg.w += w; agg.n++; mw += w; covN++; if (p && p !== "other") covY++; const ok = p === g.kind; if (ok) { agg.wc += w; agg.nc++; mwc += w; }
     const pk = agg.perK[g.kind] || (agg.perK[g.kind] = {tp: 0, fn: 0, fp: 0, w: 0, wc: 0}); pk.w += w; if (ok) { pk.tp++; pk.wc += w; } else { pk.fn++; const fk = agg.perK[p] || (agg.perK[p] = {tp: 0, fn: 0, fp: 0, w: 0, wc: 0}); fk.fp++; }
     const ck = g.kind + "→" + p; agg.conf[ck] = (agg.conf[ck] || 0) + w; agg.confN = agg.confN || {}; agg.confN[ck] = (agg.confN[ck] || 0) + 1; if (!ok) { agg.ex = agg.ex || {}; (agg.ex[ck] = agg.ex[ck] || []).length < 6 && agg.ex[ck].push(r.type + ":" + n); }
   }
-  const row = {type: r.type, acc: mw ? mwc / mw : null, params: r.params};
+  const row = {type: r.type, acc: mw ? mwc / mw : null, params: r.params, cov: covN ? covY / covN : null};
   // block lists (GT innermost non-expert lists whose items hold >= 2 parameterised sub-modules)
   if (I) {
     const nonexp = r.lists.filter(l => !l.expert);
@@ -99,6 +115,18 @@ for (const line of lines) {
       for (const k of ["heads", "kv_heads", "head_dim"]) { const g = r.hp[k]; if (typeof g !== "number") continue; const p = rec && rec[k] != null ? rec[k] : I.hp[k]; const a = agg.fz.hp[k] || (agg.fz.hp[k] = {n: 0, ok: 0}); a.n++; if (p === g) a.ok++; } }
     agg.params.n++; if (Math.abs(I.totals.params - r.params) / r.params < 1e-6) agg.params.exact++; else row.paramMiss = [r.params, I.totals.params];
     row.family = I.family; row.comps = I.comps.map(c => c.id + ":" + c.role + ":" + c.d).join(" ");
+  } else if (!back) { // baselines: block lists from the layer-index regex, one block type per list
+    const nonexp = r.lists.filter(l => !l.expert);
+    const subl = new Set(), outer = new Set();
+    for (const O of nonexp) { if (O.inner) continue; const ins = []; for (let i = 0; i < O.n; i++) { const a = nonexp.filter(L => L.inner && L.path.startsWith(O.path + "." + i + ".") && L.path.split(".").length === O.path.split(".").length + 2); ins.push(a); }
+      const short = ins.every(a => a.length >= 1 && a.every(L => L.n <= 4)) && new Set(ins.flatMap(a => a.map(L => L.n))).size === 1;
+      const hetero = ins.every(a => a.length === 1 && new Set(a[0].types).size === a[0].n), multi = ins.every(a => a.length >= 2);
+      if (short && (hetero || multi)) { ins.forEach(a => a.forEach(L => subl.add(L.path))); outer.add(O.path); } }
+    const gtL = nonexp.filter(l => (l.inner || outer.has(l.path)) && !subl.has(l.path)).filter(l => { const pre = l.path + ".0."; const mods = new Set(Object.keys(r.tensors).filter(n => n.startsWith(pre)).map(n => n.slice(0, n.lastIndexOf(".")))); return mods.size >= 2; });
+    const predS = regexStacks(r.tensors), pm = new Map(predS.map(s => [s.path, s]));
+    agg.lists.gt += gtL.length; agg.lists.pred += predS.length; let hit = 0;
+    for (const l of gtL) { const s = pm.get(l.path); if (!s) continue; hit++; agg.lists.hit++; if (s.n === l.n) agg.lists.cnt++; agg.lists.types++; if (new Set(l.types).size === 1) agg.lists.typesExact++; }
+    row.lists = [gtL.length, hit, predS.length];
   }
   agg.perModel.push(row);
 }

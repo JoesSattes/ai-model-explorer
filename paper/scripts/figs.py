@@ -5,15 +5,15 @@ import matplotlib.pyplot as plt
 R = sys.argv[1] if len(sys.argv) > 1 else "/home/claude/lab/arch/res2"
 OUT = os.path.join(os.path.dirname(__file__), "..", "fig")
 plt.rcParams.update({"font.family": "serif", "font.size": 8.5, "axes.spines.top": False, "axes.spines.right": False, "axes.linewidth": .6, "xtick.major.width": .6, "ytick.major.width": .6})
-full, obf, v1 = (json.load(open(f"{R}/{n}.json"))["f1"] for n in ("full", "obf", "v1"))
+full, obf, v1, gg = (json.load(open(f"{R}/{n}.json"))["f1"] for n in ("full", "obf", "v1moe", "gguf"))
 names = {"attn": "attention", "cross": "cross-attention", "ffn": "feed-forward", "moe": "mixture of experts", "ssm": "SSM / linear attn.", "conv": "conv module", "rnn": "recurrent cell", "mod": "adaLN modulation", "embed": "input stem", "norm": "norm", "head": "output head", "adapter": "adapter"}
 ks = list(names)[::-1]
-fig, ax = plt.subplots(figsize=(3.3, 3.15))
-y = range(len(ks)); h = .26
-for k, (src, lab, col) in enumerate([(v1, "name rules", "#bdbdbd"), (obf, "ours: shapes only", "#8fa8d8"), (full, "ours: full", "#1b4f9c")]):
-    ax.barh([i + (k - 1) * h for i in y], [src.get(x, 0) * 100 for x in ks], height=h, color=col, label=lab, linewidth=0)
+fig, ax = plt.subplots(figsize=(3.3, 3.4))
+y = range(len(ks)); h = .2
+for k, (src, lab, col) in enumerate([(gg, "llama.cpp table", "#e0e0e0"), (v1, "name rules + MoE", "#a8a8a8"), (obf, "ours: shapes only", "#8fa8d8"), (full, "ours: full", "#1b4f9c")]):
+    ax.barh([i + (k - 1.5) * h for i in y], [src.get(x, 0) * 100 for x in ks], height=h, color=col, label=lab, linewidth=0)
 ax.set_yticks(list(y)); ax.set_yticklabels([names[x] for x in ks]); ax.set_xlim(0, 100); ax.set_xlabel("F1 over tensors (%)")
-ax.legend(loc="lower left", frameon=False, fontsize=6.6, bbox_to_anchor=(-.45, 1.0), ncol=3, handlelength=1, columnspacing=.8, handletextpad=.4); ax.tick_params(axis="y", length=0)
+ax.legend(loc="lower left", frameon=False, fontsize=6.6, bbox_to_anchor=(-.45, 1.0), ncol=2, handlelength=1, columnspacing=.8, handletextpad=.4); ax.tick_params(axis="y", length=0)
 fig.tight_layout(pad=.3); fig.savefig(f"{OUT}/f1_roles.pdf")
 pts = json.load(open(f"{R}/header_points.json"))
 fig, ax = plt.subplots(figsize=(3.3, 3.0))
