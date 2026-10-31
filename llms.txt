@@ -24,7 +24,7 @@ It recognises encoder–decoder (e.g. Whisper), encoder→LLM multimodal models 
 - Whisper rehearsal models in fp32, weight-only int8 and dynamic int4 for precision comparisons
 
 ## Author
-Sattaya Singkul (Jo) — AI Solution Engineer, speech and edge AI. Portfolio: https://joessattes.github.io/Sattaya-AI-Website/ · GitHub: https://github.com/JoesSattes
+Sattaya Singkul (Jo) — Researcher, speech and edge AI. Portfolio: https://joessattes.github.io/Sattaya-AI-Website/ · GitHub: https://github.com/JoesSattes
 Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Contest", AI Expo Thailand 2026.
 
 ## Links
