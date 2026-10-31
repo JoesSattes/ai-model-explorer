@@ -63,7 +63,8 @@ then Download results; `node research/realbench.js export.jsonl corpus.jsonl` an
 ## Run locally
 Open `index.html` in a browser. To rebuild after editing `src/`: `cd src && python3 build.py`.
 To reproduce the paper's numbers: `python research/build_corpus.py corpus.jsonl`, then `node research/eval.js corpus.jsonl`
-with `--obf --nolex`, `--quant nvfp4|fp8|gptq`, `--v1` or `--cfg`.
+with `--obf --nolex`, `--quant nvfp4|fp8|gptq`, `--cfg`, or a baseline: `--v1` (name rules), `--v1moe` (name rules with an MoE label)
+or `--gguf` (llama.cpp's tensor-name table, built by `python research/gguf_baseline.py`).
 
 ## Credits
 Created by **[Sattaya Singkul](https://joessattes.github.io/Sattaya-AI-Website/)** for the workshop *Squeeze Until It Breaks — A Hands-On Edge Inference Contest*, AI Expo Thailand 2026.

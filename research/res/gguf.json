@@ -1,0 +1,348 @@
+{
+ "models": 510,
+ "macro_acc": 0.29749960541982884,
+ "failed": 0,
+ "acc_w": 0.514892569413833,
+ "acc_n": 0.2887317889076471,
+ "f1": {
+  "attn": 0.4968604565265568,
+  "cross": 0,
+  "ffn": 0.37702757502027573,
+  "moe": 0.6729112763239775,
+  "ssm": 0.5715535148136001,
+  "conv": 0,
+  "rnn": 0,
+  "mod": 0,
+  "embed": 0.20259740259740258,
+  "norm": 0.40170146292035214,
+  "head": 0.2977346278317152,
+  "adapter": 0.20202020202020204
+ },
+ "wacc": {
+  "attn": 0.5280652160471168,
+  "cross": 0,
+  "ffn": 0.4104467881336569,
+  "moe": 0.5196659096682668,
+  "ssm": 0.41332409524454256,
+  "conv": 0,
+  "rnn": 0,
+  "mod": 0,
+  "embed": 0.5250084588419344,
+  "norm": 0.14094595092961765,
+  "head": 0.9521858856847074,
+  "adapter": 0.16952951311199527
+ },
+ "lists": {
+  "gt": 1248,
+  "hit": 757,
+  "pred": 1047,
+  "cnt": 757,
+  "types": 757,
+  "typesExact": 631
+ },
+ "hp": {},
+ "params": {
+  "n": 0,
+  "exact": 0
+ },
+ "topConf": [
+  [
+   "moe→other",
+   43.26
+  ],
+  [
+   "ffn→other",
+   3.18
+  ],
+  [
+   "attn→other",
+   1.39
+  ],
+  [
+   "embed→other",
+   0.32
+  ],
+  [
+   "ssm→other",
+   0.14
+  ],
+  [
+   "ssm→attn",
+   0.05
+  ],
+  [
+   "ffn→moe",
+   0.03
+  ],
+  [
+   "ssm→ffn",
+   0.03
+  ],
+  [
+   "cross→other",
+   0.03
+  ],
+  [
+   "ffn→norm",
+   0.03
+  ],
+  [
+   "adapter→other",
+   0.02
+  ],
+  [
+   "head→other",
+   0.02
+  ],
+  [
+   "conv→other",
+   0.01
+  ],
+  [
+   "norm→other",
+   0
+  ],
+  [
+   "attn→head",
+   0
+  ]
+ ],
+ "hp1": {},
+ "hpSrc": {},
+ "header": {
+  "medianKB": 37.20703125,
+  "p95KB": 131.849609375,
+  "maxKB": 355.5380859375,
+  "medianRatio": 0.00004713446231720786
+ },
+ "listsPR": {
+  "recall": 0.6065705128205128,
+  "precision": 0.723018147086915,
+  "countExact": 1,
+  "typesExact": 0.8335535006605019
+ },
+ "families": {},
+ "labels": {},
+ "topConfN": [
+  [
+   "attn→other",
+   60114,
+   [
+    "aimv2:vision_model.encoder.layers.0.attention.k_proj.weight",
+    "aimv2:vision_model.encoder.layers.0.attention.v_proj.weight",
+    "aimv2:vision_model.encoder.layers.0.attention.q_proj.weight",
+    "aimv2:vision_model.encoder.layers.0.attention.out_proj.weight"
+   ]
+  ],
+  [
+   "norm→other",
+   56604,
+   [
+    "aimv2:vision_model.embeddings.rms_norm.weight",
+    "aimv2:vision_model.encoder.layers.0.rms_norm1.weight",
+    "aimv2:vision_model.encoder.layers.0.rms_norm2.weight",
+    "aimv2:vision_model.encoder.layers.1.rms_norm1.weight"
+   ]
+  ],
+  [
+   "ffn→other",
+   36573,
+   [
+    "aimv2:vision_model.encoder.layers.0.ffn.gate_proj.weight",
+    "aimv2:vision_model.encoder.layers.0.ffn.up_proj.weight",
+    "aimv2:vision_model.encoder.layers.0.ffn.down_proj.weight",
+    "aimv2:vision_model.encoder.layers.1.ffn.gate_proj.weight"
+   ]
+  ],
+  [
+   "moe→other",
+   9875,
+   [
+    "ernie4_5_moe:model.layers.1.mlp.gate.moe_statics.e_score_correction_bias",
+    "ernie4_5_moe:model.layers.2.mlp.gate.moe_statics.e_score_correction_bias",
+    "ernie4_5_moe:model.layers.3.mlp.gate.moe_statics.e_score_correction_bias",
+    "ernie4_5_moe:model.layers.4.mlp.gate.moe_statics.e_score_correction_bias"
+   ]
+  ],
+  [
+   "conv→other",
+   5544,
+   [
+    "align:vision_model.encoder.blocks.0.depthwise_conv.depthwise_conv.weight",
+    "align:vision_model.encoder.blocks.0.projection.project_conv.weight",
+    "align:vision_model.encoder.blocks.1.depthwise_conv.depthwise_conv.weight",
+    "align:vision_model.encoder.blocks.1.projection.project_conv.weight"
+   ]
+  ],
+  [
+   "cross→other",
+   5124,
+   [
+    "bart:model.decoder.layers.0.encoder_attn.k_proj.weight",
+    "bart:model.decoder.layers.0.encoder_attn.k_proj.bias",
+    "bart:model.decoder.layers.0.encoder_attn.v_proj.weight",
+    "bart:model.decoder.layers.0.encoder_attn.v_proj.bias"
+   ]
+  ],
+  [
+   "ssm→other",
+   3377,
+   [
+    "bamba:model.layers.0.mamba.dt_bias",
+    "bamba:model.layers.1.mamba.dt_bias",
+    "bamba:model.layers.2.mamba.dt_bias",
+    "bamba:model.layers.3.mamba.dt_bias"
+   ]
+  ],
+  [
+   "embed→other",
+   2122,
+   [
+    "aimv2:vision_model.embeddings.patch_embed.weight",
+    "aimv2:vision_model.embeddings.patch_embed.bias",
+    "aimv2:text_model.embeddings.token_embedding.weight",
+    "aimv2:text_model.embeddings.position_embedding.weight"
+   ]
+  ],
+  [
+   "head→other",
+   675,
+   [
+    "aimv2:vision_model.head.cls_token",
+    "aimv2:vision_model.head.output_proj.weight",
+    "aimv2:vision_model.head.output_proj.bias",
+    "aimv2_vision_model:head.output_proj.weight"
+   ]
+  ],
+  [
+   "attn→head",
+   410,
+   [
+    "chinese_clip_vision_model:encoder.layers.0.self_attn.out_proj.weight",
+    "chinese_clip_vision_model:encoder.layers.0.self_attn.out_proj.bias",
+    "chinese_clip_vision_model:encoder.layers.1.self_attn.out_proj.weight",
+    "chinese_clip_vision_model:encoder.layers.1.self_attn.out_proj.bias"
+   ]
+  ],
+  [
+   "ssm→attn",
+   316,
+   [
+    "glm5_next_text:layers.0.self_attn.q_proj.weight",
+    "glm5_next_text:layers.0.self_attn.k_proj.weight",
+    "glm5_next_text:layers.0.self_attn.v_proj.weight",
+    "glm5_next_text:layers.0.self_attn.o_proj.weight"
+   ]
+  ],
+  [
+   "adapter→other",
+   285,
+   [
+    "audioflamingo3:model.multi_modal_projector.linear_1.weight",
+    "audioflamingo3:model.multi_modal_projector.linear_1.bias",
+    "audioflamingo3:model.multi_modal_projector.linear_2.weight",
+    "audioflamingo3:model.multi_modal_projector.linear_2.bias"
+   ]
+  ],
+  [
+   "attn→cross",
+   280,
+   [
+    "longt5:decoder.block.0.layer.1.EncDecAttention.q.weight",
+    "longt5:decoder.block.0.layer.1.EncDecAttention.k.weight",
+    "longt5:decoder.block.0.layer.1.EncDecAttention.v.weight",
+    "longt5:decoder.block.0.layer.1.EncDecAttention.o.weight"
+   ]
+  ],
+  [
+   "mod→other",
+   166,
+   [
+    "focalnet:focalnet.encoder.stages.0.layers.0.modulation.projection_in.weight",
+    "focalnet:focalnet.encoder.stages.0.layers.0.modulation.projection_in.bias",
+    "focalnet:focalnet.encoder.stages.0.layers.0.modulation.projection_context.weight",
+    "focalnet:focalnet.encoder.stages.0.layers.0.modulation.projection_context.bias"
+   ]
+  ],
+  [
+   "attn→ssm",
+   130,
+   [
+    "bailing_hybrid:model.layers.0.self_attn.b_proj.weight",
+    "bailing_hybrid:model.layers.1.self_attn.b_proj.weight",
+    "bailing_hybrid:model.layers.2.self_attn.b_proj.weight",
+    "bailing_hybrid:model.layers.3.self_attn.b_proj.weight"
+   ]
+  ],
+  [
+   "ffn→moe",
+   112,
+   [
+    "bamba:model.layers.0.feed_forward.down_proj.weight",
+    "bamba:model.layers.1.feed_forward.down_proj.weight",
+    "bamba:model.layers.2.feed_forward.down_proj.weight",
+    "bamba:model.layers.3.feed_forward.down_proj.weight"
+   ]
+  ],
+  [
+   "ssm→ffn",
+   96,
+   [
+    "rwkv:rwkv.blocks.0.feed_forward.key.weight",
+    "rwkv:rwkv.blocks.0.feed_forward.receptance.weight",
+    "rwkv:rwkv.blocks.0.feed_forward.value.weight",
+    "rwkv:rwkv.blocks.1.feed_forward.key.weight"
+   ]
+  ],
+  [
+   "ffn→norm",
+   80,
+   [
+    "bamba:model.layers.0.feed_forward.up_proj.weight",
+    "bamba:model.layers.1.feed_forward.up_proj.weight",
+    "bamba:model.layers.2.feed_forward.up_proj.weight",
+    "bamba:model.layers.3.feed_forward.up_proj.weight"
+   ]
+  ],
+  [
+   "rnn→other",
+   64,
+   [
+    "bark:codec_model.encoder.layers.13.lstm.weight_ih_l0",
+    "bark:codec_model.encoder.layers.13.lstm.weight_hh_l0",
+    "bark:codec_model.encoder.layers.13.lstm.bias_ih_l0",
+    "bark:codec_model.encoder.layers.13.lstm.bias_hh_l0"
+   ]
+  ],
+  [
+   "embed→attn",
+   27,
+   [
+    "longt5:decoder.block.0.layer.0.SelfAttention.relative_attention_bias.weight",
+    "mt5:encoder.block.0.layer.0.SelfAttention.relative_attention_bias.weight",
+    "mt5:decoder.block.0.layer.0.SelfAttention.relative_attention_bias.weight",
+    "pop2piano:encoder.block.0.layer.0.SelfAttention.relative_attention_bias.weight"
+   ]
+  ],
+  [
+   "attn→adapter",
+   22,
+   [
+    "deepseek_vl:model.vision_model.head.attention.out_proj.weight",
+    "deepseek_vl:model.vision_model.head.attention.out_proj.bias",
+    "deepseek_vl_hybrid:model.vision_model.head.attention.out_proj.weight",
+    "deepseek_vl_hybrid:model.vision_model.head.attention.out_proj.bias"
+   ]
+  ],
+  [
+   "ffn→adapter",
+   9,
+   [
+    "idefics3:model.connector.modality_projection.proj.weight",
+    "minicpm_ocr:model.merger.mlp.0.linear_1.weight",
+    "minicpm_ocr:model.merger.mlp.0.linear_1.bias",
+    "minicpm_ocr:model.merger.mlp.0.linear_2.weight"
+   ]
+  ]
+ ]
+}
