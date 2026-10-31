@@ -485,6 +485,7 @@ function insights() {
   const L = (E || D).layers[0]; if (L && L.regions.ffn) out.push([C.mag, "i", t("i_ffn", {s: pct(L.regions.ffn._tot.params, L.tot.params)})]);
   const emb = (D || E).stemTot; if (emb.bytes / tot.bytes > .12) out.push([C.amber, "!", t("i_emb", {b: fB(emb.bytes), s: pct(emb.bytes, tot.bytes)})]);
   if (D && D.headTot.shared) out.push([C.ok, "✓", t("i_tied")]);
+  if (D && D.head.logits && D.head.logits.w.length && D.stem.embed && D.stem.embed.w.some(w => D.head.logits.w.some(l => l.shape.join() === w.shape.join()))) out.push([C.red, "!", t("i_split_emb")]);
   if (M.meta.kv_heads && M.meta.heads && M.meta.kv_heads < M.meta.heads) out.push([C.ok, "✓", t("i_gqa", {kv: M.meta.kv_heads, h: M.meta.heads, x: M.meta.heads / M.meta.kv_heads})]);
   if (M.meta.family === "prefix") out.push([C.blueL, "i", t("i_prefix")]);
   if (D) { const lin = D.layers.filter(L => L.regions.linear).length, full = D.layers.filter(L => L.regions.self).length;
@@ -575,6 +576,7 @@ function wire() {
   const rmeta = {name: "whisper rehearsal", model_type: "whisper", family: "encdec", modality: "audio", d: 128, heads: 2, kv_heads: 2, ffn: 256, vocab: 51865, tie: true, nmels: 80, seqEnc: 1500};
   if (PG.reh_fp32_enc) register({id: "reh-fp32", label: "Whisper rehearsal · fp32", short: "fp32", sub: ["มี fragility", "with fragility"], group: "prec", graphs: [PG.reh_fp32_enc, PG.reh_fp32_dec], meta: rmeta, viz: RH.fp32, note: () => t("n_reh")});
   if (PG.reh_wo_enc) register({id: "reh-weightonly", label: "Whisper rehearsal · weight-only int8", short: "weight-only int8", sub: ["ดู seams", "see the seams"], group: "prec", graphs: [PG.reh_wo_enc, PG.reh_wo_dec], meta: rmeta, viz: RH.weightonly_int8, note: () => t("n_reh_wo")});
+  if (PG.reh_static_enc) register({id: "reh-static", label: "Whisper rehearsal · static int8", short: "static int8", sub: ["ไฟล์ใหญ่ขึ้น?", "bigger file?"], group: "prec", graphs: [PG.reh_static_enc, PG.reh_static_dec], meta: rmeta, viz: RH.static_int8, note: () => t("n_reh_static")});
   if (PG.reh_int4_enc) register({id: "reh-int4", label: "Whisper rehearsal · dynamic int4", short: "dynamic int4", sub: ["int4", "int4"], group: "prec", graphs: [PG.reh_int4_enc, PG.reh_int4_dec], meta: rmeta, viz: RH.dyn_int4, note: () => t("n_reh_int4")});
 })();
 wire();
