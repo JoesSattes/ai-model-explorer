@@ -2,7 +2,7 @@
 import json, sys, os
 import matplotlib; matplotlib.use("pdf")
 import matplotlib.pyplot as plt
-R = sys.argv[1] if len(sys.argv) > 1 else "/home/claude/lab/arch/res2"
+R = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../research/res")
 OUT = os.path.join(os.path.dirname(__file__), "..", "fig")
 plt.rcParams.update({"font.family": "serif", "font.size": 8.5, "axes.spines.top": False, "axes.spines.right": False, "axes.linewidth": .6, "xtick.major.width": .6, "ytick.major.width": .6})
 full, obf, v1, gg = (json.load(open(f"{R}/{n}.json"))["f1"] for n in ("full", "obf", "v1moe", "gguf"))

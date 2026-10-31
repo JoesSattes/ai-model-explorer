@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use AI Model Explorer, please cite it as below."
+message: "If you use AI Model Explorer or its recovery method, please cite the paper below."
 title: "AI Model Explorer"
 type: software
 authors:
@@ -11,3 +11,12 @@ url: "https://joessattes.github.io/ai-model-explorer/"
 license: MIT
 date-released: 2026-10-31
 keywords: [AI model explorer, model visualization, TFLite, LiteRT, edge AI, quantization, transformer, Hugging Face]
+preferred-citation:
+  type: article
+  status: preprint
+  title: "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy"
+  authors:
+    - family-names: Singkul
+      given-names: Sattaya
+  year: 2026
+  url: "https://github.com/JoesSattes/ai-model-explorer/tree/main/paper"

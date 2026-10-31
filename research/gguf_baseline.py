@@ -2,6 +2,7 @@
 # turn every Hugging Face module path it lists into a regex, and map each llama.cpp tensor type to one of our roles.
 # usage: python gguf_baseline.py tensor_mapping.py gguf_roles.json
 # Source: https://github.com/ggml-org/llama.cpp (MIT), gguf-py/gguf/tensor_mapping.py
+# Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026 (paper/).
 import ast, json, re, sys
 
 src = open(sys.argv[1], encoding="utf-8").read()

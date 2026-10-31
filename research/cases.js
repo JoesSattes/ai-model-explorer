@@ -1,5 +1,5 @@
 // run infer on the case-study manifests and print a compact anatomy
-const fs = require("fs"), {infer} = require("/home/claude/ai-model-explorer/src/infer.js");
+const fs = require("fs"), path = require("path"), {infer} = require(path.join(__dirname, "../src/infer.js"));
 const prod = s => s.reduce((a, b) => a * b, 1);
 function quantNVFP4(t, ignore) { const o = {}; for (const [n, v] of Object.entries(t)) { const s = v.shape; if (s.length === 2 && n.endsWith(".weight") && !ignore.test(n) && s[1] % 16 === 0) { const b = n.slice(0, -7); o[n] = {dtype: "U8", shape: [s[0], s[1] / 2]}; o[b + ".weight_scale"] = {dtype: "F8_E4M3", shape: [s[0], s[1] / 16]}; o[b + ".weight_scale_2"] = {dtype: "F32", shape: []}; o[b + ".input_scale"] = {dtype: "F32", shape: []}; } else o[n] = Object.assign({}, v, {dtype: "BF16"}); } return o; }
 const cases = {};

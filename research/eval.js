@@ -1,11 +1,12 @@
 // evaluate infer.js against the meta-device corpus. usage: node eval.js corpus.jsonl [--nolex] [--obf] [--v1] [--quant fmt] [--only a,b] [--dump]
+// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026 (paper/).
 const fs = require("fs"), path = require("path"), vm = require("vm");
-const {infer, fuseConfig} = require("/home/claude/ai-model-explorer/src/infer.js");
+const {infer, fuseConfig} = require(path.join(__dirname, "../src/infer.js"));
 const args = process.argv.slice(2), file = args[0], has = f => args.includes(f), val = f => args.includes(f) ? args[args.indexOf(f) + 1] : null;
 const only = val("--only") ? val("--only").split(",") : null;
 // v1 baseline: the explorer's previous regex placement
 const ctx = {console, Math, Object, Array, String, Number, Set, Map, JSON}; vm.createContext(ctx);
-vm.runInContext(fs.readFileSync("/home/claude/ai-model-explorer/src/model.js", "utf8") + "\n;this.tensorPlace=tensorPlace;this.TOWER=TOWER;", ctx);
+vm.runInContext(fs.readFileSync(path.join(__dirname, "../src/model.js"), "utf8") + "\n;this.tensorPlace=tensorPlace;this.TOWER=TOWER;", ctx);
 function v1kinds(tensors) {
   const names = Object.keys(tensors), lay = n => /\.(?:layers|layer|h|blocks|block)\.\d+\./.test(n);
   const both = names.some(n => ctx.TOWER.test(n.toLowerCase()) && lay(n)) && names.some(n => !ctx.TOWER.test(n.toLowerCase()) && lay(n));
