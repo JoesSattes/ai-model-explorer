@@ -111,19 +111,21 @@ function classify0(names, T, d, ctx) {
   }
   const dws = names.filter(n => isDW(T[n].shape));
   const direct = names.filter(n => ctx.root != null && n.slice(0, n.lastIndexOf(".")) === ctx.root);
-  if (dws.length) {
+  const qkvW = new Map(); M.forEach(n => { if (T[n].shape[1] === d) qkvW.set(T[n].shape[0], (qkvW.get(T[n].shape[0]) || 0) + 1); });
+  const attnLike = [...qkvW.values()].some(v => v >= 3); // q, k, v of one width next to a conv: span-based dynamic conv attention (ConvBERT), not a conv module
+  if (dws.length && !attnLike) {
     const C = T[dws[0]].shape[0], k = T[dws[0]].shape[2];
     const small = direct.filter(n => T[n].shape.length === 1).map(n => T[n].shape[0]).filter(x => x !== d);
     const cnt = new Map(); small.forEach(x => cnt.set(x, (cnt.get(x) || 0) + 1));
     const rep = [...cnt].filter(([, v]) => v >= 2).map(([x]) => x);
-    const stateT = names.filter(n => { const s = T[n].shape; return s.length >= 2 && !isDW(s) && s[s.length - 1] <= 256 && s.slice(0, -1).some(x => x === C || 2 * x === C || x === C / 2) && s[s.length - 1] < s[s.length - 2]; });
+    const stateT = names.filter(n => { const s = T[n].shape; return s.length >= 2 && !isDW(s) && s[s.length - 1] > 1 && s[s.length - 1] <= 256 && s.slice(0, -1).some(x => x === C || 2 * x === C || x === C / 2) && s[s.length - 1] < s[s.length - 2]; });
     if (k <= 8 && (rep.length || stateT.length || direct.filter(n => T[n].shape.length <= 1).length >= 2)) { ev.push(`depthwise conv [${T[dws[0]].shape.join("×")}] + state parameters ${rep.length ? "[" + rep[0] + "] ×" + cnt.get(rep[0]) : stateT.length ? "[" + T[stateT[0]].shape.join("×") + "]" : ""} (A, D, Δt)`); return {kind: "ssm", heads: rep[0], ev}; }
     const pw = names.filter(n => T[n].shape.length === 3 && T[n].shape[2] === 1 || T[n].shape.length === 4 && T[n].shape[2] === 1 && T[n].shape[3] === 1);
     if (pw.length || /running_mean|running_var/.test(names.join(" ")) || k > 8) { ev.push(`depthwise conv k=${k} with pointwise convs`); return {kind: "conv", k, ev}; }
   }
   // recurrent cells: W_ih [g*h, x], W_hh [g*h, h], g in {3,4}
   const hh = M.filter(n => { const [o, i] = T[n].shape; return (o === 4 * i || o === 3 * i); });
-  if (hh.length && M.length >= 2 && M.every(n => T[n].shape[0] === T[hh[0]].shape[0] && T[n].shape[0] !== d)) { const [o, i] = T[hh[0]].shape; ev.push(`${o / i === 4 ? "LSTM" : "GRU"} gates ${o} = ${o / i}×${i}`); return {kind: "rnn", cell: o / i === 4 ? "lstm" : "gru", h: i, ev}; }
+  if (hh.length && M.length >= 2 && M.every(n => T[n].shape[0] === T[hh[0]].shape[0] && T[n].shape[0] !== d) && !(ctx.lex && !/(^|[._])(weight|bias)_(ih|hh)|lstm|gru|rnn|recur|cell/i.test(M.join(" ")))) { const [o, i] = T[hh[0]].shape; ev.push(`${o / i === 4 ? "LSTM" : "GRU"} gates ${o} = ${o / i}×${i}`); return {kind: "rnn", cell: o / i === 4 ? "lstm" : "gru", h: i, ev}; }
   if (!M.length) {
     const tab = names.find(n => T[n].shape.length === 3 && T[n].shape[0] === 1 && T[n].shape[2] === d && [2, 3, 4, 6, 9, 12].includes(T[n].shape[1]));
     if (tab) { ev.push(`scale/shift table [${T[tab].shape.join("×")}]`); return {kind: "mod", ev}; }

@@ -1,6 +1,6 @@
 // evaluate infer.js against the meta-device corpus. usage: node eval.js corpus.jsonl [--nolex] [--obf] [--v1] [--quant fmt] [--only a,b] [--dump]
 const fs = require("fs"), path = require("path"), vm = require("vm");
-const {infer} = require("/home/claude/ai-model-explorer/src/infer.js");
+const {infer, fuseConfig} = require("/home/claude/ai-model-explorer/src/infer.js");
 const args = process.argv.slice(2), file = args[0], has = f => args.includes(f), val = f => args.includes(f) ? args[args.indexOf(f) + 1] : null;
 const only = val("--only") ? val("--only").split(",") : null;
 // v1 baseline: the explorer's previous regex placement
@@ -39,7 +39,7 @@ const prod = s => s.reduce((a, b) => a * b, 1);
 const lines = fs.readFileSync(file, "utf8").split("\n").filter(Boolean);
 const seen = new Set();
 for (const line of lines) {
-  const r = JSON.parse(line); if (r.err || (only && !only.includes(r.type))) continue;
+  let r; try { r = JSON.parse(line); } catch (e) { r = JSON.parse(line.replace(/(?<=[:,\[] ?)-?Infinity\b/g, "null").replace(/(?<=[:,\[] ?)NaN\b/g, "null")); } if (r.err || (only && !only.includes(r.type))) continue;
   const key = Object.entries(r.tensors).map(([n, v]) => n + v.shape).join("|"); if (seen.has(key)) continue; seen.add(key);
   let man = r.tensors, back = null;
   if (val("--quant")) man = quantize(man, val("--quant"));
@@ -93,6 +93,10 @@ for (const line of lines) {
       if (I.comps.length === 1) { const b = agg.hp1[k] || (agg.hp1[k] = {n: 0, ok: 0}); b.n++; if (p === g) b.ok++; }
       if (k === "heads" || k === "head_dim") { const src = I.hp.head_dim_from || "none", b = agg.hpSrc[k + ":" + src] || (agg.hpSrc[k + ":" + src] = {n: 0, ok: 0}); b.n++; if (p === g) b.ok++; }
     }
+    if (has("--cfg") && r.cfg) { const F = fuseConfig(I, r.cfg) || {}, B = I.comps.find(c => c.role === "backbone"), rec = B ? F[B.id] : null;
+      agg.fz = agg.fz || {models: 0, matched: 0, checked: 0, consistent: 0, comps: 0, compsMatched: 0, hp: {}, bad: []};
+      agg.fz.models++; if (rec) agg.fz.matched++; for (const C of I.comps) { agg.fz.comps++; if (F[C.id]) { agg.fz.compsMatched++; if (F[C.id].checked) { agg.fz.checked++; if (F[C.id].consistent) agg.fz.consistent++; else if (agg.fz.bad.length < 40) agg.fz.bad.push(r.type + ":" + C.id); } } }
+      for (const k of ["heads", "kv_heads", "head_dim"]) { const g = r.hp[k]; if (typeof g !== "number") continue; const p = rec && rec[k] != null ? rec[k] : I.hp[k]; const a = agg.fz.hp[k] || (agg.fz.hp[k] = {n: 0, ok: 0}); a.n++; if (p === g) a.ok++; } }
     agg.params.n++; if (Math.abs(I.totals.params - r.params) / r.params < 1e-6) agg.params.exact++; else row.paramMiss = [r.params, I.totals.params];
     row.family = I.family; row.comps = I.comps.map(c => c.id + ":" + c.role + ":" + c.d).join(" ");
   }
@@ -109,6 +113,7 @@ res.hp1 = Object.fromEntries(Object.entries(agg.hp1).map(([k, v]) => [k, [v.ok, 
 if (agg.ms) { const m = agg.ms.sort((a, b) => a - b); res.ms = {median: m[m.length >> 1], p95: m[Math.floor(m.length * .95)], max: m[m.length - 1]}; }
 res.listsPR = {recall: agg.lists.hit / agg.lists.gt, precision: agg.lists.hit / agg.lists.pred, countExact: agg.lists.cnt / agg.lists.hit, typesExact: agg.lists.typesExact / agg.lists.types};
 res.families = {}; res.labels = {}; agg.perModel.forEach(r => { if (r.family) res.families[r.family] = (res.families[r.family] || 0) + 1; });
+if (agg.fz) res.fusion = agg.fz;
 res.topConfN = Object.entries(agg.confN).filter(([k]) => k.split("→")[0] !== k.split("→")[1]).sort((a, b) => b[1] - a[1]).slice(0, +(process.env.TOPN||25)).map(([k, v]) => [k, v, (agg.ex[k] || []).slice(0, 4)]);
 console.log(JSON.stringify(res, null, 1));
 if (has("--dump")) fs.writeFileSync(val("--dump"), JSON.stringify({res, perModel: agg.perModel, fail: agg.fail}, null, 1));

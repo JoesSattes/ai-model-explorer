@@ -894,19 +894,21 @@ function classify0(names, T, d, ctx) {
   }
   const dws = names.filter(n => isDW(T[n].shape));
   const direct = names.filter(n => ctx.root != null && n.slice(0, n.lastIndexOf(".")) === ctx.root);
-  if (dws.length) {
+  const qkvW = new Map(); M.forEach(n => { if (T[n].shape[1] === d) qkvW.set(T[n].shape[0], (qkvW.get(T[n].shape[0]) || 0) + 1); });
+  const attnLike = [...qkvW.values()].some(v => v >= 3); // q, k, v of one width next to a conv: span-based dynamic conv attention (ConvBERT), not a conv module
+  if (dws.length && !attnLike) {
     const C = T[dws[0]].shape[0], k = T[dws[0]].shape[2];
     const small = direct.filter(n => T[n].shape.length === 1).map(n => T[n].shape[0]).filter(x => x !== d);
     const cnt = new Map(); small.forEach(x => cnt.set(x, (cnt.get(x) || 0) + 1));
     const rep = [...cnt].filter(([, v]) => v >= 2).map(([x]) => x);
-    const stateT = names.filter(n => { const s = T[n].shape; return s.length >= 2 && !isDW(s) && s[s.length - 1] <= 256 && s.slice(0, -1).some(x => x === C || 2 * x === C || x === C / 2) && s[s.length - 1] < s[s.length - 2]; });
+    const stateT = names.filter(n => { const s = T[n].shape; return s.length >= 2 && !isDW(s) && s[s.length - 1] > 1 && s[s.length - 1] <= 256 && s.slice(0, -1).some(x => x === C || 2 * x === C || x === C / 2) && s[s.length - 1] < s[s.length - 2]; });
     if (k <= 8 && (rep.length || stateT.length || direct.filter(n => T[n].shape.length <= 1).length >= 2)) { ev.push(`depthwise conv [${T[dws[0]].shape.join("×")}] + state parameters ${rep.length ? "[" + rep[0] + "] ×" + cnt.get(rep[0]) : stateT.length ? "[" + T[stateT[0]].shape.join("×") + "]" : ""} (A, D, Δt)`); return {kind: "ssm", heads: rep[0], ev}; }
     const pw = names.filter(n => T[n].shape.length === 3 && T[n].shape[2] === 1 || T[n].shape.length === 4 && T[n].shape[2] === 1 && T[n].shape[3] === 1);
     if (pw.length || /running_mean|running_var/.test(names.join(" ")) || k > 8) { ev.push(`depthwise conv k=${k} with pointwise convs`); return {kind: "conv", k, ev}; }
   }
   // recurrent cells: W_ih [g*h, x], W_hh [g*h, h], g in {3,4}
   const hh = M.filter(n => { const [o, i] = T[n].shape; return (o === 4 * i || o === 3 * i); });
-  if (hh.length && M.length >= 2 && M.every(n => T[n].shape[0] === T[hh[0]].shape[0] && T[n].shape[0] !== d)) { const [o, i] = T[hh[0]].shape; ev.push(`${o / i === 4 ? "LSTM" : "GRU"} gates ${o} = ${o / i}×${i}`); return {kind: "rnn", cell: o / i === 4 ? "lstm" : "gru", h: i, ev}; }
+  if (hh.length && M.length >= 2 && M.every(n => T[n].shape[0] === T[hh[0]].shape[0] && T[n].shape[0] !== d) && !(ctx.lex && !/(^|[._])(weight|bias)_(ih|hh)|lstm|gru|rnn|recur|cell/i.test(M.join(" ")))) { const [o, i] = T[hh[0]].shape; ev.push(`${o / i === 4 ? "LSTM" : "GRU"} gates ${o} = ${o / i}×${i}`); return {kind: "rnn", cell: o / i === 4 ? "lstm" : "gru", h: i, ev}; }
   if (!M.length) {
     const tab = names.find(n => T[n].shape.length === 3 && T[n].shape[0] === 1 && T[n].shape[2] === d && [2, 3, 4, 6, 9, 12].includes(T[n].shape[1]));
     if (tab) { ev.push(`scale/shift table [${T[tab].shape.join("×")}]`); return {kind: "mod", ev}; }
@@ -1508,7 +1510,37 @@ function tensorsFromState(o, pre = "", out = {}, depth = 0) {
 // strip a wrapper prefix every tensor shares (e.g. "state_dict." or "model.")
 function stripCommon(T) { const ks = Object.keys(T); if (ks.length < 2) return T; const f = ks[0].split(".")[0]; if (!ks.every(k => k.startsWith(f + ".")) || !/^(state_dict|model_state_dict|module|ema|params|weights)$/.test(f)) return T; const o = {}; for (const k of ks) o[k.slice(f.length + 1)] = T[k]; return o; }
 
-root.Loaders = {safetensorsHeader, torchIndex, unpickle, tensorsFromState, stripCommon};
+// ---------------- a Hugging Face repo: which files describe the weights, then their headers (shared by the explorer and the benchmark)
+async function hfManifest(repo, files, prog = () => {}, opt = {}) {
+  const conc = opt.conc || 6;
+  const base = `https://huggingface.co/${repo}/resolve/main/`;
+  const folder = n => n.includes("/") ? n.slice(0, n.lastIndexOf("/")) : "";
+  const skip = n => /(^|\/)(consolidated|optimizer|training_args|scheduler|rng_state)/i.test(n) || /^(\.|original\/)/.test(n);
+  const jobs = [], seen = new Set();
+  for (const ix of files.filter(f => /\.safetensors\.index\.json$/.test(f.n) && !skip(f.n))) {
+    prog("index", ix.n); const j = await (await fetch(base + ix.n)).json(), dir = folder(ix.n);
+    for (const sh of [...new Set(Object.values(j.weight_map || {}))]) { const n = dir ? dir + "/" + sh : sh; seen.add(n); jobs.push({n, prefix: dir, kind: "st"}); } }
+  const loose = files.filter(f => /\.safetensors$/.test(f.n) && !seen.has(f.n) && !skip(f.n));
+  const rootLoose = loose.filter(f => !folder(f.n));
+  loose.forEach(f => jobs.push({n: f.n, prefix: folder(f.n) || (rootLoose.length > 1 ? f.n.replace(/\.safetensors$/, "").replace(/[^\w]+/g, "_") : ""), kind: "st"}));
+  if (!jobs.length) {
+    const pts = files.filter(f => /\.(pt|pth|bin|ckpt)$/.test(f.n) && !skip(f.n) && !/optimizer|scheduler|training/.test(f.n));
+    const groups = {}; pts.forEach(f => (groups[folder(f.n)] = groups[folder(f.n)] || []).push(f));
+    let dirs = Object.keys(groups); if (opt.prefer && groups[opt.prefer]) dirs = [opt.prefer]; else if (dirs.length > 1) dirs = dirs.sort((a, b) => groups[b].reduce((x, f) => x + f.size, 0) - groups[a].reduce((x, f) => x + f.size, 0)).slice(0, 4);
+    dirs.forEach(d => { const g = groups[d].sort((a, b) => (/classif|model|pytorch_model/.test(b.n) - /classif|model|pytorch_model/.test(a.n)) || b.size - a.size); jobs.push({n: g[0].n, prefix: dirs.length > 1 ? d.replace(/\//g, ".") : "", kind: "pt"}); });
+  }
+  if (!jobs.length) return null;
+  const tensors = {}, res = new Array(jobs.length); let read = 0, done = 0, next = 0;
+  const work = async () => { while (next < jobs.length) { const k = next++, jb = jobs[k], sz = (files.find(f => f.n === jb.n) || {}).size || 0;
+    const r = jb.kind === "pt" ? await torchIndex(base + jb.n, sz) : await safetensorsHeader(base + jb.n, sz);
+    res[k] = r; read += r.bytes; done++; prog(jb.kind === "pt" ? "pt" : "header", jb.n, done, jobs.length, read); } };
+  await Promise.all(Array.from({length: Math.min(conc, jobs.length)}, work));
+  jobs.forEach((jb, k) => { const T = jb.kind === "pt" ? stripCommon(res[k].tensors) : res[k].tensors;
+    for (const [n, v] of Object.entries(T)) tensors[(jb.prefix ? jb.prefix.replace(/\//g, ".") + "." : "") + n] = v; });
+  return {tensors, read, nfiles: jobs.length, kinds: [...new Set(jobs.map(j => j.kind))]};
+}
+
+root.Loaders = {hfManifest, safetensorsHeader, torchIndex, unpickle, tensorsFromState, stripCommon};
 })(typeof window !== "undefined" ? window : globalThis);
 </script>
 <script>// Any model -> one normalized description: family, modality, meta, and an anatomy of parts with real metrics.
@@ -2544,29 +2576,9 @@ async function hfLoad(input) {
   if (tfl.length) { const pick = tfl.filter(f => /enc|dec/i.test(f.n)).slice(0, 2), chosen = pick.length ? pick : tfl.slice(0, 1), gs = [];
     for (const f of chosen) { busy(t("st_tflite"), `${f.n} (${fB(f.size)})`); gs.push(graphFromTflite(parseTflite(await (await fetch(base + f.n)).arrayBuffer()), /enc/i.test(f.n) ? "encoder" : /dec/i.test(f.n) ? "decoder" : "model", f.n)); }
     return {graphs: gs, kind: "ops", meta: {name: repo, family: chosen.length > 1 ? "encdec" : "decoder", modality: "text", tie: true}, label: repo, noteKey: "n_upload"}; }
-  // which files describe the weights: safetensors (sharded or per component), else PyTorch zip checkpoints
-  const folder = n => n.includes("/") ? n.slice(0, n.lastIndexOf("/")) : "";
-  const skip = n => /(^|\/)(consolidated|optimizer|training_args|scheduler|rng_state)/i.test(n) || /^(\.|original\/)/.test(n);
-  const jobs = [], seen = new Set();
-  for (const ix of files.filter(f => /\.safetensors\.index\.json$/.test(f.n) && !skip(f.n))) {
-    busy(t("st_index"), ix.n); const j = await (await fetch(base + ix.n)).json(), dir = folder(ix.n);
-    for (const sh of [...new Set(Object.values(j.weight_map || {}))]) { const n = dir ? dir + "/" + sh : sh; seen.add(n); jobs.push({n, prefix: dir, kind: "st"}); } }
-  const loose = files.filter(f => /\.safetensors$/.test(f.n) && !seen.has(f.n) && !skip(f.n));
-  const rootLoose = loose.filter(f => !folder(f.n));
-  loose.forEach(f => jobs.push({n: f.n, prefix: folder(f.n) || (rootLoose.length > 1 ? f.n.replace(/\.safetensors$/, "").replace(/[^\w]+/g, "_") : ""), kind: "st"}));
-  if (!jobs.length) { // PyTorch checkpoints: one per folder, preferring the default size named in config.json
-    const pts = files.filter(f => /\.(pt|pth|bin|ckpt)$/.test(f.n) && !skip(f.n) && !/optimizer|scheduler|training/.test(f.n));
-    const groups = {}; pts.forEach(f => (groups[folder(f.n)] = groups[folder(f.n)] || []).push(f));
-    let dirs = Object.keys(groups); const want = cfg && cfg.default_size; if (want && groups[want]) dirs = [want]; else if (dirs.length > 1) dirs = dirs.sort((a, b) => groups[b].reduce((x, f) => x + f.size, 0) - groups[a].reduce((x, f) => x + f.size, 0)).slice(0, 1);
-    dirs.forEach(d => { const g = groups[d].sort((a, b) => (/classif|model|pytorch_model/.test(b.n) - /classif|model|pytorch_model/.test(a.n)) || b.size - a.size); jobs.push({n: g[0].n, prefix: "", kind: "pt"}); });
-  }
-  if (!jobs.length) { if (cfg) { const r = tensorsFromConfig(cfg); return {tensors: r.tensors, meta: {...r.meta, name: repo}, cfg, kind: "config", label: repo, noteKey: "n_cfg", noteVars: {mt: r.meta.model_type}}; } throw new Error("no .tflite / .safetensors / .pt / config.json"); }
-  const tensors = {}; let read = 0;
-  for (let k = 0; k < jobs.length; k++) { const jb = jobs[k], sz = (files.find(f => f.n === jb.n) || {}).size || 0;
-    busy(t(jb.kind === "pt" ? "st_pt" : "st_header", {i: k + 1, n: jobs.length}), `${jb.n} · ${fB(read)} ${t("st_sofar")}`);
-    const r = jb.kind === "pt" ? await Loaders.torchIndex(base + jb.n, sz) : await Loaders.safetensorsHeader(base + jb.n, sz);
-    read += r.bytes; const T = jb.kind === "pt" ? Loaders.stripCommon(r.tensors) : r.tensors;
-    for (const [n, v] of Object.entries(T)) tensors[(jb.prefix ? jb.prefix.replace(/\//g, ".") + "." : "") + n] = v; }
+  const mf = await Loaders.hfManifest(repo, files, (st, n, i, k, rd) => busy(st === "index" ? t("st_index") : t(st === "pt" ? "st_pt" : "st_header", {i, n: k}), st === "index" ? n : `${n} · ${fB(rd)} ${t("st_sofar")}`), {prefer: cfg && cfg.default_size});
+  if (!mf) { if (cfg) { const r = tensorsFromConfig(cfg); return {tensors: r.tensors, meta: {...r.meta, name: repo}, cfg, kind: "config", label: repo, noteKey: "n_cfg", noteVars: {mt: r.meta.model_type}}; } throw new Error("no .tflite / .safetensors / .pt / config.json"); }
+  const {tensors, read} = mf, jobs = {length: mf.nfiles};
   busy(t("st_infer"), `${Object.keys(tensors).length} tensors`);
   await new Promise(r => setTimeout(r, 20));
   const n = Object.keys(tensors).length; return {tensors, cfg, meta: null, kind: "tensors", label: repo, noteKey: "n_hf_auto", noteVars: {n, r: fB(read), w: fB(total), f: jobs.length}};
