@@ -25,6 +25,7 @@ function setTheme(th) {
   Object.assign(C, {red: K.neg, redL: K.neg, mag: K.dec, magL: K.dec, blue: K.enc, blueL: K.blueL, ok: K.ok, amber: K.amber, ink: K.ink, soft: K.soft, dim: K.dim});
   Object.keys(BLK).forEach(k => BLK[k] = /SSM/.test(k) ? K.ssm : /MoE/.test(k) ? K.dec : /Conformer|RNN/.test(k) ? K.conf : /Attention|Transformer|DiT|Cross/.test(k) ? K.enc : "#a9a9a3");
   Object.assign(ROLE_C, K.role);
+  Object.assign(DTC, th === "dark" ? {fp32: "#8b96fa", fp16: "#c3c9ff", bf16: "#c3c9ff", int8: "#ff4fa8", int4: "#ffaad6", uint8: "#ff4fa8", fp8: "#ffc6e4"} : {fp32: "#1b5fd1", fp16: "#7ea3e6", bf16: "#7ea3e6", int8: "#d4651c", int4: "#eba06d", uint8: "#d4651c", fp8: "#e8b48c"});
 }
 
 // ================================================================== models

@@ -1,192 +1,192 @@
 repo	cat	params	hub	family	comps	labels	headerKB	ms	roleAcc
-Alibaba-NLP/gte-multilingual-base	emb	305369089	305369089	encoder	1	Transformer	14.8	15.5	
-BAAI/bge-large-en-v1.5	emb	335142400	335142400	encoder	1	Transformer	43.9	9.8	
-BAAI/bge-m3	emb	567754752		encoder	1	Transformer	138.5	10.2	
-Efficient-Large-Model/Sana_1600M_1024px_diffusers	gen	5321947395		diffusion	5	Conv/Conformer/Transformer	282.1	36.6	
-EleutherAI/pythia-1.4b	llm	1515311512	1515311488	decoder	1	Transformer	41.5	15.2	0.921
-FacebookAI/roberta-large	enc	355412571	355412571	encoder	1	Transformer	47.0	15.0	1.000
-FacebookAI/xlm-roberta-large	enc	561192082	561192082	encoder	1	Transformer	47.9	10.7	1.000
-HiDream-ai/HiDream-I1-Full	gen	22770485475	17105733184	encoder	57	Conv/Transformer/MoE	337.8	186.5	
-HuggingFaceTB/SmolLM2-1.7B	llm	1711376384	1711376384	encoder	1	Transformer	24.6	4.3	1.000
-HuggingFaceTB/SmolLM3-3B	llm	3075098624	3075098624	encoder	1	Transformer	36.9	6.1	1.000
-HuggingFaceTB/SmolVLM2-2.2B-Instruct	vlm	2246784880	2246784880	prefix-lm	3	Transformer	82.6	21.4	1.000
-IDEA-Research/grounding-dino-base	vision	232810880	232810880	encoder	9	Conv/Attention/Transformer/Attn+Cross	162.8	36.8	
-Intel/dpt-large	vision	341850305	341850305	encoder	3	Conv/Transformer	53.5	9.8	
-Lightricks/LTX-Video	gen	7104890033	1923385472	diffusion	7	Conv/DiT/Transformer	2979.2	48.0	
-LiquidAI/LFM2-1.2B	llm	1170340608	1170340608	encoder	1	Transformer	16.3	4.0	1.000
-MIT/ast-finetuned-audioset-10-10-0.4593	speech	86594063	86594063	encoder	1	Transformer	28.0	5.9	
-MiniMaxAI/MiniMax-M2	moe	228689764864	228689764864	decoder	1	Attn+MoE	12338.0	2843.9	1.000
-NX-AI/xLSTM-7b	ssm	6865424896	6865424896	decoder	1	SSM	56.0	25.3	0.373
-OpenGVLab/InternVL3-8B-hf	vlm	7944373760	7944373760	prefix-lm	3	Transformer	96.7	32.1	
-PekingU/rtdetr_r50vd	vision	43019414	43019372	encoder	4	Conv/Head MLP/Attn+Cross	95.7	37.6	0.842
-PixArt-alpha/PixArt-Sigma-XL-2-1024-MS	gen	5456820615	610856096	diffusion	7	Conv/DiT/Transformer	120.1	32.4	
-Prior-Labs/TabPFN-v2-clf	ts	7244554		encoder	1	FFN	92.0	9.2	
-Qwen/QwQ-32B	llm	32763876352	32763876352	decoder	1	Transformer	86.9	19.2	1.000
-Qwen/Qwen-Image	gen	28849460275	20430401088	diffusion	9	Conv/Transformer/DiT	321.1	117.2	
-Qwen/Qwen1.5-MoE-A2.7B	moe	14315784192	14315784192	decoder	1	Attn+MoE	563.0	247.3	1.000
-Qwen/Qwen2-Audio-7B-Instruct	speech	8397094912	8397094912	prefix-lm	3	Transformer	104.0	17.0	
-Qwen/Qwen2.5-0.5B	llm	494032768	494032768	encoder	1	Transformer	31.5	9.5	1.000
-Qwen/Qwen2.5-72B	llm	72706203648	72706203648	decoder	1	Transformer	109.0	35.7	1.000
-Qwen/Qwen2.5-7B	llm	7615616512	7615616512	decoder	1	Transformer	38.0	11.2	1.000
-Qwen/Qwen2.5-7B-Instruct-AWQ	quant	7615616512	7615616512	decoder	1	Transformer	80.4	19.6	1.000
-Qwen/Qwen2.5-Coder-7B-Instruct	llm	7615616512	7615616512	decoder	1	Transformer	37.9	11.3	1.000
-Qwen/Qwen2.5-Omni-7B	speech	10732225440	10732225440	diffusion	9	Conv/DiT/Transformer	300.5	118.7	
-Qwen/Qwen2.5-VL-72B-Instruct	vlm	73410777344	73410777344	prefix-lm	3	Transformer	150.8	62.7	1.000
-Qwen/Qwen2.5-VL-7B-Instruct	vlm	8292166656	8292166656	prefix-lm	3	Transformer	79.3	21.3	1.000
-Qwen/Qwen3-0.6B	llm	751632384	751632384	decoder	1	Transformer	34.7	6.1	1.000
-Qwen/Qwen3-235B-A22B	moe	235093634560	235093634560	decoder	1	Attn+MoE	4498.0	1791.9	1.000
-Qwen/Qwen3-30B-A3B	moe	30532122624	30532122624	decoder	1	Attn+MoE	2275.8	772.6	1.000
-Qwen/Qwen3-30B-A3B-GPTQ-Int4	quant	30532122624	30532122624	decoder	1	Attn+MoE	8867.2	1377.3	1.000
-Qwen/Qwen3-32B	llm	32762123264	32762123264	decoder	1	Transformer	80.1	20.8	1.000
-Qwen/Qwen3-4B	llm	4022468096	4022468096	encoder	1	Transformer	44.7	20.1	1.000
-Qwen/Qwen3-8B	llm	8190735360	8190735360	decoder	1	Transformer	45.0	16.9	1.000
-Qwen/Qwen3-8B-FP8	quant	8190735360	8190735360	decoder	1	Transformer	75.8	21.4	1.000
-Qwen/Qwen3-Coder-480B-A35B-Instruct	moe	480154875392	480154875392	decoder	1	Attn+MoE	3701.7	1753.3	1.000
-Qwen/Qwen3-Embedding-0.6B	emb	595776512	595776512	encoder	1	Transformer	32.6	5.6	
-Qwen/Qwen3-Embedding-8B	emb	7567295488	7567295488	encoder	1	Transformer	42.6	8.0	
-Qwen/Qwen3-Next-80B-A3B-Instruct	moe	81324862720	81324862720	decoder	1	SSM+MoE/Attn+MoE	9214.9	4209.8	1.000
-Qwen/Qwen3-Reranker-0.6B	emb	595776512	595776512	encoder	1	Transformer	34.4	5.6	1.000
-Qwen/Qwen3-VL-235B-A22B-Instruct	vlm	235670022896	235670022896	prefix-lm	3	Transformer/Projector/Attn+MoE	173.8	36.0	
-Qwen/Qwen3-VL-30B-A3B-Instruct	vlm	31070754032	31070754032	prefix-lm	3	Transformer/Projector/Attn+MoE	107.4	21.4	
-RWKV/v6-Finch-1B6-HF	ssm	1599873024		decoder	1	SSM	142.1	11.1	
-RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8	quant	8030261248	8030261248	decoder	1	Transformer	83.5	6.2	1.000
-ResembleAI/chatterbox	speech	2669645572		prefix-lm	25	SSM/FFN/Transformer/Conv	748.6	592.7	
-Salesforce/moirai-1.1-R-base	ts	91357728	91357728	encoder	2	MoE/Transformer	17.7	4.1	
-THUDM/CogVideoX-2b	gen	6671678435	1693783872	encoder	8	Conv/DiT/Transformer	158.7	36.5	
-THUDM/glm-4-9b-chat-hf	llm	9399951360	9399951360	decoder	1	Transformer	49.8	9.0	1.000
-UsefulSensors/moonshine-base	speech	61513920	61513920	encoder	2	Transformer/Attn+Cross	23.7	6.6	1.000
-Wan-AI/Wan2.1-T2V-1.3B-Diffusers	gen	7226799667	1418996800	encoder	7	Conv/DiT/Transformer	132.4	30.0	
-Wan-AI/Wan2.2-TI2V-5B-Diffusers	gen	11385386716	4999787712	encoder	7	Conv/DiT/Transformer	134.2	30.8	
-Zyphra/Zamba2-2.7B	ssm	2662214560	2662214560	encoder	2	FFN	57.9	13.6	0.042
-albert/albert-base-v2	enc	11842272	11842272	unknown	0		3.7	1.1	0.450
-allenai/Molmo-7B-D-0924	vlm	8021025280	8021025280	prefix-lm	3	Transformer/Attention	79.0	11.8	
-allenai/OLMo-2-1124-7B	llm	7298617344	7298617344	decoder	1	Transformer	40.2	7.4	1.000
-allenai/OLMoE-1B-7B-0924	moe	6919161856	6919161856	decoder	1	Attn+MoE	388.9	83.6	1.000
-amazon/chronos-bolt-base	ts	205292928	205292928	encoder	2	Transformer	31.1	5.9	1.000
-amazon/chronos-t5-small	ts	46154240	46154240	encoder	2	Transformer	15.2	4.4	0.955
-answerdotai/ModernBERT-large	enc	395881664	395881664	encoder	1	Transformer	17.8	4.3	1.000
-baidu/ERNIE-4.5-0.3B-PT	llm	360748032	360748032	encoder	1	Transformer	18.2	3.3	1.000
-baidu/ERNIE-4.5-21B-A3B-PT	moe	21948655808	21948655808	decoder	1	Attn+MoE/Transformer	667.1	167.7	1.000
-bigscience/bloom-560m	llm	559214592	559214592	encoder	1	Transformer	29.6	7.3	
-deepseek-ai/DeepSeek-R1	moe	684489845504	684489845504	decoder	1	Transformer/Attn+MoE	11609.8	2751.4	1.000
-deepseek-ai/DeepSeek-R1-Distill-Llama-70B	llm	70553706496	70553706496	decoder	1	Transformer	82.6	12.5	1.000
-deepseek-ai/DeepSeek-R1-Distill-Qwen-7B	llm	7615616512	7615616512	decoder	1	Transformer	37.9	5.1	1.000
-deepseek-ai/DeepSeek-V2-Lite	moe	15706484224	15706484224	decoder	1	Transformer/Attn+MoE	642.7	121.7	1.000
-deepseek-ai/DeepSeek-V3	moe	684489845504	684489845504	decoder	1	Transformer/Attn+MoE	11609.8	2771.8	1.000
-deepseek-ai/DeepSeek-V3.1	moe	684489845504	684531386000	decoder	1	Transformer/Attn+MoE	11609.8	2705.2	1.000
-deepseek-ai/Janus-Pro-7B	vlm	4993943179		encoder	5	Conv/Transformer	248.6	20.1	
-depth-anything/Depth-Anything-V2-Large-hf	vision	335315649	335315649	encoder	3	Conv/Transformer	58.9	9.6	
-distil-whisper/distil-large-v3	speech	756405760	756405760	encoder	2	Transformer/Attn+Cross	123.3	27.0	
-distilbert/distilbert-base-uncased	enc	66985530	66985530	encoder	1	Transformer	12.4	4.1	1.000
-facebook/DiT-XL-2-256	gen	833480327		encoder	5	Conv/Transformer	345.8	26.7	
-facebook/bart-large-cnn	s2s	406290432	406290432	encoder	2	Transformer/Attn+Cross	59.0	16.2	1.000
-facebook/convnext-base-224	vision	88591464		encoder	1	FFN	145.3	19.6	0.278
-facebook/detr-resnet-50	vision	41631012	41631008	encoder	3	Transformer/Conv/Attn+Cross	62.3	21.8	
-facebook/dinov2-large	vision	304368640	304368640	encoder	1	Transformer	47.2	14.4	
-facebook/encodec_24khz	speech	23273218	23273218	encoder	2	SSM	26.1	6.0	1.000
-facebook/hubert-large-ls960-ft	speech	315471520		encoder	3	Conv/Transformer	178.2	8.5	1.000
-facebook/m2m100_418M	s2s	877465600		encoder-decoder	2	Attn+Cross/Transformer	170.9	8.5	1.000
-facebook/mask2former-swin-large-coco-panoptic	vision	216033408		encoder	4	Conv/Transformer/Attn+Cross	239.7	17.6	
-facebook/musicgen-small	speech	591087174	591087174	encoder	5	SSM/Transformer/Attn+Cross	76.8	28.6	
-facebook/nllb-200-distilled-600M	s2s	1402138624		encoder-decoder	2	Attn+Cross/Transformer	159.7	14.2	1.000
-facebook/opt-1.3b	llm	1418715136		decoder	1	Transformer	136.2	12.2	1.000
-facebook/sam-vit-huge	vision	641090864	641090864	encoder	3	Head MLP/Transformer/Attn+Cross	67.2	12.0	0.996
-facebook/sam2.1-hiera-large	vision	224447154	224447154	encoder	6	Conv/Head MLP/FFN/Transformer/Attn+Cross	106.3	33.6	0.954
-facebook/seamless-m4t-v2-large	speech	2309249669	2309249669	encoder	6	Conv/Transformer/Conformer/Attn+Cross	272.5	70.7	0.964
-facebook/wav2vec2-base-960h	speech	94395552	94395552	encoder	1	Transformer	25.1	9.9	1.000
-facebook/wav2vec2-large-xlsr-53	speech	317390592		encoder	3	Conv/Transformer	180.9	11.9	1.000
-google-bert/bert-base-uncased	enc	110106428	110106428	encoder	1	Transformer	23.5	6.1	1.000
-google-t5/t5-base	s2s	222903936	222903936	encoder	2	Transformer	29.9	8.9	1.000
-google/flan-t5-large	s2s	783150080	783150080	prefix-lm	2	Transformer	66.9	19.0	1.000
-google/mt5-base	s2s	966573312		prefix-lm	2	Transformer	155.5	11.0	1.000
-google/owlv2-base-patch16-ensemble	vision	154966792	154966791	encoder	4	Transformer	50.4	16.8	
-google/siglip-so400m-patch14-384	vision	877960498	877960498	encoder	2	Transformer	106.1	31.0	0.964
-google/siglip2-base-patch16-224	vision	375187970	375187970	encoder	2	Transformer	47.9	12.1	0.924
-google/timesfm-2.0-500m-pytorch	ts	498828960	498828960	encoder	1	Transformer	89.0	28.3	
-google/vit-base-patch16-224	vision	86567656	86567656	encoder	1	Transformer	22.7	5.7	0.492
-hunyuanvideo-community/HunyuanVideo	gen	20695738643	12821012544	diffusion	11	Conv/DiT/Transformer	228.5	80.8	
-ibm-granite/granite-3.1-3b-a800m-instruct	moe	3298793472	3298793472	encoder	1	Attn+MoE	34.4	7.4	1.000
-ibm-granite/granite-3.3-8b-instruct	llm	8170864640	8170864640	encoder	1	Transformer	41.1	6.0	1.000
-ibm-granite/granite-4.0-h-tiny	ssm	6939037248	6939037248	encoder	1	Attn+MoE	66.2	10.6	0.450
-ibm-granite/granite-timeseries-ttm-r2	ts	805280	805280	encoder	3	Attention	19.0	3.9	
-internlm/internlm3-8b-instruct	llm	8804241408	8804241408	decoder	1	Transformer	49.4	12.6	
-intfloat/multilingual-e5-large	emb	559890946	559890946	encoder	1	Transformer	44.5	6.9	
-kyutai/stt-2.6b-en	speech	2713270113	2617118720	encoder	37	Conv/Transformer/Conformer	75.2	30.2	
-laion/clap-htsat-unfused	speech	153543199		encoder	4	Transformer	156.8	8.9	1.000
-lerobot/smolvla_base	vlm	450046248	450046176	prefix-lm	4	Transformer	72.3	13.8	
-llava-hf/llava-1.5-7b-hf	vlm	7063427072	7063427072	prefix-lm	3	Transformer	89.8	13.7	
-llava-hf/llava-onevision-qwen2-7b-ov-hf	vlm	8030807584	8030807584	prefix-lm	3	Transformer	99.5	17.9	
-meituan-longcat/LongCat-Flash-Chat	moe	561862880256	561862880256	decoder	1	Attn+MoE	5398.0	2497.7	
-microsoft/Phi-3-mini-4k-instruct	llm	3821079552	3821079552	decoder	1	Transformer	22.2	6.2	1.000
-microsoft/Phi-3.5-MoE-instruct	moe	41873153344	41873153344	decoder	1	Attn+MoE	243.6	55.6	1.000
-microsoft/Phi-4-mini-instruct	llm	3836021760	3836021760	encoder	1	Transformer	22.2	6.9	1.000
-microsoft/Phi-4-multimodal-instruct	vlm	6404932576	5574460384	encoder	9	Transformer/Conformer/Attn+Cross	368.4	119.3	
-microsoft/VibeVoice-1.5B	speech	2704021987	2704021985	diffusion	5	FFN/Transformer	154.8	43.4	1.000
-microsoft/deberta-v3-base	enc	185537893		encoder	1	Transformer	106.3	5.2	1.000
-microsoft/phi-2	llm	2779683840	2779683840	decoder	1	Transformer	48.6	7.2	1.000
-microsoft/phi-4	llm	14659507200	14659507200	decoder	1	Transformer	27.9	6.8	1.000
-microsoft/resnet-50	vision	25610205	25610152	encoder	1	Conv	40.8	10.8	1.000
-microsoft/speecht5_tts	speech	146335465		encoder	3	Conv/Attn+Cross/Transformer	146.4	9.2	1.000
-microsoft/swin-base-patch4-window7-224	vision	87825848	87825848	encoder	1	Transformer	55.5	12.9	1.000
-microsoft/wavlm-large	speech	315453120		encoder	3	Conv/Transformer	177.7	8.0	
-mistral-community/pixtral-12b	vlm	12682739712	12682739712	prefix-lm	3	Transformer	76.0	18.7	
-mistralai/Devstral-Small-2505	llm	23572403200	23572403200	decoder	1	Transformer	41.5	13.2	1.000
-mistralai/Mistral-7B-v0.1	llm	7241732096	7241732096	decoder	1	Transformer	33.1	15.5	1.000
-mistralai/Mistral-Nemo-Instruct-2407	llm	12247782400	12247782400	decoder	1	Transformer	41.3	28.8	1.000
-mistralai/Mistral-Small-24B-Instruct-2501	llm	23572403200	23572403200	decoder	1	Transformer	41.5	23.2	1.000
-mistralai/Mixtral-8x7B-v0.1	moe	46702792704	46702792704	decoder	1	Attn+MoE	125.1	124.4	1.000
-mlx-community/Qwen3-8B-4bit	quant	8190735360	8190735360	decoder	1	Transformer	101.0	30.4	1.000
-moonshotai/Kimi-K2-Instruct	moe	1026408235864	1026408235864	decoder	1	Attn+MoE/Transformer	17309.1	4002.0	
-moonshotai/Kimi-VL-A3B-Instruct	vlm	16407657776	16407657776	prefix-lm	3	FFN/Attn+MoE/Transformer	764.6	314.6	
-moonshotai/Moonlight-16B-A3B	moe	15960111936	15960111936	decoder	1	Attn+MoE/Transformer	640.2	206.0	1.000
-nari-labs/Dia-1.6B-0626	speech	1611160576	1611160576	encoder-decoder	2	Transformer/Attn+Cross	40.7	21.1	1.000
-nomic-ai/nomic-embed-text-v1.5	emb	136731648	136731648	encoder	1	Transformer	11.3	2.8	
-nvidia/DeepSeek-R1-0528-FP4	quant	684489845628	396767013632	decoder	1	Transformer/Attn+MoE	20848.3	3146.8	1.000
-nvidia/Llama-3.1-8B-Instruct-FP4	quant	8030261248	4540600320	decoder	1	Transformer	109.4	19.1	1.000
-nvidia/Llama-3.1-Nemotron-Nano-8B-v1	llm	8030261248	8030261248	decoder	1	Transformer	33.1	17.8	1.000
-nvidia/NVIDIA-Nemotron-Nano-12B-v2-VL-BF16	vlm	13181860358	13181860358	prefix-lm	3	Transformer/SSM/FFN/Attention	94.8	42.9	
-nvidia/NVIDIA-Nemotron-Nano-9B-v2	ssm	8888227328	8888227328	decoder	1	SSM/FFN/Attention	37.0	21.1	1.000
-nvidia/Nemotron-H-8B-Base-8K	ssm	8100852736	8100852736	decoder	1	SSM/FFN/Attention	33.7	23.6	
-nvidia/Qwen3-8B-FP4	quant	8190735360	4717851648	decoder	1	Transformer	130.9	12.0	1.000
-nvidia/segformer-b5-finetuned-ade-640-640	vision	84710231		encoder	1	Conv/SSM/Transformer	365.6	65.3	
-openai-community/gpt2	llm	137022720	137022720	encoder	1	Transformer	14.0	4.0	
-openai-community/gpt2-xl	llm	1607942848	1607942848	encoder	1	Transformer	57.2	14.1	
-openai/clip-vit-large-patch14	vision	427616847	427616846	encoder	3	Transformer	70.2	18.5	
-openai/gpt-oss-120b	moe	116829156672	116829156672	decoder	1	Attn+MoE	75.6	18.6	1.000
-openai/gpt-oss-20b	moe	20914757184	20914757184	decoder	1	Attn+MoE	50.9	19.8	1.000
-openai/whisper-large-v3	speech	1543490560	1543490560	encoder	2	Transformer/Attn+Cross	292.7	29.3	
-openai/whisper-large-v3-turbo	speech	808878080	808878080	encoder	2	Transformer/Attn+Cross	67.1	14.0	1.000
-openai/whisper-small	speech	241734912	241734912	encoder	2	Transformer/Attn+Cross	54.1	16.5	1.000
-openai/whisper-tiny	speech	37760640	37760640	encoder	2	Transformer/Attn+Cross	18.7	5.5	1.000
-playgroundai/playground-v2.5-1024px-aesthetic	gen	3468837867	2567463684	encoder-decoder	8	Conv/Attn+Cross/Block/Head MLP/Transformer	1371.1	260.4	
-sentence-transformers/all-MiniLM-L6-v2	emb	22713728	22713728	encoder	1	Transformer	11.1	16.6	
-sentence-transformers/all-mpnet-base-v2	emb	109486978	109486978	encoder	1	Transformer	21.4	8.0	
-speechbrain/spkrec-ecapa-voxceleb	speech	20805983		encoder	3	Conv	125.6	12.8	
-stabilityai/sdxl-turbo	gen	3468837867	2567463684	encoder-decoder	8	Conv/Attn+Cross/Block/Head MLP/Transformer	1448.0	100.4	
-stabilityai/stable-diffusion-xl-base-1.0	gen	3468837867	2567463684	encoder-decoder	8	Conv/Attn+Cross/Block/Head MLP/Transformer	1852.7	88.6	
-stable-diffusion-v1-5/stable-diffusion-v1-5	gen	1372318477	859520964	encoder	9	Conv/Transformer/Attn+Cross/Block/Head MLP	846.2	44.9	
-state-spaces/mamba-2.8b-hf	ssm	2768345600	2768345600	encoder	1	SSM	69.2	22.4	1.000
-swiss-ai/Apertus-8B-2509	llm	8053338240	8053338176	decoder	1	Transformer	49.2	10.9	1.000
-tencent/Hunyuan-A13B-Instruct	moe	80393183232	80393183232	encoder	1	Attn+MoE	792.0	262.4	
-tiiuae/Falcon-H1-7B-Base	ssm	7585648736	7585648736	decoder	1	Transformer	82.6	11.1	1.000
-tiiuae/Falcon3-7B-Base	llm	7455550464	7455550464	decoder	1	Transformer	29.0	3.9	1.000
+Alibaba-NLP/gte-multilingual-base	emb	305369089	305369089	encoder	1	Transformer	14.8	15.6	
+BAAI/bge-large-en-v1.5	emb	335142400	335142400	encoder	1	Transformer	43.9	9.9	
+BAAI/bge-m3	emb	567754752		encoder	1	Transformer	138.5	10.8	
+Efficient-Large-Model/Sana_1600M_1024px_diffusers	gen	5321947395		diffusion	5	Conv/Conformer/Transformer	282.1	37.7	
+EleutherAI/pythia-1.4b	llm	1515311512	1515311488	decoder	1	Transformer	41.5	15.6	0.921
+FacebookAI/roberta-large	enc	355412571	355412571	encoder	1	Transformer	47.0	9.0	1.000
+FacebookAI/xlm-roberta-large	enc	561192082	561192082	encoder	1	Transformer	47.9	10.5	1.000
+HiDream-ai/HiDream-I1-Full	gen	22770485475	17105733184	encoder	57	Conv/Transformer/MoE	337.8	182.6	
+HuggingFaceTB/SmolLM2-1.7B	llm	1711376384	1711376384	encoder	1	Transformer	24.6	6.3	1.000
+HuggingFaceTB/SmolLM3-3B	llm	3075098624	3075098624	encoder	1	Transformer	36.9	6.9	1.000
+HuggingFaceTB/SmolVLM2-2.2B-Instruct	vlm	2246784880	2246784880	prefix-lm	3	Transformer	82.6	14.4	1.000
+IDEA-Research/grounding-dino-base	vision	232810880	232810880	encoder	9	Conv/Attention/Transformer/Attn+Cross	162.8	33.6	
+Intel/dpt-large	vision	341850305	341850305	encoder	3	Conv/Transformer	53.5	8.2	
+Lightricks/LTX-Video	gen	7104890033	1923385472	diffusion	7	Conv/DiT/Transformer	2979.2	39.7	
+LiquidAI/LFM2-1.2B	llm	1170340608	1170340608	encoder	1	Transformer	16.3	3.5	1.000
+MIT/ast-finetuned-audioset-10-10-0.4593	speech	86594063	86594063	encoder	1	Transformer	28.0	6.3	
+MiniMaxAI/MiniMax-M2	moe	228689764864	228689764864	decoder	1	Attn+MoE	12338.0	2608.5	1.000
+NX-AI/xLSTM-7b	ssm	6865424896	6865424896	decoder	1	SSM	56.0	12.9	0.373
+OpenGVLab/InternVL3-8B-hf	vlm	7944373760	7944373760	prefix-lm	3	Transformer	96.7	22.7	
+PekingU/rtdetr_r50vd	vision	43019414	43019372	encoder	4	Conv/Head MLP/Attn+Cross	95.7	49.0	0.842
+PixArt-alpha/PixArt-Sigma-XL-2-1024-MS	gen	5456820615	610856096	diffusion	7	Conv/DiT/Transformer	120.1	42.7	
+Prior-Labs/TabPFN-v2-clf	ts	7244554		encoder	1	FFN	92.0	3.4	
+Qwen/QwQ-32B	llm	32763876352	32763876352	decoder	1	Transformer	86.9	22.3	1.000
+Qwen/Qwen-Image	gen	28849460275	20430401088	diffusion	9	Conv/Transformer/DiT	321.1	99.6	
+Qwen/Qwen1.5-MoE-A2.7B	moe	14315784192	14315784192	decoder	1	Attn+MoE	563.0	130.5	1.000
+Qwen/Qwen2-Audio-7B-Instruct	speech	8397094912	8397094912	prefix-lm	3	Transformer	104.0	27.8	
+Qwen/Qwen2.5-0.5B	llm	494032768	494032768	encoder	1	Transformer	31.5	14.4	1.000
+Qwen/Qwen2.5-72B	llm	72706203648	72706203648	decoder	1	Transformer	109.0	49.8	1.000
+Qwen/Qwen2.5-7B	llm	7615616512	7615616512	decoder	1	Transformer	38.0	16.2	1.000
+Qwen/Qwen2.5-7B-Instruct-AWQ	quant	7615616512	7615616512	decoder	1	Transformer	80.4	12.4	1.000
+Qwen/Qwen2.5-Coder-7B-Instruct	llm	7615616512	7615616512	decoder	1	Transformer	37.9	6.4	1.000
+Qwen/Qwen2.5-Omni-7B	speech	10732225440	10732225440	diffusion	9	Conv/DiT/Transformer	300.5	103.5	
+Qwen/Qwen2.5-VL-72B-Instruct	vlm	73410777344	73410777344	prefix-lm	3	Transformer	150.8	64.1	1.000
+Qwen/Qwen2.5-VL-7B-Instruct	vlm	8292166656	8292166656	prefix-lm	3	Transformer	79.3	30.7	1.000
+Qwen/Qwen3-0.6B	llm	751632384	751632384	decoder	1	Transformer	34.7	9.7	1.000
+Qwen/Qwen3-235B-A22B	moe	235093634560	235093634560	decoder	1	Attn+MoE	4498.0	1650.0	1.000
+Qwen/Qwen3-30B-A3B	moe	30532122624	30532122624	decoder	1	Attn+MoE	2275.8	787.3	1.000
+Qwen/Qwen3-30B-A3B-GPTQ-Int4	quant	30532122624	30532122624	decoder	1	Attn+MoE	8867.2	1084.9	1.000
+Qwen/Qwen3-32B	llm	32762123264	32762123264	decoder	1	Transformer	80.1	24.7	1.000
+Qwen/Qwen3-4B	llm	4022468096	4022468096	encoder	1	Transformer	44.7	15.6	1.000
+Qwen/Qwen3-8B	llm	8190735360	8190735360	decoder	1	Transformer	45.0	26.2	1.000
+Qwen/Qwen3-8B-FP8	quant	8190735360	8190735360	decoder	1	Transformer	75.8	33.3	1.000
+Qwen/Qwen3-Coder-480B-A35B-Instruct	moe	480154875392	480154875392	decoder	1	Attn+MoE	3701.7	1368.3	1.000
+Qwen/Qwen3-Embedding-0.6B	emb	595776512	595776512	encoder	1	Transformer	32.6	5.2	
+Qwen/Qwen3-Embedding-8B	emb	7567295488	7567295488	encoder	1	Transformer	42.6	7.8	
+Qwen/Qwen3-Next-80B-A3B-Instruct	moe	81324862720	81324862720	decoder	1	SSM+MoE/Attn+MoE	9214.9	4131.4	1.000
+Qwen/Qwen3-Reranker-0.6B	emb	595776512	595776512	encoder	1	Transformer	34.4	5.7	1.000
+Qwen/Qwen3-VL-235B-A22B-Instruct	vlm	235670022896	235670022896	prefix-lm	3	Transformer/Projector/Attn+MoE	173.8	70.2	
+Qwen/Qwen3-VL-30B-A3B-Instruct	vlm	31070754032	31070754032	prefix-lm	3	Transformer/Projector/Attn+MoE	107.4	37.0	
+RWKV/v6-Finch-1B6-HF	ssm	1599873024		decoder	1	SSM	142.1	22.3	
+RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8	quant	8030261248	8030261248	decoder	1	Transformer	83.5	7.3	1.000
+ResembleAI/chatterbox	speech	2669645572		prefix-lm	25	SSM/FFN/Transformer/Conv	748.6	544.1	
+Salesforce/moirai-1.1-R-base	ts	91357728	91357728	encoder	2	MoE/Transformer	17.7	4.4	
+THUDM/CogVideoX-2b	gen	6671678435	1693783872	encoder	8	Conv/DiT/Transformer	158.7	45.6	
+THUDM/glm-4-9b-chat-hf	llm	9399951360	9399951360	decoder	1	Transformer	49.8	12.4	1.000
+UsefulSensors/moonshine-base	speech	61513920	61513920	encoder	2	Transformer/Attn+Cross	23.7	4.0	1.000
+Wan-AI/Wan2.1-T2V-1.3B-Diffusers	gen	7226799667	1418996800	encoder	7	Conv/DiT/Transformer	132.4	29.4	
+Wan-AI/Wan2.2-TI2V-5B-Diffusers	gen	11385386716	4999787712	encoder	7	Conv/DiT/Transformer	134.2	45.3	
+Zyphra/Zamba2-2.7B	ssm	2662214560	2662214560	encoder	2	FFN	57.9	22.9	0.042
+albert/albert-base-v2	enc	11842272	11842272	unknown	0		3.7	1.7	0.450
+allenai/Molmo-7B-D-0924	vlm	8021025280	8021025280	prefix-lm	3	Transformer/Attention	79.0	19.1	
+allenai/OLMo-2-1124-7B	llm	7298617344	7298617344	decoder	1	Transformer	40.2	12.8	1.000
+allenai/OLMoE-1B-7B-0924	moe	6919161856	6919161856	decoder	1	Attn+MoE	388.9	133.8	1.000
+amazon/chronos-bolt-base	ts	205292928	205292928	encoder	2	Transformer	31.1	5.6	1.000
+amazon/chronos-t5-small	ts	46154240	46154240	encoder	2	Transformer	15.2	5.2	0.955
+answerdotai/ModernBERT-large	enc	395881664	395881664	encoder	1	Transformer	17.8	3.2	1.000
+baidu/ERNIE-4.5-0.3B-PT	llm	360748032	360748032	encoder	1	Transformer	18.2	3.2	1.000
+baidu/ERNIE-4.5-21B-A3B-PT	moe	21948655808	21948655808	decoder	1	Attn+MoE/Transformer	667.1	166.8	1.000
+bigscience/bloom-560m	llm	559214592	559214592	encoder	1	Transformer	29.6	4.5	
+deepseek-ai/DeepSeek-R1	moe	684489845504	684489845504	decoder	1	Transformer/Attn+MoE	11609.8	2494.6	1.000
+deepseek-ai/DeepSeek-R1-Distill-Llama-70B	llm	70553706496	70553706496	decoder	1	Transformer	82.6	13.3	1.000
+deepseek-ai/DeepSeek-R1-Distill-Qwen-7B	llm	7615616512	7615616512	decoder	1	Transformer	37.9	5.3	1.000
+deepseek-ai/DeepSeek-V2-Lite	moe	15706484224	15706484224	decoder	1	Transformer/Attn+MoE	642.7	153.7	1.000
+deepseek-ai/DeepSeek-V3	moe	684489845504	684489845504	decoder	1	Transformer/Attn+MoE	11609.8	2618.3	1.000
+deepseek-ai/DeepSeek-V3.1	moe	684489845504	684531386000	decoder	1	Transformer/Attn+MoE	11609.8	2707.7	1.000
+deepseek-ai/Janus-Pro-7B	vlm	4993943179		encoder	5	Conv/Transformer	248.6	20.6	
+depth-anything/Depth-Anything-V2-Large-hf	vision	335315649	335315649	encoder	3	Conv/Transformer	58.9	8.9	
+distil-whisper/distil-large-v3	speech	756405760	756405760	encoder	2	Transformer/Attn+Cross	123.3	8.4	
+distilbert/distilbert-base-uncased	enc	66985530	66985530	encoder	1	Transformer	12.4	2.2	1.000
+facebook/DiT-XL-2-256	gen	833480327		encoder	5	Conv/Transformer	345.8	17.1	
+facebook/bart-large-cnn	s2s	406290432	406290432	encoder	2	Transformer/Attn+Cross	59.0	9.9	1.000
+facebook/convnext-base-224	vision	88591464		encoder	1	FFN	145.3	6.0	0.278
+facebook/detr-resnet-50	vision	41631012	41631008	encoder	3	Transformer/Conv/Attn+Cross	62.3	9.8	
+facebook/dinov2-large	vision	304368640	304368640	encoder	1	Transformer	47.2	11.4	
+facebook/encodec_24khz	speech	23273218	23273218	encoder	2	SSM	26.1	5.7	1.000
+facebook/hubert-large-ls960-ft	speech	315471520		encoder	3	Conv/Transformer	178.2	7.4	1.000
+facebook/m2m100_418M	s2s	877465600		encoder-decoder	2	Attn+Cross/Transformer	170.9	13.3	1.000
+facebook/mask2former-swin-large-coco-panoptic	vision	216033408		encoder	4	Conv/Transformer/Attn+Cross	239.7	17.5	
+facebook/musicgen-small	speech	591087174	591087174	encoder	5	SSM/Transformer/Attn+Cross	76.8	15.6	
+facebook/nllb-200-distilled-600M	s2s	1402138624		encoder-decoder	2	Attn+Cross/Transformer	159.7	12.1	1.000
+facebook/opt-1.3b	llm	1418715136		decoder	1	Transformer	136.2	5.4	1.000
+facebook/sam-vit-huge	vision	641090864	641090864	encoder	3	Head MLP/Transformer/Attn+Cross	67.2	12.5	0.996
+facebook/sam2.1-hiera-large	vision	224447154	224447154	encoder	6	Conv/Head MLP/FFN/Transformer/Attn+Cross	106.3	21.0	0.954
+facebook/seamless-m4t-v2-large	speech	2309249669	2309249669	encoder	6	Conv/Transformer/Conformer/Attn+Cross	272.5	50.6	0.964
+facebook/wav2vec2-base-960h	speech	94395552	94395552	encoder	1	Transformer	25.1	4.1	1.000
+facebook/wav2vec2-large-xlsr-53	speech	317390592		encoder	3	Conv/Transformer	180.9	7.1	1.000
+google-bert/bert-base-uncased	enc	110106428	110106428	encoder	1	Transformer	23.5	3.7	1.000
+google-t5/t5-base	s2s	222903936	222903936	encoder	2	Transformer	29.9	5.1	1.000
+google/flan-t5-large	s2s	783150080	783150080	prefix-lm	2	Transformer	66.9	11.2	1.000
+google/mt5-base	s2s	966573312		prefix-lm	2	Transformer	155.5	7.8	1.000
+google/owlv2-base-patch16-ensemble	vision	154966792	154966791	encoder	4	Transformer	50.4	7.7	
+google/siglip-so400m-patch14-384	vision	877960498	877960498	encoder	2	Transformer	106.1	18.6	0.964
+google/siglip2-base-patch16-224	vision	375187970	375187970	encoder	2	Transformer	47.9	6.9	0.924
+google/timesfm-2.0-500m-pytorch	ts	498828960	498828960	encoder	1	Transformer	89.0	15.1	
+google/vit-base-patch16-224	vision	86567656	86567656	encoder	1	Transformer	22.7	3.3	0.492
+hunyuanvideo-community/HunyuanVideo	gen	20695738643	12821012544	diffusion	11	Conv/DiT/Transformer	228.5	46.4	
+ibm-granite/granite-3.1-3b-a800m-instruct	moe	3298793472	3298793472	encoder	1	Attn+MoE	34.4	4.4	1.000
+ibm-granite/granite-3.3-8b-instruct	llm	8170864640	8170864640	encoder	1	Transformer	41.1	5.0	1.000
+ibm-granite/granite-4.0-h-tiny	ssm	6939037248	6939037248	encoder	1	Attn+MoE	66.2	10.3	0.450
+ibm-granite/granite-timeseries-ttm-r2	ts	805280	805280	encoder	3	Attention	19.0	3.5	
+internlm/internlm3-8b-instruct	llm	8804241408	8804241408	decoder	1	Transformer	49.4	6.3	
+intfloat/multilingual-e5-large	emb	559890946	559890946	encoder	1	Transformer	44.5	8.4	
+kyutai/stt-2.6b-en	speech	2713270113	2617118720	encoder	37	Conv/Transformer/Conformer	75.2	23.4	
+laion/clap-htsat-unfused	speech	153543199		encoder	4	Transformer	156.8	14.4	1.000
+lerobot/smolvla_base	vlm	450046248	450046176	prefix-lm	4	Transformer	72.3	14.7	
+llava-hf/llava-1.5-7b-hf	vlm	7063427072	7063427072	prefix-lm	3	Transformer	89.8	12.5	
+llava-hf/llava-onevision-qwen2-7b-ov-hf	vlm	8030807584	8030807584	prefix-lm	3	Transformer	99.5	15.8	
+meituan-longcat/LongCat-Flash-Chat	moe	561862880256	561862880256	decoder	1	Attn+MoE	5398.0	2128.9	
+microsoft/Phi-3-mini-4k-instruct	llm	3821079552	3821079552	decoder	1	Transformer	22.2	3.3	1.000
+microsoft/Phi-3.5-MoE-instruct	moe	41873153344	41873153344	decoder	1	Attn+MoE	243.6	43.2	1.000
+microsoft/Phi-4-mini-instruct	llm	3836021760	3836021760	encoder	1	Transformer	22.2	3.0	1.000
+microsoft/Phi-4-multimodal-instruct	vlm	6404932576	5574460384	encoder	9	Transformer/Conformer/Attn+Cross	368.4	59.9	
+microsoft/VibeVoice-1.5B	speech	2704021987	2704021985	diffusion	5	FFN/Transformer	154.8	47.1	1.000
+microsoft/deberta-v3-base	enc	185537893		encoder	1	Transformer	106.3	7.0	1.000
+microsoft/phi-2	llm	2779683840	2779683840	decoder	1	Transformer	48.6	7.4	1.000
+microsoft/phi-4	llm	14659507200	14659507200	decoder	1	Transformer	27.9	6.5	1.000
+microsoft/resnet-50	vision	25610205	25610152	encoder	1	Conv	40.8	8.3	1.000
+microsoft/speecht5_tts	speech	146335465		encoder	3	Conv/Attn+Cross/Transformer	146.4	13.2	1.000
+microsoft/swin-base-patch4-window7-224	vision	87825848	87825848	encoder	1	Transformer	55.5	10.3	1.000
+microsoft/wavlm-large	speech	315453120		encoder	3	Conv/Transformer	177.7	7.2	
+mistral-community/pixtral-12b	vlm	12682739712	12682739712	prefix-lm	3	Transformer	76.0	12.4	
+mistralai/Devstral-Small-2505	llm	23572403200	23572403200	decoder	1	Transformer	41.5	5.2	1.000
+mistralai/Mistral-7B-v0.1	llm	7241732096	7241732096	decoder	1	Transformer	33.1	4.5	1.000
+mistralai/Mistral-Nemo-Instruct-2407	llm	12247782400	12247782400	decoder	1	Transformer	41.3	8.3	1.000
+mistralai/Mistral-Small-24B-Instruct-2501	llm	23572403200	23572403200	decoder	1	Transformer	41.5	5.3	1.000
+mistralai/Mixtral-8x7B-v0.1	moe	46702792704	46702792704	decoder	1	Attn+MoE	125.1	24.0	1.000
+mlx-community/Qwen3-8B-4bit	quant	8190735360	8190735360	decoder	1	Transformer	101.0	18.4	1.000
+moonshotai/Kimi-K2-Instruct	moe	1026408235864	1026408235864	decoder	1	Attn+MoE/Transformer	17309.1	3768.0	
+moonshotai/Kimi-VL-A3B-Instruct	vlm	16407657776	16407657776	prefix-lm	3	FFN/Attn+MoE/Transformer	764.6	258.2	
+moonshotai/Moonlight-16B-A3B	moe	15960111936	15960111936	decoder	1	Attn+MoE/Transformer	640.2	147.9	1.000
+nari-labs/Dia-1.6B-0626	speech	1611160576	1611160576	encoder-decoder	2	Transformer/Attn+Cross	40.7	6.8	1.000
+nomic-ai/nomic-embed-text-v1.5	emb	136731648	136731648	encoder	1	Transformer	11.3	2.2	
+nvidia/DeepSeek-R1-0528-FP4	quant	684489845628	396767013632	decoder	1	Transformer/Attn+MoE	20848.3	2581.0	1.000
+nvidia/Llama-3.1-8B-Instruct-FP4	quant	8030261248	4540600320	decoder	1	Transformer	109.4	7.1	1.000
+nvidia/Llama-3.1-Nemotron-Nano-8B-v1	llm	8030261248	8030261248	decoder	1	Transformer	33.1	7.4	1.000
+nvidia/NVIDIA-Nemotron-Nano-12B-v2-VL-BF16	vlm	13181860358	13181860358	prefix-lm	3	Transformer/SSM/FFN/Attention	94.8	19.1	
+nvidia/NVIDIA-Nemotron-Nano-9B-v2	ssm	8888227328	8888227328	decoder	1	SSM/FFN/Attention	37.0	6.6	1.000
+nvidia/Nemotron-H-8B-Base-8K	ssm	8100852736	8100852736	decoder	1	SSM/FFN/Attention	33.7	17.6	
+nvidia/Qwen3-8B-FP4	quant	8190735360	4717851648	decoder	1	Transformer	130.9	12.9	1.000
+nvidia/segformer-b5-finetuned-ade-640-640	vision	84710231		encoder	1	Conv/SSM/Transformer	365.6	50.7	
+openai-community/gpt2	llm	137022720	137022720	encoder	1	Transformer	14.0	3.1	
+openai-community/gpt2-xl	llm	1607942848	1607942848	encoder	1	Transformer	57.2	9.8	
+openai/clip-vit-large-patch14	vision	427616847	427616846	encoder	3	Transformer	70.2	10.2	
+openai/gpt-oss-120b	moe	116829156672	116829156672	decoder	1	Attn+MoE	75.6	13.2	1.000
+openai/gpt-oss-20b	moe	20914757184	20914757184	decoder	1	Attn+MoE	50.9	17.0	1.000
+openai/whisper-large-v3	speech	1543490560	1543490560	encoder	2	Transformer/Attn+Cross	292.7	50.1	
+openai/whisper-large-v3-turbo	speech	808878080	808878080	encoder	2	Transformer/Attn+Cross	67.1	16.2	1.000
+openai/whisper-small	speech	241734912	241734912	encoder	2	Transformer/Attn+Cross	54.1	8.9	1.000
+openai/whisper-tiny	speech	37760640	37760640	encoder	2	Transformer/Attn+Cross	18.7	3.4	1.000
+playgroundai/playground-v2.5-1024px-aesthetic	gen	3468837867	2567463684	encoder-decoder	8	Conv/Attn+Cross/Block/Head MLP/Transformer	1371.1	179.6	
+sentence-transformers/all-MiniLM-L6-v2	emb	22713728	22713728	encoder	1	Transformer	11.1	2.5	
+sentence-transformers/all-mpnet-base-v2	emb	109486978	109486978	encoder	1	Transformer	21.4	9.4	
+speechbrain/spkrec-ecapa-voxceleb	speech	20805983		encoder	3	Conv	125.6	12.5	
+stabilityai/sdxl-turbo	gen	3468837867	2567463684	encoder-decoder	8	Conv/Attn+Cross/Block/Head MLP/Transformer	1448.0	101.8	
+stabilityai/stable-diffusion-xl-base-1.0	gen	3468837867	2567463684	encoder-decoder	8	Conv/Attn+Cross/Block/Head MLP/Transformer	1852.7	85.7	
+stable-diffusion-v1-5/stable-diffusion-v1-5	gen	1372318477	859520964	encoder	9	Conv/Transformer/Attn+Cross/Block/Head MLP	846.2	44.4	
+state-spaces/mamba-2.8b-hf	ssm	2768345600	2768345600	encoder	1	SSM	69.2	10.7	1.000
+swiss-ai/Apertus-8B-2509	llm	8053338240	8053338176	decoder	1	Transformer	49.2	10.1	1.000
+tencent/Hunyuan-A13B-Instruct	moe	80393183232	80393183232	encoder	1	Attn+MoE	792.0	206.6	
+tiiuae/Falcon-H1-7B-Base	ssm	7585648736	7585648736	decoder	1	Transformer	82.6	19.7	1.000
+tiiuae/Falcon3-7B-Base	llm	7455550464	7455550464	decoder	1	Transformer	29.0	4.9	1.000
 tiiuae/falcon-7b	llm	7217189760	7217189760	decoder	1	Transformer	22.9	4.0	1.000
-tiiuae/falcon-mamba-7b	ssm	7272665088	7272665088	encoder	1	SSM	70.0	35.9	1.000
-timm/efficientnet_b0.ra_in1k	vision	5330613	5330564	encoder	1	Conv	31.9	43.7	
-unsloth/Llama-3.2-11B-Vision-Instruct	vlm	10670220835	10670220835	encoder-decoder	3	Transformer/Attn+Cross	116.4	37.1	
-unsloth/Llama-3.2-1B	llm	1235814400	1235814400	encoder	1	Transformer	16.4	10.5	1.000
-unsloth/Llama-3.2-1B-Instruct-bnb-4bit	quant	1235814400	1266351458	encoder	1	Transformer	80.8	8.3	1.000
-unsloth/Llama-3.2-3B	llm	3212749824	3212749824	encoder	1	Transformer	28.7	6.2	1.000
-unsloth/Llama-3.3-70B-Instruct	llm	70553706496	70553706496	decoder	1	Transformer	82.9	29.3	1.000
-unsloth/Llama-4-Scout-17B-16E-Instruct	moe	108641793536	108641793536	prefix-lm	2	Transformer/Attn+MoE	148.1	80.6	
-unsloth/Meta-Llama-3.1-8B	llm	8030261248	8030261248	decoder	1	Transformer	33.1	30.8	1.000
-unsloth/Qwen3-8B-bnb-4bit	quant	8190735360	8408369922	decoder	1	Transformer	192.9	39.5	1.000
-unsloth/gemma-2-2b	llm	2614341888	2614341888	encoder	1	Transformer	32.9	6.4	1.000
-unsloth/gemma-2-9b	llm	9241705984	9241705984	encoder	1	Transformer	53.2	19.5	1.000
-unsloth/gemma-3-1b-it	llm	999885952	999885952	encoder	1	Transformer	38.4	10.5	1.000
-unsloth/gemma-3-27b-it	llm	27432406640	27432406640	encoder	3	Transformer	163.2	61.5	
-unsloth/gemma-3-4b-it	vlm	4300079472	4300079472	encoder	3	Transformer	116.1	39.7	
-unsloth/mistral-7b-v0.3	llm	7248023552	7248023552	encoder	1	Transformer	33.0	12.6	0.981
-zai-org/GLM-4.5	moe	358337791296	358337791296	decoder	1	Transformer/Attn+MoE	5454.4	4194.7	1.000
-zai-org/GLM-4.5-Air	moe	110468824832	110468824832	decoder	1	Transformer/Attn+MoE	2228.5	619.6	1.000
-zai-org/GLM-4.5V	vlm	107710933120	107710933120	prefix-lm	2	Transformer/Attn+MoE	2463.7	846.9	
+tiiuae/falcon-mamba-7b	ssm	7272665088	7272665088	encoder	1	SSM	70.0	21.2	1.000
+timm/efficientnet_b0.ra_in1k	vision	5330613	5330564	encoder	1	Conv	31.9	11.8	
+unsloth/Llama-3.2-11B-Vision-Instruct	vlm	10670220835	10670220835	encoder-decoder	3	Transformer/Attn+Cross	116.4	26.8	
+unsloth/Llama-3.2-1B	llm	1235814400	1235814400	encoder	1	Transformer	16.4	2.8	1.000
+unsloth/Llama-3.2-1B-Instruct-bnb-4bit	quant	1235814400	1266351458	encoder	1	Transformer	80.8	5.6	1.000
+unsloth/Llama-3.2-3B	llm	3212749824	3212749824	encoder	1	Transformer	28.7	10.5	1.000
+unsloth/Llama-3.3-70B-Instruct	llm	70553706496	70553706496	decoder	1	Transformer	82.9	17.0	1.000
+unsloth/Llama-4-Scout-17B-16E-Instruct	moe	108641793536	108641793536	prefix-lm	2	Transformer/Attn+MoE	148.1	33.9	
+unsloth/Meta-Llama-3.1-8B	llm	8030261248	8030261248	decoder	1	Transformer	33.1	6.1	1.000
+unsloth/Qwen3-8B-bnb-4bit	quant	8190735360	8408369922	decoder	1	Transformer	192.9	11.5	1.000
+unsloth/gemma-2-2b	llm	2614341888	2614341888	encoder	1	Transformer	32.9	10.4	1.000
+unsloth/gemma-2-9b	llm	9241705984	9241705984	encoder	1	Transformer	53.2	20.6	1.000
+unsloth/gemma-3-1b-it	llm	999885952	999885952	encoder	1	Transformer	38.4	19.4	1.000
+unsloth/gemma-3-27b-it	llm	27432406640	27432406640	encoder	3	Transformer	163.2	41.7	
+unsloth/gemma-3-4b-it	vlm	4300079472	4300079472	encoder	3	Transformer	116.1	52.4	
+unsloth/mistral-7b-v0.3	llm	7248023552	7248023552	encoder	1	Transformer	33.0	9.3	0.981
+zai-org/GLM-4.5	moe	358337791296	358337791296	decoder	1	Transformer/Attn+MoE	5454.4	2160.9	1.000
+zai-org/GLM-4.5-Air	moe	110468824832	110468824832	decoder	1	Transformer/Attn+MoE	2228.5	629.8	1.000
+zai-org/GLM-4.5V	vlm	107710933120	107710933120	prefix-lm	2	Transformer/Attn+MoE	2463.7	649.9	
