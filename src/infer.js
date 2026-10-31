@@ -576,6 +576,33 @@ function familyOf(o) {
   return "encoder";
 }
 
-const api = {infer, normalize, buildTree, classify};
+
+// ------------------------------------------------------------------ 5. configuration fusion and consistency check
+// Fields the shapes cannot identify (head count vs head size, top-k) are taken from config.json when it exists. The
+// sub-config is matched to a component by width (and depth), and the config is checked against the weights.
+const num = (o, ks) => { for (const k of ks) if (typeof o[k] === "number") return o[k]; return null; };
+function fuseConfig(I, cfg) {
+  if (!cfg || typeof cfg !== "object") return null;
+  const subs = []; (function walk(o, path, depth) { if (!o || typeof o !== "object" || Array.isArray(o) || depth > 5) return; subs.push({o, path});
+    for (const [k, v] of Object.entries(o)) if (v && typeof v === "object" && !Array.isArray(v)) walk(v, path ? path + "." + k : k, depth + 1); })(cfg, "", 0);
+  const W = o => num(o, ["hidden_size", "d_model", "n_embd", "dim", "embed_dim", "hidden_dim", "encoder_embed_dim", "width"]);
+  const out = {}, topAll = subs.map(x => num(x.o, ["num_experts_per_tok", "moe_topk", "top_k", "num_selected_experts", "moe_k"])).find(v => v != null) || null;
+  for (const C of I.comps) {
+    if (!C.d) continue;
+    const at = C.stacks.flatMap(st => st.types.flatMap(t => t.regions)).find(r => r.kind === "attn" && r.x);
+    let best = null, bs = -1;
+    for (const x of subs) { if (W(x.o) !== C.d) continue; let sc = 1; const L = num(x.o, ["num_hidden_layers", "num_layers", "n_layer", "encoder_layers", "decoder_layers"]);
+      if (L === C.layers) sc += 2; if (C.role === "backbone" && /(text|llm|language|decoder)/.test(x.path)) sc += 1; if (C.role !== "backbone" && /(vision|audio|encoder)/.test(x.path)) sc += 1; if (sc > bs) { bs = sc; best = x; } }
+    if (!best) continue;
+    const o = best.o, H = num(o, ["num_attention_heads", "n_head", "num_heads", "encoder_attention_heads", "attention_heads", "decoder_attention_heads"]);
+    const KV = num(o, ["num_key_value_heads", "num_kv_heads", "n_kv_heads", "multi_query_group_num"]), hd = num(o, ["head_dim", "attention_head_dim", "kv_channels", "qk_head_dim"]);
+    const rec = {path: best.path || "(root)", heads: H, kv_heads: KV || H, head_dim: hd || (H && at ? at.x / H : null), topk: num(o, ["num_experts_per_tok", "moe_topk", "top_k", "num_selected_experts"]) || (C.role === "backbone" ? topAll : null)};
+    if (at && H && rec.head_dim) { const h = rec.head_dim; rec.checked = true; rec.consistent = H * h === at.x && (!at.kv || at.kv === at.x || rec.kv_heads * h === at.kv); }
+    out[C.id] = rec;
+  }
+  return out;
+}
+
+const api = {infer, normalize, buildTree, classify, fuseConfig};
 if (typeof module !== "undefined") module.exports = api; else root.ArchInfer = api;
 })(typeof window !== "undefined" ? window : globalThis);
