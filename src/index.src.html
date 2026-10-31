@@ -68,6 +68,26 @@ html[data-theme=dark]{
   --line:#222b44;--line2:#2e3854;--glass:#121a2e;--glass2:#18213a;
   --on-ink:#0b1020;--ink-hover:#d9dce6;--sel:#1a2147;--dot-done:#4b55a8;--scrim:rgba(0,0,0,.6);
   --te-bg:#1a2147;--te-fg:#c3c9ff;--td-bg:#2a1630;--td-fg:#ffb3d9;--ts-bg:#122b20;--ts-fg:#9cf0bd;--tw-bg:#2b2614;--tw-fg:#f5d98a;--tb-bg:#2e1519;--tb-fg:#ffb0b6;color-scheme:dark}
+/* dark: gradient + glass, the original look */
+html[data-theme=dark] body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(900px 600px at 85% -10%,rgba(229,0,125,.20),transparent 60%),radial-gradient(800px 600px at -10% 30%,rgba(91,107,240,.18),transparent 60%),radial-gradient(700px 500px at 50% 110%,rgba(230,0,18,.10),transparent 60%),linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px) 0 0/48px 48px,linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px) 0 0/48px 48px}
+html[data-theme=dark] body>*:not(nav):not(#cfgDlg){position:relative;z-index:1}
+html[data-theme=dark] nav.top{background:rgba(11,16,32,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom-color:rgba(255,255,255,.08)}
+html[data-theme=dark] .lgroup{background:rgba(22,28,48,.92)}html[data-theme=dark] .panel,html[data-theme=dark] .glass{background:rgba(255,255,255,.045);border-color:rgba(255,255,255,.10);border-radius:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+html[data-theme=dark] .btn,html[data-theme=dark] .chip{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16);border-radius:999px}
+html[data-theme=dark] .btn:hover,html[data-theme=dark] .chip:hover{background:rgba(255,255,255,.11)}
+html[data-theme=dark] .btn.primary{background:linear-gradient(90deg,#e60012,#e5007d);border:0;color:#fff;box-shadow:0 8px 28px rgba(229,0,125,.35)}
+html[data-theme=dark] .btn.primary:hover{background:linear-gradient(90deg,#ff1a2b,#ff1a92)}
+html[data-theme=dark] .chip.on,html[data-theme=dark] .lang button.on{background:linear-gradient(90deg,#e60012,#e5007d);border-color:transparent;color:#fff}
+html[data-theme=dark] .lang{border-radius:999px;border-color:rgba(255,255,255,.16)}html[data-theme=dark] .lang button{background:transparent}
+html[data-theme=dark] .theme{border-radius:999px;background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16)}
+html[data-theme=dark] .own input,html[data-theme=dark] .libhead input{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14)}
+html[data-theme=dark] .hero h1{background:linear-gradient(90deg,#ff5a67,#ff7cc4 50%,#a3abfa);-webkit-background-clip:text;background-clip:text;color:transparent}
+html[data-theme=dark] h2.sec{background:linear-gradient(90deg,#f4f5f8 40%,#c3c9ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+html[data-theme=dark] .libtabs button.on{border-bottom-color:#e5007d}
+html[data-theme=dark] .lrow.on{background:linear-gradient(90deg,rgba(229,0,125,.18),rgba(91,107,240,.10))}
+html[data-theme=dark] .lrow:hover{background:rgba(255,255,255,.05)}
+html[data-theme=dark] #bDots i.done{background:rgba(229,0,125,.5)}html[data-theme=dark] #bDots i.on{background:linear-gradient(90deg,#e60012,#e5007d)}
+html[data-theme=dark] ::selection{background:rgba(229,0,125,.4)}
 .theme{display:inline-flex;align-items:center;justify-content:center;width:34px;height:32px;border:1px solid var(--control);border-radius:var(--r);background:var(--surface);color:var(--soft);cursor:pointer}.theme:hover{color:var(--ink)}
 html[data-theme=dark] .theme .sun{display:inline}html[data-theme=dark] .theme .moon{display:none}.theme .sun{display:none}
 *{box-sizing:border-box;margin:0;padding:0}
