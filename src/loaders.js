@@ -2,7 +2,7 @@
 // Weights are never downloaded. (c) 2026 Sattaya Singkul · MIT
 "use strict";
 (function (root) {
-const rangeGet = async (url, a, b) => { const r = await fetch(url, {headers: {Range: `bytes=${a}-${b}`}}); if (!r.ok && r.status !== 206) throw new Error(`HTTP ${r.status}`); return new Uint8Array(await r.arrayBuffer()); };
+const rangeGet = async (url, a, b) => { const r = await fetch(url, {headers: {Range: `bytes=${a}-${b}`}}); if (r.status === 401 || r.status === 403) throw new Error("gated repository: accept its license on Hugging Face first"); if (!r.ok && r.status !== 206) throw new Error(`HTTP ${r.status}`); return new Uint8Array(await r.arrayBuffer()); };
 const utf8 = new TextDecoder();
 
 // ---------------- safetensors: 8-byte little-endian length, then the JSON header
@@ -121,12 +121,23 @@ async function hfManifest(repo, files, prog = () => {}, opt = {}) {
   const conc = opt.conc || 6;
   const base = `https://huggingface.co/${repo}/resolve/main/`;
   const folder = n => n.includes("/") ? n.slice(0, n.lastIndexOf("/")) : "";
-  const skip = n => /(^|\/)(consolidated|optimizer|training_args|scheduler|rng_state)/i.test(n) || /^(\.|original\/)/.test(n);
+  // skip optimizer/training files, per-language adapters (MMS ships 1,000+ of them) and alternate-precision duplicates
+  const skip = n => /(^|\/)(consolidated|optimizer|training_args|scheduler|rng_state|adapter[._])/i.test(n) || /^(\.|original\/)/.test(n);
+  const getJSON = async u => { const r = await fetch(u); const t = await r.text();
+    if (!r.ok) throw new Error(r.status === 401 || r.status === 403 || /^Access to/.test(t) ? "gated repository: accept its license on Hugging Face first" : `HTTP ${r.status}`);
+    try { return JSON.parse(t); } catch (e) { throw new Error(/^Access to/.test(t) ? "gated repository: accept its license on Hugging Face first" : "unreadable index file"); } };
+  // a diffusers repo (model_index.json) is described by its component folders; single-file copies and LoRAs at the root are skipped
+  if (opt.only && opt.only.length) files = files.filter(f => opt.only.includes(folder(f.n)));
+  else files = files.filter(f => !/(^|\/)[^/]*lora[^/]*\.safetensors$/i.test(f.n) || files.every(g => /lora/i.test(g.n) || !/\.safetensors$/.test(g.n)));
   const jobs = [], seen = new Set();
-  for (const ix of files.filter(f => /\.safetensors\.index\.json$/.test(f.n) && !skip(f.n))) {
-    prog("index", ix.n); const j = await (await fetch(base + ix.n)).json(), dir = folder(ix.n);
+  for (const ix of files.filter(f => /\.safetensors\.index\.json$/.test(f.n) && !skip(f.n) && !/\.(fp16|bf16|fp32)\.safetensors\.index\.json$/.test(f.n) || /\.(fp16|bf16)\.safetensors\.index\.json$/.test(f.n) && !files.some(g => g.n === f.n.replace(/\.(fp16|bf16)\.safetensors/, ".safetensors")))) {
+    prog("index", ix.n); const j = await getJSON(base + ix.n), dir = folder(ix.n);
     for (const sh of [...new Set(Object.values(j.weight_map || {}))]) { const n = dir ? dir + "/" + sh : sh; seen.add(n); jobs.push({n, prefix: dir, kind: "st"}); } }
-  const loose = files.filter(f => /\.safetensors$/.test(f.n) && !seen.has(f.n) && !skip(f.n));
+  let loose = files.filter(f => /\.safetensors$/.test(f.n) && !seen.has(f.n) && !skip(f.n));
+  // a folder with both x.safetensors and x.fp16.safetensors describes the same weights twice: keep one
+  loose = loose.filter(f => !(/\.(fp16|bf16|fp32)\.safetensors$/.test(f.n) && loose.some(g => g !== f && g.n === f.n.replace(/\.(fp16|bf16|fp32)\.safetensors$/, ".safetensors"))));
+  { const byDir = {}; loose.forEach(f => (byDir[folder(f.n)] = byDir[folder(f.n)] || []).push(f)); // never read more than 32 loose files per folder
+    loose = Object.values(byDir).flatMap(g => g.length > 32 ? g.sort((a, b) => b.size - a.size).slice(0, 4) : g); }
   const rootLoose = loose.filter(f => !folder(f.n));
   loose.forEach(f => jobs.push({n: f.n, prefix: folder(f.n) || (rootLoose.length > 1 ? f.n.replace(/\.safetensors$/, "").replace(/[^\w]+/g, "_") : ""), kind: "st"}));
   if (!jobs.length) {

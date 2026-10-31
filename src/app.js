@@ -683,11 +683,12 @@ async function hfLoad(input) {
   if (info.error) throw new Error(info.error);
   const files = (info.siblings || []).map(s => ({n: s.rfilename, size: s.size || 0})), tfl = files.filter(f => /\.tflite$/i.test(f.n));
   const total = files.reduce((a, f) => a + f.size, 0);
+  let mi = null; if (files.some(f => f.n === "model_index.json")) try { mi = await (await fetch(base + "model_index.json")).json(); } catch (e) {}
   let cfg = null; const cfgF = files.find(f => f.n === "config.json"); if (cfgF) try { busy(t("st_cfg"), "config.json"); cfg = await (await fetch(base + "config.json")).json(); } catch (e) {}
   if (tfl.length) { const pick = tfl.filter(f => /enc|dec/i.test(f.n)).slice(0, 2), chosen = pick.length ? pick : tfl.slice(0, 1), gs = [];
     for (const f of chosen) { busy(t("st_tflite"), `${f.n} (${fB(f.size)})`); gs.push(graphFromTflite(parseTflite(await (await fetch(base + f.n)).arrayBuffer()), /enc/i.test(f.n) ? "encoder" : /dec/i.test(f.n) ? "decoder" : "model", f.n)); }
     return {graphs: gs, kind: "ops", meta: {name: repo, family: chosen.length > 1 ? "encdec" : "decoder", modality: "text", tie: true}, label: repo, noteKey: "n_upload"}; }
-  const mf = await Loaders.hfManifest(repo, files, (st, n, i, k, rd) => busy(st === "index" ? t("st_index") : t(st === "pt" ? "st_pt" : "st_header", {i, n: k}), st === "index" ? n : `${n} · ${fB(rd)} ${t("st_sofar")}`), {prefer: cfg && cfg.default_size});
+  const mf = await Loaders.hfManifest(repo, files, (st, n, i, k, rd) => busy(st === "index" ? t("st_index") : t(st === "pt" ? "st_pt" : "st_header", {i, n: k}), st === "index" ? n : `${n} · ${fB(rd)} ${t("st_sofar")}`), {prefer: cfg && cfg.default_size, only: mi ? Object.entries(mi).filter(([k, v]) => !k.startsWith("_") && Array.isArray(v) && v[0]).map(([k]) => k) : null});
   if (!mf) { if (cfg) { const r = tensorsFromConfig(cfg); return {tensors: r.tensors, meta: {...r.meta, name: repo}, cfg, kind: "config", label: repo, noteKey: "n_cfg", noteVars: {mt: r.meta.model_type}}; } throw new Error("no .tflite / .safetensors / .pt / config.json"); }
   const {tensors, read} = mf, jobs = {length: mf.nfiles};
   busy(t("st_infer"), `${Object.keys(tensors).length} tensors`);
