@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Model Explorer — checkpoint benchmark</title>
+<style>
+:root{--bg:#0b1020;--ink:#f4f5f8;--soft:#b9c0d4;--dim:#7d86a0;--line:rgba(255,255,255,.10)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(900px 600px at 85% -10%,rgba(229,0,125,.18),transparent 60%),radial-gradient(800px 600px at -10% 30%,rgba(91,107,240,.16),transparent 60%)}
+main{position:relative;max-width:1180px;margin:0 auto;padding:32px 24px 60px}
+h1{margin:0 0 6px;font-size:30px;background:linear-gradient(90deg,#ff5a67,#ff7cc4 50%,#a3abfa);-webkit-background-clip:text;background-clip:text;color:transparent}
+p{color:var(--soft);max-width:820px;margin:0 0 14px}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:18px 0 14px}
+button{font:600 14px inherit;font-family:inherit;color:#fff;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:8px 16px;cursor:pointer}
+button.p{background:linear-gradient(90deg,#e60012,#e5007d);border:0;box-shadow:0 8px 24px rgba(229,0,125,.3)}button:disabled{opacity:.5;cursor:wait}
+#prog{color:var(--soft);font-variant-numeric:tabular-nums}
+.box{background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:16px;overflow:auto;max-height:70vh}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.06);white-space:nowrap}
+th{position:sticky;top:0;background:#141b30;color:var(--dim);font-weight:500}td.n{text-align:right}td.repo{font-family:"IBM Plex Mono",monospace;font-size:12.5px}
+tr.run td.st{color:#a3abfa}tr.ok td.st{color:#4ade80}tr.bad td.st{color:#ff5a67;white-space:normal}tr.warn td.st{color:#f5c443}
+</style></head><body><main>
+<h1>Checkpoint benchmark</h1>
+<p>Runs the explorer's loader and recovery on <b id="count"></b> popular public checkpoints. For each one it reads the file list, the configuration files and the safetensors headers by range request. No weights are downloaded. Results are kept in this browser as they finish, so you can close the tab and press Start again to continue. When it is done, press Download results and send the file back.</p>
+<div class="bar"><button class="p" id="go">Start</button><button id="pause">Pause</button><button id="retry">Retry failed</button><button id="dl" disabled>Download results</button><button id="reset">Clear</button><span id="prog">Connecting…</span></div>
+<div class="box"><table><thead><tr><th>group</th><th>repo</th><th>status</th><th>params (ours)</th><th>params (hub)</th><th>family</th><th>header bytes</th></tr></thead><tbody id="tb"></tbody></table></div>
+</main>
+<script>// infer.js — recover a model's anatomy from its weight manifest alone (tensor names, shapes, dtypes).
+// No weights are downloaded and no model code is run. Works in the browser and in Node.
+// (c) 2026 Sattaya Singkul · MIT
+"use strict";
+(function (root) {
+const prod = s => (s || []).reduce((a, b) => a * b, 1);
+const DTB = {F64: 8, F32: 4, F16: 2, BF16: 2, F8_E4M3: 1, F8_E5M2: 1, F8_E8M0: 1, I64: 8, I32: 4, U32: 4, I16: 2, I8: 1, U8: 1, BOOL: 1, F4: .5};
+const isInt = s => /^\d+$/.test(s);
+const LEX = { // optional name priors; used only to break ties the shapes cannot (the 'nolex' mode switches them off)
+  attn: /(^|_)(attn|attention|self_attn|selfattention|mha|msa|sa)($|_)/i, cross: /(encoder_attn|cross_attn|crossattention|cross_attention|enc_dec|encdecattention|src_attn|crossattn)/i,
+  ffn: /(^|_)(mlp|ffn|feed_forward\d?|feedforward|intermediate|fc\d|ff|dense_relu_dense)($|_)/i, moe: /(experts?|moe|router|block_sparse)/i,
+  ssm: /(mixer|mamba|ssm|linear_attn|deltanet|time_mix|recurrent|rwkv)/i, conv: /(^|_)(conv|conv_module|convolution|dwconv)($|_)/i,
+  mod: /(adaln|ada_ln|modulation|scale_shift|norm1_context|time_embed|timestep)/i, q: /(^|_)(q|q_proj|query|wq|to_q)$/i, k: /(^|_)(k|k_proj|key|wk|to_k)$/i,
+  v: /(^|_)(v|v_proj|value|wv|to_v)$/i, o: /(^|_)(o|o_proj|out_proj|dense|wo|to_out|out|c_proj|proj)$/i, gate: /(gate|w1|wi_0)/i, up: /(up|w3|wi_1|fc1|c_fc|intermediate|wi$)/i, down: /(down|w2|wo$|fc2|output)/i,
+};
+
+// ------------------------------------------------------------------ 1. normalize: quantized storage -> logical tensors
+const AUX = /(^|[._])(weight_scale_2|weight_scale_inv|weight_scale|input_scale|output_scale|k_scale|v_scale|scales|qzeros|g_idx|absmax|quant_map|nested_absmax|nested_quant_map|quant_state(\.\w+)?|weight_zero_point|weight_global_scale|input_global_scale|weight_shape|_amax|biases|SCB|weight_format|zeros)$/;
+function normalize(manifest) {
+  const T = {}, groups = {};
+  for (const [n, v] of Object.entries(manifest)) { if (n === "__metadata__" || !v || !v.shape) continue; const i = n.lastIndexOf("."); const mod = i < 0 ? "" : n.slice(0, i), leaf = n.slice(i + 1); (groups[mod] || (groups[mod] = {}))[leaf] = v; }
+  const out = {}, quant = {};
+  for (const [mod, g] of Object.entries(groups)) {
+    const P = m => mod ? mod + "." + m : m;
+    const used = new Set();
+    const q = (fmt, bits, extra) => { quant[fmt] = (quant[fmt] || 0) + 1; return Object.assign({fmt, bits}, extra || {}); };
+    const bytesOf = keys => keys.reduce((a, k) => a + prod(g[k].shape) * (DTB[g[k].dtype] || 4), 0);
+    // GPTQ / AWQ
+    if (g.qweight && g.scales) { const qw = g.qweight.shape, sc = g.scales.shape, aux = Object.keys(g).filter(k => /^(qweight|qzeros|scales|g_idx)$/.test(k));
+      const gptq = qw[1] === sc[1], i = gptq ? qw[0] * 8 : qw[0], o = gptq ? qw[1] : qw[1] * 8;
+      out[P("weight")] = {shape: [o, i], dtype: "I4", bytes: bytesOf(aux), q: q(gptq ? "gptq" : "awq", 4, {group: Math.round(i / sc[0])}), src: aux.map(P)}; aux.forEach(k => used.add(k)); }
+    // MXFP4 (gpt-oss style): <name>_blocks [.., n/32, 16] + <name>_scales
+    for (const k of Object.keys(g)) { const m = k.match(/^(.*)_blocks$/); if (!m || !g[m[1] + "_scales"]) continue; const b = g[k].shape;
+      out[P(m[1])] = {shape: [...b.slice(0, -2), b[b.length - 2] * b[b.length - 1] * 2], dtype: "F4", bytes: bytesOf([k, m[1] + "_scales"]), q: q("mxfp4", 4, {group: 32}), src: [P(k)]}; used.add(k); used.add(m[1] + "_scales"); }
+    if (!g.weight && !g.qweight) {
+      const ks = Object.keys(g), U8 = ks.find(k => g[k].dtype === "U8" && g[k].shape.length === 2), F8s = ks.find(k => /F8/.test(g[k].dtype) && U8 && g[k].shape[0] === g[U8].shape[0] && g[k].shape[1] * 8 === g[U8].shape[1]);
+      const F8w = ks.find(k => /F8/.test(g[k].dtype) && g[k].shape.length >= 2 && prod(g[k].shape) > 64), I32 = ks.filter(k => g[k].dtype === "I32" && g[k].shape.length === 2), F16 = ks.find(k => /F16|BF16/.test(g[k].dtype) && g[k].shape.length === 2);
+      if (U8 && F8s) { const w = g[U8].shape, aux = ks.filter(k => k !== U8 && (prod(g[k].shape) <= 1 || k === F8s)); out[P(U8)] = {shape: [w[0], w[1] * 2], dtype: "U8", bytes: bytesOf([U8, ...aux]), q: q("nvfp4", 4, {group: 16}), src: aux.map(P)}; used.add(U8); aux.forEach(k => used.add(k)); }
+      else if (F8w) { const aux = ks.filter(k => k !== F8w && /F32|BF16|F16/.test(g[k].dtype) && (prod(g[k].shape) === 1 || g[k].shape.length === 2 && g[k].shape[1] === 1 && g[k].shape[0] === g[F8w].shape[0])); out[P(F8w)] = {shape: g[F8w].shape, dtype: g[F8w].dtype, bytes: bytesOf([F8w, ...aux]), q: q("fp8", 8, {}), src: aux.map(P)}; used.add(F8w); aux.forEach(k => used.add(k)); }
+      else if (I32.length && F16) { const qw = I32.map(k => g[k]).sort((a, b) => prod(b.shape) - prod(a.shape))[0], qk = I32.find(k => g[k] === qw), sc = g[F16].shape; if (qw.shape[1] === sc[1]) { const aux = ks.filter(k => k !== qk && (g[k].dtype === "I32" || k === F16)); out[P(qk)] = {shape: [qw.shape[1], qw.shape[0] * 8], dtype: "I4", bytes: bytesOf([qk, ...aux]), q: q("gptq", 4, {group: Math.round(qw.shape[0] * 8 / sc[0])}), src: aux.map(P)}; used.add(qk); aux.forEach(k => used.add(k)); } }
+    }
+    if (g.weight && !used.has("weight")) {
+      const w = g.weight, aux = Object.keys(g).filter(k => k !== "weight" && k !== "bias" && AUX.test("." + k)); let shape = w.shape, qq = null;
+      const sc = g.weight_scale || g.weight_scale_inv;
+      if (w.dtype === "U8" && sc && /F8/.test(sc.dtype) && sc.shape.length === w.shape.length) { shape = [...w.shape.slice(0, -1), w.shape[w.shape.length - 1] * 2]; qq = q("nvfp4", 4, {group: Math.round(shape[shape.length - 1] / sc.shape[sc.shape.length - 1])}); }
+      else if (/F8/.test(w.dtype)) { const n = sc ? prod(sc.shape) : 0; qq = q("fp8", 8, {scale: !sc ? "none" : n === 1 ? "per-tensor" : sc.shape.length === 2 && sc.shape[1] > 1 ? "block" : "per-channel"}); }
+      else if (w.dtype === "U32" && g.scales && g.biases) { const per = 32 * w.shape[w.shape.length - 1] / (g.scales.shape[g.scales.shape.length - 1] * 64); const bits = [2, 3, 4, 6, 8].includes(per) ? per : 4; shape = [...w.shape.slice(0, -1), w.shape[w.shape.length - 1] * 32 / bits]; qq = q("mlx", bits, {group: 64}); }
+      else if ((w.dtype === "U8" || w.dtype === "I8") && g.absmax) { shape = [prod(w.shape) * 2]; qq = q("bnb4", 4, {}); }
+      else if (w.dtype === "I8" && g.SCB) qq = q("int8", 8, {});
+      else if (w.dtype === "I8" || w.dtype === "U8") { if (sc || g.scales) qq = q("int8", 8, {}); }
+      out[P("weight")] = {shape, dtype: w.dtype, bytes: bytesOf(["weight", ...aux]), q: qq, src: aux.map(P)}; used.add("weight"); aux.forEach(k => used.add(k));
+    }
+    for (const [k, v] of Object.entries(g)) { if (used.has(k)) continue; if (AUX.test("." + k) && Object.keys(g).length > 1 && (g.weight || g.qweight)) continue;
+      out[P(k)] = {shape: v.shape, dtype: v.dtype, bytes: prod(v.shape) * (DTB[v.dtype] || 4), q: null}; }
+  }
+  return {T: out, quant};
+}
+
+// ------------------------------------------------------------------ 2. module tree
+function buildTree(T) {
+  const rootN = {path: "", tok: "", kids: new Map(), ts: [], parent: null};
+  for (const n of Object.keys(T)) {
+    const parts = n.split("."); let node = rootN;
+    for (let i = 0; i < parts.length - 1; i++) { const t = parts[i]; if (!node.kids.has(t)) node.kids.set(t, {path: node.path ? node.path + "." + t : t, tok: t, kids: new Map(), ts: [], parent: node}); node = node.kids.get(t); }
+    node.ts.push(n);
+  }
+  const fill = nd => { nd.all = [...nd.ts]; nd.mods = nd.ts.length ? 1 : 0; for (const k of nd.kids.values()) { fill(k); nd.all.push(...k.all); nd.mods += k.mods; } };
+  fill(rootN); return rootN;
+}
+const walk = (nd, f) => { f(nd); for (const k of nd.kids.values()) walk(k, f); };
+const rel = (n, base) => (base ? n.slice(base.length + 1) : n).split(".").map(t => isInt(t) ? "#" : t).join(".");
+
+// ------------------------------------------------------------------ 3. shape algebra helpers
+function widthOf(names, T) { // the residual width of a group of tensors: the dimension most matrices agree on
+  const c = new Map(), add = (x, w) => c.set(x, (c.get(x) || 0) + w);
+  for (const n of names) { const s = T[n].shape; if (s.length === 2) { add(s[0], 1); add(s[1], 1); } else if (s.length === 1 && s[0] > 8) add(s[0], .6); else if (s.length === 3 && s[0] > 8 && s[1] > 8 && s[2] > 8) { add(s[1], .5); add(s[2], .5); } }
+  let best = null, bv = 0; for (const [x, v] of c) if (v > bv || v === bv && x > best) { best = x; bv = v; } return best;
+}
+const mats = (names, T) => names.filter(n => T[n].shape.length === 2 && Math.min(...T[n].shape) > 1);
+const vecs = (names, T) => names.filter(n => T[n].shape.length === 1);
+const isDW = s => s.length === 3 && s[1] === 1 && s[2] <= 64 && s[0] > 1; // depthwise conv1d [C, 1, k]
+const isDW2 = s => s.length === 4 && s[1] === 1 && s[2] <= 15 && s[0] > 1;
+const leafTok = n => { const p = n.split("."); return p.length > 1 ? p[p.length - 2] : p[0]; };
+
+// classify one region (a child module of a block, or a set of loose tensors) by its shapes
+function classify(names, T, d, ctx) {
+  let r = classify0(names, T, d, ctx);
+  const weak = /^(other|half_up|half_down)$/.test(r.kind) || r.kind === "ffn" && mats(names, T).length === 2 && mats(names, T).some(n => T[n].shape[0] === d && T[n].shape[1] >= 2.5 * d && T[n].shape[1] % d === 0 && T[n].shape[1] / d === 3);
+  if (weak && mats(names, T).length) {
+    const Tt = Object.assign({}, T); names.forEach(n => { const v = T[n]; if (v.shape.length === 2) Tt[n] = Object.assign({}, v, {shape: [v.shape[1], v.shape[0]]}); });
+    const r2 = classify0(names, Tt, d, Object.assign({}, ctx));
+    if (!/^(other|half_up|half_down)$/.test(r2.kind) && (r2.kind !== "ffn" || r.kind !== "ffn")) { r = r2; r.ev.push("weights stored transposed [in, out]"); r.transposed = true; }
+  }
+  r.d = d; return r;
+}
+function classify0(names, T, d, ctx) {
+  const ev = [], V = vecs(names, T), all = names.map(n => T[n].shape);
+  let M = mats(names, T);
+  // head-shaped parameters [H, h] (relative-position biases, per-head scales): not projections, but they reveal H and h
+  const dims = new Set(M.flatMap(n => T[n].shape));
+  const headish = M.filter(n => { const [a, b] = T[n].shape; return a <= 64 && b >= 16 && dims.has(a * b) && M.some(m => m !== n && T[m].shape.includes(a * b)); });
+  if (headish.length) { M = M.filter(n => !headish.includes(n)); ctx.headShape = T[headish[0]].shape; }
+  const by = k => names.filter(n => T[n].shape.length === k);
+  const fused = names.filter(n => T[n].shape.length === 3 && T[n].shape[0] >= 2 && T[n].shape[0] <= 4096 && T[n].shape[1] > 64 && T[n].shape[2] > 64 && (T[n].shape[1] === d || T[n].shape[2] === d));
+  if (fused.length && !ctx.expertList && !names.some(n => isDW(T[n].shape))) { const E = Math.max(...fused.map(n => T[n].shape[0])), r = M.find(n => T[n].shape[1] === d && T[n].shape[0] >= E && T[n].shape[0] <= E + 8);
+    ev.push(`${fused.length} stacked expert tensors [${T[fused[0]].shape.join("×")}]${r ? ", router [" + T[r].shape.join("×") + "]" : ""}`); return {kind: "moe", E, ev}; }
+  if (ctx.expertList || !names.some(n => isDW(T[n].shape)) && names.some(n => T[n].shape.length === 3 && T[n].shape[0] >= 2 && T[n].shape[0] <= 4096 && T[n].shape[1] > 16 && T[n].shape[2] > 16)) {
+    const r = M.find(n => T[n].shape[1] === d && (ctx.expertN ? T[n].shape[0] === ctx.expertN : T[n].shape[0] <= 1024));
+    const E = ctx.expertN || (names.find(n => T[n].shape.length === 3) ? T[names.find(n => T[n].shape.length === 3)].shape[0] : null);
+    if (r && T[r].shape[0] === E || ctx.expertList) { ev.push(`router [${r ? T[r].shape.join("×") : "?"}] and ${E} experts`); return {kind: "moe", E, ev}; }
+  }
+  const dws = names.filter(n => isDW(T[n].shape));
+  const direct = names.filter(n => ctx.root != null && n.slice(0, n.lastIndexOf(".")) === ctx.root);
+  const qkvW = new Map(); M.forEach(n => { if (T[n].shape[1] === d) qkvW.set(T[n].shape[0], (qkvW.get(T[n].shape[0]) || 0) + 1); });
+  const attnLike = [...qkvW.values()].some(v => v >= 3); // q, k, v of one width next to a conv: span-based dynamic conv attention (ConvBERT), not a conv module
+  if (dws.length && !attnLike) {
+    const C = T[dws[0]].shape[0], k = T[dws[0]].shape[2];
+    const small = direct.filter(n => T[n].shape.length === 1).map(n => T[n].shape[0]).filter(x => x !== d);
+    const cnt = new Map(); small.forEach(x => cnt.set(x, (cnt.get(x) || 0) + 1));
+    const rep = [...cnt].filter(([, v]) => v >= 2).map(([x]) => x);
+    const stateT = names.filter(n => { const s = T[n].shape; return s.length >= 2 && !isDW(s) && s[s.length - 1] > 1 && s[s.length - 1] <= 256 && s.slice(0, -1).some(x => x === C || 2 * x === C || x === C / 2) && s[s.length - 1] < s[s.length - 2]; });
+    if (k <= 8 && (rep.length || stateT.length || direct.filter(n => T[n].shape.length <= 1).length >= 2)) { ev.push(`depthwise conv [${T[dws[0]].shape.join("×")}] + state parameters ${rep.length ? "[" + rep[0] + "] ×" + cnt.get(rep[0]) : stateT.length ? "[" + T[stateT[0]].shape.join("×") + "]" : ""} (A, D, Δt)`); return {kind: "ssm", heads: rep[0], ev}; }
+    const pw = names.filter(n => T[n].shape.length === 3 && T[n].shape[2] === 1 || T[n].shape.length === 4 && T[n].shape[2] === 1 && T[n].shape[3] === 1);
+    if (pw.length || /running_mean|running_var/.test(names.join(" ")) || k > 8) { ev.push(`depthwise conv k=${k} with pointwise convs`); return {kind: "conv", k, ev}; }
+  }
+  // recurrent cells: W_ih [g*h, x], W_hh [g*h, h], g in {3,4}
+  const hh = M.filter(n => { const [o, i] = T[n].shape; return (o === 4 * i || o === 3 * i); });
+  if (hh.length && M.length >= 2 && M.every(n => T[n].shape[0] === T[hh[0]].shape[0] && T[n].shape[0] !== d) && !(ctx.lex && !/(^|[._])(weight|bias)_(ih|hh)|lstm|gru|rnn|recur|cell/i.test(M.join(" ")))) { const [o, i] = T[hh[0]].shape; ev.push(`${o / i === 4 ? "LSTM" : "GRU"} gates ${o} = ${o / i}×${i}`); return {kind: "rnn", cell: o / i === 4 ? "lstm" : "gru", h: i, ev}; }
+  if (!M.length) {
+    const tab = names.find(n => T[n].shape.length === 3 && T[n].shape[0] === 1 && T[n].shape[2] === d && [2, 3, 4, 6, 9, 12].includes(T[n].shape[1]));
+    if (tab) { ev.push(`scale/shift table [${T[tab].shape.join("×")}]`); return {kind: "mod", ev}; }
+    if (by(3).length || by(4).length || by(5).length) return {kind: "conv", ev: ["conv kernels"]};
+    if (V.length && V.every(n => T[n].shape[0] === d || ctx.lex && /norm|ln/.test(n))) return {kind: "norm", ev: ["vectors of width " + d]};
+    return {kind: V.length ? "norm" : "other", ev};
+  }
+  const ins = M.filter(n => T[n].shape[1] === d), outs = M.filter(n => T[n].shape[0] === d);
+  // recurrent / linear-attention mixers without a conv: per-head gate projections [<=64, d] or decay/mix vectors on the mixer itself
+  const gates = M.filter(n => T[n].shape[1] === d && T[n].shape[0] <= 64);
+  const decay = direct.filter(n => { const s = T[n].shape; return s.length === 1 && s[0] === d || s.length === 3 && s[0] === 1 && s[1] === 1; });
+  if (outs.length && ins.length >= 2 && (gates.length >= 2 && !ctx.expertList || decay.length >= 2)) { ev.push(gates.length ? `per-head gates [${T[gates[0]].shape.join("×")}]` : `${decay.length} decay/mix vectors`); return {kind: "ssm", ev}; }
+  // feed-forward: d -> f (one or two parallel) -> d
+  if (M.length <= 3 && outs.length === 1 && ins.length === M.length - 1 && ins.length >= 1) {
+    const f = T[outs[0]].shape[1], ups = ins.map(n => T[n].shape[0]);
+    if (ups.every(x => x === f) && ins.length <= 2) { ev.push(`${ins.length === 2 ? "gated " : ""}d ${d} → ${f} → ${d}`); return {kind: "ffn", f, gated: ins.length === 2, ev}; }
+    if (ins.length === 1 && ups[0] === 2 * f && f > 1.3 * d) { ev.push(`fused gate+up ${ups[0]} = 2×${f}`); return {kind: "ffn", f, gated: true, ev}; }
+    if (ins.length === 1 && ups[0] === 2 * f && ctx.lex && LEX.ffn.test(names.join(" "))) { ev.push(`fused gate+up ${ups[0]} = 2×${f}`); return {kind: "ffn", f, gated: true, ev}; }
+  }
+  // attention: several projections leave d and one projection returns to d
+  if (outs.length >= 1 && M.length >= 2) {
+    const o = outs.find(n => M.some(m => m !== n && T[m].shape[0] === T[n].shape[1])) || outs[0], x = T[o].shape[1];
+    const inp = M.filter(n => n !== o);
+    // per-head norms (q_norm / k_norm) live in modules that hold no matrix; biases share a module with their weight and are skipped
+    const matMods = new Set(names.filter(n => T[n].shape.length >= 2).map(modOf0));
+    const qk = ctx.headShape ? [ctx.headShape[1]] : V.filter(n => !matMods.has(modOf0(n))).map(n => T[n].shape[0]).filter(h => h >= 16 && h <= 512 && x % h === 0 && h !== d);
+    if (inp.length >= 1) {
+      // external inputs: projections whose input is not produced inside the region (low-rank chains such as MLA are internal)
+      const outsSet = new Set(M.map(n => T[n].shape[0])), ext = inp.filter(n => !outsSet.has(T[n].shape[1]) || T[n].shape[1] === d);
+      const foreign = ext.filter(n => T[n].shape[0] >= 64).map(n => T[n].shape[1]).filter(w => w !== d && w >= 128), cnt = {}; foreign.forEach(w => cnt[w] = (cnt[w] || 0) + 1);
+      const cross = Object.values(cnt).some(c => c >= 2) && ext.some(n => T[n].shape[1] === d);
+      if (inp.length === 1) { const a = T[inp[0]].shape[0]; if (a === 3 * x || a > x && a < 3 * x && (a - x) % 2 === 0) { ev.push(`fused qkv ${a} = ${x} + 2×${(a - x) / 2}`); return {kind: "attn", x, kv: (a - x) / 2, qk: qk[0], ev}; } }
+      else { ev.push(`${inp.length} input projections → [${x}] → output [${d}×${x}]`); return {kind: cross ? "cross" : "attn", x, kv: inferKV(inp, T, x), qk: qk[0], ev}; }
+    }
+  }
+  // modulation (adaLN): one matrix producing k×d
+  if (M.length === 1) { const [o, i] = T[M[0]].shape; if (o % d === 0 && (i === d ? [6, 9, 12, 18].includes(o / d) : o / d >= 2 && o / d <= 24 && i < d)) { ev.push(`[${o}×${i}] = ${o / d}×d shift/scale/gate`); return {kind: "mod", ev}; }
+    if (i === d) return {kind: "half_up", f: o, ev: [`d ${d} → ${o}`]}; if (o === d) return {kind: "half_down", f: i, ev: [`${i} → d ${d}`]}; }
+  return {kind: "other", ev};
+}
+function inferKV(inp, T, x) { const o = inp.map(n => T[n].shape[0]); if (o.length >= 3) { const s = [...o].sort((a, b) => a - b); return s[0] === s[1] && s[2] >= s[0] ? s[0] : x; } return x; }
+
+// lexical fallback when the shapes are ambiguous or a region is a single loose matrix
+function lexKind(key) { for (const k of ["cross", "moe", "ssm", "mod", "attn", "conv", "ffn"]) if (LEX[k].test(key)) return k; return null; }
+
+// ------------------------------------------------------------------ 4. main
+function infer(manifest, opts = {}) {
+  const lex = opts.lex !== false, ev = [];
+  const {T, quant} = normalize(manifest);
+  const R = buildTree(T);
+  const out = {tensors: {}, comps: [], edges: [], quant, evidence: ev, hp: {}, totals: {params: 0, bytes: 0}};
+  for (const [n, v] of Object.entries(T)) { out.totals.params += prod(v.shape); out.totals.bytes += v.bytes; }
+  // lists: nodes whose children are all numeric (>= 2)
+  const lists = [];
+  const listKeys = ks => { if (ks.every(isInt)) return true; const m = ks.map(k => k.match(/^([A-Za-z]+)_(\d+)$/)); return ks.length >= 3 && m.every(x => x && x[1] === m[0][1]); };
+  walk(R, nd => { const ks = [...nd.kids.keys()]; if (ks.length >= 2 && listKeys(ks) && !nd.ts.length) lists.push(nd); });
+  const composite = item => item.mods >= 2;
+  const inItemOf = (nd, L) => nd.path.startsWith(L.path + ".") && nd !== L;
+  // experts: a list nested inside another list's item, uniform small MLP items, often with a router of matching width
+  const expert = L => {
+    const items = [...L.kids.values()], n = items.length;
+    if (lex && /expert/i.test(L.tok)) return true;
+    const inside = lists.some(O => O !== L && inItemOf(L, O) && [...O.kids.values()].every(composite));
+    if (!inside || n < 4) return false;
+    const sig = it => it.all.map(x => rel(x, it.path) + ":" + T[x].shape.length).sort().join("|");
+    const s0 = sig(items[0]); if (!items.every(it => sig(it) === s0)) return false;
+    const m = items[0].all.filter(x => T[x].shape.length >= 2).length; if (m < 2 || m > 3 || items[0].all.some(x => T[x].shape.length === 1 && !/bias/.test(x))) return false;
+    const par = L.parent; return par.all.some(x => !x.startsWith(L.path + ".") && T[x].shape.length === 2 && T[x].shape[0] === n) || n >= 8;
+  };
+  const expertLists = new Set(lists.filter(expert));
+  const blockLists = lists.filter(L => !expertLists.has(L) && [...L.kids.values()].filter(composite).length >= 2);
+  let inner = blockLists.filter(L => !blockLists.some(O => O !== L && [...L.kids.values()].some(it => O.path.startsWith(it.path + "."))));
+  const sigOf = it => it.all.map(x => rel(x, it.path) + ":" + T[x].shape.length).sort().join("|");
+  const sub = new Set();
+  for (const O of blockLists) { if (inner.includes(O)) continue; const its = [...O.kids.values()];
+    const ins = its.map(it => inner.filter(L => L.path.startsWith(it.path + ".") && L.parent === it));
+    const short = ins.every(a => a.length >= 1 && a.every(L => L.kids.size <= 4)) && new Set(ins.flatMap(a => a.map(L => L.kids.size))).size === 1;
+    const hetero = ins.every(a => a.length === 1 && new Set([...a[0].kids.values()].map(sigOf)).size === a[0].kids.size), multi = ins.every(a => a.length >= 2);
+    if (short && (hetero || multi)) { ins.forEach(a => a.forEach(L => sub.add(L))); inner.push(O); } }
+  inner = inner.filter(L => !sub.has(L));
+  // homes: the module that owns a stack; stage lists (lists of items that themselves hold stacks) fold into their parent
+  const homeOf = L => { let h = L.parent; while (h && h.parent && (isInt(h.tok) || lists.includes(h))) h = h.parent; return h; };
+  const homes = new Map();
+  const under = (nd, h) => !h.path || nd.path === h.path || nd.path.startsWith(h.path + ".");
+  for (const L of inner) { let h = homeOf(L);
+    // raise the home while its parent holds no other stack (so embeddings / heads next to an 'encoder' wrapper join it)
+    const multiRoot = [...R.kids.values()].filter(k => k.all.length >= 3).length > 1; // several top-level components (diffusers folders, VAE + transformer)
+    while (h.parent && !inner.some(O => !under(O, h) && under(O, h.parent)) && !(h.parent === R && multiRoot)) h = h.parent;
+    if (!homes.has(h)) homes.set(h, []); homes.get(h).push(L); }
+  // nested homes (e.g. a vision tower inside the model home): keep both; a tensor belongs to the deepest home that prefixes it
+  const homeList = [...homes.keys()].sort((a, b) => b.path.length - a.path.length);
+  const ownerHome = name => homeList.find(h => !h.path || name.startsWith(h.path + ".")) || null;
+  const comps = homeList.map(h => ({id: h.path || "(root)", path: h.path, node: h, stacks: [], stem: [], head: [], loose: [], d: null, params: 0, bytes: 0, ev: []}));
+  const compOfHome = new Map(comps.map(c => [c.node, c]));
+  // 4a. blocks and block types
+  const blockOf = new Map();
+  for (const [h, Ls] of homes) {
+    const C = compOfHome.get(h);
+    for (const L of Ls) {
+      const items = [...L.kids.values()].filter(composite);
+      const sigs = items.map(it => it.all.filter(x => !/num_batches_tracked/.test(x)).map(x => rel(x, it.path) + ":" + T[x].shape.length).sort().join("|"));
+      const types = []; const tix = sigs.map(s => { let i = types.findIndex(t => t.sig === s); if (i < 0) { types.push({sig: s, count: 0}); i = types.length - 1; } types[i].count++; return i; });
+      const st = {path: L.path, n: items.length, items: items.map(i => i.path), typeOf: tix, types};
+      items.forEach((it, k) => it.all.forEach(x => blockOf.set(x, {stack: st, item: it, k, t: tix[k]})));
+      C.stacks.push(st);
+    }
+    const bnames = [].concat(...C.stacks.flatMap(s => s.items.map(p => findNode(R, p).all)));
+    C.d = widthOf(bnames.filter(x => !expertLists.size || ![...expertLists].some(E => x.startsWith(E.path + "."))), T);
+  }
+  // 4b. regions inside one representative block per type
+  for (const C of comps) for (const st of C.stacks) st.types.forEach((ty, ti) => {
+    const k = st.typeOf.indexOf(ti), item = findNode(R, st.items[k]), d = widthOfBlock(item, T, expertLists) || C.d;
+    ty.d = d; ty.regions = regionsOf(item, T, d, expertLists, lex);
+    ty.label = blockLabel(ty.regions);
+  });
+  // per-tensor labels for every block of every type (by relative path through the representative)
+  for (const C of comps) for (const st of C.stacks) st.items.forEach((p, k) => {
+    const ty = st.types[st.typeOf[k]], map = new Map(); ty.regions.forEach(rg => rg.rel.forEach(r => map.set(r, rg)));
+    findNode(R, p).all.forEach(x => { const rg = map.get(rel(x, p)); out.tensors[x] = {comp: C.id, stack: st.path, block: k, kind: rg ? rg.kind : "other", region: rg ? rg.key : null, role: rg ? roleOf(x, rg, T, lex) : null}; });
+  });
+  for (const X of [...comps]) {
+    const Y = comps.find(c => c !== X && (!c.path || X.path.startsWith(c.path + ".")));
+    if (!Y || !X.stacks.every(st => st.types.every(t => t.label === "Conv" || t.label === "Block"))) continue;
+    const xs = Object.entries(out.tensors).filter(([, t]) => t.comp === X.id), xp = xs.reduce((a, [n]) => a + prod(T[n].shape), 0);
+    const yp = Object.entries(out.tensors).filter(([, t]) => t.comp === Y.id).reduce((a, [n]) => a + prod(T[n].shape), 0);
+    if (xp > .1 * yp) continue;
+    xs.forEach(([, t]) => Object.assign(t, {comp: Y.id, block: null, stack: null, kind: "conv", role: "stem"}));
+    comps.splice(comps.indexOf(X), 1); homeList.splice(homeList.indexOf(X.node), 1); X.stacks.forEach(st => ev.push(`${st.path}: small conv stack folded into the ${Y.id || "model"} stem`));
+  }
+  // 4c. everything outside the blocks: stem, head, adapters
+  const widths = comps.map(c => c.d);
+  const embRows = [];
+  for (const [n, v] of Object.entries(T)) {
+    if (out.tensors[n]) continue;
+    const h = ownerHome(n); const C0 = h ? compOfHome.get(h) : null; const s = v.shape;
+    const C = C0 || (s.length === 2 ? comps.filter(c => c.d === s[1]).sort((a, b) => b.stacks.length - a.stacks.length)[0] : null) || null;
+    let kind = "other", role = null;
+    if (s.length === 1) kind = "norm";
+    else if (s.length >= 3 && !(s.length === 3 && s[0] === 1)) { kind = "conv"; role = "stem"; }
+    else if (s.length === 2) {
+      const [o, i] = s, d = C ? C.d : null;
+      const otherW = w => widths.includes(w) && w !== d;
+      if (d && (otherW(o) && (i === d || i % d === 0) || otherW(i) && o === d)) { kind = "adapter"; }
+      else if (d && i === d && o > 4 * d && o >= 1000 && embRows.length && embRows.includes(o)) { kind = "head"; role = "logits"; }
+      else if (d && i === d && o % d === 0 && o / d <= 8 && o > d) { kind = "head"; role = "mlp"; }
+      else if (d && i === d && o >= 1000 && o > 2 * d && !/embed|wte|token|tok_emb|word/i.test(lex ? n : "")) { kind = "head_or_embed"; }
+      else if (d && i === d && o >= 1000 && o > d) { kind = "embed"; role = "tokens"; embRows.push(o); }
+      else if (d && i === d && o !== d && o >= 128 && o < 1000 && (Number.isInteger(Math.log2(o)) || Number.isInteger(Math.log2(o - 2)) || o === 448)) { kind = "embed"; role = "positions"; }
+      else if (d && i === d && o < 1000 && widths.every(w => w !== o)) { kind = "head"; role = o <= 64 ? "classifier" : "proj"; }
+      else if (d && o === d && i !== d && widths.includes(i)) { kind = "adapter"; }
+      else if (d && i === d && widths.includes(o) && o !== d) { kind = "adapter"; }
+      else if (d && o === d && i !== d) { kind = "conv"; role = "input proj"; }
+      else if (d && i === d && o === d) { kind = "head"; role = "pool/proj"; }
+      else if (s[0] === 1 || s[1] === 1) kind = "embed";
+      else kind = widths.includes(i) || widths.includes(o) ? "adapter" : "other";
+    } else kind = s.length === 3 ? "embed" : "other";
+    out.tensors[n] = {comp: C0 ? C0.id : null, kind, role, region: null};
+  }
+  for (const [n, t] of Object.entries(out.tensors)) if (t.block == null && (t.kind === "head" && t.role !== "logits" || t.kind === "other") && T[n].shape.length === 2 && T[n].shape[0] < 1000) {
+    const par = findNode(R, modOf0(n)); const gp = par && par.parent;
+    if (par && par.ts.some(m => m !== n && T[m].shape.length === 1 && T[m].shape[0] === T[n].shape[0])) continue;
+    if (gp && gp.all.some(m => m !== n && out.tensors[m] && (out.tensors[m].kind === "embed" && T[m].shape.length === 2 && T[m].shape[0] >= 1000 || out.tensors[m].kind === "conv") && Math.abs(modOf0(m).split(".").length - modOf0(n).split(".").length) <= 1)) Object.assign(t, {kind: "embed", role: "table"});
+  }
+  // token embedding vs untied output head: same [V, d] shape; the head is usually the later / outer one
+  const hoe = Object.entries(out.tensors).filter(([, t]) => t.kind === "head_or_embed");
+  for (const [n, t] of hoe) {
+    const s = T[n].shape, twins = Object.entries(T).filter(([m, v]) => m !== n && v.shape[0] === s[0] && v.shape[1] === s[1] && !out.tensors[m].block);
+    let isHead;
+    if (lex && /lm_head|output|head|proj_out|classifier|logits/i.test(n)) isHead = true;
+    else if (lex && /embed|wte|tok|word/i.test(n)) isHead = false;
+    else if (twins.length) isHead = n.split(".").length < twins[0][0].split(".").length || n > twins[0][0];
+    else isHead = false;
+    Object.assign(t, isHead ? {kind: "head", role: "logits"} : {kind: "embed", role: "tokens"});
+  }
+  // lexical cleanup for loose tensors the shapes could not place
+  if (lex) for (const [n, t] of Object.entries(out.tensors)) if (t.block == null && (t.kind === "other" || t.kind === "adapter")) {
+    if (/(^|\.)(lm_head|classifier|score|qa_outputs|proj_out|head|joint)/i.test(n)) t.kind = "head";
+    else if (/merger|projector|multi_modal|mm_proj|adapter|connector|mlp1/i.test(n)) t.kind = "adapter";
+    else if (/embed|wte|wpe|position|pos_emb|token_type|cls_token|mask_token/i.test(n) && t.kind === "other") t.kind = "embed";
+    else if (/conv|patch|subsampl|feature_extractor/i.test(n) && t.kind === "other") t.kind = "conv";
+  }
+  // leftovers outside every home: attach by width (a [V, d] head next to a 'model' wrapper belongs to the d-wide component)
+  for (const [n, t] of Object.entries(out.tensors)) if (!t.comp) {
+    const s = T[n].shape, w = s.length === 2 ? s[1] : s.length === 1 ? s[0] : null;
+    const c = comps.filter(c => c.d === w).sort((a, b) => b.stacks.reduce((x, y) => x + y.n, 0) - a.stacks.reduce((x, y) => x + y.n, 0))[0];
+    if (c && !out.joint) t.comp = c.id;
+  }
+  // tensor-level structure: a bias follows its weight; a leaf module holding only vectors is a normalisation
+  const modOf = n => n.slice(0, Math.max(0, n.lastIndexOf(".")));
+  const byMod = new Map(); for (const n of Object.keys(T)) { const m = modOf(n); (byMod.get(m) || byMod.set(m, []).get(m)).push(n); }
+  for (const [m, ns] of byMod) {
+    const nd = findNode(R, m), big = ns.filter(n => T[n].shape.length >= 2);
+    if (big.length) { const k = out.tensors[big[0]].kind; ns.filter(n => T[n].shape.length < 2).forEach(n => { const t = out.tensors[n]; if (t.kind === "norm" || t.kind === "other" || t.block == null) t.kind = k; }); }
+    else if (nd && nd.kids.size === 0 && ns.every(n => T[n].shape.length <= 1) && (ns.length <= 2 || /running|num_batches/.test(ns.join(" ")) || !lex)) {
+      const ln = ns.filter(n => T[n].shape.length === 1).map(n => T[n].shape[0]);
+      if (ln.length && ln.every(x => x === ln[0]) && !(nd.parent && nd.parent.ts.length === 0 && false)) ns.forEach(n => { out.tensors[n].kind = "norm"; });
+    }
+  }
+  const vocabs = new Set(Object.entries(out.tensors).filter(([n, t]) => (t.kind === "embed" || t.kind === "head") && T[n].shape.length === 2 && T[n].shape[0] >= 1000).map(([n]) => T[n].shape[0]));
+  for (const [n, t] of Object.entries(out.tensors)) if (t.block == null && T[n].shape.length === 1 && vocabs.has(T[n].shape[0]) && t.kind === "norm") Object.assign(t, {kind: "head", role: "bias"});
+  // non-block modules can still be recognised by shape: recurrent cells, attention pools, adaLN heads
+  for (const [m, ns] of byMod) { if (ns.some(n => out.tensors[n].block != null)) continue; const C = comps.find(c => c.id === out.tensors[ns[0]].comp);
+    const c = classify(ns, T, C ? C.d : -1, {lex}); if (c.kind === "rnn" || c.kind === "mod" || c.kind === "ssm") ns.forEach(n => out.tensors[n].kind = c.kind); }
+  // adapters between components: a chain of matrices whose free input width matches one component (or k² × it, after
+  // pixel-shuffle merging) and whose free output width matches another
+  const adGroups = new Map();
+  for (const [n, t] of Object.entries(out.tensors)) if (t.block == null && (t.kind === "adapter" || !t.comp && T[n].shape.length === 2)) {
+    let key = modOf0(n); const up = modOf0(key); const upN = up ? findNode(R, up) : null;
+    if (upN && upN !== R && upN.all.every(m => out.tensors[m] && out.tensors[m].block == null && !homeList.includes(upN)) && upN.all.length <= 12) key = up;
+    (adGroups.get(key) || adGroups.set(key, []).get(key)).push(n);
+  }
+  for (const [key, ns0] of adGroups) {
+    const node = findNode(R, key), ns = node ? node.all.filter(m => out.tensors[m] && out.tensors[m].block == null) : ns0;
+    const M2 = ns.filter(n => T[n].shape.length === 2); if (!M2.length) continue;
+    const outsW = new Set(M2.map(n => T[n].shape[0])), insW = new Set(M2.map(n => T[n].shape[1]));
+    const src = [...insW].find(w => !outsW.has(w)) || T[M2[0]].shape[1], dst = [...outsW].find(w => !insW.has(w)) || T[M2[M2.length - 1]].shape[0];
+    const from = comps.find(c => c.d === src) || comps.find(c => [4, 9, 16].some(k => c.d * k === src)), to = comps.find(c => c.d === dst && c !== from);
+    if (!from || !to) continue;
+    const merge = src !== from.d ? Math.round(Math.sqrt(src / from.d)) : 1;
+    const A = {id: key || "(adapter)", path: key, stacks: [], d: dst, params: 0, bytes: 0, ev: [`maps ${from.id} (${from.d}${merge > 1 ? ` ×${merge}² merged = ${src}` : ""}) → ${to.id} (${dst})`], adapter: true, merge};
+    comps.push(A); ns.forEach(n => Object.assign(out.tensors[n], {comp: A.id, kind: T[n].shape.length === 2 || out.tensors[n].kind !== "norm" ? "adapter" : "norm"}));
+    addEdge(out, from.id, A.id, "features"); addEdge(out, A.id, to.id, "tokens");
+  }
+  {
+    const byM = new Map(); for (const [n, t] of Object.entries(out.tensors)) if (t.block == null && T[n].shape.length === 2) { const top = n.split(".")[0]; (byM.get(top) || byM.set(top, []).get(top)).push(n); }
+    for (const [top, ns] of byM) { const sq = ns.filter(n => T[n].shape[0] === T[n].shape[1]), C0 = sq.length ? T[sq[0]].shape[0] : 0;
+      const agg = ns.find(n => T[n].shape[0] === C0 && T[n].shape[1] % C0 === 0 && T[n].shape[1] / C0 >= 2 && T[n].shape[1] / C0 <= 8);
+      if (sq.length >= 2 && agg && !Object.entries(out.tensors).some(([m, t]) => m.startsWith(top + ".") && t.block != null) && findNode(R, top) && findNode(R, top).all.length <= 24) { const G = {id: top, path: top, stacks: [], d: C0, params: 0, bytes: 0, ev: [`message passing: ${sq.length} square maps [${C0}×${C0}] + aggregation [${T[agg].shape.join("×")}] (${T[agg].shape[1] / C0} reducers)`], graph: true};
+        comps.push(G); for (const [n, t] of Object.entries(out.tensors)) if (n.startsWith(top + ".")) Object.assign(t, {comp: top, kind: T[n].shape.length === 2 ? "adapter" : t.kind, role: "message passing"}); ev.push(G.ev[0]);
+        const to = comps.find(c => c !== G && c.d === C0 && !c.graph), from = comps.find(c => c !== G && c !== to && !c.graph && (c.d === C0 || [2, 4, 8].some(k => c.d * k === C0)));
+        if (from) addEdge(out, from.id, G.id, "row embeddings"); if (to) addEdge(out, G.id, to.id, "row embeddings + neighbours"); } }
+  }
+  // transducers (RNN-T / TDT): a prediction network (label embedding + RNN) and a joint network whose output size is the
+  // label vocabulary (+ duration bins for TDT)
+  {
+    const emb = Object.entries(out.tensors).filter(([n, t]) => t.block == null && t.kind === "embed" && T[n].shape.length === 2 && T[n].shape[0] >= 64);
+    const rnnT = Object.entries(out.tensors).filter(([, t]) => t.kind === "rnn");
+    for (const [en] of emb) {
+      const [V, jp] = T[en].shape; if (V < 2 * jp) continue;
+      const head = Object.entries(T).find(([n, v]) => v.shape.length === 2 && v.shape[0] >= V && v.shape[0] <= V + 16 && n !== en && out.tensors[n].block == null);
+      if (!head) continue; const [Vo, j] = head[1].shape;
+      const encC = comps.filter(c => !c.adapter).sort((a, b) => b.params - a.params)[0] || comps[0];
+      const encP = Object.entries(T).find(([n, v]) => v.shape.length === 2 && v.shape[0] === j && encC && v.shape[1] === encC.d && out.tensors[n].block == null);
+      if (!encP || !rnnT.length) continue;
+      const predRoot = commonPrefix([en, ...rnnT.map(x => x[0])]);
+      const pred = {id: predRoot || "prediction", path: predRoot, stacks: [], d: jp, params: 0, bytes: 0, ev: [`label embedding [${V}×${jp}]${rnnT.length ? " + " + (rnnT.length / 4) + " recurrent layer(s)" : ""}`], pred: true};
+      const joint = {id: "joint", path: null, stacks: [], d: j, params: 0, bytes: 0, ev: [`encoder ${encC.d} → ${j}, prediction ${jp} → ${j}, output ${Vo} = ${V} labels${Vo > V ? " + " + (Vo - V) + " duration bins (TDT)" : ""}`], joint: true};
+      comps.push(pred, joint);
+      for (const [n, t] of Object.entries(out.tensors)) if (t.block == null && predRoot && n.startsWith(predRoot + ".")) { t.comp = pred.id; if (T[n].shape.length === 2 && t.kind !== "embed" && t.kind !== "rnn") t.kind = "head", t.role = "pred proj"; }
+      const jn = [head[0], encP[0]]; jn.forEach(b => [b, b.replace(/weight$/, "bias")].forEach(m => { if (out.tensors[m]) Object.assign(out.tensors[m], {comp: "joint", kind: "head", role: "joint"}); }));
+      out.joint = {dEnc: encC.d, dPred: jp, j, out: Vo, labels: V, durations: Vo - V};
+      addEdge(out, encC.id, "joint", "acoustic frames"); addEdge(out, pred.id, "joint", "label context");
+      ev.push(`transducer: ${joint.ev[0]}`); break;
+    }
+  }
+  // diffusion denoisers: a timestep MLP (sinusoidal 256 → h → t) feeding adaLN modulation matrices of input width t
+  {
+    const modIn = new Set(); for (const C of comps) for (const st of C.stacks) for (const ty of st.types) for (const rg of ty.regions) if (rg.kind === "mod") mats(rg.names, T).forEach(n => modIn.add(T[n].shape[1]));
+    const free = Object.entries(T).filter(([n, v]) => v.shape.length === 2 && out.tensors[n].block == null);
+    for (const [a, va] of free) { if (![128, 256, 320].includes(va.shape[1]) || va.shape[0] <= va.shape[1] || !modIn.size) continue;
+      const b = free.find(([m, vb]) => vb.shape[1] === va.shape[0] && modIn.has(vb.shape[0]) && m !== a);
+      if (b) { [a, b[0]].forEach(x => [x, x.replace(/weight$/, "bias")].forEach(m => { if (out.tensors[m]) Object.assign(out.tensors[m], {kind: "mod", role: "timestep"}); })); out.timestep = {freq: va.shape[1], width: b[1].shape[0]}; ev.push(`timestep embedder ${va.shape[1]} → ${va.shape[0]} → ${b[1].shape[0]} drives adaLN`); break; }
+    }
+  }
+  // 4d. component roles, modality, edges
+  for (const C of comps) {
+    const names = Object.entries(out.tensors).filter(([, t]) => t.comp === C.id).map(([n]) => n);
+    names.forEach(n => { C.params += prod(T[n].shape); C.bytes += T[n].bytes; });
+    const stemConv = names.filter(n => out.tensors[n].kind === "conv" && out.tensors[n].block == null).map(n => T[n].shape);
+    C.hasEmbed = names.some(n => out.tensors[n].kind === "embed" && T[n].shape.length === 2 && T[n].shape[0] >= 1000);
+    C.hasHead = names.some(n => out.tensors[n].kind === "head" && out.tensors[n].role === "logits");
+    C.inProj = names.filter(n => out.tensors[n].block == null && T[n].shape.length === 2 && T[n].shape[0] === C.d && T[n].shape[1] !== C.d).map(n => T[n].shape[1]);
+    C.modality = C.adapter || C.graph ? "features" : C.joint || C.pred ? "labels" : modalityOf(stemConv, names.map(n => T[n].shape), C);
+    if (out.timestep && C.stacks.some(st => st.types.some(t => t.regions.some(r => r.kind === "mod")))) C.modality = "latent";
+    const kinds = {}; names.forEach(n => { const k = out.tensors[n].kind; kinds[k] = (kinds[k] || 0) + prod(T[n].shape); }); C.kinds = kinds;
+    // parallel sibling lists of equal length (XLM: attentions.#, ffns.#) describe the same layers
+    const seenL = new Set(); C.layers = 0; for (const st of C.stacks) { const key = st.path.slice(0, st.path.lastIndexOf(".")) + "#" + st.n; if (seenL.has(key)) continue; seenL.add(key); C.layers += st.n; }
+    const dv = {}; C.stacks.forEach(st => st.types.forEach(t => { if (t.d) dv[t.d] = (dv[t.d] || 0) + t.count; })); const dm = Object.entries(dv).sort((a, b) => b[1] - a[1])[0]; if (dm) C.d = +dm[0];
+    C.pattern = C.stacks.map(s => s.typeOf.map(i => (s.types[i].label || "?")[0]).join("")).join(" | ");
+  }
+  // edges from widths: an adapter maps one component's width to another's; cross-attention reads another component
+  const byD = d => comps.filter(c => c.d === d);
+  for (const [n, t] of Object.entries(out.tensors)) if (t.kind === "adapter" && T[n].shape.length === 2) {
+    const [o, i] = T[n].shape, to = byD(o).find(c => c.id !== t.comp) || byD(o)[0], from = comps.find(c => c.id === t.comp);
+    if (to && from && to !== from) addEdge(out, from.id, to.id, `adapter ${i}→${o}`);
+  }
+  for (const C of comps) for (const st of C.stacks) for (const ty of st.types) for (const rg of ty.regions) if (rg.kind === "cross") {
+    const src = comps.find(c => c !== C && (c.d === rg.kvIn || !rg.kvIn)); if (src) addEdge(out, src.id, C.id, "cross-attention");
+  }
+  // root-level joint networks (transducers): two projections from different widths into one space, then to the vocabulary
+  const rootMats = Object.entries(out.tensors).filter(([n, t]) => !t.comp && T[n].shape.length === 2).map(([n]) => n);
+  const J = jointOf(rootMats, T, comps);
+  if (J) { J.names.forEach(n => Object.assign(out.tensors[n], {kind: "head", role: "joint"})); out.joint = J; ev.push(`joint network: enc ${J.dEnc} + pred ${J.dPred} → ${J.j} → ${J.out} outputs`); }
+  // order: sources (raw-signal stems) first, then by edges, the backbone (largest with a head or embedding) last
+  const score = c => (c.modality !== "text" ? 0 : 10) + (c.hasHead ? 5 : 0) + out.edges.filter(e => e.to === c.id).length;
+  comps.sort((a, b) => score(a) - score(b) || a.params - b.params);
+  const back = [...comps].filter(c => !c.adapter && !c.joint && !c.pred && !c.graph).sort((a, b) => (b.hasHead || b.hasEmbed) - (a.hasHead || a.hasEmbed) || b.params - a.params)[0];
+  for (const C of comps) C.role = C.graph ? "graph" : C.adapter ? "adapter" : C.joint ? "joint" : C.pred ? "prediction" : C === back ? "backbone" : out.edges.some(e => e.from === C.id) || C.modality !== "text" ? "encoder" : "aux";
+  // 4e. hyperparameters of the backbone
+  if (back) out.hp = hpOf(back, T, out, comps);
+  out.comps = comps.map(c => { delete c.node; return c; });
+  out.family = familyOf(out);
+  return out;
+}
+function commonPrefix(ns) { if (!ns.length) return ""; let p = ns[0].split("."); for (const n of ns.slice(1)) { const q = n.split("."); let i = 0; while (i < p.length && p[i] === q[i]) i++; p = p.slice(0, i); } return p.join("."); }
+function addEdge(out, a, b, via) { if (!out.edges.some(e => e.from === a && e.to === b)) out.edges.push({from: a, to: b, via}); }
+function modOf0(n) { return n.slice(0, Math.max(0, n.lastIndexOf("."))); }
+function findChild(item, k) { return item.kids.get(k) || null; }
+function findNode(R, p) { let n = R; if (!p) return n; for (const t of p.split(".")) { n = n.kids.get(t); if (!n) return null; } return n; }
+function widthOfBlock(item, T, EL) {
+  // the block's own normalisation layers (leaf children holding only vectors) carry the residual width
+  const nl = [...item.kids.values()].filter(c => c.kids.size === 0 && c.ts.length && c.ts.every(n => T[n].shape.length === 1)).map(c => T[c.ts[0]].shape[0]);
+  const loose = item.ts.filter(n => T[n].shape.length === 1).map(n => T[n].shape[0]);
+  const all = nl.concat(loose); if (all.length) { const c = {}; all.forEach(x => c[x] = (c[x] || 0) + 1); return +Object.entries(c).sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0]; }
+  return widthOf(item.all.filter(x => ![...EL].some(E => x.startsWith(E.path + "."))), T);
+}
+
+function regionsOf(item, T, d, EL, lex) {
+  const groups = new Map(), loose = [];
+  for (const x of item.all) {
+    const r = x.slice(item.path.length + 1).split(".");
+    if (r.length === 1) loose.push(x); else { const k = r[0]; (groups.get(k) || groups.set(k, []).get(k)).push(x); }
+  }
+  const regs = [];
+  const leafKids = [...item.kids.values()].every(c => c.kids.size === 0);
+  if (leafKids && groups.size >= 2 && !loose.length) { const c = classify(item.all, T, d, {lex, root: item.path}); if (c.kind !== "other" && c.kind !== "norm") return [mk("·", item.all, c, item, T, lex)]; }
+  for (const [k, names] of groups) {
+    const E = [...EL].find(L => L.path.startsWith(item.path + "." + k + ".") || L.path === item.path + "." + k);
+    // a group that wraps a list of sub-layers (T5 'layer.0', 'layer.1'): each sub-layer is its own region
+    const kidN = findChild(item, k);
+    if (kidN && [...kidN.kids.keys()].length >= 2 && [...kidN.kids.keys()].every(isInt) && [...kidN.kids.values()].every(x => x.mods >= 2)) {
+      for (const [kk, sn] of kidN.kids) regs.push(mk(k + "." + kk, sn.all, classify(sn.all, T, d, {lex, root: sn.path, expertList: [...EL].some(L => L.path.startsWith(sn.path + ".")), expertN: ([...EL].find(L => L.path.startsWith(sn.path + ".")) || {kids: {size: 0}}).kids.size}), item, T, lex));
+      continue;
+    }
+    let c = classify(names, T, d, {expertList: !!E, expertN: E ? E.kids.size : 0, lex, root: item.path + "." + k});
+    // a module that holds several distinct sub-regions (e.g. one 'layer' module wrapping attention + ffn): split it
+    if ((c.kind === "other" || c.kind === "half_up" || c.kind === "half_down") && names.some(n => n.split(".").length - item.path.split(".").length > 2)) {
+      const sub = new Map(); names.forEach(n => { const kk = n.slice(item.path.length + 1).split(".").slice(0, 2).join("."); (sub.get(kk) || sub.set(kk, []).get(kk)).push(n); });
+      if (sub.size > 1) { for (const [kk, nn] of sub) regs.push(mk(kk, nn, classify(nn, T, d, {lex, root: item.path + "." + kk}), item, T, lex)); continue; }
+    }
+    if (c.kind !== "moe" && kidN && kidN.kids.size >= 2) {
+      const parts = [...kidN.kids.entries()].map(([kk, sn]) => [kk, sn, classify(sn.all, T, d, {lex, root: sn.path})]);
+      const conf = new Set(parts.filter(x => x[1].kids.size > 0).map(x => x[2].kind).filter(k => !/^(other|norm|half_up|half_down)$/.test(k)));
+      if (conf.size >= 2) { const used = new Set(); parts.forEach(([kk, sn, cc]) => { regs.push(mk(k + "." + kk, sn.all, cc, item, T, lex)); sn.all.forEach(x => used.add(x)); });
+        const rest = names.filter(x => !used.has(x)); if (rest.length) regs.push(mk(k + ".·", rest, {kind: rest.every(x => T[x].shape.length === 1) ? "norm" : "other", ev: []}, item, T, lex)); continue; }
+    }
+    regs.push(mk(k, names, c, item, T, lex));
+  }
+  // loose matrices directly on the block (fc1 / fc2 style): chain them into a feed-forward
+  const lm = loose.filter(x => T[x].shape.length >= 2), lv = loose.filter(x => T[x].shape.length < 2);
+  if (lm.length) {
+    const c = classify(lm.concat(lv.filter(x => !/norm|ln/i.test(x) || !lex)), T, d, {lex});
+    const r = mk("·", lm.concat(lv.filter(x => /bias/.test(x) && lm.some(m => m.replace(/weight$/, "") === x.replace(/bias$/, "")))), c, item, T, lex);
+    regs.push(r);
+  }
+  const used = new Set(regs.flatMap(r => r.names));
+  lv.filter(x => !used.has(x)).forEach(x => regs.push(mk(leafTok(x) === item.tok ? "·norm" : "·" + x.split(".").pop(), [x], {kind: T[x].shape.length === 1 ? "norm" : "other", ev: []}, item, T, lex)));
+  // halves: an 'up' region followed by a 'down' region of the same width form one feed-forward (BERT intermediate + output)
+  const ups = regs.filter(r => r.kind === "half_up"), downs = regs.filter(r => r.kind === "half_down");
+  for (const u of ups) { const dn = downs.find(x => x.f === u.f || x.f * 2 === u.f); if (dn) { u.kind = dn.kind = "ffn"; u.ev.push("pairs with " + dn.key); } }
+  for (const r of regs) {
+    if (r.kind === "half_up" || r.kind === "half_down" || r.kind === "other") { const lk = lex ? lexKind(r.key + " " + r.names.join(" ")) : null; r.kind = lk || (r.kind === "other" ? "other" : "ffn"); if (lk) r.ev.push("by name"); }
+    if (lex && r.kind === "attn" && LEX.cross.test(r.key)) r.kind = "cross";
+    if (lex && r.kind === "ffn" && LEX.moe.test(r.key + " " + r.names.join(" ")) && r.names.some(n => /router|gate\.weight$|experts/i.test(n))) r.kind = "moe";
+  }
+  // two attention regions in one block and no width evidence: the one named like cross (or, shape-only, the second) reads the encoder
+  const at = regs.filter(r => r.kind === "attn"); if (!lex && at.length === 2 && !regs.some(r => r.kind === "cross")) at[1].kind = "cross";
+  // norms: attach each loose vector to the region whose name it echoes, else it stays a norm
+  return regs;
+}
+function mk(key, names, c, item, T, lex) {
+  const params = names.reduce((a, n) => a + prod(T[n].shape), 0);
+  const kvIn = c.kind === "cross" ? Math.min(...mats(names, T).map(n => T[n].shape[1])) : null;
+  return Object.assign({key, names, rel: names.map(n => rel(n, item.path)), params, kvIn, d: c.d}, c, {ev: c.ev || []});
+}
+function blockLabel(regs) {
+  const k = new Set(regs.map(r => r.kind));
+  if (k.has("ssm") && !k.has("attn")) return k.has("moe") ? "SSM+MoE" : "SSM";
+  if (k.has("moe") && !k.has("attn") && !k.has("ssm")) return "MoE";
+  if (k.has("conv") && k.has("attn")) return "Conformer";
+  if (k.has("mod") && k.has("attn")) return "DiT";
+  if (k.has("cross")) return "Attn+Cross";
+  if (k.has("attn") && k.has("moe")) return "Attn+MoE";
+  if (k.has("attn")) return k.has("ffn") ? "Transformer" : "Attention";
+  if (k.has("ffn") && !k.has("attn")) return "FFN";
+  if (k.has("rnn")) return "RNN";
+  if (k.has("conv")) return "Conv";
+  return "Block";
+}
+function roleOf(x, rg, T, lex) {
+  const s = T[x].shape, leaf = leafTok(x);
+  if (s.length === 1) return /bias/.test(x) ? "bias" : "norm";
+  if (rg.kind === "attn" || rg.kind === "cross") { if (s.length === 2 && s[0] === rg.d && s[1] === rg.x) return "out"; if (lex) for (const r of ["q", "k", "v", "o"]) if (LEX[r].test(leaf)) return r === "o" ? "out" : r; if (s.length === 2 && rg.x && s[0] > rg.x) return "qkv"; return "proj"; }
+  if (rg.kind === "ffn") { if (s.length === 2 && rg.f && s[1] === rg.f) return "down"; if (lex) { if (LEX.gate.test(leaf)) return "gate"; if (LEX.up.test(leaf)) return "up"; } return "up"; }
+  if (rg.kind === "moe") { if (s.length === 3 || /experts?\.\d+/.test(x)) return "expert"; if (s.length === 2 && s[0] === rg.E) return "router"; return "shared"; }
+  if (rg.kind === "ssm") { if (isDW(s)) return "conv"; if (s.length === 2 && s[0] > s[1]) return "in"; if (s.length === 2) return "out"; return "state"; }
+  return rg.kind;
+}
+function modalityOf(stem, shapes, C) {
+  for (const s of stem) {
+    if (s.length === 4 && s[1] === 3) return "image";
+    if (s.length === 5 && s[1] === 3) return "video";
+    if (s.length === 5 && s[1] >= 4) return "latent";
+    if (s.length === 4 && s[1] === 1) return "audio";
+    if (s.length === 3 && (s[1] === 80 || s[1] === 128 || s[1] === 1 || s[1] === 64)) return "audio";
+    if (s.length === 4 && s[1] >= 4 && s[1] <= 64) return "latent";
+  }
+  if (C.hasEmbed) return "text";
+  if (C.inProj) for (const k of C.inProj) { if ([588, 768, 1176, 3072, 2352].includes(k)) return "image"; if ([1536, 6144].includes(k)) return "image"; }
+  return stem.length ? "signal" : "features";
+}
+function jointOf(names, T, comps) {
+  const M = names.map(n => ({n, s: T[n].shape}));
+  for (const a of M) for (const b of M) {
+    if (a === b || a.s[0] !== b.s[0] || a.s[1] === b.s[1]) continue;
+    const j = a.s[0], o = M.find(m => m.s[1] === j && m !== a && m !== b);
+    if (o && comps.some(c => c.d === a.s[1])) return {names: [a.n, b.n, o.n], dEnc: a.s[1], dPred: b.s[1], j, out: o.s[0]};
+  }
+  return null;
+}
+function hpOf(C, T, out, comps) {
+  const hp = {d: C.d, layers: C.layers};
+  const regs = C.stacks.flatMap(s => s.types.flatMap(t => t.regions.map(r => Object.assign({}, r, {count: t.count}))));
+  const at = regs.find(r => r.kind === "attn" && r.x);
+  if (at) {
+    const pri = at.x >= 2048 ? [128, 64, 256, 96, 80, 160, 192, 112, 32] : [64, 128, 32, 96, 80, 112, 160, 256];
+    const hd = at.qk || pri.find(h => at.x % h === 0 && at.kv % h === 0) || null;
+    hp.head_dim = hd; hp.heads = hd ? at.x / hd : null; hp.kv_heads = hd ? at.kv / hd : null; hp.head_dim_from = at.qk ? "q/k-norm width" : "prior";
+  }
+  const ff = regs.find(r => r.kind === "ffn" && r.f); if (ff) hp.ffn = ff.f;
+  const moe = regs.find(r => r.kind === "moe"); if (moe) hp.experts = moe.E;
+  const emb = Object.entries(out.tensors).filter(([n, t]) => t.comp === C.id && t.kind === "embed" && T[n].shape.length === 2 && T[n].shape[1] === C.d).map(([n]) => T[n].shape[0]).sort((a, b) => b - a)[0];
+  if (emb) hp.vocab = emb;
+  else if (!out.timestep) { const e2 = Object.entries(out.tensors).filter(([n, t]) => t.kind === "embed" && T[n].shape.length === 2 && T[n].shape[0] >= 100).map(([n]) => T[n].shape[0]).sort((a, b) => b - a)[0]; if (e2) hp.vocab = e2; }
+  hp.tie = emb ? !Object.entries(out.tensors).some(([n, t]) => t.kind === "head" && t.role === "logits" && T[n].shape[0] === emb) : null;
+  const attnLayers = regs.filter(r => r.kind === "attn").reduce((a, r) => a + r.count, 0), ssmLayers = regs.filter(r => r.kind === "ssm").reduce((a, r) => a + r.count, 0);
+  hp.attn_layers = attnLayers; hp.ssm_layers = ssmLayers;
+  if (at && hp.kv_heads != null) hp.kv_bytes_per_token_bf16 = attnLayers * 2 * at.kv * 2;
+  if (moe) { const ex = Object.entries(out.tensors).filter(([n, t]) => t.comp === C.id && t.role === "expert").reduce((a, [n]) => a + prod(T[n].shape), 0); hp.expert_params = ex; }
+  return hp;
+}
+function familyOf(o) {
+  const b = o.comps.find(c => c.role === "backbone"); if (!b) return "unknown";
+  const k = b.kinds || {};
+  const enc = o.comps.filter(c => c.role === "encoder");
+  if (o.joint) return "transducer";
+  if (o.timestep || k.mod && b.modality === "latent") return "diffusion";
+  if (enc.length && b.hasHead) return o.comps.some(c => c.stacks.some(s => s.types.some(t => t.regions.some(r => r.kind === "cross")))) ? "encoder-decoder" : "prefix-lm";
+  if (b.hasHead) return "decoder";
+  return "encoder";
+}
+
+
+// ------------------------------------------------------------------ 5. configuration fusion and consistency check
+// Fields the shapes cannot identify (head count vs head size, top-k) are taken from config.json when it exists. The
+// sub-config is matched to a component by width (and depth), and the config is checked against the weights.
+const num = (o, ks) => { for (const k of ks) if (typeof o[k] === "number") return o[k]; return null; };
+function fuseConfig(I, cfg) {
+  if (!cfg || typeof cfg !== "object") return null;
+  const subs = []; (function walk(o, path, depth) { if (!o || typeof o !== "object" || Array.isArray(o) || depth > 5) return; subs.push({o, path});
+    for (const [k, v] of Object.entries(o)) if (v && typeof v === "object" && !Array.isArray(v)) walk(v, path ? path + "." + k : k, depth + 1); })(cfg, "", 0);
+  const W = o => num(o, ["hidden_size", "d_model", "n_embd", "dim", "embed_dim", "hidden_dim", "encoder_embed_dim", "width"]);
+  const out = {}, topAll = subs.map(x => num(x.o, ["num_experts_per_tok", "moe_topk", "top_k", "num_selected_experts", "moe_k"])).find(v => v != null) || null;
+  for (const C of I.comps) {
+    if (!C.d) continue;
+    const at = C.stacks.flatMap(st => st.types.flatMap(t => t.regions)).find(r => r.kind === "attn" && r.x);
+    let best = null, bs = -1;
+    for (const x of subs) { if (W(x.o) !== C.d) continue; let sc = 1; const L = num(x.o, ["num_hidden_layers", "num_layers", "n_layer", "encoder_layers", "decoder_layers"]);
+      if (L === C.layers) sc += 2; if (C.role === "backbone" && /(text|llm|language|decoder)/.test(x.path)) sc += 1; if (C.role !== "backbone" && /(vision|audio|encoder)/.test(x.path)) sc += 1; if (sc > bs) { bs = sc; best = x; } }
+    if (!best) continue;
+    const o = best.o, H = num(o, ["num_attention_heads", "n_head", "num_heads", "encoder_attention_heads", "attention_heads", "decoder_attention_heads"]);
+    const KV = num(o, ["num_key_value_heads", "num_kv_heads", "n_kv_heads", "multi_query_group_num"]), hd = num(o, ["head_dim", "attention_head_dim", "kv_channels", "qk_head_dim"]);
+    const rec = {path: best.path || "(root)", heads: H, kv_heads: KV || H, head_dim: hd || (H && at ? at.x / H : null), topk: num(o, ["num_experts_per_tok", "moe_topk", "top_k", "num_selected_experts"]) || (C.role === "backbone" ? topAll : null)};
+    if (at && H && rec.head_dim) { const h = rec.head_dim; rec.checked = true; rec.consistent = H * h === at.x && (!at.kv || at.kv === at.x || rec.kv_heads * h === at.kv); }
+    out[C.id] = rec;
+  }
+  return out;
+}
+
+const api = {infer, normalize, buildTree, classify, fuseConfig};
+if (typeof module !== "undefined") module.exports = api; else root.ArchInfer = api;
+})(typeof window !== "undefined" ? window : globalThis);
+</script><script>// loaders.js — read only what describes a model: safetensors headers and PyTorch checkpoint indexes, via HTTP Range.
+// Weights are never downloaded. (c) 2026 Sattaya Singkul · MIT
+"use strict";
+(function (root) {
+const rangeGet = async (url, a, b) => { const r = await fetch(url, {headers: {Range: `bytes=${a}-${b}`}}); if (!r.ok && r.status !== 206) throw new Error(`HTTP ${r.status}`); return new Uint8Array(await r.arrayBuffer()); };
+const utf8 = new TextDecoder();
+
+// ---------------- safetensors: 8-byte little-endian length, then the JSON header
+async function safetensorsHeader(url, size) {
+  const h = await rangeGet(url, 0, 7), n = Number(new DataView(h.buffer, h.byteOffset, 8).getBigUint64(0, true));
+  if (!(n > 0 && n < 200e6)) throw new Error("not a safetensors file");
+  const j = JSON.parse(utf8.decode(await rangeGet(url, 8, 8 + n - 1))); const meta = j.__metadata__; delete j.__metadata__;
+  return {tensors: j, bytes: 8 + n, meta};
+}
+
+// ---------------- PyTorch zip checkpoints (.pt / .pth / .bin): read the zip directory from the end, then data.pkl only
+async function torchIndex(url, size) {
+  const tail = Math.min(size, 65536 + 22), buf = await rangeGet(url, size - tail, size - 1), dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  let eocd = -1; for (let i = buf.length - 22; i >= 0; i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error("not a zip-format PyTorch file (old pickle format is not supported)");
+  let cdSize = dv.getUint32(eocd + 12, true), cdOff = dv.getUint32(eocd + 16, true), count = dv.getUint16(eocd + 10, true);
+  if (cdOff === 0xffffffff || count === 0xffff) { // zip64
+    const loc = eocd - 20; const z64 = Number(dv.getBigUint64(loc + 8, true)); const r = await rangeGet(url, z64, z64 + 55), d2 = new DataView(r.buffer, r.byteOffset, r.byteLength);
+    count = Number(d2.getBigUint64(32, true)); cdSize = Number(d2.getBigUint64(40, true)); cdOff = Number(d2.getBigUint64(48, true)); }
+  const cd = cdOff >= size - tail ? buf.subarray(cdOff - (size - tail), cdOff - (size - tail) + cdSize) : await rangeGet(url, cdOff, cdOff + cdSize - 1), c = new DataView(cd.buffer, cd.byteOffset, cd.byteLength);
+  let p = 0, pkl = null, ents = 0; const sizes = {};
+  while (p + 46 <= cd.length && ents < count + 5) { if (c.getUint32(p, true) !== 0x02014b50) break; ents++;
+    const method = c.getUint16(p + 10, true); let csize = c.getUint32(p + 20, true), usize = c.getUint32(p + 24, true); const nl = c.getUint16(p + 28, true), xl = c.getUint16(p + 30, true), cl = c.getUint16(p + 32, true); let off = c.getUint32(p + 42, true);
+    const name = utf8.decode(cd.subarray(p + 46, p + 46 + nl));
+    if (csize === 0xffffffff || usize === 0xffffffff || off === 0xffffffff) { let q = p + 46 + nl; const end = q + xl; while (q < end) { const id = c.getUint16(q, true), ln = c.getUint16(q + 2, true); if (id === 1) { let r = q + 4; if (usize === 0xffffffff) { usize = Number(c.getBigUint64(r, true)); r += 8; } if (csize === 0xffffffff) { csize = Number(c.getBigUint64(r, true)); r += 8; } if (off === 0xffffffff) { off = Number(c.getBigUint64(r, true)); } } q += 4 + ln; } }
+    if (/(^|\/)data\.pkl$/.test(name)) pkl = {off, csize, method, name};
+    const m = name.match(/\/data\/(\d+)$/); if (m) sizes[m[1]] = usize;
+    p += 46 + nl + xl + cl; }
+  if (!pkl) throw new Error("no data.pkl in the checkpoint");
+  if (pkl.method !== 0) throw new Error("compressed data.pkl is not supported");
+  const lh = await rangeGet(url, pkl.off, pkl.off + 29), ld = new DataView(lh.buffer, lh.byteOffset, 30), start = pkl.off + 30 + ld.getUint16(26, true) + ld.getUint16(28, true);
+  const data = await rangeGet(url, start, start + pkl.csize - 1);
+  const obj = unpickle(data);
+  return {tensors: tensorsFromState(obj), bytes: tail + cdSize + pkl.csize + 30};
+}
+
+// a minimal unpickler for torch.save output: tensors become {dtype, shape}; everything else stays plain data
+const ST = {FloatStorage: "F32", HalfStorage: "F16", BFloat16Storage: "BF16", DoubleStorage: "F64", LongStorage: "I64", IntStorage: "I32", ShortStorage: "I16", CharStorage: "I8", ByteStorage: "U8", BoolStorage: "BOOL", Float8_e4m3fnStorage: "F8_E4M3", Float8_e5m2Storage: "F8_E5M2"};
+const TD = {float32: "F32", float16: "F16", bfloat16: "BF16", float64: "F64", int64: "I64", int32: "I32", int16: "I16", int8: "I8", uint8: "U8", bool: "BOOL", float8_e4m3fn: "F8_E4M3", float8_e5m2: "F8_E5M2"};
+function unpickle(b) {
+  const dv = new DataView(b.buffer, b.byteOffset, b.byteLength); let i = 0; const stack = [], marks = [], memo = {};
+  const MARK = {mark: 1}, pop = () => stack.pop(), popMark = () => { const m = marks.pop(); return stack.splice(m); };
+  const glob = (mod, name) => ({__global: mod + "." + name});
+  const call = (f, args) => {
+    const g = f && f.__global || "";
+    if (/_rebuild_tensor/.test(g)) { const st = args[0] || {}; return {__tensor: true, dtype: st.dtype || "F32", shape: (args[2] || []).slice()}; }
+    if (/_rebuild_parameter/.test(g)) return args[0];
+    if (/OrderedDict|^builtins\.dict$/.test(g)) return {};
+    if (/torch\.Size/.test(g)) return args[0];
+    if (/_codecs\.encode/.test(g)) return args[0];
+    return {__obj: g, args};
+  };
+  while (i < b.length) {
+    const op = b[i++];
+    switch (op) {
+      case 0x80: i++; break; // PROTO
+      case 0x95: i += 8; break; // FRAME
+      case 0x7d: stack.push({}); break; // EMPTY_DICT
+      case 0x5d: stack.push([]); break; // EMPTY_LIST
+      case 0x29: stack.push([]); break; // EMPTY_TUPLE
+      case 0x28: marks.push(stack.length); break; // MARK
+      case 0x58: { const n = dv.getUint32(i, true); i += 4; stack.push(utf8.decode(b.subarray(i, i + n))); i += n; break; } // BINUNICODE
+      case 0x8c: { const n = b[i++]; stack.push(utf8.decode(b.subarray(i, i + n))); i += n; break; } // SHORT_BINUNICODE
+      case 0x8d: { const n = Number(dv.getBigUint64(i, true)); i += 8; stack.push(utf8.decode(b.subarray(i, i + n))); i += n; break; }
+      case 0x42: { const n = dv.getUint32(i, true); i += 4; stack.push(b.subarray(i, i + n)); i += n; break; } // BINBYTES
+      case 0x43: { const n = b[i++]; stack.push(b.subarray(i, i + n)); i += n; break; } // SHORT_BINBYTES
+      case 0x71: memo[b[i++]] = stack[stack.length - 1]; break; // BINPUT
+      case 0x72: memo[dv.getUint32(i, true)] = stack[stack.length - 1]; i += 4; break; // LONG_BINPUT
+      case 0x94: memo[Object.keys(memo).length] = stack[stack.length - 1]; break; // MEMOIZE
+      case 0x68: stack.push(memo[b[i++]]); break; // BINGET
+      case 0x6a: stack.push(memo[dv.getUint32(i, true)]); i += 4; break; // LONG_BINGET
+      case 0x63: { let e = b.indexOf(10, i); const mod = utf8.decode(b.subarray(i, e)); i = e + 1; e = b.indexOf(10, i); const nm = utf8.decode(b.subarray(i, e)); i = e + 1; stack.push(glob(mod, nm)); break; } // GLOBAL
+      case 0x93: { const nm = pop(), mod = pop(); stack.push(glob(mod, nm)); break; } // STACK_GLOBAL
+      case 0x4a: stack.push(dv.getInt32(i, true)); i += 4; break; // BININT
+      case 0x4b: stack.push(b[i++]); break; // BININT1
+      case 0x4d: stack.push(dv.getUint16(i, true)); i += 2; break; // BININT2
+      case 0x8a: { const n = b[i++]; let v = 0; for (let k = n - 1; k >= 0; k--) v = v * 256 + b[i + k]; if (n && b[i + n - 1] & 0x80) v -= Math.pow(256, n); i += n; stack.push(v); break; } // LONG1
+      case 0x47: stack.push(dv.getFloat64(i, false)); i += 8; break; // BINFLOAT
+      case 0x4e: stack.push(null); break; case 0x88: stack.push(true); break; case 0x89: stack.push(false); break;
+      case 0x74: stack.push(popMark()); break; // TUPLE
+      case 0x85: stack.push([pop()]); break; case 0x86: { const b2 = pop(), a = pop(); stack.push([a, b2]); break; } case 0x87: { const c2 = pop(), b2 = pop(), a = pop(); stack.push([a, b2, c2]); break; }
+      case 0x6c: stack.push(popMark()); break; // LIST
+      case 0x64: { const it = popMark(), d = {}; for (let k = 0; k < it.length; k += 2) d[it[k]] = it[k + 1]; stack.push(d); break; } // DICT
+      case 0x73: { const v = pop(), k = pop(); stack[stack.length - 1][k] = v; break; } // SETITEM
+      case 0x75: { const it = popMark(), d = stack[stack.length - 1]; for (let k = 0; k < it.length; k += 2) d[it[k]] = it[k + 1]; break; } // SETITEMS
+      case 0x61: { const v = pop(); stack[stack.length - 1].push(v); break; } // APPEND
+      case 0x65: { const it = popMark(); stack[stack.length - 1].push(...it); break; } // APPENDS
+      case 0x52: { const args = pop(), f = pop(); stack.push(call(f, args)); break; } // REDUCE
+      case 0x81: { const args = pop(), cls = pop(); stack.push(call(cls, args)); break; } // NEWOBJ
+      case 0x62: { const st = pop(), o = stack[stack.length - 1]; if (o && typeof o === "object" && st && typeof st === "object" && !Array.isArray(st)) Object.assign(o, st); break; } // BUILD
+      case 0x51: { const pid = pop(); // BINPERSID: ('storage', <StorageType or dtype>, key, location, numel)
+        const kind = pid[1] && pid[1].__global || ""; const nm = kind.split(".").pop(); stack.push({dtype: ST[nm] || TD[nm] || "F32", key: pid[2]}); break; }
+      case 0x2e: return stack.pop(); // STOP
+      case 0x30: pop(); break; case 0x32: stack.push(stack[stack.length - 1]); break; // POP, DUP
+      case 0x31: popMark(); break; // POP_MARK
+      default: throw new Error("unsupported pickle opcode 0x" + op.toString(16));
+    }
+  }
+  return stack.pop();
+}
+// flatten nested dicts down to the tensors (checkpoints often wrap the state dict: {"state_dict": {...}, "config": {...}})
+function tensorsFromState(o, pre = "", out = {}, depth = 0) {
+  if (!o || typeof o !== "object" || depth > 6) return out;
+  for (const [k, v] of Object.entries(o)) {
+    const n = pre ? pre + "." + k : k;
+    if (v && v.__tensor) out[n] = {dtype: v.dtype, shape: v.shape};
+    else if (v && typeof v === "object" && !(v instanceof Uint8Array)) tensorsFromState(v, n, out, depth + 1);
+  }
+  return out;
+}
+// strip a wrapper prefix every tensor shares (e.g. "state_dict." or "model.")
+function stripCommon(T) { const ks = Object.keys(T); if (ks.length < 2) return T; const f = ks[0].split(".")[0]; if (!ks.every(k => k.startsWith(f + ".")) || !/^(state_dict|model_state_dict|module|ema|params|weights)$/.test(f)) return T; const o = {}; for (const k of ks) o[k.slice(f.length + 1)] = T[k]; return o; }
+
+// ---------------- a Hugging Face repo: which files describe the weights, then their headers (shared by the explorer and the benchmark)
+async function hfManifest(repo, files, prog = () => {}, opt = {}) {
+  const conc = opt.conc || 6;
+  const base = `https://huggingface.co/${repo}/resolve/main/`;
+  const folder = n => n.includes("/") ? n.slice(0, n.lastIndexOf("/")) : "";
+  const skip = n => /(^|\/)(consolidated|optimizer|training_args|scheduler|rng_state)/i.test(n) || /^(\.|original\/)/.test(n);
+  const jobs = [], seen = new Set();
+  for (const ix of files.filter(f => /\.safetensors\.index\.json$/.test(f.n) && !skip(f.n))) {
+    prog("index", ix.n); const j = await (await fetch(base + ix.n)).json(), dir = folder(ix.n);
+    for (const sh of [...new Set(Object.values(j.weight_map || {}))]) { const n = dir ? dir + "/" + sh : sh; seen.add(n); jobs.push({n, prefix: dir, kind: "st"}); } }
+  const loose = files.filter(f => /\.safetensors$/.test(f.n) && !seen.has(f.n) && !skip(f.n));
+  const rootLoose = loose.filter(f => !folder(f.n));
+  loose.forEach(f => jobs.push({n: f.n, prefix: folder(f.n) || (rootLoose.length > 1 ? f.n.replace(/\.safetensors$/, "").replace(/[^\w]+/g, "_") : ""), kind: "st"}));
+  if (!jobs.length) {
+    const pts = files.filter(f => /\.(pt|pth|bin|ckpt)$/.test(f.n) && !skip(f.n) && !/optimizer|scheduler|training/.test(f.n));
+    const groups = {}; pts.forEach(f => (groups[folder(f.n)] = groups[folder(f.n)] || []).push(f));
+    let dirs = Object.keys(groups); if (opt.prefer && groups[opt.prefer]) dirs = [opt.prefer]; else if (dirs.length > 1) dirs = dirs.sort((a, b) => groups[b].reduce((x, f) => x + f.size, 0) - groups[a].reduce((x, f) => x + f.size, 0)).slice(0, 4);
+    dirs.forEach(d => { const g = groups[d].sort((a, b) => (/classif|model|pytorch_model/.test(b.n) - /classif|model|pytorch_model/.test(a.n)) || b.size - a.size); jobs.push({n: g[0].n, prefix: dirs.length > 1 ? d.replace(/\//g, ".") : "", kind: "pt"}); });
+  }
+  if (!jobs.length) return null;
+  const tensors = {}, res = new Array(jobs.length); let read = 0, done = 0, next = 0;
+  const work = async () => { while (next < jobs.length) { const k = next++, jb = jobs[k], sz = (files.find(f => f.n === jb.n) || {}).size || 0;
+    const r = jb.kind === "pt" ? await torchIndex(base + jb.n, sz) : await safetensorsHeader(base + jb.n, sz);
+    res[k] = r; read += r.bytes; done++; prog(jb.kind === "pt" ? "pt" : "header", jb.n, done, jobs.length, read); } };
+  await Promise.all(Array.from({length: Math.min(conc, jobs.length)}, work));
+  jobs.forEach((jb, k) => { const T = jb.kind === "pt" ? stripCommon(res[k].tensors) : res[k].tensors;
+    for (const [n, v] of Object.entries(T)) tensors[(jb.prefix ? jb.prefix.replace(/\//g, ".") + "." : "") + n] = v; });
+  return {tensors, read, nfiles: jobs.length, kinds: [...new Set(jobs.map(j => j.kind))]};
+}
+
+root.Loaders = {hfManifest, safetensorsHeader, torchIndex, unpickle, tensorsFromState, stripCommon};
+})(typeof window !== "undefined" ? window : globalThis);
+</script><script>// Popular public checkpoints for the real-world benchmark (ungated repos or ungated mirrors of gated ones).
+window.BENCH_MODELS = [
+ // ---- language models, dense
+ ["llm","openai-community/gpt2"],["llm","openai-community/gpt2-xl"],["llm","EleutherAI/pythia-1.4b"],["llm","facebook/opt-1.3b"],["llm","bigscience/bloom-560m"],
+ ["llm","unsloth/Llama-3.2-1B"],["llm","unsloth/Llama-3.2-3B"],["llm","unsloth/Meta-Llama-3.1-8B"],["llm","unsloth/Llama-3.3-70B-Instruct"],["llm","NousResearch/Meta-Llama-3.1-405B"],
+ ["llm","Qwen/Qwen2.5-0.5B"],["llm","Qwen/Qwen2.5-7B"],["llm","Qwen/Qwen2.5-72B"],["llm","Qwen/Qwen2.5-Coder-7B-Instruct"],["llm","Qwen/QwQ-32B"],
+ ["llm","Qwen/Qwen3-0.6B"],["llm","Qwen/Qwen3-4B"],["llm","Qwen/Qwen3-8B"],["llm","Qwen/Qwen3-32B"],
+ ["llm","mistralai/Mistral-7B-v0.1"],["llm","unsloth/mistral-7b-v0.3"],["llm","mistralai/Mistral-Nemo-Instruct-2407"],["llm","mistralai/Mistral-Small-24B-Instruct-2501"],["llm","mistralai/Devstral-Small-2505"],
+ ["llm","unsloth/gemma-2-2b"],["llm","unsloth/gemma-2-9b"],["llm","unsloth/gemma-3-1b-it"],["llm","unsloth/gemma-3-27b-it"],
+ ["llm","microsoft/phi-2"],["llm","microsoft/Phi-3-mini-4k-instruct"],["llm","microsoft/Phi-4-mini-instruct"],["llm","microsoft/phi-4"],
+ ["llm","deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"],["llm","deepseek-ai/DeepSeek-R1-Distill-Llama-70B"],
+ ["llm","tiiuae/falcon-7b"],["llm","tiiuae/Falcon3-7B-Base"],["llm","allenai/OLMo-2-1124-7B"],["llm","HuggingFaceTB/SmolLM2-1.7B"],["llm","HuggingFaceTB/SmolLM3-3B"],
+ ["llm","ibm-granite/granite-3.3-8b-instruct"],["llm","THUDM/glm-4-9b-chat-hf"],["llm","CohereLabs/c4ai-command-r7b-12-2024"],["llm","internlm/internlm3-8b-instruct"],
+ ["llm","google/gemma-3-270m"],["llm","baidu/ERNIE-4.5-0.3B-PT"],["llm","LiquidAI/LFM2-1.2B"],["llm","nvidia/Llama-3.1-Nemotron-Nano-8B-v1"],["llm","swiss-ai/Apertus-8B-2509"],
+ // ---- language models, mixture of experts
+ ["moe","mistralai/Mixtral-8x7B-v0.1"],["moe","Qwen/Qwen1.5-MoE-A2.7B"],["moe","Qwen/Qwen3-30B-A3B"],["moe","Qwen/Qwen3-235B-A22B"],["moe","Qwen/Qwen3-Coder-480B-A35B-Instruct"],["moe","Qwen/Qwen3-Next-80B-A3B-Instruct"],
+ ["moe","deepseek-ai/DeepSeek-V2-Lite"],["moe","deepseek-ai/DeepSeek-V3"],["moe","deepseek-ai/DeepSeek-R1"],["moe","deepseek-ai/DeepSeek-V3.1"],
+ ["moe","moonshotai/Kimi-K2-Instruct"],["moe","moonshotai/Moonlight-16B-A3B"],["moe","openai/gpt-oss-20b"],["moe","openai/gpt-oss-120b"],
+ ["moe","zai-org/GLM-4.5-Air"],["moe","zai-org/GLM-4.5"],["moe","allenai/OLMoE-1B-7B-0924"],["moe","microsoft/Phi-3.5-MoE-instruct"],["moe","ibm-granite/granite-3.1-3b-a800m-instruct"],
+ ["moe","baidu/ERNIE-4.5-21B-A3B-PT"],["moe","tencent/Hunyuan-A13B-Instruct"],["moe","MiniMaxAI/MiniMax-M2"],["moe","unsloth/Llama-4-Scout-17B-16E-Instruct"],["moe","meituan-longcat/LongCat-Flash-Chat"],
+ // ---- state-space and hybrid
+ ["ssm","state-spaces/mamba-2.8b-hf"],["ssm","tiiuae/falcon-mamba-7b"],["ssm","tiiuae/Falcon-H1-7B-Base"],["ssm","nvidia/NVIDIA-Nemotron-Nano-9B-v2"],["ssm","nvidia/Nemotron-H-8B-Base-8K"],
+ ["ssm","ai21labs/AI21-Jamba-Mini-1.7"],["ssm","ibm-granite/granite-4.0-h-tiny"],["ssm","Zyphra/Zamba2-2.7B"],["ssm","RWKV/v6-Finch-1B6-HF"],["ssm","NX-AI/xLSTM-7b"],
+ // ---- encoders, embeddings, seq2seq
+ ["enc","google-bert/bert-base-uncased"],["enc","FacebookAI/roberta-large"],["enc","FacebookAI/xlm-roberta-large"],["enc","distilbert/distilbert-base-uncased"],["enc","microsoft/deberta-v3-base"],
+ ["enc","answerdotai/ModernBERT-large"],["enc","google/electra-base-discriminator"],["enc","albert/albert-base-v2"],
+ ["emb","sentence-transformers/all-MiniLM-L6-v2"],["emb","sentence-transformers/all-mpnet-base-v2"],["emb","BAAI/bge-m3"],["emb","BAAI/bge-large-en-v1.5"],["emb","intfloat/multilingual-e5-large"],
+ ["emb","Qwen/Qwen3-Embedding-0.6B"],["emb","Qwen/Qwen3-Embedding-8B"],["emb","nomic-ai/nomic-embed-text-v1.5"],["emb","Alibaba-NLP/gte-multilingual-base"],["emb","Qwen/Qwen3-Reranker-0.6B"],
+ ["s2s","google-t5/t5-base"],["s2s","google/flan-t5-large"],["s2s","google/mt5-base"],["s2s","facebook/bart-large-cnn"],["s2s","facebook/nllb-200-distilled-600M"],["s2s","facebook/m2m100_418M"],["s2s","Helsinki-NLP/opus-mt-en-de"],
+ // ---- speech and audio
+ ["speech","openai/whisper-tiny"],["speech","openai/whisper-small"],["speech","openai/whisper-large-v3"],["speech","openai/whisper-large-v3-turbo"],["speech","distil-whisper/distil-large-v3"],
+ ["speech","facebook/wav2vec2-base-960h"],["speech","facebook/wav2vec2-large-xlsr-53"],["speech","facebook/hubert-large-ls960-ft"],["speech","microsoft/wavlm-large"],["speech","facebook/mms-1b-all"],
+ ["speech","facebook/seamless-m4t-v2-large"],["speech","UsefulSensors/moonshine-base"],["speech","Qwen/Qwen2-Audio-7B-Instruct"],["speech","Qwen/Qwen2.5-Omni-7B"],["speech","kyutai/stt-2.6b-en"],
+ ["speech","microsoft/speecht5_tts"],["speech","facebook/musicgen-small"],["speech","facebook/encodec_24khz"],["speech","microsoft/VibeVoice-1.5B"],["speech","ResembleAI/chatterbox"],
+ ["speech","nari-labs/Dia-1.6B-0626"],["speech","pyannote/segmentation-3.0"],["speech","speechbrain/spkrec-ecapa-voxceleb"],["speech","MIT/ast-finetuned-audioset-10-10-0.4593"],["speech","laion/clap-htsat-unfused"],
+ // ---- vision
+ ["vision","google/vit-base-patch16-224"],["vision","facebook/dinov2-large"],["vision","microsoft/resnet-50"],["vision","facebook/convnext-base-224"],["vision","microsoft/swin-base-patch4-window7-224"],
+ ["vision","openai/clip-vit-large-patch14"],["vision","google/siglip-so400m-patch14-384"],["vision","google/siglip2-base-patch16-224"],["vision","facebook/sam-vit-huge"],["vision","facebook/sam2.1-hiera-large"],
+ ["vision","facebook/detr-resnet-50"],["vision","PekingU/rtdetr_r50vd"],["vision","nvidia/segformer-b5-finetuned-ade-640-640"],["vision","facebook/mask2former-swin-large-coco-panoptic"],
+ ["vision","depth-anything/Depth-Anything-V2-Large-hf"],["vision","Intel/dpt-large"],["vision","google/owlv2-base-patch16-ensemble"],["vision","IDEA-Research/grounding-dino-base"],["vision","timm/efficientnet_b0.ra_in1k"],
+ // ---- vision-language
+ ["vlm","Qwen/Qwen2.5-VL-7B-Instruct"],["vlm","Qwen/Qwen2.5-VL-72B-Instruct"],["vlm","Qwen/Qwen3-VL-30B-A3B-Instruct"],["vlm","Qwen/Qwen3-VL-235B-A22B-Instruct"],["vlm","llava-hf/llava-1.5-7b-hf"],
+ ["vlm","llava-hf/llava-onevision-qwen2-7b-ov-hf"],["vlm","HuggingFaceTB/SmolVLM2-2.2B-Instruct"],["vlm","mistral-community/pixtral-12b"],["vlm","unsloth/Llama-3.2-11B-Vision-Instruct"],
+ ["vlm","unsloth/gemma-3-4b-it"],["vlm","microsoft/Phi-4-multimodal-instruct"],["vlm","deepseek-ai/Janus-Pro-7B"],["vlm","moonshotai/Kimi-VL-A3B-Instruct"],["vlm","zai-org/GLM-4.5V"],
+ ["vlm","OpenGVLab/InternVL3-8B-hf"],["vlm","nvidia/NVIDIA-Nemotron-Nano-12B-v2-VL-BF16"],["vlm","google/paligemma2-3b-pt-224"],["vlm","allenai/Molmo-7B-D-0924"],["vlm","lerobot/smolvla_base"],
+ // ---- image and video generation
+ ["gen","stable-diffusion-v1-5/stable-diffusion-v1-5"],["gen","stabilityai/stable-diffusion-xl-base-1.0"],["gen","stabilityai/sdxl-turbo"],["gen","black-forest-labs/FLUX.1-schnell"],
+ ["gen","Qwen/Qwen-Image"],["gen","PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"],["gen","Efficient-Large-Model/Sana_1600M_1024px_diffusers"],["gen","HiDream-ai/HiDream-I1-Full"],["gen","facebook/DiT-XL-2-256"],
+ ["gen","Wan-AI/Wan2.1-T2V-1.3B-Diffusers"],["gen","Wan-AI/Wan2.2-TI2V-5B-Diffusers"],["gen","hunyuanvideo-community/HunyuanVideo"],["gen","Lightricks/LTX-Video"],["gen","THUDM/CogVideoX-2b"],["gen","playgroundai/playground-v2.5-1024px-aesthetic"],
+ // ---- time series and tabular
+ ["ts","amazon/chronos-t5-small"],["ts","amazon/chronos-bolt-base"],["ts","google/timesfm-2.0-500m-pytorch"],["ts","Salesforce/moirai-1.1-R-base"],["ts","ibm-granite/granite-timeseries-ttm-r2"],["ts","Prior-Labs/TabPFN-v2-clf"],
+ // ---- quantized releases
+ ["quant","Qwen/Qwen3-8B-FP8"],["quant","Qwen/Qwen3-30B-A3B-GPTQ-Int4"],["quant","Qwen/Qwen2.5-7B-Instruct-AWQ"],["quant","RedHatAI/Meta-Llama-3.1-8B-Instruct-FP8"],["quant","nvidia/Llama-3.1-8B-Instruct-FP4"],
+ ["quant","nvidia/DeepSeek-R1-0528-FP4"],["quant","mlx-community/Qwen3-8B-4bit"],["quant","unsloth/Qwen3-8B-bnb-4bit"],["quant","unsloth/Llama-3.2-1B-Instruct-bnb-4bit"],["quant","nvidia/Qwen3-8B-FP4"],
+];
+</script><script>// bench.js — run the explorer's own loader and recovery over popular Hugging Face checkpoints.
+// Each result (repo metadata, config files, and the tensor manifest, gzip-compressed) is kept in this browser (IndexedDB)
+// and can be downloaded as one JSON-lines file.
+"use strict";
+const V = 1, CHUNK = 190000, CONC = 3;
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const fmt = n => n == null ? "—" : n >= 1e12 ? (n / 1e12).toFixed(2) + " T" : n >= 1e9 ? (n / 1e9).toFixed(2) + " B" : n >= 1e6 ? (n / 1e6).toFixed(1) + " M" : n >= 1e3 ? (n / 1e3).toFixed(1) + " K" : String(n);
+const idOf = r => r.replace(/[^\w.-]+/g, "__");
+let stop = false;
+const IDB = (() => { let p; const open = () => p || (p = new Promise((res, rej) => { const q = indexedDB.open("mx-bench", 1); q.onupgradeneeded = () => q.result.createObjectStore("r"); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }));
+  const tx = async (mode, f) => { const d = await open(); return new Promise((res, rej) => { const t = d.transaction("r", mode), st = t.objectStore("r"), out = f(st); t.oncomplete = () => res(out && out.result); t.onerror = () => rej(t.error); }); };
+  return {put: (k, v) => tx("readwrite", s => s.put(v, k)), all: () => tx("readonly", s => s.getAll()), clear: () => tx("readwrite", s => s.clear())}; })();
+const rows = {};
+
+async function gz(str) {
+  const cs = new Blob([str]).stream().pipeThrough(new CompressionStream("gzip"));
+  const buf = new Uint8Array(await new Response(cs).arrayBuffer()); let bin = "";
+  for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+async function getJSON(url) { const r = await fetch(url); if (!r.ok) throw new Error(`HTTP ${r.status} ${url.split("/resolve/main/")[1] || ""}`); return r.json(); }
+
+function row(repo, cat) {
+  if (!rows[repo]) { const tr = document.createElement("tr"); tr.innerHTML = `<td>${esc(cat)}</td><td class="repo">${esc(repo)}</td><td class="st">waiting</td><td class="n"></td><td class="n"></td><td></td><td class="n"></td>`; $("#tb").appendChild(tr); rows[repo] = tr; }
+  return rows[repo];
+}
+function setRow(repo, st, cls, cells) { const tr = row(repo, ""); tr.className = cls || ""; tr.children[2].textContent = st; if (cells) cells.forEach((c, i) => tr.children[3 + i].textContent = c); }
+
+async function one(cat, repo) {
+  const t0 = performance.now(); setRow(repo, "listing", "run");
+  const info = await getJSON(`https://huggingface.co/api/models/${repo}?blobs=true`);
+  if (info.error) throw new Error(info.error);
+  const files = (info.siblings || []).map(s => ({n: s.rfilename, size: s.size || 0})), base = `https://huggingface.co/${repo}/resolve/main/`;
+  const has = n => files.some(f => f.n === n);
+  const cfgs = {};
+  for (const n of ["config.json", "model_index.json", "params.json"]) if (has(n)) try { cfgs[n] = await getJSON(base + n); } catch (e) {}
+  for (const f of files) if (/^[\w.-]+\/config\.json$/.test(f.n) && Object.keys(cfgs).length < 10) try { cfgs[f.n] = await getJSON(base + f.n); } catch (e) {}
+  setRow(repo, "headers", "run");
+  const mf = await Loaders.hfManifest(repo, files, (st, n, i, k) => setRow(repo, st === "index" ? "index" : `header ${i}/${k}`, "run"), {prefer: cfgs["config.json"] && cfgs["config.json"].default_size, conc: 8});
+  const t1 = performance.now();
+  if (!mf) throw new Error("no safetensors / pt weights");
+  const man = {}; for (const [n, v] of Object.entries(mf.tensors)) man[n] = [v.dtype, v.shape];
+  let I = null, ms = null, ierr = null;
+  try { const a = performance.now(); I = ArchInfer.infer(mf.tensors, {lex: true}); ms = performance.now() - a; } catch (e) { ierr = String(e && e.message || e); }
+  const raw = await gz(JSON.stringify(man)), nch = 1;
+  const cfgStr = JSON.stringify(cfgs);
+  const st = info.safetensors || null;
+  const rec = {v: V, repo, cat, ok: true, ts: Date.now(), nch, raw, cfgs: cfgStr,
+    api: {total: st && st.total || null, parameters: st && st.parameters || null, downloads: info.downloads || 0, likes: info.likes || 0, pipeline: info.pipeline_tag || null, library: info.library_name || null, created: info.createdAt || null, weightBytes: files.filter(f => /\.(safetensors|pt|pth|bin|ckpt)$/.test(f.n)).reduce((a, f) => a + f.size, 0)},
+    read: mf.read, nfiles: mf.nfiles, kinds: mf.kinds, ntensors: Object.keys(man).length, msFetch: Math.round(t1 - t0), msInfer: ms, ierr,
+    quick: I ? {params: I.totals.params, family: I.family, comps: I.comps.length, d: I.hp.d, layers: I.hp.layers} : null};
+  await IDB.put(repo, rec);
+  return rec;
+}
+
+async function run(onlyFailed) {
+  stop = false; $("#go").disabled = true; $("#retry").disabled = true;
+  const done = {}; try { (await IDB.all()).forEach(x => done[x.repo] = x); } catch (e) {}
+  const todo = BENCH_MODELS.filter(([c, r]) => { const d = done[r]; if (d && d.v === V && d.ok) { const q = d.quick || {}; setRow(r, "done", "ok", [fmt(q.params), fmt(d.api.total), q.family || "", fmt(d.read)]); return false; } if (d && !d.ok && !onlyFailed) { setRow(r, "failed: " + d.err, "bad"); return false; } return true; });
+  let next = 0, nOk = Object.values(done).filter(d => d.ok).length, nBad = 0;
+  const upd = () => $("#prog").textContent = `${nOk} done · ${nBad} failed this run · ${todo.length - next} left`;
+  upd();
+  const work = async () => { while (next < todo.length && !stop) { const [cat, repo] = todo[next++]; upd();
+    try { const r = await one(cat, repo); nOk++; const q = r.quick || {}; setRow(repo, r.ierr ? "read, infer error" : "done", r.ierr ? "warn" : "ok", [fmt(q.params), fmt(r.api.total), q.family || r.ierr || "", fmt(r.read)]); }
+    catch (e) { nBad++; const err = String(e && e.message || e).slice(0, 160); setRow(repo, "failed: " + err, "bad"); try { await IDB.put(repo, {v: V, repo, cat, ok: false, err, ts: Date.now()}); } catch (e2) {} }
+    upd(); } };
+  await Promise.all(Array.from({length: CONC}, work));
+  $("#prog").textContent += stop ? " · paused" : " · finished. Press Download results."; $("#go").disabled = false; $("#retry").disabled = false; $("#dl").disabled = false;
+}
+
+async function download() {
+  const all = await IDB.all(), blob = new Blob([all.map(x => JSON.stringify(x)).join("\n") + "\n"], {type: "application/x-ndjson"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `ame-bench-${all.filter(x => x.ok).length}-models.jsonl`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+}
+(async () => {
+  BENCH_MODELS.forEach(([c, r]) => row(r, c));
+  $("#count").textContent = BENCH_MODELS.length;
+  try { const r = await fetch("https://huggingface.co/api/models/openai-community/gpt2"); if (!r.ok) throw 0; $("#prog").textContent = "Ready. Hugging Face is reachable."; }
+  catch (e) { $("#prog").textContent = "This page cannot reach huggingface.co from here (the browser or host blocks it). Open the copy on GitHub Pages instead."; }
+  $("#go").onclick = () => run(false); $("#retry").onclick = () => run(true); $("#pause").onclick = () => { stop = true; }; $("#dl").onclick = download;
+  $("#reset").onclick = async () => { if (confirm("Delete the results stored in this browser?")) { await IDB.clear(); location.reload(); } };
+  try { const prev = await IDB.all(); prev.forEach(d => { if (d.ok) { const q = d.quick || {}; setRow(d.repo, "done", "ok", [fmt(q.params), fmt(d.api.total), q.family || "", fmt(d.read)]); } else setRow(d.repo, "failed: " + d.err, "bad"); }); if (prev.length) $("#dl").disabled = false; } catch (e) {}
+  if (location.hash === "#auto") run(false);
+})();
+</script>
+</body></html>

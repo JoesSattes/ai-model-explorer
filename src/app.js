@@ -687,29 +687,9 @@ async function hfLoad(input) {
   if (tfl.length) { const pick = tfl.filter(f => /enc|dec/i.test(f.n)).slice(0, 2), chosen = pick.length ? pick : tfl.slice(0, 1), gs = [];
     for (const f of chosen) { busy(t("st_tflite"), `${f.n} (${fB(f.size)})`); gs.push(graphFromTflite(parseTflite(await (await fetch(base + f.n)).arrayBuffer()), /enc/i.test(f.n) ? "encoder" : /dec/i.test(f.n) ? "decoder" : "model", f.n)); }
     return {graphs: gs, kind: "ops", meta: {name: repo, family: chosen.length > 1 ? "encdec" : "decoder", modality: "text", tie: true}, label: repo, noteKey: "n_upload"}; }
-  // which files describe the weights: safetensors (sharded or per component), else PyTorch zip checkpoints
-  const folder = n => n.includes("/") ? n.slice(0, n.lastIndexOf("/")) : "";
-  const skip = n => /(^|\/)(consolidated|optimizer|training_args|scheduler|rng_state)/i.test(n) || /^(\.|original\/)/.test(n);
-  const jobs = [], seen = new Set();
-  for (const ix of files.filter(f => /\.safetensors\.index\.json$/.test(f.n) && !skip(f.n))) {
-    busy(t("st_index"), ix.n); const j = await (await fetch(base + ix.n)).json(), dir = folder(ix.n);
-    for (const sh of [...new Set(Object.values(j.weight_map || {}))]) { const n = dir ? dir + "/" + sh : sh; seen.add(n); jobs.push({n, prefix: dir, kind: "st"}); } }
-  const loose = files.filter(f => /\.safetensors$/.test(f.n) && !seen.has(f.n) && !skip(f.n));
-  const rootLoose = loose.filter(f => !folder(f.n));
-  loose.forEach(f => jobs.push({n: f.n, prefix: folder(f.n) || (rootLoose.length > 1 ? f.n.replace(/\.safetensors$/, "").replace(/[^\w]+/g, "_") : ""), kind: "st"}));
-  if (!jobs.length) { // PyTorch checkpoints: one per folder, preferring the default size named in config.json
-    const pts = files.filter(f => /\.(pt|pth|bin|ckpt)$/.test(f.n) && !skip(f.n) && !/optimizer|scheduler|training/.test(f.n));
-    const groups = {}; pts.forEach(f => (groups[folder(f.n)] = groups[folder(f.n)] || []).push(f));
-    let dirs = Object.keys(groups); const want = cfg && cfg.default_size; if (want && groups[want]) dirs = [want]; else if (dirs.length > 1) dirs = dirs.sort((a, b) => groups[b].reduce((x, f) => x + f.size, 0) - groups[a].reduce((x, f) => x + f.size, 0)).slice(0, 1);
-    dirs.forEach(d => { const g = groups[d].sort((a, b) => (/classif|model|pytorch_model/.test(b.n) - /classif|model|pytorch_model/.test(a.n)) || b.size - a.size); jobs.push({n: g[0].n, prefix: "", kind: "pt"}); });
-  }
-  if (!jobs.length) { if (cfg) { const r = tensorsFromConfig(cfg); return {tensors: r.tensors, meta: {...r.meta, name: repo}, cfg, kind: "config", label: repo, noteKey: "n_cfg", noteVars: {mt: r.meta.model_type}}; } throw new Error("no .tflite / .safetensors / .pt / config.json"); }
-  const tensors = {}; let read = 0;
-  for (let k = 0; k < jobs.length; k++) { const jb = jobs[k], sz = (files.find(f => f.n === jb.n) || {}).size || 0;
-    busy(t(jb.kind === "pt" ? "st_pt" : "st_header", {i: k + 1, n: jobs.length}), `${jb.n} · ${fB(read)} ${t("st_sofar")}`);
-    const r = jb.kind === "pt" ? await Loaders.torchIndex(base + jb.n, sz) : await Loaders.safetensorsHeader(base + jb.n, sz);
-    read += r.bytes; const T = jb.kind === "pt" ? Loaders.stripCommon(r.tensors) : r.tensors;
-    for (const [n, v] of Object.entries(T)) tensors[(jb.prefix ? jb.prefix.replace(/\//g, ".") + "." : "") + n] = v; }
+  const mf = await Loaders.hfManifest(repo, files, (st, n, i, k, rd) => busy(st === "index" ? t("st_index") : t(st === "pt" ? "st_pt" : "st_header", {i, n: k}), st === "index" ? n : `${n} · ${fB(rd)} ${t("st_sofar")}`), {prefer: cfg && cfg.default_size});
+  if (!mf) { if (cfg) { const r = tensorsFromConfig(cfg); return {tensors: r.tensors, meta: {...r.meta, name: repo}, cfg, kind: "config", label: repo, noteKey: "n_cfg", noteVars: {mt: r.meta.model_type}}; } throw new Error("no .tflite / .safetensors / .pt / config.json"); }
+  const {tensors, read} = mf, jobs = {length: mf.nfiles};
   busy(t("st_infer"), `${Object.keys(tensors).length} tensors`);
   await new Promise(r => setTimeout(r, 20));
   const n = Object.keys(tensors).length; return {tensors, cfg, meta: null, kind: "tensors", label: repo, noteKey: "n_hf_auto", noteVars: {n, r: fB(read), w: fB(total), f: jobs.length}};

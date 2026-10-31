@@ -116,5 +116,35 @@ function tensorsFromState(o, pre = "", out = {}, depth = 0) {
 // strip a wrapper prefix every tensor shares (e.g. "state_dict." or "model.")
 function stripCommon(T) { const ks = Object.keys(T); if (ks.length < 2) return T; const f = ks[0].split(".")[0]; if (!ks.every(k => k.startsWith(f + ".")) || !/^(state_dict|model_state_dict|module|ema|params|weights)$/.test(f)) return T; const o = {}; for (const k of ks) o[k.slice(f.length + 1)] = T[k]; return o; }
 
-root.Loaders = {safetensorsHeader, torchIndex, unpickle, tensorsFromState, stripCommon};
+// ---------------- a Hugging Face repo: which files describe the weights, then their headers (shared by the explorer and the benchmark)
+async function hfManifest(repo, files, prog = () => {}, opt = {}) {
+  const conc = opt.conc || 6;
+  const base = `https://huggingface.co/${repo}/resolve/main/`;
+  const folder = n => n.includes("/") ? n.slice(0, n.lastIndexOf("/")) : "";
+  const skip = n => /(^|\/)(consolidated|optimizer|training_args|scheduler|rng_state)/i.test(n) || /^(\.|original\/)/.test(n);
+  const jobs = [], seen = new Set();
+  for (const ix of files.filter(f => /\.safetensors\.index\.json$/.test(f.n) && !skip(f.n))) {
+    prog("index", ix.n); const j = await (await fetch(base + ix.n)).json(), dir = folder(ix.n);
+    for (const sh of [...new Set(Object.values(j.weight_map || {}))]) { const n = dir ? dir + "/" + sh : sh; seen.add(n); jobs.push({n, prefix: dir, kind: "st"}); } }
+  const loose = files.filter(f => /\.safetensors$/.test(f.n) && !seen.has(f.n) && !skip(f.n));
+  const rootLoose = loose.filter(f => !folder(f.n));
+  loose.forEach(f => jobs.push({n: f.n, prefix: folder(f.n) || (rootLoose.length > 1 ? f.n.replace(/\.safetensors$/, "").replace(/[^\w]+/g, "_") : ""), kind: "st"}));
+  if (!jobs.length) {
+    const pts = files.filter(f => /\.(pt|pth|bin|ckpt)$/.test(f.n) && !skip(f.n) && !/optimizer|scheduler|training/.test(f.n));
+    const groups = {}; pts.forEach(f => (groups[folder(f.n)] = groups[folder(f.n)] || []).push(f));
+    let dirs = Object.keys(groups); if (opt.prefer && groups[opt.prefer]) dirs = [opt.prefer]; else if (dirs.length > 1) dirs = dirs.sort((a, b) => groups[b].reduce((x, f) => x + f.size, 0) - groups[a].reduce((x, f) => x + f.size, 0)).slice(0, 4);
+    dirs.forEach(d => { const g = groups[d].sort((a, b) => (/classif|model|pytorch_model/.test(b.n) - /classif|model|pytorch_model/.test(a.n)) || b.size - a.size); jobs.push({n: g[0].n, prefix: dirs.length > 1 ? d.replace(/\//g, ".") : "", kind: "pt"}); });
+  }
+  if (!jobs.length) return null;
+  const tensors = {}, res = new Array(jobs.length); let read = 0, done = 0, next = 0;
+  const work = async () => { while (next < jobs.length) { const k = next++, jb = jobs[k], sz = (files.find(f => f.n === jb.n) || {}).size || 0;
+    const r = jb.kind === "pt" ? await torchIndex(base + jb.n, sz) : await safetensorsHeader(base + jb.n, sz);
+    res[k] = r; read += r.bytes; done++; prog(jb.kind === "pt" ? "pt" : "header", jb.n, done, jobs.length, read); } };
+  await Promise.all(Array.from({length: Math.min(conc, jobs.length)}, work));
+  jobs.forEach((jb, k) => { const T = jb.kind === "pt" ? stripCommon(res[k].tensors) : res[k].tensors;
+    for (const [n, v] of Object.entries(T)) tensors[(jb.prefix ? jb.prefix.replace(/\//g, ".") + "." : "") + n] = v; });
+  return {tensors, read, nfiles: jobs.length, kinds: [...new Set(jobs.map(j => j.kind))]};
+}
+
+root.Loaders = {hfManifest, safetensorsHeader, torchIndex, unpickle, tensorsFromState, stripCommon};
 })(typeof window !== "undefined" ? window : globalThis);
