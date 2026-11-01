@@ -704,7 +704,7 @@ function renderAll() { applyI18n(); renderPicker(); renderHero(); renderArch(); 
 function wire() {
   { const tb = $("#themeBtn"); if (tb) { const lab = () => { const d = K.ink === PAL.dark.ink; tb.title = LANG === "th" ? (d ? "สลับเป็นธีมสว่าง" : "สลับเป็นธีมมืด") : (d ? "Switch to light theme" : "Switch to dark theme"); tb.setAttribute("aria-label", tb.title); };
     lab(); tb.onclick = () => { const nt = K.ink === PAL.dark.ink ? "light" : "dark"; setTheme(nt); try { localStorage.setItem("mx_theme", nt); } catch (e) {} renderAll(); lab(); }; } }
-  $$("[data-lang]").forEach(b => b.onclick = () => { LANG = b.dataset.lang; try { localStorage.setItem("mx_lang", LANG); } catch (e) {} renderAll(); });
+  $$("[data-lang]").forEach(b => b.onclick = () => { if (/^https?:$/.test(location.protocol) && window.PAGE_ALT && b.dataset.lang !== window.PAGE_LANG) { try { localStorage.setItem("mx_lang", b.dataset.lang); } catch (e) {} location.href = window.PAGE_ALT + location.hash; return; } LANG = b.dataset.lang; try { localStorage.setItem("mx_lang", LANG); } catch (e) {} renderAll(); });
   $$("[data-xl]").forEach(b => b.onclick = () => { S.lens = b.dataset.xl; pref("lens", S.lens); renderBig(); renderDetail(); });
   $$("[data-ml]").forEach(b => b.onclick = () => { S.mapLens = b.dataset.ml; renderMap(); });
   $("#bPlay").onclick = () => S.playing ? stopPlay() : startPlay();

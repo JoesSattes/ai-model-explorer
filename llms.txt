@@ -33,7 +33,7 @@ Sattaya Singkul (Jo) — Researcher, speech and edge AI. Portfolio: https://joes
 Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Contest", AI Expo Thailand 2026.
 
 ## Links
-- App: https://joessattes.github.io/ai-model-explorer/
+- App: https://joessattes.github.io/ai-model-explorer/ (Thai) · https://joessattes.github.io/ai-model-explorer/en/ (English)
 - Source: https://github.com/JoesSattes/ai-model-explorer
 - Paper (LaTeX + PDF): https://github.com/JoesSattes/ai-model-explorer/tree/main/paper
 - Hub benchmark: https://joessattes.github.io/ai-model-explorer/bench.html

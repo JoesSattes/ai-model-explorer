@@ -48,8 +48,8 @@ then Download results; `node research/realbench.js export.jsonl corpus.jsonl` an
 ## Repository
 | Path | What |
 |---|---|
-| `index.html` | the built site (single file) |
-| `src/` | sources: `infer.js` (recovery), `loaders.js` (headers, range requests), `model.js`, `app.js`, `i18n.js`; `python3 build.py` rebuilds `index.html` |
+| `index.html`, `en/index.html` | the built site, Thai and English (one file each) |
+| `src/` | sources: `infer.js` (recovery), `loaders.js` (headers, range requests), `model.js`, `app.js`, `i18n.js`; `python3 build.py` rebuilds both pages |
 | `bench/`, `bench.html` | the Hub checkpoint benchmark page and its model list |
 | `research/` | corpus builder, evaluation (`eval.js`), Hub analysis (`realbench.js`), results (`res/`), the Hub export (`data/`) |
 | `paper/` | LaTeX sources and PDF of *Reading the Architecture off the Weights* |
