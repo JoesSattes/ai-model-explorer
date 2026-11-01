@@ -90,7 +90,7 @@ Hub benchmark: `node research/realbench.js research/data/hub-bench-191.jsonl.gz 
 Figures: `cd paper && python scripts/figs.py` (reads `research/res/`).
 
 ## Citation
-If you use AI Model Explorer or its recovery method, please cite the paper ([PDF](paper/manifest-anatomy-singkul-2026.pdf)):
+If you use AI Model Explorer or its recovery method, please cite the paper ([ResearchGate](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy), [PDF](paper/manifest-anatomy-singkul-2026.pdf)):
 
 ```bibtex
 @misc{singkul2026reading,
@@ -98,7 +98,8 @@ If you use AI Model Explorer or its recovery method, please cite the paper ([PDF
   author = {Singkul, Sattaya},
   year   = {2026},
   note   = {Preprint},
-  url    = {https://github.com/JoesSattes/ai-model-explorer/tree/main/paper}
+  howpublished = {ResearchGate},
+  url    = {https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy}
 }
 ```
 

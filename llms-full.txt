@@ -1,0 +1,63 @@
+# AI Model Explorer — full description
+
+> Free, open-source (MIT) web tool by Sattaya Singkul that shows the architecture of any AI model on Hugging Face without downloading its weights. It reads only the safetensors header (tensor names, shapes and dtypes, usually a few tens of kilobytes) and works out the model's parts, layers, parameter counts and precision. Thai: https://joessattes.github.io/ai-model-explorer/ · English: https://joessattes.github.io/ai-model-explorer/en/
+
+## What it does
+Paste a Hugging Face repo id (for example `deepseek-ai/DeepSeek-V3`, `Qwen/Qwen3-30B-A3B`, `openai/whisper-large-v3`), or drop a `.safetensors`, `.tflite` or `config.json` file. The page:
+
+- requests only the header bytes of each weight file by HTTP range request, plus `config.json` and shard indexes. Weights are never downloaded and no model code is run;
+- finds repeated layer stacks in the module tree and the block types inside each stack (for example hybrid models that alternate attention, SSM and mixture-of-experts layers);
+- labels every tensor by role: attention (including grouped-query, latent and cross-attention), feed-forward (dense and gated), mixture of experts (experts, router, shared experts), SSM or linear attention, convolution, adaLN modulation, recurrent cell, embedding, norm, output head, adapter;
+- links components by matching widths, for example vision encoder → projector → language model, or transducer encoder → prediction network → joint network;
+- counts parameters exactly under FP8, NVFP4, GPTQ, AWQ, MXFP4, MLX and bitsandbytes storage;
+- reads heads, KV heads and head size from config.json when present, and checks the config against the weights;
+- tags every value as measured from the weights, read from config, or estimated.
+
+Files are parsed in the browser. There is no server, and opened models are cached in the browser (IndexedDB).
+
+## How it works (method)
+The method is described in the paper "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy" (Sattaya Singkul, 2026). In order:
+1. Normalize quantized storage back to logical tensors (packed 4-bit, scales, zero points, block formats).
+2. Build the module tree from tensor paths and find stacks of identical blocks by their index tokens and shape signatures.
+3. Assign roles from the algebra of shapes inside a block. For example, four projections where three share an input width and one maps back to the residual width are attention; a pair or triple that expands and contracts the residual width is a feed-forward; a stack of identical expert matrices with a router is a mixture of experts. Name hints are used only to break ties.
+4. Connect components whose input and output widths match.
+5. Fuse config.json for fields shapes cannot determine (number of heads), and report where config and weights disagree.
+
+## How accurate it is
+| Benchmark | Result |
+|---|---|
+| 510 architectures from the transformers library (ground truth from module class names the method never sees) | 96.8% of tensors get the right role (macro average), 99.9% micro |
+| Same, every tensor name replaced by a random token | 95.0% |
+| Name-only baselines on the same corpus | rule set with MoE label 82.3%; llama.cpp tensor-name table 29.7% overall, covering about one model in five |
+| Parameter totals | exact for 510 of 510, also under NVFP4, FP8 and GPTQ storage |
+| Block lists (layer stacks) | recall 98.6%, precision 91.4% |
+| 191 popular Hugging Face checkpoints (DeepSeek-V3, Kimi K2, Qwen3, Llama 3.3, gpt-oss, Gemma 3, Whisper, SAM, SDXL, Wan and others) | parameter totals agree with the Hub's own count for 163 of 170; most differences come from the Hub counting packed 4-bit bytes |
+| Bytes read per repo | median 79 KB |
+| Recovery time | median about 10 ms per model |
+
+## Who it is for
+Engineers deploying models to phones and edge devices who need to know which parts to quantize; researchers comparing architectures; students learning how transformers, mixtures of experts and state-space models are built; anyone who wants to know what is inside a checkpoint before downloading hundreds of gigabytes.
+
+## Compared with other tools
+Netron and Google's Model Explorer draw the operator graph of a model file you already have. AI Model Explorer starts from a repo name, reads only headers, and groups tensors into architectural parts with sizes and precision, so it works on checkpoints with hundreds of billions of parameters without the files. It also opens .tflite files and shows their real op graph.
+
+## FAQ
+- Do I need to download the model? No. Only header bytes are requested, usually under 200 KB in total.
+- Does my file leave my computer? No. Dropped files are parsed in the browser.
+- Is it free? Yes. MIT license, source on GitHub.
+- Which models? Any Hugging Face repo with safetensors weights (LLMs, speech, vision-language, diffusion, embedding models), .tflite files, and config.json for common families. Gated repos (those that require accepting a license) cannot be read and are reported as gated.
+
+## Author
+Sattaya Singkul (Jo), researcher in speech and edge AI, Bangkok. Portfolio: https://joessattes.github.io/Sattaya-AI-Website/ · GitHub: https://github.com/JoesSattes
+Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Contest", AI Expo Thailand 2026.
+
+## Links
+- App (Thai): https://joessattes.github.io/ai-model-explorer/
+- App (English): https://joessattes.github.io/ai-model-explorer/en/
+- Paper: https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy
+- Paper PDF: https://joessattes.github.io/ai-model-explorer/paper/manifest-anatomy-singkul-2026.pdf
+- Source code: https://github.com/JoesSattes/ai-model-explorer
+- Hub benchmark page: https://joessattes.github.io/ai-model-explorer/bench.html
+
+## Citation
+Sattaya Singkul. 2026. Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy. Preprint, ResearchGate.
