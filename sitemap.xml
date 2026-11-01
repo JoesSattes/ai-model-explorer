@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://joessattes.github.io/ai-model-explorer/</loc><lastmod>2026-10-31</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://joessattes.github.io/ai-model-explorer/llms.txt</loc><lastmod>2026-10-31</lastmod><priority>0.5</priority></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://joessattes.github.io/ai-model-explorer/</loc>
+    <xhtml:link rel="alternate" hreflang="th" href="https://joessattes.github.io/ai-model-explorer/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://joessattes.github.io/ai-model-explorer/en/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://joessattes.github.io/ai-model-explorer/en/"/>
+    <lastmod>2026-11-01</lastmod>
+  </url>
+  <url>
+    <loc>https://joessattes.github.io/ai-model-explorer/en/</loc>
+    <xhtml:link rel="alternate" hreflang="th" href="https://joessattes.github.io/ai-model-explorer/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://joessattes.github.io/ai-model-explorer/en/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://joessattes.github.io/ai-model-explorer/en/"/>
+    <lastmod>2026-11-01</lastmod>
+  </url>
+  <url>
+    <loc>https://joessattes.github.io/ai-model-explorer/paper/manifest-anatomy-singkul-2026.pdf</loc>
+    <lastmod>2026-11-01</lastmod>
+  </url>
 </urlset>

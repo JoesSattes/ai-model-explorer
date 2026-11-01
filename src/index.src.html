@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="{{LANG}}">
 <head>
 <script>try{document.documentElement.dataset.theme=localStorage.getItem("mx_theme")==="light"?"light":"dark"}catch(e){document.documentElement.dataset.theme="dark"}</script>
 <meta charset="utf-8">
+<script>window.PAGE_LANG="{{LANG}}";window.PAGE_ALT="{{ALT}}";</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Model Explorer — see inside any AI model, part by part | Sattaya Singkul</title>
-<meta name="description" content="Free AI model explorer: paste any Hugging Face repo and see its architecture split into parts, read from the safetensors header without downloading weights. Layers, attention, MoE, SSM, parameter counts and precision (FP8, NVFP4, GPTQ). Also .tflite and config.json. Thai and English. By Sattaya Singkul.">
+<title>{{TITLE}}</title>
+<meta name="description" content="{{DESC}}">
 <meta name="keywords" content="AI model explorer, model visualization, transformer explainer, TFLite analyzer, LiteRT, edge AI, on-device AI, quantization, int8, int4, Whisper, Qwen3-ASR, Qwen3.8, Qwen, Llama, GPT-2, BERT, ViT, Hugging Face, safetensors, model architecture, Sattaya Singkul, ภาษาไทย, AI Expo Thailand">
 <meta name="author" content="Sattaya Singkul">
 <meta name="creator" content="Sattaya Singkul">
@@ -14,23 +15,26 @@
 <meta name="theme-color" content="#f6f6f3">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="canonical" href="https://joessattes.github.io/ai-model-explorer/">
+<link rel="canonical" href="{{CANON}}">
+<link rel="alternate" hreflang="th" href="https://joessattes.github.io/ai-model-explorer/">
+<link rel="alternate" hreflang="en" href="https://joessattes.github.io/ai-model-explorer/en/">
+<link rel="alternate" hreflang="x-default" href="https://joessattes.github.io/ai-model-explorer/en/">
 <link rel="author" href="https://joessattes.github.io/Sattaya-AI-Website/">
 <link rel="license" href="https://joessattes.github.io/ai-model-explorer/LICENSE">
 <link rel="alternate" type="text/plain" title="LLM summary" href="https://joessattes.github.io/ai-model-explorer/llms.txt">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23141414'/%3E%3Crect x='12' y='14' width='9' height='36' fill='%231b5fd1'/%3E%3Crect x='27.5' y='14' width='9' height='36' fill='%23ffffff'/%3E%3Crect x='43' y='14' width='9' height='36' fill='%23d4651c'/%3E%3C/svg%3E">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="AI Model Explorer">
-<meta property="og:title" content="AI Model Explorer — see inside any AI model, part by part">
-<meta property="og:description" content="Paste any Hugging Face repo: the architecture, read from the file header without downloading weights, split into parts with sizes, layer types and precision. By Sattaya Singkul.">
-<meta property="og:url" content="https://joessattes.github.io/ai-model-explorer/">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESC}}">
+<meta property="og:url" content="{{CANON}}">
 <meta property="og:image" content="https://joessattes.github.io/ai-model-explorer/og.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="AI Model Explorer: Whisper split into audio, spectrogram, encoder, decoder and logits with real numbers">
-<meta property="og:locale" content="th_TH"><meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale" content="{{OGLOC}}"><meta property="og:locale:alternate" content="{{OGLOCALT}}">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="AI Model Explorer — see inside any AI model, part by part">
-<meta name="twitter:description" content="Any Hugging Face model, read from its header: parts, layers, MoE/SSM/attention, parameter counts and precision. Thai + English. By Sattaya Singkul.">
+<meta name="twitter:title" content="{{TITLE}}">
+<meta name="twitter:description" content="{{DESC}}">
 <meta name="twitter:image" content="https://joessattes.github.io/ai-model-explorer/og.png">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[
@@ -41,11 +45,7 @@
   "keywords":"AI model explorer, model visualization, TFLite, LiteRT, edge AI, quantization, Whisper, Llama, Hugging Face","screenshot":"https://joessattes.github.io/ai-model-explorer/og.png"},
  {"@type":"Person","@id":"https://joessattes.github.io/Sattaya-AI-Website/#person","name":"Sattaya Singkul","alternateName":"Jo","url":"https://joessattes.github.io/Sattaya-AI-Website/","jobTitle":"Researcher","knowsAbout":["Speech AI","Edge AI","On-device inference","Model quantization"],"sameAs":["https://joessattes.github.io/Sattaya-AI-Website/","https://github.com/JoesSattes"]},
  {"@type":"SoftwareSourceCode","name":"AI Model Explorer source","codeRepository":"https://github.com/JoesSattes/ai-model-explorer","programmingLanguage":"JavaScript","license":"https://opensource.org/licenses/MIT","author":{"@id":"https://joessattes.github.io/Sattaya-AI-Website/#person"}},
- {"@type":"FAQPage","mainEntity":[
-  {"@type":"Question","name":"What does AI Model Explorer do?","acceptedAnswer":{"@type":"Answer","text":"It splits an AI model into its parts — input, embedding, encoder or decoder layers, attention, feed-forward, output head — and shows the real weights, compute, TFLite op count and precision of each part, with a play-through of what goes in and comes out."}},
-  {"@type":"Question","name":"Which models can it read?","acceptedAnswer":{"@type":"Answer","text":"Any .tflite (LiteRT) file, any Hugging Face repository with safetensors weights (only the header is read), or a pasted config.json for common families such as Llama, Qwen, Gemma, Mistral, GPT-2, BERT, ViT, Whisper, BART and T5."}},
-  {"@type":"Question","name":"Does my model leave my computer?","acceptedAnswer":{"@type":"Answer","text":"No. Files are parsed in the browser. For Hugging Face repositories only the safetensors header (tensor names, shapes and dtypes) is requested."}},
-  {"@type":"Question","name":"Who made it?","acceptedAnswer":{"@type":"Answer","text":"Sattaya Singkul, for the workshop “Squeeze Until It Breaks” at AI Expo Thailand 2026. MIT licensed."}}]}
+{{LDEXTRA}}
 ]}
 </script>
 <style>
@@ -241,6 +241,7 @@ footer{padding:44px 0 40px;color:var(--soft);font-size:14.5px;border-top:1px sol
 footer .fname{font-size:40px;font-weight:700;letter-spacing:-.03em;color:var(--ink);margin-bottom:10px}
 footer .fl{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}footer a{color:var(--ink)}
 .credit a{color:var(--ink)}
+#about .about{max-width:860px;padding:40px 0 10px}#about h2{font-size:26px;margin:28px 0 10px;color:var(--ink)}#about h3{font-size:17px;margin:18px 0 4px;color:var(--ink)}#about p{color:var(--soft);line-height:1.65;margin:0 0 10px}#about a{color:var(--ink)}
 footer .cite{margin-top:16px;max-width:860px}footer .cite summary{cursor:pointer;color:var(--ink);font-weight:600}footer .citeref{margin:10px 0 8px;color:var(--soft)}
 footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,127,127,.25));border-radius:10px;padding:12px 14px;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);white-space:pre-wrap;word-break:break-word;margin-bottom:8px}
 @media (max-width:1100px){.hgrid{grid-template-columns:1fr}.iogrid{grid-template-columns:1fr 1fr}.iomid{grid-column:1/-1;order:-1}.ionums{grid-column:1/-1}.xdg,.agrid{grid-template-columns:1fr}.cgrid{grid-template-columns:1fr 1fr}.qplay,.rgrid{grid-template-columns:1fr}#cur{grid-template-columns:1fr}}
@@ -337,13 +338,25 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
   <div class="xbar" style="margin-top:20px"><span style="flex:1"></span><button class="btn sm" id="copyMd" data-i="copy_md"></button></div>
   <div class="panel" style="padding:14px 16px;margin-top:10px" id="rTable"></div>
 </div></section>
+<section id="about"><div class="wrap about">
+  <h2 data-i="about_h"></h2>
+  <p data-i="about_p1"></p>
+  <p data-i="about_p2"></p>
+  <p data-ih="about_p3"></p>
+  <h2 data-i="faq_h"></h2>
+  <h3 data-i="faq_q1"></h3><p data-i="faq_a1"></p>
+  <h3 data-i="faq_q2"></h3><p data-i="faq_a2"></p>
+  <h3 data-i="faq_q3"></h3><p data-i="faq_a3"></p>
+  <h3 data-i="faq_q4"></h3><p data-i="faq_a4"></p>
+  <h3 data-i="faq_q5"></h3><p data-i="faq_a5"></p>
+</div></section>
 </main>
 
 <footer><div class="wrap">
   <div class="fname">AI Model Explorer</div>
   <div class="credit">© 2026 <a href="https://joessattes.github.io/Sattaya-AI-Website/" rel="author">Sattaya Singkul</a> · <a href="https://github.com/JoesSattes/ai-model-explorer/blob/main/LICENSE" rel="license">MIT License</a></div>
   <p style="margin-top:8px" data-i="footer"></p>
-  <div class="fl"><a href="https://joessattes.github.io/Sattaya-AI-Website/">Portfolio — Sattaya Singkul</a><a href="https://github.com/JoesSattes/ai-model-explorer">GitHub</a><a href="https://github.com/JoesSattes/ai-model-explorer/tree/main/paper">Paper</a><a href="llms.txt">llms.txt</a></div>
+  <div class="fl"><a href="https://joessattes.github.io/Sattaya-AI-Website/">Portfolio — Sattaya Singkul</a><a href="https://github.com/JoesSattes/ai-model-explorer">GitHub</a><a href="https://github.com/JoesSattes/ai-model-explorer/tree/main/paper">Paper</a><a href="{{ROOT}}llms.txt">llms.txt</a></div>
   <details class="cite" id="cite"><summary data-i="cite_t">Cite this work</summary>
     <p class="citeref">Sattaya Singkul. 2026. <i>Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy</i>. Preprint.</p>
     <pre id="citeBib">@misc{singkul2026reading,

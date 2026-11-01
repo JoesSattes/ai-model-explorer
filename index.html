@@ -3,9 +3,10 @@
 <head>
 <script>try{document.documentElement.dataset.theme=localStorage.getItem("mx_theme")==="light"?"light":"dark"}catch(e){document.documentElement.dataset.theme="dark"}</script>
 <meta charset="utf-8">
+<script>window.PAGE_LANG="th";window.PAGE_ALT="en/";</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Model Explorer — see inside any AI model, part by part | Sattaya Singkul</title>
-<meta name="description" content="Free AI model explorer: paste any Hugging Face repo and see its architecture split into parts, read from the safetensors header without downloading weights. Layers, attention, MoE, SSM, parameter counts and precision (FP8, NVFP4, GPTQ). Also .tflite and config.json. Thai and English. By Sattaya Singkul.">
+<title>AI Model Explorer — ดูโครงสร้างโมเดล AI จาก Hugging Face โดยไม่ต้องโหลด weight</title>
+<meta name="description" content="วางชื่อ repo บน Hugging Face แล้วเห็นโครงสร้างโมเดลแยกเป็นส่วน: layer, attention, MoE, SSM, จำนวน parameter และ precision อ่านแค่ header ของ safetensors ไม่โหลด weight ใช้ฟรี ภาษาไทยและอังกฤษ">
 <meta name="keywords" content="AI model explorer, model visualization, transformer explainer, TFLite analyzer, LiteRT, edge AI, on-device AI, quantization, int8, int4, Whisper, Qwen3-ASR, Qwen3.8, Qwen, Llama, GPT-2, BERT, ViT, Hugging Face, safetensors, model architecture, Sattaya Singkul, ภาษาไทย, AI Expo Thailand">
 <meta name="author" content="Sattaya Singkul">
 <meta name="creator" content="Sattaya Singkul">
@@ -15,22 +16,25 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="canonical" href="https://joessattes.github.io/ai-model-explorer/">
+<link rel="alternate" hreflang="th" href="https://joessattes.github.io/ai-model-explorer/">
+<link rel="alternate" hreflang="en" href="https://joessattes.github.io/ai-model-explorer/en/">
+<link rel="alternate" hreflang="x-default" href="https://joessattes.github.io/ai-model-explorer/en/">
 <link rel="author" href="https://joessattes.github.io/Sattaya-AI-Website/">
 <link rel="license" href="https://joessattes.github.io/ai-model-explorer/LICENSE">
 <link rel="alternate" type="text/plain" title="LLM summary" href="https://joessattes.github.io/ai-model-explorer/llms.txt">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23141414'/%3E%3Crect x='12' y='14' width='9' height='36' fill='%231b5fd1'/%3E%3Crect x='27.5' y='14' width='9' height='36' fill='%23ffffff'/%3E%3Crect x='43' y='14' width='9' height='36' fill='%23d4651c'/%3E%3C/svg%3E">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="AI Model Explorer">
-<meta property="og:title" content="AI Model Explorer — see inside any AI model, part by part">
-<meta property="og:description" content="Paste any Hugging Face repo: the architecture, read from the file header without downloading weights, split into parts with sizes, layer types and precision. By Sattaya Singkul.">
+<meta property="og:title" content="AI Model Explorer — ดูโครงสร้างโมเดล AI จาก Hugging Face โดยไม่ต้องโหลด weight">
+<meta property="og:description" content="วางชื่อ repo บน Hugging Face แล้วเห็นโครงสร้างโมเดลแยกเป็นส่วน: layer, attention, MoE, SSM, จำนวน parameter และ precision อ่านแค่ header ของ safetensors ไม่โหลด weight ใช้ฟรี ภาษาไทยและอังกฤษ">
 <meta property="og:url" content="https://joessattes.github.io/ai-model-explorer/">
 <meta property="og:image" content="https://joessattes.github.io/ai-model-explorer/og.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="AI Model Explorer: Whisper split into audio, spectrogram, encoder, decoder and logits with real numbers">
 <meta property="og:locale" content="th_TH"><meta property="og:locale:alternate" content="en_US">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="AI Model Explorer — see inside any AI model, part by part">
-<meta name="twitter:description" content="Any Hugging Face model, read from its header: parts, layers, MoE/SSM/attention, parameter counts and precision. Thai + English. By Sattaya Singkul.">
+<meta name="twitter:title" content="AI Model Explorer — ดูโครงสร้างโมเดล AI จาก Hugging Face โดยไม่ต้องโหลด weight">
+<meta name="twitter:description" content="วางชื่อ repo บน Hugging Face แล้วเห็นโครงสร้างโมเดลแยกเป็นส่วน: layer, attention, MoE, SSM, จำนวน parameter และ precision อ่านแค่ header ของ safetensors ไม่โหลด weight ใช้ฟรี ภาษาไทยและอังกฤษ">
 <meta name="twitter:image" content="https://joessattes.github.io/ai-model-explorer/og.png">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[
@@ -41,11 +45,8 @@
   "keywords":"AI model explorer, model visualization, TFLite, LiteRT, edge AI, quantization, Whisper, Llama, Hugging Face","screenshot":"https://joessattes.github.io/ai-model-explorer/og.png"},
  {"@type":"Person","@id":"https://joessattes.github.io/Sattaya-AI-Website/#person","name":"Sattaya Singkul","alternateName":"Jo","url":"https://joessattes.github.io/Sattaya-AI-Website/","jobTitle":"Researcher","knowsAbout":["Speech AI","Edge AI","On-device inference","Model quantization"],"sameAs":["https://joessattes.github.io/Sattaya-AI-Website/","https://github.com/JoesSattes"]},
  {"@type":"SoftwareSourceCode","name":"AI Model Explorer source","codeRepository":"https://github.com/JoesSattes/ai-model-explorer","programmingLanguage":"JavaScript","license":"https://opensource.org/licenses/MIT","author":{"@id":"https://joessattes.github.io/Sattaya-AI-Website/#person"}},
- {"@type":"FAQPage","mainEntity":[
-  {"@type":"Question","name":"What does AI Model Explorer do?","acceptedAnswer":{"@type":"Answer","text":"It splits an AI model into its parts — input, embedding, encoder or decoder layers, attention, feed-forward, output head — and shows the real weights, compute, TFLite op count and precision of each part, with a play-through of what goes in and comes out."}},
-  {"@type":"Question","name":"Which models can it read?","acceptedAnswer":{"@type":"Answer","text":"Any .tflite (LiteRT) file, any Hugging Face repository with safetensors weights (only the header is read), or a pasted config.json for common families such as Llama, Qwen, Gemma, Mistral, GPT-2, BERT, ViT, Whisper, BART and T5."}},
-  {"@type":"Question","name":"Does my model leave my computer?","acceptedAnswer":{"@type":"Answer","text":"No. Files are parsed in the browser. For Hugging Face repositories only the safetensors header (tensor names, shapes and dtypes) is requested."}},
-  {"@type":"Question","name":"Who made it?","acceptedAnswer":{"@type":"Answer","text":"Sattaya Singkul, for the workshop “Squeeze Until It Breaks” at AI Expo Thailand 2026. MIT licensed."}}]}
+ {"@type": "FAQPage", "inLanguage": "th", "mainEntity": [{"@type": "Question", "name": "ต้องโหลดโมเดลก่อนไหม", "acceptedAnswer": {"@type": "Answer", "text": "ไม่ต้อง สำหรับ repo บน Hugging Face เว็บขอแค่ไบต์ส่วน header ของแต่ละไฟล์ ปกติรวมไม่ถึง 200 KB แม้โมเดลจะใหญ่หลายร้อย GB ก็ตาม"}}, {"@type": "Question", "name": "ไฟล์ของฉันถูกส่งขึ้นเซิร์ฟเวอร์ไหม", "acceptedAnswer": {"@type": "Answer", "text": "ไม่ ไฟล์ที่ลากมาวางถูกอ่านในเบราว์เซอร์ของคุณเอง ไม่มีเซิร์ฟเวอร์ และโมเดลที่เปิดไว้จะถูกเก็บในเบราว์เซอร์ เข้าครั้งหน้าไม่ต้องโหลดใหม่"}}, {"@type": "Question", "name": "ต่างจาก Netron หรือ Model Explorer ของ Google อย่างไร", "acceptedAnswer": {"@type": "Answer", "text": "สองตัวนั้นวาดกราฟ operator จากไฟล์โมเดลที่คุณมีอยู่แล้ว เว็บนี้เริ่มจากชื่อ repo โหลดแค่ header แล้วจัด tensor เป็นส่วนของสถาปัตยกรรมพร้อมขนาดและ precision จึงใช้กับโมเดลหลายแสนล้าน parameter ได้โดยไม่ต้องมีไฟล์"}}, {"@type": "Question", "name": "ใช้ฟรีไหม เอาโค้ดไปใช้ได้หรือเปล่า", "acceptedAnswer": {"@type": "Answer", "text": "ฟรี โค้ดเป็น MIT License อยู่บน GitHub ถ้านำไปใช้ในงานวิจัย ช่วยอ้างอิง paper ด้วย"}}, {"@type": "Question", "name": "ใครทำ", "acceptedAnswer": {"@type": "Answer", "text": "Sattaya Singkul ทำสำหรับ workshop “Squeeze Until It Breaks” ที่งาน AI Expo Thailand 2026"}}]},
+ {"@type": "ScholarlyArticle", "headline": "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", "author": {"@id": "https://joessattes.github.io/Sattaya-AI-Website/#person"}, "datePublished": "2026-11", "inLanguage": "en", "url": "https://github.com/JoesSattes/ai-model-explorer/tree/main/paper", "about": {"@id": "https://joessattes.github.io/ai-model-explorer/#app"}}
 ]}
 </script>
 <style>
@@ -241,6 +242,7 @@ footer{padding:44px 0 40px;color:var(--soft);font-size:14.5px;border-top:1px sol
 footer .fname{font-size:40px;font-weight:700;letter-spacing:-.03em;color:var(--ink);margin-bottom:10px}
 footer .fl{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}footer a{color:var(--ink)}
 .credit a{color:var(--ink)}
+#about .about{max-width:860px;padding:40px 0 10px}#about h2{font-size:26px;margin:28px 0 10px;color:var(--ink)}#about h3{font-size:17px;margin:18px 0 4px;color:var(--ink)}#about p{color:var(--soft);line-height:1.65;margin:0 0 10px}#about a{color:var(--ink)}
 footer .cite{margin-top:16px;max-width:860px}footer .cite summary{cursor:pointer;color:var(--ink);font-weight:600}footer .citeref{margin:10px 0 8px;color:var(--soft)}
 footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,127,127,.25));border-radius:10px;padding:12px 14px;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);white-space:pre-wrap;word-break:break-word;margin-bottom:8px}
 @media (max-width:1100px){.hgrid{grid-template-columns:1fr}.iogrid{grid-template-columns:1fr 1fr}.iomid{grid-column:1/-1;order:-1}.ionums{grid-column:1/-1}.xdg,.agrid{grid-template-columns:1fr}.cgrid{grid-template-columns:1fr 1fr}.qplay,.rgrid{grid-template-columns:1fr}#cur{grid-template-columns:1fr}}
@@ -258,7 +260,7 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
 <body>
 <nav class="top"><div class="wrap">
   <a class="brand" href="#top"><svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="10" fill="var(--ink)"/><rect x="12" y="14" width="9" height="36" fill="var(--enc)"/><rect x="27.5" y="14" width="9" height="36" fill="var(--ground)"/><rect x="43" y="14" width="9" height="36" fill="var(--dec)"/></svg><span data-i="brand">AI Model Explorer</span></a>
-  <a class="l" href="#arch" data-i="nav_arch">Anatomy</a><a class="l" href="#big" data-i="nav_big">Big picture</a><a class="l" href="#map" data-i="nav_map">Layer map</a><a class="l" href="#concepts" data-i="nav_concepts">Concepts</a><a class="l" href="#report" data-i="nav_report">Report</a>
+  <a class="l" href="#arch" data-i="nav_arch">โครงสร้าง</a><a class="l" href="#big" data-i="nav_big">ภาพรวม</a><a class="l" href="#map" data-i="nav_map">Layer map</a><a class="l" href="#concepts" data-i="nav_concepts">แนวคิด</a><a class="l" href="#report" data-i="nav_report">รายงาน</a>
   <span class="sp"></span><span id="navModel"></span>
   <button class="theme" id="themeBtn" type="button" aria-label="Theme"><svg class="sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
   <div class="lang" role="group" aria-label="Language"><button data-lang="th">TH</button><button data-lang="en">EN</button></div>
@@ -268,15 +270,15 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
   <div class="hgrid">
     <div>
       <h1 data-ih="hero_h1">AI Model Explorer</h1>
-      <p class="sub" data-i="hero_sub"></p>
-      <label class="xk" for="hf" data-i="pick_own">Hugging Face repo</label>
-      <div class="own"><input id="hf" data-iph="hf_ph" placeholder="Hugging Face repo" autocomplete="off"><button class="btn primary" id="hfGo" data-i="load">Load</button></div>
+      <p class="sub" data-i="hero_sub">เปิดดูโครงสร้างของโมเดลใดก็ได้บน Hugging Face: มีกี่ส่วน แต่ละส่วนทำอะไร ใหญ่แค่ไหน โดยไม่ต้องดาวน์โหลด weight</p>
+      <label class="xk" for="hf" data-i="pick_own">repo บน Hugging Face</label>
+      <div class="own"><input id="hf" data-iph="hf_ph" placeholder="repo บน Hugging Face เช่น nvidia/parakeet-tdt-0.6b-v3" autocomplete="off"><button class="btn primary" id="hfGo" data-i="load">โหลด</button></div>
       <div class="own">
-        <label class="btn sm" for="file"><span data-i="upload">Upload</span></label><input type="file" id="file" accept=".tflite,.safetensors" multiple hidden>
-        <button class="btn sm" id="cfgOpen"><span data-i="paste_cfg">Paste config.json</span></button>
+        <label class="btn sm" for="file"><span data-i="upload">อัปโหลด .tflite / .safetensors</span></label><input type="file" id="file" accept=".tflite,.safetensors" multiple hidden>
+        <button class="btn sm" id="cfgOpen"><span data-i="paste_cfg">วาง config.json</span></button>
       </div>
       <div id="ownNote" role="status" aria-live="polite"></div>
-      <p class="howread" data-ih="how_read"></p>
+      <p class="howread" data-ih="how_read"><b>อ่านอะไรบ้าง</b> header ของ safetensors (ชื่อ, shape, dtype ของทุก tensor) กับ config.json รวมกันปกติไม่ถึง 200 KB ส่วนไฟล์ .pt อ่านแค่สารบัญ ทุกอย่างประมวลผลในเบราว์เซอร์</p>
     </div>
     <div class="panel lib" id="picker" aria-label="Model library"></div>
   </div>
@@ -284,67 +286,79 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
 
 <main>
 <section id="arch"><div class="wrap">
-  <h2 class="sec" data-i="arch_h2"></h2><p class="lead" data-i="arch_lead"></p>
+  <h2 class="sec" data-i="arch_h2">โครงสร้างของโมเดล</h2><p class="lead" data-i="arch_lead">แต่ละกล่องคือหนึ่งส่วนของโมเดล เรียงตามทางที่ข้อมูลไหล แถบสีคือชนิดของแต่ละ layer คลิกกล่องเพื่อดูว่าข้างในมีอะไร และค่าแต่ละค่ามาจากไหน</p>
   <div class="panel" id="cur"></div>
   <div class="panel" id="archBox"></div>
 </div></section>
 
 <section id="big"><div class="wrap">
   <h2 class="sec" id="bigH2"></h2>
-  <p class="lead" data-i="big_lead"></p>
+  <p class="lead" data-i="big_lead">กด ▶ Play เพื่อเดินทีละส่วน: แต่ละส่วนรับอะไรเข้า ส่งอะไรออก และทำไปทำไม · คลิกส่วนไหนก็ได้เพื่อเปิดดูข้างใน · เปลี่ยน lens เพื่อดูว่า weight, compute, จำนวน op หรือ precision อยู่ตรงไหน</p>
   <div class="xbar"><span class="xk" data-i="lens">lens</span>
     <button class="chip" data-xl="weights" data-i="lens_weights">Weights</button><button class="chip" data-xl="compute" data-i="lens_compute">Compute</button><button class="chip" data-xl="ops" data-i="lens_ops">TFLite ops</button><button class="chip" data-xl="precision" data-i="lens_precision">Precision</button><button class="chip" data-xl="fragility" data-i="lens_fragility">Fragility</button>
     <span class="xsay" id="lensSay"></span></div>
   <div class="panel ov"><div class="hscroll"><svg id="xsvg" viewBox="0 0 1600 520" role="img" aria-label="Model parts overview"></svg></div><div class="xstrip hscroll" id="xstrip"></div></div>
-  <div class="playbar"><button class="btn primary" id="bPlay" data-i="play">Play</button><button class="btn sm" id="bPrev" data-i="prev">Prev</button><button class="btn sm" id="bNext" data-i="next">Next</button><div id="bDots"></div>
-    <label class="slider"><span data-i="tokens_per">tokens per sentence</span> <input type="range" id="tok" min="5" max="150" value="40"> <b id="tokV">40</b></label></div>
+  <div class="playbar"><button class="btn primary" id="bPlay" data-i="play">▶ Play</button><button class="btn sm" id="bPrev" data-i="prev">‹ ก่อนหน้า</button><button class="btn sm" id="bNext" data-i="next">ถัดไป ›</button><div id="bDots"></div>
+    <label class="slider"><span data-i="tokens_per">token ต่อประโยค</span> <input type="range" id="tok" min="5" max="150" value="40"> <b id="tokV">40</b></label></div>
   <div class="panel" id="xio"></div>
   <div class="panel xdet" id="xdetail"></div>
 </div></section>
 
 <section id="map"><div class="wrap">
-  <h2 class="sec" data-i="map_h2"></h2><p class="lead" data-i="map_lead"></p>
+  <h2 class="sec" data-i="map_h2">ทุก layer วาดตามขนาดจริง คลิกเพื่อเปิด</h2><p class="lead" data-i="map_lead">ความกว้างของบล็อก = ค่าจริงของ lens ที่เลือก · แถวบน = encoder (ถ้ามี) · แถวล่าง = decoder (ถ้ามี)</p>
   <div class="xbar"><button class="chip" data-ml="size" data-i="map_size">Size</button><button class="chip" data-ml="read" data-i="map_read">Bytes read</button><button class="chip" data-ml="prec" data-i="map_prec">Precision</button><button class="chip" data-ml="frag" data-i="map_frag">Fragility</button>
-    <span style="flex:1"></span><label class="slider"><span data-i="tokens_per">tokens per sentence</span> <input type="range" id="tok2" min="5" max="150" value="40"> <b id="tokV2">40</b></label></div>
+    <span style="flex:1"></span><label class="slider"><span data-i="tokens_per">token ต่อประโยค</span> <input type="range" id="tok2" min="5" max="150" value="40"> <b id="tokV2">40</b></label></div>
   <div class="panel" style="margin-top:12px;padding:18px 20px 14px"><div class="hscroll"><svg id="mapSvg" viewBox="0 0 1280 300"></svg></div></div>
   <p id="mapNote"></p>
 </div></section>
 
 <section id="concepts"><div class="wrap">
-  <h2 class="sec" data-i="c_h2"></h2><p class="lead" data-i="c_lead"></p>
+  <h2 class="sec" data-i="c_h2">คำศัพท์ที่ต้องรู้ เป็นภาพเคลื่อนไหว</h2><p class="lead" data-i="c_lead">ตัวเลขในการ์ดมาจากโมเดลที่เลือกอยู่ อันสุดท้ายลองเล่นเองได้</p>
   <span id="cFfnD" hidden>1024</span><span id="cFfnF" hidden>4096</span>
   <div class="cgrid">
     <div class="panel ccard"><canvas id="cSpec" width="600" height="300"></canvas><h4 id="c1t"></h4><p id="c1p"></p></div>
-    <div class="panel ccard"><svg id="cAttn" viewBox="0 0 600 300"></svg><h4 data-i="c_attn_t"></h4><p id="c2p"></p></div>
-    <div class="panel ccard"><svg id="cFfn" viewBox="0 0 600 300"></svg><h4 data-i="c_ffn_t"></h4><p id="c3p"></p></div>
-    <div class="panel ccard"><svg id="cKv" viewBox="0 0 600 300"></svg><h4 data-i="c_kv_t"></h4><p id="c4p"></p></div>
-    <div class="panel ccard"><svg id="cTie" viewBox="0 0 600 300"></svg><h4 data-i="c_tie_t"></h4><p id="c5p"></p></div>
-    <div class="panel ccard"><svg id="cSeam" viewBox="0 0 600 300"></svg><h4 data-i="c_seam_t"></h4><p id="c6p"></p></div>
+    <div class="panel ccard"><svg id="cAttn" viewBox="0 0 600 300"></svg><h4 data-i="c_attn_t">Attention</h4><p id="c2p"></p></div>
+    <div class="panel ccard"><svg id="cFfn" viewBox="0 0 600 300"></svg><h4 data-i="c_ffn_t">Feed-forward</h4><p id="c3p"></p></div>
+    <div class="panel ccard"><svg id="cKv" viewBox="0 0 600 300"></svg><h4 data-i="c_kv_t">KV cache</h4><p id="c4p"></p></div>
+    <div class="panel ccard"><svg id="cTie" viewBox="0 0 600 300"></svg><h4 data-i="c_tie_t">Tied embedding</h4><p id="c5p"></p></div>
+    <div class="panel ccard"><svg id="cSeam" viewBox="0 0 600 300"></svg><h4 data-i="c_seam_t">Seams</h4><p id="c6p"></p></div>
     <div class="panel qplay">
       <div><canvas id="qCv" width="1200" height="560"></canvas></div>
-      <div><h4 style="font-size:21px;font-weight:600;margin:0 0 10px" data-i="q_h"></h4>
+      <div><h4 style="font-size:21px;font-weight:600;margin:0 0 10px" data-i="q_h">ปัด 64 weights ให้เหลือน้อยระดับ</h4>
         <label class="slider" style="margin:10px 0"><span data-i="q_bits">bits</span> <input type="range" id="qBits" min="2" max="8" value="4"> <b id="qBitsV">4</b></label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0"><button class="chip" id="qOut"></button><button class="chip" id="qBlock"></button><button class="chip" id="qNew" data-i="q_new"></button></div>
-        <div class="qstat"><div class="fact"><b id="qLev">15</b><span data-i="q_levels"></span></div><div class="fact"><b id="qErr">–</b><span data-i="q_err"></span></div><div class="fact"><b id="qZero">–</b><span data-i="q_zero"></span></div><div class="fact"><b id="qSize">–</b><span data-i="q_bytes"></span></div></div>
-        <p style="color:var(--soft);font-size:14.5px;margin-top:12px" data-i="q_help"></p></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0"><button class="chip" id="qOut"></button><button class="chip" id="qBlock"></button><button class="chip" id="qNew" data-i="q_new">สุ่มใหม่</button></div>
+        <div class="qstat"><div class="fact"><b id="qLev">15</b><span data-i="q_levels">ระดับ</span></div><div class="fact"><b id="qErr">–</b><span data-i="q_err">error สัมพัทธ์</span></div><div class="fact"><b id="qZero">–</b><span data-i="q_zero">weights ที่ถูกปัดเป็น 0</span></div><div class="fact"><b id="qSize">–</b><span data-i="q_bytes">byte ต่อ weight</span></div></div>
+        <p style="color:var(--soft);font-size:14.5px;margin-top:12px" data-i="q_help">จุดฟ้า = ค่าเดิม · เส้นชมพู = ค่าหลังปัด · เปิด outlier แล้วดูค่าเล็กๆ ถูกปัดเป็น 0 · เปลี่ยนเป็น scale ทุก 32 ค่าแล้วดู error ลดลง</p></div>
     </div>
   </div>
 </div></section>
 
 <section id="report"><div class="wrap">
-  <h2 class="sec" data-i="r_h2"></h2><p class="lead" data-i="r_lead"></p>
-  <div class="rgrid"><div><div class="ahead" data-i="r_insights"></div><div id="rIns"></div></div><div><div class="ahead" data-i="r_ops"></div><div id="rOps"></div></div></div>
-  <div class="xbar" style="margin-top:20px"><span style="flex:1"></span><button class="btn sm" id="copyMd" data-i="copy_md"></button></div>
+  <h2 class="sec" data-i="r_h2">ทุกอย่างไปอยู่ตรงไหน</h2><p class="lead" data-i="r_lead">สรุปตัวเลขของโมเดลที่เลือก คัดลอกเป็น Markdown ไปใส่สไลด์หรือรายงานได้</p>
+  <div class="rgrid"><div><div class="ahead" data-i="r_insights">ข้อสังเกต</div><div id="rIns"></div></div><div><div class="ahead" data-i="r_ops">ชนิด op</div><div id="rOps"></div></div></div>
+  <div class="xbar" style="margin-top:20px"><span style="flex:1"></span><button class="btn sm" id="copyMd" data-i="copy_md">คัดลอกตาราง (Markdown)</button></div>
   <div class="panel" style="padding:14px 16px;margin-top:10px" id="rTable"></div>
+</div></section>
+<section id="about"><div class="wrap about">
+  <h2 data-i="about_h">เว็บนี้ทำอะไร</h2>
+  <p data-i="about_p1">วางชื่อ repo บน Hugging Face หรือลากไฟล์ .safetensors, .tflite หรือ config.json มาวาง เว็บจะอ่านแค่ header ของไฟล์ safetensors ซึ่งมีชื่อ ขนาด และชนิดข้อมูลของทุก tensor รวมกันไม่กี่สิบ KB จึงไม่ต้องโหลด weight เลย จากรายการนี้เว็บหา layer ที่ซ้ำกัน แยกว่าแต่ละส่วนคือ attention, feed-forward, mixture of experts, SSM หรือ linear attention, convolution, embedding, norm หรือ output head และนับจำนวน parameter ได้ตรง รวมถึงโมเดลที่เก็บแบบ FP8, NVFP4, GPTQ, AWQ, MXFP4, MLX และ bitsandbytes</p>
+  <p data-i="about_p2">ใช้ได้หลายตระกูล: LLM แบบ decoder-only เช่น Llama, Qwen, DeepSeek, Gemma, gpt-oss · โมเดลเสียงเช่น Whisper, Parakeet · โมเดลภาพ+ภาษา · diffusion transformer · embedding model ทุกค่าบนหน้ามีป้ายบอกว่าวัดจาก weight, อ่านจาก config.json หรือประมาณ</p>
+  <p data-ih="about_p3"><b>แม่นแค่ไหน</b> ทดสอบกับ 510 สถาปัตยกรรมใน transformers: แยกส่วนของ tensor ถูก 96.8% ขณะที่กฎซึ่งอ่านแค่ชื่อ tensor ได้ 82.3% และแม้เปลี่ยนชื่อทุก tensor เป็นคำสุ่มก็ยังถูก 95.0% กับโมเดลยอดนิยมบน Hugging Face 191 ตัว จำนวน parameter ตรงกับตัวเลขของ Hub 163 จาก 170 ตัว วิธีและผลทั้งหมดอยู่ใน <a href="https://github.com/JoesSattes/ai-model-explorer/tree/main/paper">paper</a></p>
+  <h2 data-i="faq_h">คำถามที่พบบ่อย</h2>
+  <h3 data-i="faq_q1">ต้องโหลดโมเดลก่อนไหม</h3><p data-i="faq_a1">ไม่ต้อง สำหรับ repo บน Hugging Face เว็บขอแค่ไบต์ส่วน header ของแต่ละไฟล์ ปกติรวมไม่ถึง 200 KB แม้โมเดลจะใหญ่หลายร้อย GB ก็ตาม</p>
+  <h3 data-i="faq_q2">ไฟล์ของฉันถูกส่งขึ้นเซิร์ฟเวอร์ไหม</h3><p data-i="faq_a2">ไม่ ไฟล์ที่ลากมาวางถูกอ่านในเบราว์เซอร์ของคุณเอง ไม่มีเซิร์ฟเวอร์ และโมเดลที่เปิดไว้จะถูกเก็บในเบราว์เซอร์ เข้าครั้งหน้าไม่ต้องโหลดใหม่</p>
+  <h3 data-i="faq_q3">ต่างจาก Netron หรือ Model Explorer ของ Google อย่างไร</h3><p data-i="faq_a3">สองตัวนั้นวาดกราฟ operator จากไฟล์โมเดลที่คุณมีอยู่แล้ว เว็บนี้เริ่มจากชื่อ repo โหลดแค่ header แล้วจัด tensor เป็นส่วนของสถาปัตยกรรมพร้อมขนาดและ precision จึงใช้กับโมเดลหลายแสนล้าน parameter ได้โดยไม่ต้องมีไฟล์</p>
+  <h3 data-i="faq_q4">ใช้ฟรีไหม เอาโค้ดไปใช้ได้หรือเปล่า</h3><p data-i="faq_a4">ฟรี โค้ดเป็น MIT License อยู่บน GitHub ถ้านำไปใช้ในงานวิจัย ช่วยอ้างอิง paper ด้วย</p>
+  <h3 data-i="faq_q5">ใครทำ</h3><p data-i="faq_a5">Sattaya Singkul ทำสำหรับ workshop “Squeeze Until It Breaks” ที่งาน AI Expo Thailand 2026</p>
 </div></section>
 </main>
 
 <footer><div class="wrap">
   <div class="fname">AI Model Explorer</div>
   <div class="credit">© 2026 <a href="https://joessattes.github.io/Sattaya-AI-Website/" rel="author">Sattaya Singkul</a> · <a href="https://github.com/JoesSattes/ai-model-explorer/blob/main/LICENSE" rel="license">MIT License</a></div>
-  <p style="margin-top:8px" data-i="footer"></p>
+  <p style="margin-top:8px" data-i="footer">ทำสำหรับ “Squeeze Until It Breaks” · AI Expo Thailand 2026 · Sattaya Singkul · template Whisper วิเคราะห์จากกราฟ .tflite ของสถาปัตยกรรมจริงด้วย weight สุ่ม: ขนาด dtype op และความเร็วเป็นของจริง ความแม่นยำไม่ใช่</p>
   <div class="fl"><a href="https://joessattes.github.io/Sattaya-AI-Website/">Portfolio — Sattaya Singkul</a><a href="https://github.com/JoesSattes/ai-model-explorer">GitHub</a><a href="https://github.com/JoesSattes/ai-model-explorer/tree/main/paper">Paper</a><a href="llms.txt">llms.txt</a></div>
-  <details class="cite" id="cite"><summary data-i="cite_t">Cite this work</summary>
+  <details class="cite" id="cite"><summary data-i="cite_t">อ้างอิงงานนี้</summary>
     <p class="citeref">Sattaya Singkul. 2026. <i>Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy</i>. Preprint.</p>
     <pre id="citeBib">@misc{singkul2026reading,
   title  = {Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy},
@@ -353,12 +367,12 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
   note   = {Preprint},
   url    = {https://github.com/JoesSattes/ai-model-explorer/tree/main/paper}
 }</pre>
-    <button class="btn sm" id="copyBib" data-i="cite_copy">Copy BibTeX</button>
+    <button class="btn sm" id="copyBib" data-i="cite_copy">คัดลอก BibTeX</button>
   </details>
 </div></footer>
 
-<div id="cfgDlg"><div class="box"><div style="display:flex;justify-content:space-between;align-items:center"><h3 data-i="cfg_title">Paste config.json</h3><button class="btn sm" id="cfgClose">✕</button></div>
-  <p style="color:var(--soft);font-size:14px;margin-top:6px" data-i="cfg_help"></p><textarea id="cfgTxt" spellcheck="false" placeholder='{"model_type": "qwen2", "hidden_size": 896, ...}'></textarea><div id="cfgErr"></div><button class="btn primary" id="cfgGo" data-i="cfg_go">Build</button></div></div>
+<div id="cfgDlg"><div class="box"><div style="display:flex;justify-content:space-between;align-items:center"><h3 data-i="cfg_title">วาง config.json</h3><button class="btn sm" id="cfgClose">✕</button></div>
+  <p style="color:var(--soft);font-size:14px;margin-top:6px" data-i="cfg_help">เปิดหน้า repo บน Hugging Face → Files → config.json → คัดลอกทั้งหมดมาวาง</p><textarea id="cfgTxt" spellcheck="false" placeholder='{"model_type": "qwen2", "hidden_size": 896, ...}'></textarea><div id="cfgErr"></div><button class="btn primary" id="cfgGo" data-i="cfg_go">สร้างโมเดล</button></div></div>
 
 <noscript><div class="wrap" style="padding:40px 0"><h2>AI Model Explorer</h2><p>An interactive tool by Sattaya Singkul that splits any AI model — Whisper, Llama, GPT-2, BERT, ViT and more — into its parts and shows real weights, compute, TFLite ops and precision. JavaScript is required.</p></div></noscript>
 
@@ -505,6 +519,21 @@ window.I18N = {
   e_blocked: ["<b>หน้านี้ต่อ Hugging Face ไม่ได้</b> — หน้า artifact บล็อกการเชื่อมต่อออกไปเว็บอื่น · ทางเลือก: กด “วาง config.json” แล้ววางเนื้อหา config.json จากหน้า repo หรือเปิด <span class=\"mono\">site/index.html</span> จาก repo บนเครื่องตัวเอง", "<b>This page can't reach Hugging Face</b> — the artifact frame blocks outside connections. Instead: press “Paste config.json” and paste the repo's config.json, or open <span class=\"mono\">site/index.html</span> from the repo locally."],
   e_read: ["อ่านไม่ได้:", "Could not read:"], e_cfg: ["config นี้ยังไม่รองรับ: ", "Config not supported yet: "],
   loading: ["กำลังโหลด…", "Loading…"], cfg_title: ["วาง config.json", "Paste config.json"], cfg_help: ["เปิดหน้า repo บน Hugging Face → Files → config.json → คัดลอกทั้งหมดมาวาง", "Open the repo on Hugging Face → Files → config.json → copy everything and paste it here."], cfg_go: ["สร้างโมเดล", "Build"],
+  about_h: ["เว็บนี้ทำอะไร", "What this tool does"],
+  about_p1: ["วางชื่อ repo บน Hugging Face หรือลากไฟล์ .safetensors, .tflite หรือ config.json มาวาง เว็บจะอ่านแค่ header ของไฟล์ safetensors ซึ่งมีชื่อ ขนาด และชนิดข้อมูลของทุก tensor รวมกันไม่กี่สิบ KB จึงไม่ต้องโหลด weight เลย จากรายการนี้เว็บหา layer ที่ซ้ำกัน แยกว่าแต่ละส่วนคือ attention, feed-forward, mixture of experts, SSM หรือ linear attention, convolution, embedding, norm หรือ output head และนับจำนวน parameter ได้ตรง รวมถึงโมเดลที่เก็บแบบ FP8, NVFP4, GPTQ, AWQ, MXFP4, MLX และ bitsandbytes", "Paste a Hugging Face repo id, or drop a .safetensors, .tflite or config.json file. The page reads only the safetensors header: a few tens of kilobytes that list every tensor's name, shape and type. The weights are never downloaded. From that list it finds the repeated layers, labels each part as attention, feed-forward, mixture of experts, SSM or linear attention, convolution, embedding, norm or output head, and counts parameters exactly, including checkpoints stored as FP8, NVFP4, GPTQ, AWQ, MXFP4, MLX or bitsandbytes."],
+  about_p2: ["ใช้ได้หลายตระกูล: LLM แบบ decoder-only เช่น Llama, Qwen, DeepSeek, Gemma, gpt-oss · โมเดลเสียงเช่น Whisper, Parakeet · โมเดลภาพ+ภาษา · diffusion transformer · embedding model ทุกค่าบนหน้ามีป้ายบอกว่าวัดจาก weight, อ่านจาก config.json หรือประมาณ", "It works across model families: decoder-only LLMs such as Llama, Qwen, DeepSeek, Gemma and gpt-oss, speech models such as Whisper and Parakeet, vision-language models, diffusion transformers and embedding models. Every value on the page says whether it was measured from the weights, read from config.json, or estimated."],
+  about_p3: ["<b>แม่นแค่ไหน</b> ทดสอบกับ 510 สถาปัตยกรรมใน transformers: แยกส่วนของ tensor ถูก 96.8% ขณะที่กฎซึ่งอ่านแค่ชื่อ tensor ได้ 82.3% และแม้เปลี่ยนชื่อทุก tensor เป็นคำสุ่มก็ยังถูก 95.0% กับโมเดลยอดนิยมบน Hugging Face 191 ตัว จำนวน parameter ตรงกับตัวเลขของ Hub 163 จาก 170 ตัว วิธีและผลทั้งหมดอยู่ใน <a href=\"https://github.com/JoesSattes/ai-model-explorer/tree/main/paper\">paper</a>", "<b>How accurate is it?</b> On 510 architectures from the transformers library, 96.8% of tensors get the right role, against 82.3% for the best rule set that reads names only, and 95.0% when every name is replaced by a random token. On 191 popular Hugging Face checkpoints, parameter totals match the Hub's own count for 163 of 170. The method and full results are in the <a href=\"https://github.com/JoesSattes/ai-model-explorer/tree/main/paper\">paper</a>."],
+  faq_h: ["คำถามที่พบบ่อย", "FAQ"],
+  faq_q1: ["ต้องโหลดโมเดลก่อนไหม", "Do I need to download the model?"],
+  faq_a1: ["ไม่ต้อง สำหรับ repo บน Hugging Face เว็บขอแค่ไบต์ส่วน header ของแต่ละไฟล์ ปกติรวมไม่ถึง 200 KB แม้โมเดลจะใหญ่หลายร้อย GB ก็ตาม", "No. For a Hugging Face repo the page requests only the header bytes of each file, usually under 200 KB in total, even for checkpoints of hundreds of gigabytes."],
+  faq_q2: ["ไฟล์ของฉันถูกส่งขึ้นเซิร์ฟเวอร์ไหม", "Does my file leave my computer?"],
+  faq_a2: ["ไม่ ไฟล์ที่ลากมาวางถูกอ่านในเบราว์เซอร์ของคุณเอง ไม่มีเซิร์ฟเวอร์ และโมเดลที่เปิดไว้จะถูกเก็บในเบราว์เซอร์ เข้าครั้งหน้าไม่ต้องโหลดใหม่", "No. Files you drop are parsed in your browser; there is no server. Models you open are kept in your browser, so the next visit does not need to load them again."],
+  faq_q3: ["ต่างจาก Netron หรือ Model Explorer ของ Google อย่างไร", "How is it different from Netron or Google's Model Explorer?"],
+  faq_a3: ["สองตัวนั้นวาดกราฟ operator จากไฟล์โมเดลที่คุณมีอยู่แล้ว เว็บนี้เริ่มจากชื่อ repo โหลดแค่ header แล้วจัด tensor เป็นส่วนของสถาปัตยกรรมพร้อมขนาดและ precision จึงใช้กับโมเดลหลายแสนล้าน parameter ได้โดยไม่ต้องมีไฟล์", "Those tools draw the operator graph of a model file you already have. This page starts from a repo name, reads only headers, and groups tensors into architectural parts with sizes and precision, so it works on checkpoints with hundreds of billions of parameters without having the files."],
+  faq_q4: ["ใช้ฟรีไหม เอาโค้ดไปใช้ได้หรือเปล่า", "Is it free, and can I reuse the code?"],
+  faq_a4: ["ฟรี โค้ดเป็น MIT License อยู่บน GitHub ถ้านำไปใช้ในงานวิจัย ช่วยอ้างอิง paper ด้วย", "Yes. The code is MIT licensed on GitHub. If you use it in research, please cite the paper."],
+  faq_q5: ["ใครทำ", "Who made it?"],
+  faq_a5: ["Sattaya Singkul ทำสำหรับ workshop “Squeeze Until It Breaks” ที่งาน AI Expo Thailand 2026", "Sattaya Singkul, for the workshop “Squeeze Until It Breaks” at AI Expo Thailand 2026."],
   cite_t: ["อ้างอิงงานนี้", "Cite this work"], cite_copy: ["คัดลอก BibTeX", "Copy BibTeX"], cite_fail: ["คัดลอกไม่ได้ — เลือกข้อความเอง", "Could not copy — select the text"],
   footer: ["ทำสำหรับ “Squeeze Until It Breaks” · AI Expo Thailand 2026 · Sattaya Singkul · template Whisper วิเคราะห์จากกราฟ .tflite ของสถาปัตยกรรมจริงด้วย weight สุ่ม: ขนาด dtype op และความเร็วเป็นของจริง ความแม่นยำไม่ใช่", "Built for “Squeeze Until It Breaks” · AI Expo Thailand 2026 · Sattaya Singkul · The Whisper template comes from the real architecture's .tflite graph with random weights: sizes, dtypes, ops and speeds are real, accuracy is not."],
 
@@ -527,7 +556,7 @@ window.I18N = {
   brand: ["AI Model Explorer", "AI Model Explorer"],
   grp_Attention: ["attention (รวม DiT)", "attention (incl. DiT)"], grp_SSM: ["SSM / linear attention", "SSM / linear attention"], grp_MoE: ["mixture of experts", "mixture of experts"], grp_Conformer: ["conformer", "conformer"], grp_Other: ["อื่นๆ (FFN, conv, RNN)", "other (FFN, conv, RNN)"]
 };
-window.LANG = (() => { try { return localStorage.getItem("mx_lang") || "th"; } catch (e) { return "th"; } })();
+window.LANG = (() => { const p = window.PAGE_LANG && !/{{/.test(window.PAGE_LANG) ? window.PAGE_LANG : null; if (p && /^https?:$/.test(location.protocol)) return p; try { return localStorage.getItem("mx_lang") || p || "th"; } catch (e) { return p || "th"; } })();
 window.t = (k, v) => { const e = I18N[k]; let s = e ? e[LANG === "en" ? 1 : 0] : k; if (v) Object.entries(v).forEach(([a, b]) => s = s.split("{" + a + "}").join(b)); return s; };
 window.applyI18n = () => {
   document.documentElement.lang = LANG;
@@ -2649,7 +2678,7 @@ function renderAll() { applyI18n(); renderPicker(); renderHero(); renderArch(); 
 function wire() {
   { const tb = $("#themeBtn"); if (tb) { const lab = () => { const d = K.ink === PAL.dark.ink; tb.title = LANG === "th" ? (d ? "สลับเป็นธีมสว่าง" : "สลับเป็นธีมมืด") : (d ? "Switch to light theme" : "Switch to dark theme"); tb.setAttribute("aria-label", tb.title); };
     lab(); tb.onclick = () => { const nt = K.ink === PAL.dark.ink ? "light" : "dark"; setTheme(nt); try { localStorage.setItem("mx_theme", nt); } catch (e) {} renderAll(); lab(); }; } }
-  $$("[data-lang]").forEach(b => b.onclick = () => { LANG = b.dataset.lang; try { localStorage.setItem("mx_lang", LANG); } catch (e) {} renderAll(); });
+  $$("[data-lang]").forEach(b => b.onclick = () => { if (/^https?:$/.test(location.protocol) && window.PAGE_ALT && b.dataset.lang !== window.PAGE_LANG) { try { localStorage.setItem("mx_lang", b.dataset.lang); } catch (e) {} location.href = window.PAGE_ALT + location.hash; return; } LANG = b.dataset.lang; try { localStorage.setItem("mx_lang", LANG); } catch (e) {} renderAll(); });
   $$("[data-xl]").forEach(b => b.onclick = () => { S.lens = b.dataset.xl; pref("lens", S.lens); renderBig(); renderDetail(); });
   $$("[data-ml]").forEach(b => b.onclick = () => { S.mapLens = b.dataset.ml; renderMap(); });
   $("#bPlay").onclick = () => S.playing ? stopPlay() : startPlay();
