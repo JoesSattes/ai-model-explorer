@@ -61,10 +61,33 @@ then Download results; `node research/realbench.js export.jsonl corpus.jsonl` an
 - **Precision demos**: Whisper rehearsal models in fp32, weight-only int8, static int8 and dynamic int4
 
 ## Run locally
-Open `index.html` in a browser. To rebuild after editing `src/`: `cd src && python3 build.py`.
-To reproduce the paper's numbers: `python research/build_corpus.py corpus.jsonl`, then `node research/eval.js corpus.jsonl`
-with `--obf --nolex`, `--quant nvfp4|fp8|gptq`, `--cfg`, or a baseline: `--v1` (name rules), `--v1moe` (name rules with an MoE label)
-or `--gguf` (llama.cpp's tensor-name table, built by `python research/gguf_baseline.py`).
+**The website** needs no install: open `index.html` in a browser. After editing `src/`, rebuild with
+`cd src && python3 build.py` (standard library only).
+
+**Reproducing the paper** needs Python 3.11–3.13 and Node.js 18 or newer:
+
+```bash
+git clone https://github.com/JoesSattes/ai-model-explorer.git
+cd ai-model-explorer
+python3 -m venv .venv
+source .venv/bin/activate              # Windows PowerShell: .venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt        # PyTorch and transformers at the versions used in the paper
+```
+
+Quick check (about a minute):
+
+```bash
+python research/build_corpus.py corpus.jsonl --only gpt2,whisper,llama
+node research/eval.js corpus.jsonl     # prints macro_acc 1 for these three
+```
+
+Full run: `python research/build_corpus.py corpus.jsonl` builds all 510 architectures (tens of minutes, a few GB of RAM;
+models are created on the meta device, nothing is downloaded but configs). Then `node research/eval.js corpus.jsonl`
+with `--obf --nolex`, `--quant nvfp4|fp8|gptq`, `--cfg`, or a baseline: `--v1` (name rules), `--v1moe` (name rules
+with an MoE label) or `--gguf` (llama.cpp's tensor-name table, built by `python research/gguf_baseline.py`).
+Hub benchmark: `node research/realbench.js research/data/hub-bench-191.jsonl.gz corpus.jsonl`.
+Figures: `cd paper && python scripts/figs.py` (reads `research/res/`).
 
 ## Citation
 If you use AI Model Explorer or its recovery method, please cite the paper ([PDF](paper/manifest-anatomy-singkul-2026.pdf)):

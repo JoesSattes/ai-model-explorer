@@ -34,7 +34,7 @@ function hp(cfg) {
 }
 
 const rows = [], fails = [];
-for (const line of fs.readFileSync(args[0], "utf8").split("\n")) {
+for (const line of (args[0].endsWith(".gz") ? zlib.gunzipSync(fs.readFileSync(args[0])).toString("utf8") : fs.readFileSync(args[0], "utf8")).split("\n")) {
   if (!line.trim()) continue; const r = JSON.parse(line);
   if (!r.ok) { fails.push({repo: r.repo, cat: r.cat, err: r.err}); continue; }
   const man = JSON.parse(zlib.gunzipSync(Buffer.from(r.raw, "base64")).toString("utf8"));
