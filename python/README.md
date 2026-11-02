@@ -80,6 +80,9 @@ print(compare_table(compare(["Qwen/Qwen3-8B", "Qwen/Qwen3-30B-A3B-GPTQ-Int4"])))
 - **Comparisons and reports**: a table across many models, diagrams for slides and papers, an HTML report to share.
 - **Batch analysis and agents**: plain data from a single function call.
 
+## What is new
+Reading the header is standard practice; tools such as hf-mem estimate memory from it, and HF Viewer draws graphs from a model's config and code. This package interprets the header itself: components, block types and the role of every tensor without config or code (95% of roles still right with every tensor name hidden), exact logical parameter counts under quantized storage, KV cache from the weights including latent attention, and a check of `config.json` against the weights.
+
 ## How accurate is it?
 On 510 architectures from the transformers library, 96.8% of tensors get the right role (82.3% for the best rule
 set that reads names only, 95.0% for this method with every name replaced by a random token). Parameter totals

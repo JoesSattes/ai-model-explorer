@@ -16,6 +16,7 @@
 <p align="center">
   <a href="https://joessattes.github.io/ai-model-explorer/en/"><b>Open the web app</b></a> ·
   <a href="https://joessattes.github.io/ai-model-explorer/">ภาษาไทย</a> ·
+  <a href="#what-is-new-here">What is new</a> ·
   <a href="docs/usage.md">Docs</a> ·
   <a href="docs/how-it-works.md">How it works</a> ·
   <a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy">Paper</a>
@@ -86,6 +87,27 @@ print(compare_table(compare(["Qwen/Qwen3-8B", "Qwen/Qwen3-30B-A3B-GPTQ-Int4"])))
 ```
 Python 3.9+. No PyTorch, transformers or Node.js needed. Full reference: [docs/usage.md](docs/usage.md).
 
+## What is new here
+Reading a safetensors header is standard: the Hugging Face Hub does it to show parameter counts, and several viewers list tensor names and shapes. What this project adds is the **interpretation**: turning that list into an architecture without the model's config or code.
+
+| | Netron, Model Explorer | Safetensors viewers | [hf-mem](https://github.com/alvarobartt/hf-mem) | [HF Viewer](https://hfviewer.com) | llama.cpp name table | **AI Model Explorer** |
+|---|---|---|---|---|---|---|
+| Starts from a repo name, no weight download | no, needs the file | yes | yes | yes | n/a | **yes** |
+| What each tensor does (attention, MoE, SSM, …) | operators, not parts | no | no | from config and code | for listed families | **from the header alone** |
+| New or unknown families | yes (operators) | n/a | n/a | needs a working config and code | no | **yes** |
+| Works without tensor names | – | – | – | – | no | **95% of roles still right** |
+| Exact parameters under FP8 / NVFP4 / GPTQ | – | storage counts | storage bytes | – | – | **logical parameters, exact** |
+| KV cache per token | – | – | from config.json | – | – | **from the weights, incl. latent attention** |
+| Checks config.json against the weights | – | – | – | – | – | **yes** |
+| Published evaluation | – | – | – | – | – | **510 architectures + 191 Hub checkpoints** |
+
+The contributions, in short:
+1. **Manifest-only recovery.** Components, layer stacks, block types and a role for every tensor, from names, shapes and dtypes. Shapes carry most of the signal: with every name replaced by a random token, 95.0% of tensors still get the right role (96.8% with names; 82.3% for the best name-only rule set).
+2. **Quantized storage undone.** FP8, NVFP4, MXFP4, GPTQ, AWQ, MLX and bitsandbytes layouts are mapped back to logical tensors, so parameter counts are exact (510 of 510).
+3. **Config checked, not trusted.** Heads, KV heads and head size come from `config.json` only after they are checked against the projection widths; 5% of configs disagree with their weights.
+4. **Per-token costs from the weights.** Active parameters for mixtures of experts (multi-token-prediction layers excluded) and KV cache including latent attention, matching published figures (DeepSeek-V3 37B active, Kimi K2 32B).
+5. **One implementation, three front ends.** The same `infer.js` runs the website, the CLI and the Python API.
+
 ## What you get
 | | |
 |---|---|
@@ -110,7 +132,7 @@ Method and full results: [docs/how-it-works.md](docs/how-it-works.md) and the [p
 Run the Hub benchmark yourself at [bench.html](https://joessattes.github.io/ai-model-explorer/bench.html).
 
 ## Compared with other tools
-[Netron](https://netron.app) and Google's [Model Explorer](https://github.com/google-ai-edge/model-explorer) draw the operator graph of a model file you already have, and they are the right tools for debugging a converted graph. AI Model Explorer starts from a repo name, reads only headers, and groups tensors into architectural parts with sizes and storage formats. That makes it practical for checkpoints of hundreds of billions of parameters and for comparing many models in a script. For `.tflite` files it also shows the real op graph.
+[Netron](https://netron.app) and Google's [Model Explorer](https://github.com/google-ai-edge/model-explorer) draw the operator graph of a model file you already have, and they are the right tools for debugging a converted graph. [hf-mem](https://github.com/alvarobartt/hf-mem) is the quickest way to a memory number, and [HF Viewer](https://hfviewer.com) draws graphs from a model's config and code; see the table in [What is new here](#what-is-new-here). AI Model Explorer starts from a repo name, reads only headers, and groups tensors into architectural parts with sizes and storage formats. That makes it practical for checkpoints of hundreds of billions of parameters and for comparing many models in a script. For `.tflite` files it also shows the real op graph.
 
 ## Repository
 | Path | What |

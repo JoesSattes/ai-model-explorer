@@ -63,6 +63,8 @@ The method is described in the paper "Reading the Architecture off the Weights: 
 Engineers deploying models to phones and edge devices who need to know which parts to quantize; researchers comparing architectures; students learning how transformers, mixtures of experts and state-space models are built; anyone who wants to know what is inside a checkpoint before downloading hundreds of gigabytes.
 
 ## Compared with other tools
+Reading safetensors headers by range request is standard (the Hugging Face Hub does it to show parameter counts). hf-mem estimates inference memory from headers plus config.json; HF Viewer draws architecture graphs from a model's config and PyTorch code. AI Model Explorer interprets the header alone: it recovers components, block types and every tensor's role without config or code, counts logical parameters exactly under quantized storage, computes the KV cache from the weights (including latent attention) and checks config.json against the weights.
+
 Netron and Google's Model Explorer draw the operator graph of a model file you already have. AI Model Explorer starts from a repo name, reads only headers, and groups tensors into architectural parts with sizes and precision, so it works on checkpoints with hundreds of billions of parameters without the files. It also opens .tflite files and shows their real op graph.
 
 ## FAQ
