@@ -158,7 +158,10 @@ async function hfManifest(repo, files, prog = () => {}, opt = {}) {
   const unitOf = jb => jb.unit || jb.n.replace(/-\d{3,5}-of-\d{3,5}(?=\.)/, "-shards"), units = {}; jobs.forEach((jb, k) => (units[unitOf(jb)] = units[unitOf(jb)] || []).push(k));
   const fp = ks => ks.flatMap(k => Object.entries(res[k].tensors).filter(([n, v]) => v && v.shape && v.shape.length >= 2 && !/(scale|zero|absmax|quant|g_idx|biases)/i.test(n)).map(([, v]) => v.shape.join("x"))).sort().join(",");
   const keep = new Set(), seenFp = new Set(); let dups = 0;
-  for (const ks of Object.values(units).sort((a, b) => a.length - b.length || 0)) { const f = fp(ks); if (f && seenFp.has(f)) { dups++; continue; } seenFp.add(f); ks.forEach(k => keep.add(k)); }
+  // a second copy may use another library's layout (open_clip vs transformers fuse q/k/v differently): same element count at the repo root counts as a copy too
+  const total = ks => ks.reduce((a, k) => a + Object.values(res[k].tensors).reduce((b, v) => b + (v && v.shape ? v.shape.reduce((x, y) => x * y, 1) : 0), 0), 0), seenTot = new Set();
+  for (const ks of Object.values(units).sort((a, b) => a.length - b.length || 0)) { const f = fp(ks), t = total(ks), atRoot = ks.every(k => !folder(jobs[k].n));
+    if (f && seenFp.has(f) || atRoot && t > 1e6 && seenTot.has(t)) { dups++; continue; } seenFp.add(f); if (atRoot) seenTot.add(t); ks.forEach(k => keep.add(k)); }
   const kept = jobs.filter((jb, k) => keep.has(k)), rootKept = new Set(kept.filter(jb => jb.kind === "st" && !folder(jb.n) && !jb.unit).map(jb => jb.n));
   jobs.forEach((jb, k) => { if (!keep.has(k)) return; if (jb.kind === "st" && !jb.unit && !folder(jb.n) && rootKept.size === 1) jb.prefix = "";
     const T = jb.kind === "pt" ? stripCommon(res[k].tensors) : res[k].tensors;
