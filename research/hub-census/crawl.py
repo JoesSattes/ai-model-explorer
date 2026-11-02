@@ -37,6 +37,9 @@ def probe(repo: str, token):
     eng = extra.pop("engine")
     an = eng.infer(tensors)                       # manifest only: no config, no code
     fam_manifest = an.get("family")
+    hint = eng.quant_hint(cfg)
+    if cfg and any(hint.values()) and an.get("quant"):  # bits/group from config change the unpacked shapes: count again with them
+        an = eng.infer(tensors, qhint=hint)
     check = eng.fuse(an, cfg) if cfg else None
     fam_cfg = eng.family({"family": fam_manifest, "comps": an.get("comps")}, cfg) if cfg else None
     tot = an.get("totals") or {}
@@ -49,7 +52,7 @@ def probe(repo: str, token):
         "tensors": len(tensors),
         "family_manifest": fam_manifest, "family_config": fam_cfg,
         "params": tot.get("params"), "stored_bytes": tot.get("bytes"),
-        "hub_params": hub_params,
+        "hub_params": hub_params, "duplicates_skipped": extra.get("duplicates_skipped"),
         "params_match_hub": (abs(tot.get("params", 0) - hub_params) / hub_params <= 0.001) if hub_params else None,
         "quant": an.get("quant"),
         "hp": an.get("hp"),

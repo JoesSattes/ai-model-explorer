@@ -83,6 +83,22 @@ def main(path, outdir):
         for s, g in d.groupby("status"):
             L.append(f"| {s} | {int(g['downloads'].median()):,} | {int(g['likes'].median()):,} | {len(g)} |")
 
+    if len(o):
+        h = o[o["hub_params"].notna() & (o["hub_params"] > 0)].copy()
+        h["r"] = h["params"] / h["hub_params"]
+        h["qf"] = h["quant"].apply(lambda q: ",".join(sorted(q)) if isinstance(q, dict) and q else "")
+        def why(r):
+            if abs(r.r - 1) <= 0.001: return "equal"
+            if r.qf and r.r > 1: return "quantized: Hub counts packed storage elements"
+            if r.qf: return "quantized: we undercount (check)"
+            if r.files_read > 1 and r.r > 1: return "several components or copies (check)"
+            return "other (check)"
+        h["why"] = h.apply(why, axis=1)
+        L += ["", "## Our parameter count vs the Hub's", "", "| reason | repos | median ours / Hub |", "|---|---|---|"]
+        for k, g in h.groupby("why"):
+            L.append(f"| {k} | {len(g)} | {g['r'].median():.3f} |")
+        L.append(f"| no Hub count at all | {int(o['hub_params'].isna().sum())} | - |")
+
     errs = d[d["status"].isin(["error", "no_weights"])]["error"].fillna("").str.slice(0, 80).value_counts().head(10)
     if len(errs):
         L += ["", "## Most common failure messages", ""] + [f"- `{k}` × {v}" for k, v in errs.items()]

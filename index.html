@@ -852,7 +852,7 @@ const LEX = { // optional name priors; used only to break ties the shapes cannot
 
 // ------------------------------------------------------------------ 1. normalize: quantized storage -> logical tensors
 const AUX = /(^|[._])(weight_scale_2|weight_scale_inv|weight_scale|input_scale|output_scale|k_scale|v_scale|scales|qzeros|g_idx|absmax|quant_map|nested_absmax|nested_quant_map|quant_state(\.\w+)?|weight_zero_point|weight_global_scale|input_global_scale|weight_shape|_amax|biases|SCB|weight_format|zeros)$/;
-function normalize(manifest) {
+function normalize(manifest, hint = {}) { // hint: {bits, group} from config.json quantization, when known
   const T = {}, groups = {};
   for (const [n, v] of Object.entries(manifest)) { if (n === "__metadata__" || !v || !v.shape) continue;
     const bq = n.match(/^(.*)\.weight\.(absmax|quant_map|nested_absmax|nested_quant_map|quant_state(?:\..+)?)$/); // bitsandbytes keeps its state under <module>.weight.*
@@ -879,6 +879,9 @@ function normalize(manifest) {
       const F8w = ks.find(k => /F8/.test(g[k].dtype) && g[k].shape.length >= 2 && prod(g[k].shape) > 64), I32 = ks.filter(k => g[k].dtype === "I32" && g[k].shape.length === 2), F16 = ks.find(k => /F16|BF16/.test(g[k].dtype) && g[k].shape.length === 2);
       if (U8 && F8s) { const w = g[U8].shape, aux = ks.filter(k => k !== U8 && (prod(g[k].shape) <= 1 || k === F8s)); out[P(U8)] = {shape: [w[0], w[1] * 2], dtype: "U8", bytes: bytesOf([U8, ...aux]), q: q("nvfp4", 4, {group: 16}), src: aux.map(P)}; used.add(U8); aux.forEach(k => used.add(k)); }
       else if (F8w) { const aux = ks.filter(k => k !== F8w && /F32|BF16|F16/.test(g[k].dtype) && (prod(g[k].shape) === 1 || g[k].shape.length === 2 && g[k].shape[1] === 1 && g[k].shape[0] === g[F8w].shape[0])); out[P(F8w)] = {shape: g[F8w].shape, dtype: g[F8w].dtype, bytes: bytesOf([F8w, ...aux]), q: q("fp8", 8, {}), src: aux.map(P)}; used.add(F8w); aux.forEach(k => used.add(k)); }
+      else if (g.weight_packed && g.weight_packed.dtype === "I32" && g.weight_scale) { // compressed-tensors pack-quantized: int32 [out, in·bits/32] + scale [out, in/group]
+        const pk = g.weight_packed.shape, bits = hint.bits || 4, i = pk[pk.length - 1] * 32 / bits, aux = ks.filter(k => k !== "weight_packed" && /^weight_(scale|zero_point|shape|global_scale|g_idx)$/.test(k));
+        out[P("weight")] = {shape: [...pk.slice(0, -1), i], dtype: "I" + bits, bytes: bytesOf(["weight_packed", ...aux]), q: q("compressed-tensors", bits, {group: Math.round(i / g.weight_scale.shape[g.weight_scale.shape.length - 1])}), src: aux.map(P)}; used.add("weight_packed"); aux.forEach(k => used.add(k)); }
       else if (I32.length && F16) { const qw = I32.map(k => g[k]).sort((a, b) => prod(b.shape) - prod(a.shape))[0], qk = I32.find(k => g[k] === qw), sc = g[F16].shape; if (qw.shape[1] === sc[1]) { const aux = ks.filter(k => k !== qk && (g[k].dtype === "I32" || k === F16)); out[P(qk)] = {shape: [qw.shape[1], qw.shape[0] * 8], dtype: "I4", bytes: bytesOf([qk, ...aux]), q: q("gptq", 4, {group: Math.round(qw.shape[0] * 8 / sc[0])}), src: aux.map(P)}; used.add(qk); aux.forEach(k => used.add(k)); } }
     }
     if (g.weight && !used.has("weight")) {
@@ -886,7 +889,8 @@ function normalize(manifest) {
       const sc = g.weight_scale || g.weight_scale_inv;
       if (w.dtype === "U8" && sc && /F8/.test(sc.dtype) && sc.shape.length === w.shape.length) { shape = [...w.shape.slice(0, -1), w.shape[w.shape.length - 1] * 2]; qq = q("nvfp4", 4, {group: Math.round(shape[shape.length - 1] / sc.shape[sc.shape.length - 1])}); }
       else if (/F8/.test(w.dtype)) { const n = sc ? prod(sc.shape) : 0; qq = q("fp8", 8, {scale: !sc ? "none" : n === 1 ? "per-tensor" : sc.shape.length === 2 && sc.shape[1] > 1 ? "block" : "per-channel"}); }
-      else if (w.dtype === "U32" && g.scales && g.biases) { const per = 32 * w.shape[w.shape.length - 1] / (g.scales.shape[g.scales.shape.length - 1] * 64); const bits = [2, 3, 4, 6, 8].includes(per) ? per : 4; shape = [...w.shape.slice(0, -1), w.shape[w.shape.length - 1] * 32 / bits]; qq = q("mlx", bits, {group: 64}); }
+      else if (w.dtype === "U32" && g.scales && g.biases) { const pc = w.shape[w.shape.length - 1], sc = g.scales.shape[g.scales.shape.length - 1], OK = [1, 2, 3, 4, 5, 6, 8]; // MLX: cols = in·bits/32, scales = in/group; bits and group trade off, so the config decides when present
+        const bits = hint.bits && OK.includes(hint.bits) ? hint.bits : hint.group ? Math.round(32 * pc / (sc * hint.group)) : [64, 32, 128].map(G => 32 * pc / (sc * G)).find(b => OK.includes(b)) || 4; shape = [...w.shape.slice(0, -1), w.shape[w.shape.length - 1] * 32 / bits]; qq = q("mlx", bits, {group: 64}); }
       else if ((w.dtype === "U8" || w.dtype === "I8") && g.absmax) { const L = prod(w.shape) * 2; // nf4/fp4: two values per byte; the shape lives in quant_state, outside the header
         shape = dGuess && L % dGuess === 0 ? (/(down_proj|down|o_proj|out_proj|fc2|wo|w2|c_proj|dense_4h_to_h|dense)$/.test(mod) ? [dGuess, L / dGuess] : [L / dGuess, dGuess]) : [L]; qq = q("bnb4", 4, {}); }
       else if (w.dtype === "I8" && g.SCB) qq = q("int8", 8, {});
@@ -1018,7 +1022,7 @@ function lexKind(key) { for (const k of ["cross", "moe", "ssm", "mod", "attn", "
 // ------------------------------------------------------------------ 4. main
 function infer(manifest, opts = {}) {
   const lex = opts.lex !== false, ev = [];
-  const {T, quant} = normalize(manifest);
+  const {T, quant} = normalize(manifest, opts.qhint || {});
   const R = buildTree(T);
   const out = {tensors: {}, comps: [], edges: [], quant, evidence: ev, hp: {}, totals: {params: 0, bytes: 0}};
   for (const [n, v] of Object.entries(T)) { out.totals.params += prod(v.shape); out.totals.bytes += v.bytes; }
@@ -1496,13 +1500,20 @@ function fuseConfig(I, cfg) {
     const o = best.o, H = num(o, ["num_attention_heads", "n_head", "num_heads", "encoder_attention_heads", "attention_heads", "decoder_attention_heads"]);
     const KV = num(o, ["num_key_value_heads", "num_kv_heads", "n_kv_heads", "multi_query_group_num"]), hd = num(o, ["head_dim", "attention_head_dim", "kv_channels", "qk_head_dim"]);
     const rec = {path: best.path || "(root)", heads: H, kv_heads: KV || (o.multi_query === true ? 1 : H), head_dim: hd || (H && at ? at.x / H : null), topk: num(o, ["num_experts_per_tok", "moe_topk", "top_k", "num_selected_experts"]) || (C.role === "backbone" ? topAll : null)};
-    if (at && H && rec.head_dim) { const h = rec.head_dim; rec.checked = true; rec.consistent = H * h === at.x && (!at.kv || at.kv === at.x || rec.kv_heads * h === at.kv); }
+    if (at && H && rec.head_dim) { const h = rec.head_dim; rec.checked = true; rec.q_width = at.x; rec.kv_width = at.kv || null; rec.consistent = H * h === at.x && (!at.kv || at.kv === at.x || rec.kv_heads * h === at.kv); }
     out[C.id] = rec;
   }
   return out;
 }
 
-const api = {infer, normalize, buildTree, classify, fuseConfig, familyFromConfig};
+function quantHint(cfg) { // bits / group size declared in config.json (MLX "quantization", HF "quantization_config", compressed-tensors config_groups)
+  if (!cfg || typeof cfg !== "object") return {};
+  const q = cfg.quantization || cfg.quantization_config || (cfg.text_config || {}).quantization_config || {};
+  let bits = q.bits || q.w_bit || q.num_bits, group = q.group_size || q.q_group_size;
+  if (!bits && q.config_groups) { const w = (Object.values(q.config_groups)[0] || {}).weights || {}; bits = w.num_bits; group = group || w.group_size; }
+  return {bits: typeof bits === "number" ? bits : undefined, group: typeof group === "number" ? group : undefined};
+}
+const api = {infer, normalize, buildTree, classify, fuseConfig, familyFromConfig, quantHint};
 if (typeof module !== "undefined") module.exports = api; else root.ArchInfer = api;
 })(typeof window !== "undefined" ? window : globalThis);
 </script>
@@ -1631,7 +1642,7 @@ async function hfManifest(repo, files, prog = () => {}, opt = {}) {
   const base = `https://huggingface.co/${repo}/resolve/main/`;
   const folder = n => n.includes("/") ? n.slice(0, n.lastIndexOf("/")) : "";
   // skip optimizer/training files, per-language adapters (MMS ships 1,000+ of them) and alternate-precision duplicates
-  const skip = n => /(^|\/)(consolidated|optimizer|training_args|scheduler|rng_state|adapter[._])/i.test(n) || /^(\.|original\/)/.test(n);
+  const skip = n => /(^|\/)(consolidated|optimizer|training_args|scheduler|rng_state|adapter[._])/i.test(n) || /^(\.|original\/)/.test(n) || /(^|\/)(checkpoint-\d+|runs|global_step\d+)\//.test(n);
   const getJSON = async u => { const r = await fetch(u); const t = await r.text();
     if (!r.ok) throw new Error(r.status === 401 || r.status === 403 || /^Access to/.test(t) ? "gated repository: accept its license on Hugging Face first" : `HTTP ${r.status}`);
     try { return JSON.parse(t); } catch (e) { throw new Error(/^Access to/.test(t) ? "gated repository: accept its license on Hugging Face first" : "unreadable index file"); } };
@@ -1641,7 +1652,7 @@ async function hfManifest(repo, files, prog = () => {}, opt = {}) {
   const jobs = [], seen = new Set();
   for (const ix of files.filter(f => /\.safetensors\.index\.json$/.test(f.n) && !skip(f.n) && !/\.(fp16|bf16|fp32)\.safetensors\.index\.json$/.test(f.n) || /\.(fp16|bf16)\.safetensors\.index\.json$/.test(f.n) && !files.some(g => g.n === f.n.replace(/\.(fp16|bf16)\.safetensors/, ".safetensors")))) {
     prog("index", ix.n); const j = await getJSON(base + ix.n), dir = folder(ix.n);
-    for (const sh of [...new Set(Object.values(j.weight_map || {}))]) { const n = dir ? dir + "/" + sh : sh; seen.add(n); jobs.push({n, prefix: dir, kind: "st"}); } }
+    for (const sh of [...new Set(Object.values(j.weight_map || {}))]) { const n = dir ? dir + "/" + sh : sh; seen.add(n); jobs.push({n, prefix: dir, kind: "st", unit: ix.n}); } }
   let loose = files.filter(f => /\.safetensors$/.test(f.n) && !seen.has(f.n) && !skip(f.n));
   // a folder with both x.safetensors and x.fp16.safetensors describes the same weights twice: keep one
   loose = loose.filter(f => !(/\.(fp16|bf16|fp32)\.safetensors$/.test(f.n) && loose.some(g => g !== f && g.n === f.n.replace(/\.(fp16|bf16|fp32)\.safetensors$/, ".safetensors"))));
@@ -1661,9 +1672,17 @@ async function hfManifest(repo, files, prog = () => {}, opt = {}) {
     const r = jb.kind === "pt" ? await torchIndex(base + jb.n, sz) : await safetensorsHeader(base + jb.n, sz);
     res[k] = r; read += r.bytes; done++; prog(jb.kind === "pt" ? "pt" : "header", jb.n, done, jobs.length, read); } };
   await Promise.all(Array.from({length: Math.min(conc, jobs.length)}, work));
-  jobs.forEach((jb, k) => { const T = jb.kind === "pt" ? stripCommon(res[k].tensors) : res[k].tensors;
+  // the same weights are often stored more than once (another precision, another library's naming, an older version, a training
+  // checkpoint): a unit (one index's shards, or one loose file) whose matrix shapes equal those of a unit already kept is a copy
+  const unitOf = jb => jb.unit || jb.n.replace(/-\d{3,5}-of-\d{3,5}(?=\.)/, "-shards"), units = {}; jobs.forEach((jb, k) => (units[unitOf(jb)] = units[unitOf(jb)] || []).push(k));
+  const fp = ks => ks.flatMap(k => Object.entries(res[k].tensors).filter(([n, v]) => v && v.shape && v.shape.length >= 2 && !/(scale|zero|absmax|quant|g_idx|biases)/i.test(n)).map(([, v]) => v.shape.join("x"))).sort().join(",");
+  const keep = new Set(), seenFp = new Set(); let dups = 0;
+  for (const ks of Object.values(units).sort((a, b) => a.length - b.length || 0)) { const f = fp(ks); if (f && seenFp.has(f)) { dups++; continue; } seenFp.add(f); ks.forEach(k => keep.add(k)); }
+  const kept = jobs.filter((jb, k) => keep.has(k)), rootKept = new Set(kept.filter(jb => jb.kind === "st" && !folder(jb.n) && !jb.unit).map(jb => jb.n));
+  jobs.forEach((jb, k) => { if (!keep.has(k)) return; if (jb.kind === "st" && !jb.unit && !folder(jb.n) && rootKept.size === 1) jb.prefix = "";
+    const T = jb.kind === "pt" ? stripCommon(res[k].tensors) : res[k].tensors;
     for (const [n, v] of Object.entries(T)) tensors[(jb.prefix ? jb.prefix.replace(/\//g, ".") + "." : "") + n] = v; });
-  return {tensors, read, nfiles: jobs.length, kinds: [...new Set(jobs.map(j => j.kind))]};
+  return {tensors, read, nfiles: jobs.length, duplicates: dups, kinds: [...new Set(jobs.map(j => j.kind))]};
 }
 
 root.Loaders = {hfManifest, safetensorsHeader, torchIndex, unpickle, tensorsFromState, stripCommon};
@@ -2062,7 +2081,7 @@ function build(def) {
   let M;
   if (def.graphs) { M = {A: anatomyFromOps(def.graphs), graphs: def.graphs, meta: def.meta, kind: "ops"}; }
   else if (def.tensors) {
-    const I = ArchInfer.infer(def.tensors); if (def.cfg) I.family = ArchInfer.familyFromConfig(I, def.cfg); const N = ArchInfer.normalize(def.tensors).T, auto = metaFromIR(I, def.cfg || null, def.label);
+    const I = ArchInfer.infer(def.tensors, {qhint: ArchInfer.quantHint(def.cfg)}); if (def.cfg) I.family = ArchInfer.familyFromConfig(I, def.cfg); const N = ArchInfer.normalize(def.tensors, ArchInfer.quantHint(def.cfg)).T, auto = metaFromIR(I, def.cfg || null, def.label);
     const meta = Object.assign({}, auto, def.meta || {}); if (I.family === "transducer" || I.family === "diffusion") meta.family = auto.family; ["layer_pattern", "irFamily", "quant", "joint", "timestep", "experts"].forEach(k => { if (auto[k] != null && auto[k] !== 0) meta[k] = auto[k]; });
     M = {A: anatomyFromIR(I, N, meta), meta, kind: def.kind || "tensors", IR: I, T: N}; }
   M.id = def.id; M.label = def.label; M.note = def.note; M.viz = def.viz; M.group = def.group; M.cfg = def.cfg || null;

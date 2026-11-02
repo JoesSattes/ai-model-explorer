@@ -123,7 +123,7 @@ async function hfManifest(repo, files, prog = () => {}, opt = {}) {
   const base = `https://huggingface.co/${repo}/resolve/main/`;
   const folder = n => n.includes("/") ? n.slice(0, n.lastIndexOf("/")) : "";
   // skip optimizer/training files, per-language adapters (MMS ships 1,000+ of them) and alternate-precision duplicates
-  const skip = n => /(^|\/)(consolidated|optimizer|training_args|scheduler|rng_state|adapter[._])/i.test(n) || /^(\.|original\/)/.test(n);
+  const skip = n => /(^|\/)(consolidated|optimizer|training_args|scheduler|rng_state|adapter[._])/i.test(n) || /^(\.|original\/)/.test(n) || /(^|\/)(checkpoint-\d+|runs|global_step\d+)\//.test(n);
   const getJSON = async u => { const r = await fetch(u); const t = await r.text();
     if (!r.ok) throw new Error(r.status === 401 || r.status === 403 || /^Access to/.test(t) ? "gated repository: accept its license on Hugging Face first" : `HTTP ${r.status}`);
     try { return JSON.parse(t); } catch (e) { throw new Error(/^Access to/.test(t) ? "gated repository: accept its license on Hugging Face first" : "unreadable index file"); } };
@@ -133,7 +133,7 @@ async function hfManifest(repo, files, prog = () => {}, opt = {}) {
   const jobs = [], seen = new Set();
   for (const ix of files.filter(f => /\.safetensors\.index\.json$/.test(f.n) && !skip(f.n) && !/\.(fp16|bf16|fp32)\.safetensors\.index\.json$/.test(f.n) || /\.(fp16|bf16)\.safetensors\.index\.json$/.test(f.n) && !files.some(g => g.n === f.n.replace(/\.(fp16|bf16)\.safetensors/, ".safetensors")))) {
     prog("index", ix.n); const j = await getJSON(base + ix.n), dir = folder(ix.n);
-    for (const sh of [...new Set(Object.values(j.weight_map || {}))]) { const n = dir ? dir + "/" + sh : sh; seen.add(n); jobs.push({n, prefix: dir, kind: "st"}); } }
+    for (const sh of [...new Set(Object.values(j.weight_map || {}))]) { const n = dir ? dir + "/" + sh : sh; seen.add(n); jobs.push({n, prefix: dir, kind: "st", unit: ix.n}); } }
   let loose = files.filter(f => /\.safetensors$/.test(f.n) && !seen.has(f.n) && !skip(f.n));
   // a folder with both x.safetensors and x.fp16.safetensors describes the same weights twice: keep one
   loose = loose.filter(f => !(/\.(fp16|bf16|fp32)\.safetensors$/.test(f.n) && loose.some(g => g !== f && g.n === f.n.replace(/\.(fp16|bf16|fp32)\.safetensors$/, ".safetensors"))));
@@ -153,9 +153,17 @@ async function hfManifest(repo, files, prog = () => {}, opt = {}) {
     const r = jb.kind === "pt" ? await torchIndex(base + jb.n, sz) : await safetensorsHeader(base + jb.n, sz);
     res[k] = r; read += r.bytes; done++; prog(jb.kind === "pt" ? "pt" : "header", jb.n, done, jobs.length, read); } };
   await Promise.all(Array.from({length: Math.min(conc, jobs.length)}, work));
-  jobs.forEach((jb, k) => { const T = jb.kind === "pt" ? stripCommon(res[k].tensors) : res[k].tensors;
+  // the same weights are often stored more than once (another precision, another library's naming, an older version, a training
+  // checkpoint): a unit (one index's shards, or one loose file) whose matrix shapes equal those of a unit already kept is a copy
+  const unitOf = jb => jb.unit || jb.n.replace(/-\d{3,5}-of-\d{3,5}(?=\.)/, "-shards"), units = {}; jobs.forEach((jb, k) => (units[unitOf(jb)] = units[unitOf(jb)] || []).push(k));
+  const fp = ks => ks.flatMap(k => Object.entries(res[k].tensors).filter(([n, v]) => v && v.shape && v.shape.length >= 2 && !/(scale|zero|absmax|quant|g_idx|biases)/i.test(n)).map(([, v]) => v.shape.join("x"))).sort().join(",");
+  const keep = new Set(), seenFp = new Set(); let dups = 0;
+  for (const ks of Object.values(units).sort((a, b) => a.length - b.length || 0)) { const f = fp(ks); if (f && seenFp.has(f)) { dups++; continue; } seenFp.add(f); ks.forEach(k => keep.add(k)); }
+  const kept = jobs.filter((jb, k) => keep.has(k)), rootKept = new Set(kept.filter(jb => jb.kind === "st" && !folder(jb.n) && !jb.unit).map(jb => jb.n));
+  jobs.forEach((jb, k) => { if (!keep.has(k)) return; if (jb.kind === "st" && !jb.unit && !folder(jb.n) && rootKept.size === 1) jb.prefix = "";
+    const T = jb.kind === "pt" ? stripCommon(res[k].tensors) : res[k].tensors;
     for (const [n, v] of Object.entries(T)) tensors[(jb.prefix ? jb.prefix.replace(/\//g, ".") + "." : "") + n] = v; });
-  return {tensors, read, nfiles: jobs.length, kinds: [...new Set(jobs.map(j => j.kind))]};
+  return {tensors, read, nfiles: jobs.length, duplicates: dups, kinds: [...new Set(jobs.map(j => j.kind))]};
 }
 
 root.Loaders = {hfManifest, safetensorsHeader, torchIndex, unpickle, tensorsFromState, stripCommon};
