@@ -96,5 +96,13 @@ class Engine:
     def infer(self, tensors: dict, lex: bool = True) -> dict:
         return self._await(f'ArchInfer.infer({self._put("t", tensors)}, {{lex: {"true" if lex else "false"}}})')
 
+    def normalize(self, tensors: dict) -> dict:
+        """Logical shape and stored bytes of every tensor after undoing quantized storage."""
+        return self._await('(function (N) { var o = {}; for (var k in N.T) o[k] = [N.T[k].shape, N.T[k].bytes || 0]; return o; })'
+                           f'(ArchInfer.normalize({self._put("n", tensors)}))')
+
+    def family(self, anatomy: dict, config: dict) -> str:
+        return self._await(f'ArchInfer.familyFromConfig({self._put("fa", anatomy)}, {self._put("fc", config)})')
+
     def fuse(self, anatomy: dict, config: dict):
         return self._await(f'ArchInfer.fuseConfig({self._put("a", anatomy)}, {self._put("c", config)})')

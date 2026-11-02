@@ -19,12 +19,20 @@ Also available as a Python package (Python 3.9+, no PyTorch or Node.js):
 pip install ai-model-explorer
 ai-model-explorer inspect deepseek-ai/DeepSeek-V3          # readable summary
 ai-model-explorer inspect Qwen/Qwen3-8B --json --tensors   # everything, including the role of each tensor
+ai-model-explorer insights deepseek-ai/DeepSeek-V3         # findings: active params, KV cache, where params sit
+ai-model-explorer memory Qwen/Qwen3-8B --context 32768 --weight-bits 4
+ai-model-explorer compare Qwen/Qwen3-8B Qwen/Qwen3-30B-A3B   # side-by-side table
+ai-model-explorer plot deepseek-ai/DeepSeek-V3 -o ds.png    # diagram (png, svg, pdf)
+ai-model-explorer report deepseek-ai/DeepSeek-V3 -o ds.html # self-contained HTML report
 ai-model-explorer open                                     # the web app on your machine
 ```
 
 ```python
-from ai_model_explorer import inspect, summary
-a = inspect("Qwen/Qwen3-8B")   # dict: family, totals, hyperparameters, components, edges, quantization, config check
+from ai_model_explorer import explore, compare
+m = explore("deepseek-ai/DeepSeek-V3")
+m.params, m.active_params        # 684489845504, 37552297472
+m.insights(); m.breakdown("kind"); m.memory(context=32768, weight_bits=4)
+m.plot("ds.png"); m.report("ds.html")
 ```
 
 The package runs the same JavaScript as the website in an embedded QuickJS engine, so results match. Gated repos: set HF_TOKEN.

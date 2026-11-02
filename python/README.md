@@ -39,35 +39,46 @@ deepseek-ai/DeepSeek-V3
 
 | Command | What it does |
 |---|---|
-| `ai-model-explorer inspect REPO` | readable summary of a Hugging Face repo, URL, `.safetensors` file or folder |
-| `ai-model-explorer inspect REPO --json` | the full result as JSON; add `--tensors` for the role of every tensor |
-| `ai-model-explorer open [REPO]` | start the web app on your machine (`--lang th` for Thai) |
+| `ai-model-explorer inspect MODEL` | readable summary of a Hugging Face repo, URL, `.safetensors` file or folder (`--json` for everything, `--tensors` for every tensor's role) |
+| `ai-model-explorer insights MODEL` | findings in plain language: active parameters per token, where the parameters sit, KV-cache cost, tied embeddings, hybrid layers |
+| `ai-model-explorer memory MODEL --context 32768 --weight-bits 4` | memory for the weights at any precision plus the KV cache |
+| `ai-model-explorer compare A B C` | side-by-side table (Markdown, `--csv` or `--json`) |
+| `ai-model-explorer plot MODEL -o model.png` | the anatomy diagram as PNG, SVG or PDF (`--theme dark`) |
+| `ai-model-explorer report MODEL -o model.html` | one self-contained HTML report: diagram, insights, tables, memory |
+| `ai-model-explorer open [MODEL]` | the web app on your machine (`--lang th` for Thai) |
+
+![Diagram drawn by ai-model-explorer plot for DeepSeek-V3](https://raw.githubusercontent.com/JoesSattes/ai-model-explorer/main/assets/example-deepseek-v3.png)
 
 Gated or private repos: set `HF_TOKEN` or pass `--token`. A mirror: set `HF_ENDPOINT`.
 
 ## Python
 
 ```python
-from ai_model_explorer import inspect, summary
+from ai_model_explorer import explore, compare, compare_table
 
-a = inspect("Qwen/Qwen3-8B")
-a["family"]                                   # 'decoder'
-a["totals"]["params"]                         # 8190735360
-a["hyperparameters_with_config"]["kv_heads"]  # 8
-a["components"][0]["stacks"][0]["n"]          # 36
-print(summary(a))
+m = explore("deepseek-ai/DeepSeek-V3")
+m.family, m.params, m.active_params   # 'decoder', 684489845504, 37552297472
+m.hp["heads"], m.hp["kv_heads"]       # 128, 128 (from config.json, checked against the weights)
+m.breakdown("kind")                   # parameters, share and bytes per part type
+m.kv_cache_bytes_per_token()          # 70272 (latent attention)
+m.memory(context=32768, weight_bits=4)
+for line in m.insights():
+    print("-", line)
+m.plot("deepseek.png")                # matplotlib Figure; .png, .svg or .pdf
+m.report("deepseek.html")
+
+print(compare_table(compare(["Qwen/Qwen3-8B", "Qwen/Qwen3-30B-A3B-GPTQ-Int4"])))
 ```
 
-`inspect(model, token=None, config=None, include_tensors=False)` returns a JSON-serializable dict with `family`,
-`totals`, `hyperparameters`, `hyperparameters_with_config`, `quantization`, `components` (with their layer stacks
-and block types), `edges`, `evidence`, `config_check`, and how many bytes were read. The fields are described in
-the [usage guide](https://github.com/JoesSattes/ai-model-explorer/blob/main/docs/usage.md#what-the-result-contains).
+`explore()` returns a `Model`; `inspect()` returns the raw dict it wraps. Every field and method is described in the
+[usage guide](https://github.com/JoesSattes/ai-model-explorer/blob/main/docs/usage.md).
 
 ## Why it is useful
 - **Before downloading**: the anatomy of a 689 GB checkpoint from 12 MB of headers.
 - **Quantization and edge planning**: where the parameters sit, which layers keep a KV cache, how each tensor is stored (FP8, NVFP4, GPTQ, AWQ, MXFP4, MLX, bitsandbytes).
 - **New architectures**: hybrid attention / state-space / mixture-of-experts stacks, multi-token-prediction layers, encoders feeding an LLM, each labelled with the evidence.
-- **Batch analysis and agents**: plain JSON from a single function call.
+- **Comparisons and reports**: a table across many models, diagrams for slides and papers, an HTML report to share.
+- **Batch analysis and agents**: plain data from a single function call.
 
 ## How accurate is it?
 On 510 architectures from the transformers library, 96.8% of tensors get the right role (82.3% for the best rule
@@ -77,7 +88,7 @@ with the Hub's own count for 163 of 170.
 
 ## How it runs
 The analysis is the same JavaScript that powers the website (`infer.js`, `loaders.js`), run in an embedded QuickJS
-engine, so the Python and web results match. Python 3.9+, one dependency (`quickjs`), no PyTorch, transformers or
+engine, so the Python and web results match. Python 3.9+, two dependencies (`quickjs`, and `matplotlib` for diagrams), no PyTorch, transformers or
 Node.js. A typical model takes well under a second; the largest manifests (DeepSeek-V3, 92k tensors) take about ten.
 
 ## Citation

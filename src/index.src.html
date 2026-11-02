@@ -244,6 +244,7 @@ footer{padding:44px 0 40px;color:var(--soft);font-size:14.5px;border-top:1px sol
 footer .fname{font-size:40px;font-weight:700;letter-spacing:-.03em;color:var(--ink);margin-bottom:10px}
 footer .fl{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}footer a{color:var(--ink)}
 .credit a{color:var(--ink)}
+.pipchip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--soft)}.pipchip button{display:inline-flex;align-items:center;gap:8px;background:var(--glass2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:var(--ink);cursor:pointer;font:inherit}.pipchip button:hover{border-color:var(--blue)}.pipchip code{font-family:'IBM Plex Mono',monospace;font-size:12.5px}.pipchip a{color:var(--soft)}
 #about .about{max-width:860px;padding:40px 0 10px}#about h2{font-size:26px;margin:28px 0 10px;color:var(--ink)}#about h3{font-size:17px;margin:18px 0 4px;color:var(--ink)}#about p{color:var(--soft);line-height:1.65;margin:0 0 10px}#about code{font-family:'IBM Plex Mono',monospace;font-size:.92em;background:var(--glass2);padding:1px 6px;border-radius:6px;color:var(--ink)}#about a{color:var(--ink)}
 footer .cite{margin-top:16px;max-width:860px}footer .cite summary{cursor:pointer;color:var(--ink);font-weight:600}footer .citeref{margin:10px 0 8px;color:var(--soft)}
 footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,127,127,.25));border-radius:10px;padding:12px 14px;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);white-space:pre-wrap;word-break:break-word;margin-bottom:8px}
@@ -281,6 +282,7 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
       </div>
       <div id="ownNote" role="status" aria-live="polite"></div>
       <p class="howread" data-ih="how_read"></p>
+      <div class="pipchip"><span data-i="pip_lead">Also in Python and the terminal</span><button type="button" id="pipCopy" title="Copy"><code>pip install ai-model-explorer</code><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><a href="https://pypi.org/project/ai-model-explorer/" data-i="pip_more">PyPI</a></div>
     </div>
     <div class="panel lib" id="picker" aria-label="Model library"></div>
   </div>

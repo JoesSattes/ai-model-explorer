@@ -603,9 +603,23 @@ function familyOf(o) {
   const enc = o.comps.filter(c => c.role === "encoder");
   if (o.joint) return "transducer";
   if (o.timestep || k.mod && b.modality === "latent") return "diffusion";
-  if (enc.length && b.hasHead) return o.comps.some(c => c.stacks.some(s => s.types.some(t => t.regions.some(r => r.kind === "cross")))) ? "encoder-decoder" : "prefix-lm";
+  const cross = o.comps.some(c => c.stacks.some(s => s.types.some(t => t.regions.some(r => r.kind === "cross"))));
+  if (enc.length && cross) return "encoder-decoder"; // an encoder feeding a decoder through cross-attention, head tied or not
+  if (enc.length && b.hasHead) return "prefix-lm";
   if (b.hasHead) return "decoder";
-  return "encoder";
+  return "encoder"; // also tied-head decoders when there is no config: shapes cannot tell them apart (familyFromConfig can)
+}
+
+// The family as the checkpoint's own config declares it (architectures, is_encoder_decoder), used when a config exists.
+function familyFromConfig(I, cfg) {
+  if (!cfg || !I) return I ? I.family : null;
+  if (/^(transducer|diffusion)$/.test(I.family)) return I.family;
+  const archs = [].concat(cfg.architectures || [], (cfg.text_config || {}).architectures || []).join(" ");
+  const enc = (I.comps || []).some(c => c.role === "encoder");
+  if (cfg.is_encoder_decoder || /Seq2Seq|ForSpeechSeq2Seq/.test(archs)) return "encoder-decoder";
+  if (/ForCausalLM|LMHeadModel|ForConditionalGeneration|ForImageTextToText|ForMultimodalLM/.test(archs)) return I.family === "encoder-decoder" ? I.family : enc ? "prefix-lm" : "decoder";
+  if (/ForMaskedLM|ForSequenceClassification|ForTokenClassification|ForQuestionAnswering|ForImageClassification|ForPreTraining/.test(archs)) return enc ? I.family : "encoder";
+  return I.family;
 }
 
 
@@ -635,6 +649,6 @@ function fuseConfig(I, cfg) {
   return out;
 }
 
-const api = {infer, normalize, buildTree, classify, fuseConfig};
+const api = {infer, normalize, buildTree, classify, fuseConfig, familyFromConfig};
 if (typeof module !== "undefined") module.exports = api; else root.ArchInfer = api;
 })(typeof window !== "undefined" ? window : globalThis);
