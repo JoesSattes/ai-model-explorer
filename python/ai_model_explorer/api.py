@@ -111,9 +111,27 @@ def inspect(model: Union[str, os.PathLike], token: Optional[str] = None, config:
         "config_check": check,
         "has_config": cfg is not None,
     }
+    out["hyperparameters_with_config"] = _merge_hp(anatomy, check)
     if include_tensors:
         out["tensors"] = anatomy.get("tensors")
     return out
+
+
+def _merge_hp(anatomy: dict, check) -> dict:
+    """Hyperparameters from the weights, with heads / kv heads / head size / experts per token taken from config.json
+    for the largest component when the config was checked against the weights and agrees."""
+    hp = dict(anatomy.get("hp") or {})
+    if not check:
+        return hp
+    comps = sorted(anatomy.get("comps") or [], key=lambda c: c.get("params") or 0, reverse=True)
+    main = check.get(comps[0]["id"]) if comps else None
+    main = main or next((v for v in check.values() if isinstance(v, dict)), None)
+    if main and main.get("checked") and main.get("consistent"):
+        for k_src, k_dst in (("heads", "heads"), ("kv_heads", "kv_heads"), ("head_dim", "head_dim"), ("topk", "experts_per_token")):
+            if main.get(k_src):
+                hp[k_dst] = main[k_src]
+        hp["head_dim_from"] = "config.json, checked against the weights"
+    return hp
 
 
 def _fmt_n(n) -> str:
@@ -139,13 +157,13 @@ def summary(a: dict) -> str:
     src = a["source"]
     name = src.get("repo") or src.get("path")
     t = a.get("totals") or {}
-    hp = a.get("hyperparameters") or {}
+    hp = a.get("hyperparameters_with_config") or a.get("hyperparameters") or {}
     lines = [f"{name}",
              f"  family {a.get('family')} · {_fmt_n(t.get('params'))} parameters · {_fmt_b(t.get('bytes'))} of weights"
              + (f" · stored as {', '.join(a['quantization'])}" if a.get("quantization") else ""),
              f"  read {_fmt_b(a.get('header_bytes'))} from {a.get('files_read')} file(s), {a.get('tensor_count')} tensors"]
     keys = [("d", "width"), ("layers", "layers"), ("heads", "heads"), ("kv_heads", "kv heads"), ("head_dim", "head dim"),
-            ("ffn", "ffn"), ("experts", "experts"), ("vocab", "vocab")]
+            ("ffn", "ffn"), ("experts", "experts"), ("experts_per_token", "active experts"), ("vocab", "vocab")]
     hps = " · ".join(f"{lab} {hp[k]}" for k, lab in keys if hp.get(k))
     if hps:
         lines.append("  " + hps)
@@ -155,8 +173,10 @@ def summary(a: dict) -> str:
         head = f"    {c.get('id')}" + (f" ({role})" if role else "") + (f" · d={c['d']}" if c.get("d") else "")
         lines.append(head)
         for st in c.get("stacks") or []:
-            types = ", ".join(f"{ty.get('label')}" + (f" ×{ty['n']}" if ty.get("n") and len(st.get("types", [])) > 1 else "") for ty in st.get("types") or [])
-            lines.append(f"      {st.get('path')}: {st.get('n')} blocks · {types}")
+            tys = st.get("types") or []
+            types = ", ".join(f"{ty.get('label')}" + (f" ×{ty['count']}" if ty.get("count") and len(tys) > 1 else "") for ty in tys)
+            mtp = " (last one is a multi-token-prediction layer)" if st.get("mtp") else ""
+            lines.append(f"      {st.get('path')}: {st.get('n')} blocks · {types}{mtp}")
     for e in a.get("edges") or []:
         lines.append(f"    {e.get('from')} → {e.get('to')}" + (f" (via {e['via']})" if e.get("via") else ""))
     chk = a.get("config_check")

@@ -1,85 +1,124 @@
-# AI Model Explorer
+<p align="center">
+  <img src="assets/logo.svg" width="112" alt="AI Model Explorer logo">
+</p>
 
-**See inside any AI model, part by part, before you download or squeeze it.**
-Live: **https://joessattes.github.io/ai-model-explorer/** · Thai / English · dark theme (light on the toggle)
+<h1 align="center">AI Model Explorer</h1>
 
-![AI Model Explorer](og.png)
+<p align="center"><b>See inside any AI model on Hugging Face, part by part, without downloading the weights.</b></p>
 
-Paste a Hugging Face repo id and the explorer reads only the file headers, never the weights. It works out the
-model's anatomy on its own (components, layer stacks, what each layer does, how the parts connect, parameter
-counts) and shows it as a diagram you can walk through with **Play**. Every value says where it came from:
-**measured** from the weights, read from **config** and checked against the weights, or **estimated**.
+<p align="center">
+  <a href="https://pypi.org/project/ai-model-explorer/"><img src="https://img.shields.io/pypi/v/ai-model-explorer?color=8b96fa" alt="PyPI"></a>
+  <a href="https://pypi.org/project/ai-model-explorer/"><img src="https://img.shields.io/pypi/pyversions/ai-model-explorer?color=8b96fa" alt="Python"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-ff6bb5" alt="MIT license"></a>
+  <a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy"><img src="https://img.shields.io/badge/paper-ResearchGate-ff6bb5" alt="Paper"></a>
+</p>
 
-## Bring any model
-| Input | What is read | What you get |
-|---|---|---|
-| Hugging Face repo id | file list, safetensors headers by HTTP range request, shard indexes, `config.json`; for PyTorch zip checkpoints only the zip directory and `data.pkl` | automatic anatomy, exact parameter counts, KV-cache size, precision per tensor |
-| `.safetensors` file | its header | the same, offline |
-| `.tflite` (LiteRT) file | the full op graph, parsed in your browser | real ops, shapes, dtypes, quantize/dequantize seams |
-| `config.json` (paste) | the config values | synthesized structure for common families |
+<p align="center">
+  <a href="https://joessattes.github.io/ai-model-explorer/en/"><b>Open the web app</b></a> ·
+  <a href="https://joessattes.github.io/ai-model-explorer/">ภาษาไทย</a> ·
+  <a href="docs/usage.md">Docs</a> ·
+  <a href="docs/how-it-works.md">How it works</a> ·
+  <a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy">Paper</a>
+</p>
 
-Nothing is uploaded anywhere. Models you open are kept in your own browser (IndexedDB), so the next visit opens
-them instantly. Gated repositories need their license accepted on Hugging Face first.
+![AI Model Explorer: Whisper split into its parts with real sizes](og.png)
 
-## How the automatic anatomy works
-The method is in `src/infer.js` (about 650 lines, no dependencies) and is described in the paper in `paper/`.
-From tensor names, shapes and dtypes alone it:
+## What it is
+AI Model Explorer works out a model's architecture from its weight manifest, the list of tensor names, shapes and
+types at the start of every safetensors file. It reads that header (a few tens of kilobytes, even for models of
+hundreds of gigabytes) and shows what the model is made of: its components, the repeated layers and what each one
+does, how the parts connect, the exact parameter count and how every tensor is stored. It runs as a web page, a
+command-line tool and a Python library.
 
-1. normalizes quantized storage to logical shapes (NVFP4, FP8, GPTQ, AWQ, MXFP4, MLX, bitsandbytes NF4);
-2. finds repeated blocks in the module tree and groups them into block types (a hybrid Mamba-2 / MoE / attention
-   stack gets one type each);
-3. labels the parts of each block from shape algebra: attention (fused, GQA, latent, cross), dense and gated
-   feed-forward, mixtures of experts, SSM / linear attention, conformer convolution, adaLN modulation, recurrent
-   cells, multi-token-prediction layers;
-4. links components by matching widths (vision tower → projector → LLM; encoder → joint ← prediction network);
-5. reads what shapes cannot show (heads, KV heads, head size, routing top-k) from `config.json`, and checks that
-   the config agrees with the weights.
+## Why use it
+- **Know a model before you download it.** DeepSeek-V3 is 689 GB of weights. Its anatomy takes 12 MB of headers and a few seconds.
+- **Plan quantization and edge deployment.** See which parts hold the parameters, which layers carry a KV cache, and how each tensor is already stored (FP8, NVFP4, GPTQ, AWQ, MXFP4, MLX, bitsandbytes).
+- **Understand new architectures quickly.** Hybrid attention / state-space / mixture-of-experts stacks, multi-token-prediction layers, vision and audio encoders feeding an LLM: each is labelled, with the evidence behind the label.
+- **Check what a model card or config claims.** Parameter totals come from the weights, and `config.json` is checked against them.
+- **Script it.** `pip install ai-model-explorer` gives a CLI and a Python API that return JSON, for batch analysis or for AI agents.
+- **Private by design.** Files you open are parsed in your browser or on your machine. No server, no upload.
 
-## How well it works
+## Quick start
+**Web.** Open https://joessattes.github.io/ai-model-explorer/en/, type a repo id such as `Qwen/Qwen3-8B` and press Load.
+Links like [`…/en/#hf=deepseek-ai/DeepSeek-V3`](https://joessattes.github.io/ai-model-explorer/en/#hf=deepseek-ai/DeepSeek-V3) open a model directly.
+
+**Command line.**
+```bash
+pip install ai-model-explorer
+ai-model-explorer inspect deepseek-ai/DeepSeek-V3
+```
+```
+deepseek-ai/DeepSeek-V3
+  family decoder · 684.49B parameters · 688.6 GB of weights · stored as fp8
+  read 11.9 MB from 163 file(s), 91991 tensors
+  width 7168 · layers 61 · heads 128 · kv heads 128 · head dim 128 · ffn 18432 · experts 256 · active experts 8 · vocab 129280
+  components:
+    (root) (backbone) · d=7168
+      model.layers: 62 blocks · Transformer ×3, Attn+MoE ×58, Attn+MoE ×1 (last one is a multi-token-prediction layer)
+  config.json: agrees with the weights
+```
+Add `--json` for everything, `--tensors` for the role of every tensor, or run `ai-model-explorer open` to start the web app on your machine.
+
+**Python.**
+```python
+from ai_model_explorer import inspect, summary
+
+a = inspect("Qwen/Qwen3-8B")
+a["totals"]["params"]                    # 8190735360
+a["hyperparameters_with_config"]["kv_heads"]  # 8
+print(summary(a))
+```
+Python 3.9+. No PyTorch, transformers or Node.js needed. Full reference: [docs/usage.md](docs/usage.md).
+
+## What you get
+| | |
+|---|---|
+| **Components** | vision tower, projector, language model, speech encoder, transducer prediction and joint networks, diffusion denoiser, and how they connect |
+| **Layer stacks** | every repeated block and its type, including hybrid stacks (attention, Mamba / linear attention and MoE in one stack) |
+| **Roles** | attention (grouped-query, latent, cross), feed-forward (dense, gated), mixture of experts, state-space, convolution, recurrent cells, adaLN modulation, embeddings, norms, heads |
+| **Numbers** | width, layers, heads, KV heads, head size, FFN width, experts and active experts, vocabulary, KV-cache bytes per token, exact parameter count, bytes as stored |
+| **Provenance** | every value marked as measured from the weights, read from `config.json` and checked, or estimated |
+| **Web views** | anatomy, a numbered big picture with a play-through of each part's input and output, a layer map drawn to scale, lenses for weights, compute, TFLite ops, precision and fragility, and a copyable report |
+
+Inputs: a Hugging Face repo id or URL, `.safetensors` files, `.tflite` (LiteRT) files with their real op graph, or a pasted `config.json`. The interface is in English and Thai.
+
+## How accurate is it?
 | Benchmark | Result |
 |---|---|
-| 510 architectures from `transformers` (labels from module classes the method never sees) | 96.8% of tensors get the right role (macro) vs 82.3% for the best name-only baseline; 95.0% with every name replaced by a random token; parameter totals exact for 510/510, also under NVFP4, FP8 and GPTQ |
-| Same, head geometry | 73% from shapes alone; 96–98% with the config; 95% of configs agree with their weights |
-| 191 popular Hugging Face checkpoints (DeepSeek-V3, Kimi K2, Qwen3, Llama 3.3, gpt-oss, Gemma 3, Whisper, SAM, SDXL, Wan, …) | totals agree with the Hub's own count for 163 of 170; 4 of the 7 differences are the Hub counting packed 4-bit bytes; head count 97% with config; median 79 KB read per repo |
+| 510 architectures from `transformers`, labels from module classes the method never sees | 96.8% of tensors get the right role (macro), against 82.3% for the best name-only rule set; 95.0% with every name replaced by a random token |
+| Parameter totals on the same 510 | exact for all of them, also under NVFP4, FP8 and GPTQ storage |
+| Head geometry | 73% from shapes alone, 96–98% with `config.json`; 95% of configs agree with their weights |
+| 191 popular Hugging Face checkpoints (DeepSeek-V3, Kimi K2, Qwen3, Llama 3.3, gpt-oss, Gemma 3, Whisper, SAM, SDXL, Wan, …) | totals agree with the Hub's own count for 163 of 170, and 4 of the 7 differences are the Hub counting packed 4-bit bytes; median 79 KB read per repo |
 
-Run the Hub benchmark yourself: open **https://joessattes.github.io/ai-model-explorer/bench.html**, press Start,
-then Download results; `node research/realbench.js export.jsonl corpus.jsonl` analyses the export.
+Method and full results: [docs/how-it-works.md](docs/how-it-works.md) and the [paper](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy).
+Run the Hub benchmark yourself at [bench.html](https://joessattes.github.io/ai-model-explorer/bench.html).
+
+## Compared with other tools
+[Netron](https://netron.app) and Google's [Model Explorer](https://github.com/google-ai-edge/model-explorer) draw the operator graph of a model file you already have, and they are the right tools for debugging a converted graph. AI Model Explorer starts from a repo name, reads only headers, and groups tensors into architectural parts with sizes and storage formats. That makes it practical for checkpoints of hundreds of billions of parameters and for comparing many models in a script. For `.tflite` files it also shows the real op graph.
 
 ## Repository
 | Path | What |
 |---|---|
-| `index.html`, `en/index.html` | the built site, Thai and English (one file each) |
-| `src/` | sources: `infer.js` (recovery), `loaders.js` (headers, range requests), `model.js`, `app.js`, `i18n.js`; `python3 build.py` rebuilds both pages |
-| `bench/`, `bench.html` | the Hub checkpoint benchmark page and its model list |
-| `python/`, `pyproject.toml` | the `pip install ai-model-explorer` package (CLI and Python API) |
-| `research/` | corpus builder, evaluation (`eval.js`), Hub analysis (`realbench.js`), results (`res/`), the Hub export (`data/`) |
-| `paper/` | PDF of *Reading the Architecture off the Weights* |
+| `index.html`, `en/index.html` | the built site, Thai and English |
+| `src/` | `infer.js` (recovery method), `loaders.js` (headers by HTTP range request), `app.js`, `i18n.js`, `model.js`; `python3 build.py` rebuilds both pages |
+| `python/`, `pyproject.toml` | the `ai-model-explorer` package on PyPI (CLI and Python API) |
+| `docs/` | usage guide and how it works |
+| `bench/`, `bench.html` | the Hub checkpoint benchmark page |
+| `research/` | corpus builder, evaluation, baselines, results and the Hub export used in the paper |
+| `paper/` | the paper (PDF) |
+| `assets/` | logo |
 
-## Templates
+## Built-in examples in the web app
 - **Whisper medium (Thai)**: `biodatlab/distill-whisper-th-medium` converted to `.tflite` (random weights, so ops, shapes, sizes and compute are real; accuracy is not)
 - **Nemotron 3.5** Super VL, Transcribe, ASR streaming and Embed NVFP4; **Parakeet TDT 0.6B v3**; **FastH3 Omni FP8**; **Kumo** Tabular and Relational: analysed automatically from their weight manifests
 - **Qwen3-ASR 1.7B**, **Qwen3.8 27B**, **Llama 3.2 1B**, **GPT-2 small**, **BERT base**, **ViT base**
 - **Precision demos**: Whisper rehearsal models in fp32, weight-only int8, static int8 and dynamic int4
 
-## Install with pip
-```bash
-pip install ai-model-explorer
-ai-model-explorer inspect Qwen/Qwen3-8B          # anatomy in the terminal (add --json for everything)
-ai-model-explorer open                            # the web app on your machine
-```
-```python
-from ai_model_explorer import inspect, summary
-print(summary(inspect("deepseek-ai/DeepSeek-V3")))
-```
-Python 3.9+, no PyTorch or Node.js needed: the package runs the same `infer.js` and `loaders.js` as the website in an
-embedded QuickJS engine and reads only the safetensors headers. Gated repos: set `HF_TOKEN`.
-Package docs: [`python/README.md`](python/README.md).
-
-## Run locally
-**The website** needs no install: open `index.html` in a browser. After editing `src/`, rebuild with
+## Reproduce the paper
+The website needs no install: open `index.html` in a browser. After editing `src/`, rebuild with
 `cd src && python3 build.py` (standard library only).
 
-**Reproducing the paper** needs Python 3.11–3.13 and Node.js 18 or newer:
+Reproducing the paper's numbers needs Python 3.11–3.13 and Node.js 18 or newer:
 
 ```bash
 git clone https://github.com/JoesSattes/ai-model-explorer.git
