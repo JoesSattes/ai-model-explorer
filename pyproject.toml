@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ai-model-explorer"
+dynamic = ["version"]
+description = "See any Hugging Face model's architecture from its safetensors header, without downloading weights."
+readme = "python/README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Sattaya Singkul", email = "joeysattaya@gmail.com" }]
+requires-python = ">=3.9"
+dependencies = ["quickjs>=1.19"]
+keywords = ["huggingface", "safetensors", "model architecture", "llm", "transformers", "mixture of experts", "visualization", "edge ai", "quantization"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Scientific/Engineering :: Visualization",
+]
+
+[project.urls]
+Homepage = "https://joessattes.github.io/ai-model-explorer/en/"
+Source = "https://github.com/JoesSattes/ai-model-explorer"
+Paper = "https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy"
+
+[project.scripts]
+ai-model-explorer = "ai_model_explorer.cli:main"
+
+[tool.hatch.version]
+path = "python/ai_model_explorer/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["python/ai_model_explorer"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/infer.js" = "ai_model_explorer/js/infer.js"
+"src/loaders.js" = "ai_model_explorer/js/loaders.js"
+"index.html" = "ai_model_explorer/web/index.html"
+"en/index.html" = "ai_model_explorer/web/en/index.html"
+"og.png" = "ai_model_explorer/web/og.png"
+
+[tool.hatch.build.targets.sdist]
+include = ["python/", "src/infer.js", "src/loaders.js", "index.html", "en/index.html", "og.png", "LICENSE", "pyproject.toml"]

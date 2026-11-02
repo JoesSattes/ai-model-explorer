@@ -51,6 +51,7 @@ then Download results; `node research/realbench.js export.jsonl corpus.jsonl` an
 | `index.html`, `en/index.html` | the built site, Thai and English (one file each) |
 | `src/` | sources: `infer.js` (recovery), `loaders.js` (headers, range requests), `model.js`, `app.js`, `i18n.js`; `python3 build.py` rebuilds both pages |
 | `bench/`, `bench.html` | the Hub checkpoint benchmark page and its model list |
+| `python/`, `pyproject.toml` | the `pip install ai-model-explorer` package (CLI and Python API) |
 | `research/` | corpus builder, evaluation (`eval.js`), Hub analysis (`realbench.js`), results (`res/`), the Hub export (`data/`) |
 | `paper/` | PDF of *Reading the Architecture off the Weights* |
 
@@ -59,6 +60,20 @@ then Download results; `node research/realbench.js export.jsonl corpus.jsonl` an
 - **Nemotron 3.5** Super VL, Transcribe, ASR streaming and Embed NVFP4; **Parakeet TDT 0.6B v3**; **FastH3 Omni FP8**; **Kumo** Tabular and Relational: analysed automatically from their weight manifests
 - **Qwen3-ASR 1.7B**, **Qwen3.8 27B**, **Llama 3.2 1B**, **GPT-2 small**, **BERT base**, **ViT base**
 - **Precision demos**: Whisper rehearsal models in fp32, weight-only int8, static int8 and dynamic int4
+
+## Install with pip
+```bash
+pip install ai-model-explorer
+ai-model-explorer inspect Qwen/Qwen3-8B          # anatomy in the terminal (add --json for everything)
+ai-model-explorer open                            # the web app on your machine
+```
+```python
+from ai_model_explorer import inspect, summary
+print(summary(inspect("deepseek-ai/DeepSeek-V3")))
+```
+Python 3.9+, no PyTorch or Node.js needed: the package runs the same `infer.js` and `loaders.js` as the website in an
+embedded QuickJS engine and reads only the safetensors headers. Gated repos: set `HF_TOKEN`.
+Package docs: [`python/README.md`](python/README.md).
 
 ## Run locally
 **The website** needs no install: open `index.html` in a browser. After editing `src/`, rebuild with

@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 corpus.jsonl
 .DS_Store
+dist/
+build/
+*.egg-info/
