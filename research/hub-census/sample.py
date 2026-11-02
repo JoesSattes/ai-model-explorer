@@ -23,12 +23,15 @@ def tier(d):
     return "0"
 
 
-def stratify(f: pd.DataFrame, top_n: int, rest_n: int, min_per: int, seed: int) -> pd.DataFrame:
+def stratify(f: pd.DataFrame, top_n: int, rest_n: int, min_per: int, seed: int, originals: int = 0) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
     f = f.sort_values("downloads", ascending=False).reset_index(drop=True)
     top = f.head(top_n).copy()
+    if originals and "origin" in f:  # the main models: most-downloaded original releases (not quantized / fine-tuned / merged copies)
+        extra = f[(f["origin"] == "original") & ~f["id"].isin(top["id"])].head(max(0, originals - int((top["origin"] == "original").sum())))
+        top = pd.concat([top, extra])
     top["stratum"], top["weight"] = "top", 1.0
-    rest = f.iloc[top_n:].copy()
+    rest = f[~f["id"].isin(top["id"])].copy()
     rest["stratum"] = ("y" + rest["created_at"].dt.year.fillna(0).astype(int).astype(str) + "|d" +
                        rest["downloads"].map(tier) + "|st" + rest["has_safetensors_tag"].astype(int).astype(str))
     sizes = rest["stratum"].value_counts()
@@ -51,10 +54,11 @@ if __name__ == "__main__":
     ap.add_argument("--top", type=int, default=500)
     ap.add_argument("--rest", type=int, default=500)
     ap.add_argument("--min-per-stratum", type=int, default=2)
+    ap.add_argument("--originals", type=int, default=0, help="also read the N most-downloaded original releases in full")
     ap.add_argument("--seed", type=int, default=2026)
     a = ap.parse_args()
     f = pd.read_parquet(a.frame)
-    s = stratify(f, a.top, a.rest, a.min_per_stratum, a.seed)
+    s = stratify(f, a.top, a.rest, a.min_per_stratum, a.seed, a.originals)
     s.to_parquet(a.out, index=False)
     info = {"frame": len(f), "sample": len(s), "seed": a.seed, "top": a.top, "rest_target": a.rest,
             "strata": int(s["stratum"].nunique()), "weight_sum": round(float(s["weight"].sum()))}

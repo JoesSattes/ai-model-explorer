@@ -62,6 +62,14 @@ def normalize(df: pd.DataFrame) -> pd.DataFrame:
     out["tags"] = out["tags"].apply(lambda t: [str(x) for x in t] if isinstance(t, (list, tuple)) or hasattr(t, "tolist") else [])
     out["gated"] = out["gated"].apply(lambda g: bool(g) and str(g).lower() not in ("false", "0", "none"))
     out["has_safetensors_tag"] = out["tags"].apply(lambda t: "safetensors" in t)
+    # original release or derivative: the Hub tags derivatives as base_model:<relation>:<parent>
+    def origin(t):
+        rel = [x.split(":")[1] for x in t if x.startswith("base_model:") and x.count(":") >= 2]
+        for r in ("quantized", "adapter", "merge", "finetune"):
+            if r in rel:
+                return r
+        return "original"
+    out["origin"] = out["tags"].apply(origin)
     return out.dropna(subset=["id"]).drop_duplicates("id").reset_index(drop=True)
 
 
@@ -112,6 +120,8 @@ def describe(f: pd.DataFrame) -> dict:
         "share_of_downloads_top_1000": round(float(top.head(1000).sum() / max(top.sum(), 1)), 4),
         "share_of_downloads_top_10000": round(float(top.head(10000).sum() / max(top.sum(), 1)), 4),
         "created_per_year": {int(k): int(v) for k, v in yr.value_counts().sort_index().items() if pd.notna(k)},
+        "origin": f["origin"].value_counts().to_dict(),
+        "origin_share_of_downloads": {k: round(float(v), 4) for k, v in (f.groupby("origin")["downloads"].sum() / max(f["downloads"].sum(), 1)).items()},
         "top_libraries": f["library"].fillna("(none)").value_counts().head(15).to_dict(),
         "top_pipeline_tags": f["pipeline_tag"].fillna("(none)").value_counts().head(15).to_dict(),
     }

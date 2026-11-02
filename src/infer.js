@@ -461,7 +461,7 @@ function infer(manifest, opts = {}) {
   // 4e. hyperparameters of the backbone
   if (back) out.hp = hpOf(back, T, out, comps);
   out.comps = comps.map(c => { delete c.node; return c; });
-  out.family = familyOf(out);
+  out.family = familyOf(out, lex);
   return out;
 }
 function commonPrefix(ns) { if (!ns.length) return ""; let p = ns[0].split("."); for (const n of ns.slice(1)) { const q = n.split("."); let i = 0; while (i < p.length && p[i] === q[i]) i++; p = p.slice(0, i); } return p.join("."); }
@@ -521,6 +521,7 @@ function regionsOf(item, T, d, EL, lex) {
   const ups = regs.filter(r => r.kind === "half_up"), downs = regs.filter(r => r.kind === "half_down");
   for (const u of ups) { const dn = downs.find(x => x.f === u.f || x.f * 2 === u.f); if (dn) { u.kind = dn.kind = "ffn"; u.ev.push("pairs with " + dn.key); } }
   for (const r of regs) {
+    if (lex && r.kind === "attn" && LEX.cross.test(r.key + " " + (r.names || []).join(" ")) && !/(^|[._])(self_?attn|selfattention|self_attention)([._]|$)/i.test(r.key)) { r.kind = "cross"; r.ev.push("cross-attention by name (keys come from an encoder of the same width)"); }
     if (r.kind === "half_up" || r.kind === "half_down" || r.kind === "other") { const lk = lex ? lexKind(r.key + " " + r.names.join(" ")) : null; r.kind = lk || (r.kind === "other" ? "other" : "ffn"); if (lk) r.ev.push("by name"); }
     if (lex && r.kind === "attn" && LEX.cross.test(r.key)) r.kind = "cross";
     if (lex && r.kind === "ffn" && LEX.moe.test(r.key + " " + r.names.join(" ")) && r.names.some(n => /router|gate\.weight$|experts/i.test(n))) r.kind = "moe";
@@ -619,7 +620,7 @@ function hpOf(C, T, out, comps) {
     if (mtpItems.length) hp.mtp_expert_params = ex.filter(([n]) => inMtp(n)).reduce((a, [n]) => a + prod(T[n].shape), 0); }
   return hp;
 }
-function familyOf(o) {
+function familyOf(o, lex = true) {
   const b = o.comps.find(c => c.role === "backbone"); if (!b) return "unknown";
   const k = b.kinds || {};
   const enc = o.comps.filter(c => c.role === "encoder");
@@ -629,7 +630,25 @@ function familyOf(o) {
   if (enc.length && cross) return "encoder-decoder"; // an encoder feeding a decoder through cross-attention, head tied or not
   if (enc.length && b.hasHead) return "prefix-lm";
   if (b.hasHead) return "decoder";
-  return "encoder"; // also tied-head decoders when there is no config: shapes cannot tell them apart (familyFromConfig can)
+  if (k.head && b.d && k.head >= 4096 * b.d && !/image|audio|video/.test(b.modality || "")) return enc.length ? "prefix-lm" : "decoder"; // a vocabulary-sized output projection the head detector did not attach
+  if (b.modality === "text") return tiedText(o, b, lex);
+  return "encoder";
+}
+// A text backbone with no output head is either an encoder (BERT family) or a decoder whose head is tied to the embedding.
+// Encoders carry a segment (token-type) table, a pooler or a norm right after the embedding and keep biases on their
+// projections; tied decoders end the stack with a final norm and, since Llama, drop the biases; SSM and MoE stacks are decoders.
+function tiedText(o, b, lex) {
+  const own = Object.entries(o.tensors).filter(([, t]) => t.comp === b.id).map(([n]) => n);
+  if (b.kinds && (b.kinds.ssm || b.kinds.moe)) return "decoder";
+  if (lex) {
+    if (own.some(n => /(token_type|segment)_?emb|(^|\.)pooler\./i.test(n))) return "encoder";
+    const embNorm = own.some(n => /emb\w*[._](layer_?norm|ln|norm)\b|embeddings\.LayerNorm/i.test(n));
+    const finalNorm = own.some(n => /(^|\.)(norm|ln_f|norm_f|final_layer_?norm|final_norm|ln_out)\.weight$/.test(n) && !/(layers?|h|blocks?)\.\d+\./.test(n));
+    if (finalNorm && !embNorm) return "decoder";
+    if (embNorm) return "encoder";
+  }
+  const mats = own.filter(n => o.tensors[n].kind === "attn"), biased = mats.filter(n => /bias$/.test(n)).length;
+  return mats.length && biased === 0 ? "decoder" : "encoder";
 }
 
 // The family as the checkpoint's own config declares it (architectures, is_encoder_decoder), used when a config exists.
