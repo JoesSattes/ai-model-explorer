@@ -2733,6 +2733,7 @@ wire();
 S.lens = pref("lens") || "weights";
 const h0 = location.hash.slice(1), last = pref("last");
 setModel(MODELS.some(m => m.id === h0) ? h0 : MODELS.some(m => m.id === last) ? last : MODELS[0].id, true);
+if (/^hf=/.test(h0)) { $("#hf").value = decodeURIComponent(h0.slice(3)); setTimeout(() => $("#hfGo").click(), 50); } // shareable link: #hf=owner/repo
 DB.all().then(list => { (list || []).sort((a, b) => b.savedAt - a.savedAt).forEach(o => { if (!MODELS.some(m => m.id === o.id)) register({...o, group: "own", note: () => t(o.noteKey || "n_upload", o.noteVars)}); });
   const want = MODELS.some(m => m.id === h0) ? h0 : last; if (want && S.M.id !== want && MODELS.some(m => m.id === want)) setModel(want, true); else renderPicker(); });
 })();
