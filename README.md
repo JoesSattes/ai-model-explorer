@@ -52,7 +52,7 @@ then Download results; `node research/realbench.js export.jsonl corpus.jsonl` an
 | `src/` | sources: `infer.js` (recovery), `loaders.js` (headers, range requests), `model.js`, `app.js`, `i18n.js`; `python3 build.py` rebuilds both pages |
 | `bench/`, `bench.html` | the Hub checkpoint benchmark page and its model list |
 | `research/` | corpus builder, evaluation (`eval.js`), Hub analysis (`realbench.js`), results (`res/`), the Hub export (`data/`) |
-| `paper/` | LaTeX sources and PDF of *Reading the Architecture off the Weights* |
+| `paper/` | PDF of *Reading the Architecture off the Weights* |
 
 ## Templates
 - **Whisper medium (Thai)**: `biodatlab/distill-whisper-th-medium` converted to `.tflite` (random weights, so ops, shapes, sizes and compute are real; accuracy is not)
@@ -87,7 +87,6 @@ models are created on the meta device, nothing is downloaded but configs). Then 
 with `--obf --nolex`, `--quant nvfp4|fp8|gptq`, `--cfg`, or a baseline: `--v1` (name rules), `--v1moe` (name rules
 with an MoE label) or `--gguf` (llama.cpp's tensor-name table, built by `python research/gguf_baseline.py`).
 Hub benchmark: `node research/realbench.js research/data/hub-bench-191.jsonl.gz corpus.jsonl`.
-Figures: `cd paper && python scripts/figs.py` (reads `research/res/`).
 
 ## Citation
 If you use AI Model Explorer or its recovery method, please cite the paper ([ResearchGate](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy), [PDF](paper/manifest-anatomy-singkul-2026.pdf)):

@@ -1,7 +1,6 @@
-# Only needed to reproduce the paper (research/ and paper/scripts/). The website itself needs nothing: open index.html.
+# Only needed to reproduce the paper (research/). The website itself needs nothing: open index.html.
 # Versions used for the paper's numbers. Python 3.11-3.13; Node.js 18+ for research/*.js (tested on Node 22).
 torch==2.14.1
 transformers==5.22.1
 sentencepiece
-matplotlib==3.11.2
 numpy
