@@ -34,6 +34,9 @@ class Hub:
                 return r.status, body
         except urllib.error.HTTPError as e:
             return e.code, e.read() or b""
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            host = urllib.request.urlparse(url).netloc
+            raise ConnectionError(f"cannot reach {host}: {getattr(e, 'reason', e)}") from None
 
     def json(self, url: str):
         st, body = self.get(url)

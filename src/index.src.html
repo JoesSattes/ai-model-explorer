@@ -45,7 +45,7 @@
   "author":{"@id":"https://joessattes.github.io/Sattaya-AI-Website/#person"},"creator":{"@id":"https://joessattes.github.io/Sattaya-AI-Website/#person"},"copyrightHolder":{"@id":"https://joessattes.github.io/Sattaya-AI-Website/#person"},"copyrightYear":2026,"license":"https://opensource.org/licenses/MIT",
   "keywords":"AI model explorer, model visualization, TFLite, LiteRT, edge AI, quantization, Whisper, Llama, Hugging Face","screenshot":"https://joessattes.github.io/ai-model-explorer/og.png"},
  {"@type":"Person","@id":"https://joessattes.github.io/Sattaya-AI-Website/#person","name":"Sattaya Singkul","alternateName":"Jo","url":"https://joessattes.github.io/Sattaya-AI-Website/","jobTitle":"Researcher","knowsAbout":["Speech AI","Edge AI","On-device inference","Model quantization"],"sameAs":["https://joessattes.github.io/Sattaya-AI-Website/","https://github.com/JoesSattes"]},
- {"@type":"SoftwareSourceCode","name":"AI Model Explorer source","codeRepository":"https://github.com/JoesSattes/ai-model-explorer","programmingLanguage":"JavaScript","license":"https://opensource.org/licenses/MIT","author":{"@id":"https://joessattes.github.io/Sattaya-AI-Website/#person"}},
+ {"@type":"SoftwareSourceCode","name":"AI Model Explorer source","codeRepository":"https://github.com/JoesSattes/ai-model-explorer","sameAs":["https://pypi.org/project/ai-model-explorer/"],"runtimePlatform":["Web browser","Python 3.9+ (pip install ai-model-explorer)"],"programmingLanguage":"JavaScript","license":"https://opensource.org/licenses/MIT","author":{"@id":"https://joessattes.github.io/Sattaya-AI-Website/#person"}},
 {{LDEXTRA}}
 ]}
 </script>
@@ -242,7 +242,7 @@ footer{padding:44px 0 40px;color:var(--soft);font-size:14.5px;border-top:1px sol
 footer .fname{font-size:40px;font-weight:700;letter-spacing:-.03em;color:var(--ink);margin-bottom:10px}
 footer .fl{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}footer a{color:var(--ink)}
 .credit a{color:var(--ink)}
-#about .about{max-width:860px;padding:40px 0 10px}#about h2{font-size:26px;margin:28px 0 10px;color:var(--ink)}#about h3{font-size:17px;margin:18px 0 4px;color:var(--ink)}#about p{color:var(--soft);line-height:1.65;margin:0 0 10px}#about a{color:var(--ink)}
+#about .about{max-width:860px;padding:40px 0 10px}#about h2{font-size:26px;margin:28px 0 10px;color:var(--ink)}#about h3{font-size:17px;margin:18px 0 4px;color:var(--ink)}#about p{color:var(--soft);line-height:1.65;margin:0 0 10px}#about code{font-family:'IBM Plex Mono',monospace;font-size:.92em;background:var(--glass2);padding:1px 6px;border-radius:6px;color:var(--ink)}#about a{color:var(--ink)}
 footer .cite{margin-top:16px;max-width:860px}footer .cite summary{cursor:pointer;color:var(--ink);font-weight:600}footer .citeref{margin:10px 0 8px;color:var(--soft)}
 footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,127,127,.25));border-radius:10px;padding:12px 14px;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);white-space:pre-wrap;word-break:break-word;margin-bottom:8px}
 @media (max-width:1100px){.hgrid{grid-template-columns:1fr}.iogrid{grid-template-columns:1fr 1fr}.iomid{grid-column:1/-1;order:-1}.ionums{grid-column:1/-1}.xdg,.agrid{grid-template-columns:1fr}.cgrid{grid-template-columns:1fr 1fr}.qplay,.rgrid{grid-template-columns:1fr}#cur{grid-template-columns:1fr}}
@@ -344,6 +344,7 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
   <p data-i="about_p1"></p>
   <p data-i="about_p2"></p>
   <p data-ih="about_p3"></p>
+  <p data-ih="about_pip"></p>
   <h2 data-i="faq_h"></h2>
   <h3 data-i="faq_q1"></h3><p data-i="faq_a1"></p>
   <h3 data-i="faq_q2"></h3><p data-i="faq_a2"></p>
@@ -357,7 +358,7 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
   <div class="fname">AI Model Explorer</div>
   <div class="credit">© 2026 <a href="https://joessattes.github.io/Sattaya-AI-Website/" rel="author">Sattaya Singkul</a> · <a href="https://github.com/JoesSattes/ai-model-explorer/blob/main/LICENSE" rel="license">MIT License</a></div>
   <p style="margin-top:8px" data-i="footer"></p>
-  <div class="fl"><a href="https://joessattes.github.io/Sattaya-AI-Website/">Portfolio — Sattaya Singkul</a><a href="https://github.com/JoesSattes/ai-model-explorer">GitHub</a><a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy">Paper</a><a href="{{ROOT}}llms.txt">llms.txt</a></div>
+  <div class="fl"><a href="https://joessattes.github.io/Sattaya-AI-Website/">Portfolio — Sattaya Singkul</a><a href="https://github.com/JoesSattes/ai-model-explorer">GitHub</a><a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy">Paper</a><a href="https://pypi.org/project/ai-model-explorer/">PyPI</a><a href="{{ROOT}}llms.txt">llms.txt</a></div>
   <details class="cite" id="cite"><summary data-i="cite_t">Cite this work</summary>
     <p class="citeref">Sattaya Singkul. 2026. <i>Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy</i>. Preprint, <a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy">ResearchGate</a>.</p>
     <pre id="citeBib">@misc{singkul2026reading,

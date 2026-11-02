@@ -13,6 +13,22 @@ Paste a Hugging Face repo id (for example `deepseek-ai/DeepSeek-V3`, `Qwen/Qwen3
 - reads heads, KV heads and head size from config.json when present, and checks the config against the weights;
 - tags every value as measured from the weights, read from config, or estimated.
 
+Also available as a Python package (Python 3.9+, no PyTorch or Node.js):
+
+```
+pip install ai-model-explorer
+ai-model-explorer inspect deepseek-ai/DeepSeek-V3          # readable summary
+ai-model-explorer inspect Qwen/Qwen3-8B --json --tensors   # everything, including the role of each tensor
+ai-model-explorer open                                     # the web app on your machine
+```
+
+```python
+from ai_model_explorer import inspect, summary
+a = inspect("Qwen/Qwen3-8B")   # dict: family, totals, hyperparameters, components, edges, quantization, config check
+```
+
+The package runs the same JavaScript as the website in an embedded QuickJS engine, so results match. Gated repos: set HF_TOKEN.
+
 Files are parsed in the browser. There is no server, and opened models are cached in the browser (IndexedDB).
 
 ## How it works (method)
@@ -56,6 +72,7 @@ Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Co
 - App (English): https://joessattes.github.io/ai-model-explorer/en/
 - Paper: https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy
 - Paper PDF: https://joessattes.github.io/ai-model-explorer/paper/manifest-anatomy-singkul-2026.pdf
+- Python package: https://pypi.org/project/ai-model-explorer/
 - Source code: https://github.com/JoesSattes/ai-model-explorer
 - Hub benchmark page: https://joessattes.github.io/ai-model-explorer/bench.html
 

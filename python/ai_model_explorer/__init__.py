@@ -6,7 +6,7 @@
 
 Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026.
 """
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from .api import inspect, summary  # noqa: E402
 
