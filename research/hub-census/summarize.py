@@ -102,8 +102,9 @@ def main(path, outdir):
     if "no_weights_kind" in d:
         nw = d[d["status"] == "no_weights"]
         L += ["", "## Why there were no weights to read", "", "| kind | " + " | ".join(g for g, _ in groups) + " |", "|---|" + "---|" * len(groups)]
-        for k in nw["no_weights_kind"].fillna("other").value_counts().index:
-            L.append(f"| {k} | " + " | ".join(fmt(*wprop(p["no_weights_kind"].fillna("other") == k, p["weight"])) for _, p in groups) + " |")
+        for k in nw["no_weights_kind"].fillna("other").value_counts().index:  # share among repos with no weights
+            L.append(f"| {k} | " + " | ".join(fmt(*wprop(q["no_weights_kind"].fillna("other") == k, q["weight"])) if len(q) else "-"
+                                              for q in (p[p["status"] == "no_weights"] for _, p in groups)) + " |")
     if "origin" in d and d["origin"].notna().any():
         L += ["", "## Original releases vs derivatives (repos read in full, unweighted)", "",
               "| origin | repos | readable | no config.json | family by weights = family by config |", "|---|---|---|---|---|"]

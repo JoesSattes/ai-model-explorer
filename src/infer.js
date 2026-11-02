@@ -684,7 +684,8 @@ function fuseConfig(I, cfg) {
     const o = best.o, H = num(o, ["num_attention_heads", "n_head", "num_heads", "encoder_attention_heads", "attention_heads", "decoder_attention_heads"]);
     const KV = num(o, ["num_key_value_heads", "num_kv_heads", "n_kv_heads", "multi_query_group_num"]), hd = num(o, ["head_dim", "attention_head_dim", "kv_channels", "qk_head_dim"]);
     const rec = {path: best.path || "(root)", heads: H, kv_heads: KV || (o.multi_query === true ? 1 : H), head_dim: hd || (H && at ? at.x / H : null), topk: num(o, ["num_experts_per_tok", "moe_topk", "top_k", "num_selected_experts"]) || (C.role === "backbone" ? topAll : null)};
-    if (at && H && rec.head_dim) { const h = rec.head_dim; rec.checked = true; rec.q_width = at.x; rec.kv_width = at.kv || null; rec.consistent = H * h === at.x && (!at.kv || at.kv === at.x || rec.kv_heads * h === at.kv); }
+    if (I.hp && I.hp.kv_latent && C.role === "backbone") { rec.checked = false; rec.skipped = "latent attention: head widths are not visible in the shapes"; }
+    else if (at && H && rec.head_dim && Number.isInteger(at.x)) { const h = rec.head_dim; rec.checked = true; rec.q_width = at.x; rec.kv_width = at.kv || null; rec.consistent = H * h === at.x && (!at.kv || at.kv === at.x || rec.kv_heads * h === at.kv); }
     out[C.id] = rec;
   }
   return out;
