@@ -593,8 +593,26 @@ function hpOf(C, T, out, comps) {
   hp.tie = emb ? !Object.entries(out.tensors).some(([n, t]) => t.kind === "head" && t.role === "logits" && T[n].shape[0] === emb) : null;
   const attnLayers = regs.filter(r => r.kind === "attn").reduce((a, r) => a + r.count, 0), ssmLayers = regs.filter(r => r.kind === "ssm").reduce((a, r) => a + r.count, 0);
   hp.attn_layers = attnLayers; hp.ssm_layers = ssmLayers;
-  if (at && hp.kv_heads != null) hp.kv_bytes_per_token_bf16 = attnLayers * 2 * at.kv * 2;
-  if (moe) { const ex = Object.entries(out.tensors).filter(([n, t]) => t.comp === C.id && t.role === "expert").reduce((a, [n]) => a + prod(T[n].shape), 0); hp.expert_params = ex; }
+  // multi-token-prediction layers serve speculative decoding: keep them out of the per-token cost
+  const mtpItems = C.stacks.filter(s => s.mtp && s.mtpItem).map(s => s.mtpItem + ".");
+  const inMtp = n => mtpItems.some(p => n.startsWith(p));
+  if (mtpItems.length) {
+    hp.mtp_layers = mtpItems.length;
+    hp.mtp_params = Object.keys(out.tensors).filter(inMtp).reduce((a, n) => a + prod(T[n].shape), 0);
+  }
+  // latent attention (MLA) caches one compressed vector per layer: the d-input projection that is a norm width plus a rope part
+  let latent = null;
+  for (const r of regs.filter(r => r.kind === "attn")) {
+    const names = r.names || [], norms = names.filter(n => T[n] && T[n].shape.length === 1).map(n => T[n].shape[0]);
+    for (const n of names) { const s = T[n] && T[n].shape; if (!s || s.length !== 2 || s[1] !== C.d || s[0] * 4 > C.d) continue;
+      const w = norms.find(w => s[0] - w > 0 && s[0] - w <= 128); if (w) { latent = s[0]; break; } }
+    if (latent) break;
+  }
+  const kvLayers = attnLayers - (hp.mtp_layers || 0);
+  if (latent) { hp.kv_latent = latent; hp.kv_bytes_per_token_bf16 = kvLayers * latent * 2; }
+  else if (at && hp.kv_heads != null) hp.kv_bytes_per_token_bf16 = kvLayers * 2 * at.kv * 2;
+  if (moe) { const ex = Object.entries(out.tensors).filter(([n, t]) => t.comp === C.id && t.role === "expert"); hp.expert_params = ex.reduce((a, [n]) => a + prod(T[n].shape), 0);
+    if (mtpItems.length) hp.mtp_expert_params = ex.filter(([n]) => inMtp(n)).reduce((a, [n]) => a + prod(T[n].shape), 0); }
   return hp;
 }
 function familyOf(o) {

@@ -98,7 +98,8 @@ class Model:
     @property
     def active_params(self) -> Optional[int]:
         """Parameters used per token. Equals the total for dense models; for mixtures of experts only the routed
-        experts a token visits count. Multi-token-prediction layers are left out (they serve speculative decoding)."""
+        experts a token visits count. Multi-token-prediction layers are left out (they serve speculative decoding).
+        Embeddings are included; some model cards leave the input embedding out (gpt-oss), DeepSeek and Kimi include it."""
         hp = self.hp
         mtp = (self.data.get("breakdown") or {}).get("mtp") or {}
         main = self.params - mtp.get("params", 0)
@@ -111,21 +112,18 @@ class Model:
         return int(main - ex_main * (1 - k / e))
 
     def kv_cache_bytes_per_token(self, bits: int = 16) -> Optional[int]:
-        """Bytes of KV cache one token adds, summed over all attention layers. Latent attention (MLA) stores a
-        compressed vector per layer; state-space layers keep no per-token cache."""
-        hp, cfg = self.hp, self.config or {}
-        bpe = bits / 8
-        layers = hp.get("attn_layers") or hp.get("layers")
-        if not layers:
-            return None
-        if self.mtp_params and layers > 1:
-            layers -= 1
-        if cfg.get("kv_lora_rank"):
-            return int(layers * (cfg["kv_lora_rank"] + cfg.get("qk_rope_head_dim", 0)) * bpe)
+        """Bytes of KV cache one token adds, summed over all attention layers. Taken from the weights: the width of the
+        key/value projections (exact for grouped-query attention), the compressed vector for latent attention (MLA);
+        state-space layers and multi-token-prediction layers keep no per-token cache here."""
+        base = (self.data.get("hyperparameters") or {}).get("kv_bytes_per_token_bf16")
+        if base:
+            return int(base * bits / 16)
+        hp = self.hp
+        layers = (hp.get("attn_layers") or hp.get("layers") or 0) - (hp.get("mtp_layers") or 0)
         kv, hd = hp.get("kv_heads"), hp.get("head_dim")
-        if not (kv and hd):
+        if layers <= 0 or not (kv and hd):
             return None
-        return int(2 * layers * kv * hd * bpe)
+        return int(2 * layers * kv * hd * bits / 8)
 
     def memory(self, context: int = 8192, batch: int = 1, weight_bits: Optional[float] = None, kv_bits: int = 16) -> dict:
         """Rough memory to run the model: weights at a chosen precision (default: as stored) plus the KV cache for
