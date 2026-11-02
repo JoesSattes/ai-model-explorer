@@ -43,6 +43,9 @@ packages = ["python/ai_model_explorer"]
 "index.html" = "ai_model_explorer/web/index.html"
 "en/index.html" = "ai_model_explorer/web/en/index.html"
 "og.png" = "ai_model_explorer/web/og.png"
+"assets/logo.svg" = "ai_model_explorer/web/assets/logo.svg"
+"assets/logo-32.png" = "ai_model_explorer/web/assets/logo-32.png"
+"assets/logo-180.png" = "ai_model_explorer/web/assets/logo-180.png"
 
 [tool.hatch.build.targets.sdist]
-include = ["python/", "src/infer.js", "src/loaders.js", "index.html", "en/index.html", "og.png", "LICENSE", "pyproject.toml"]
+include = ["python/", "src/infer.js", "src/loaders.js", "index.html", "en/index.html", "og.png", "assets/", "LICENSE", "pyproject.toml"]
