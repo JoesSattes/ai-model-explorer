@@ -66,12 +66,20 @@ def normalize(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def from_dump(path):
+    """hub-stats models.parquet is ~1.5 GB. Download it with huggingface_hub (parallel, resumable, progress bar),
+    then read only the columns we need so memory stays small."""
+    import pyarrow.parquet as pq
     if not os.path.exists(path):
-        print("downloading", DUMP, file=sys.stderr)
-        with _open(DUMP) as r, open(path, "wb") as f:
-            while chunk := r.read(1 << 20):
-                f.write(chunk)
-    return pd.read_parquet(path)
+        from huggingface_hub import hf_hub_download
+        print("downloading cfahlgren1/hub-stats models.parquet (~1.5 GB)", file=sys.stderr, flush=True)
+        got = hf_hub_download("cfahlgren1/hub-stats", "models.parquet", repo_type="dataset",
+                              local_dir=os.path.dirname(path) or ".", token=TOKEN)
+        if os.path.abspath(got) != os.path.abspath(path):
+            os.replace(got, path)
+    names = set(pq.ParquetFile(path).schema_arrow.names)
+    cols = [c for cands in ALIASES.values() for c in cands if c in names]
+    print(f"reading {len(cols)} of {len(names)} columns: {cols}", file=sys.stderr, flush=True)
+    return pq.read_table(path, columns=cols).to_pandas()
 
 
 def from_api(limit_pages):
@@ -86,7 +94,7 @@ def from_api(limit_pages):
             nxt = r.headers.get("Link", "")
         url = nxt.split(";")[0].strip("<> ") if 'rel="next"' in nxt else None
         page += 1
-        print(f"page {page}: {len(rows):,} repos", file=sys.stderr)
+        print(f"page {page}: {len(rows):,} repos", file=sys.stderr, flush=True)
     return pd.DataFrame(rows)
 
 

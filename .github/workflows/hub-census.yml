@@ -28,8 +28,18 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - name: Install
-        run: pip install ../.. pandas pyarrow
+        run: pip install ../.. pandas pyarrow huggingface_hub hf_xet
+      - name: Cache hub-stats dump (one per day)
+        id: dump
+        run: echo "day=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: research/hub-census/out/models.parquet
+          key: hub-stats-${{ steps.dump.outputs.day }}
       - name: Sampling frame (every public model + popularity)
+        timeout-minutes: 25
+        env:
+          PYTHONUNBUFFERED: "1"
         run: python frame.py
       - name: Draw sample
         run: python sample.py --top ${{ inputs.top }} --rest ${{ inputs.rest }} --seed ${{ inputs.seed }}
