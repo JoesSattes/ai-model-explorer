@@ -23,6 +23,27 @@ def tier(d):
     return "0"
 
 
+# Providers whose releases define the state of the art; their recent originals form the "frontier" stratum, which tests
+# the method on architectures it was not written against (see --since).
+FRONTIER = ["Qwen", "deepseek-ai", "google", "meta-llama", "mistralai", "microsoft", "nvidia", "openai", "zai-org",
+            "moonshotai", "MiniMaxAI", "ibm-granite", "allenai", "HuggingFaceTB", "LiquidAI", "tencent", "baidu",
+            "stepfun-ai", "XiaomiMiMo", "inclusionAI", "ByteDance-Seed", "THUDM", "openbmb", "internlm", "OpenGVLab",
+            "CohereLabs", "ai21labs", "tiiuae", "apple", "facebook", "amazon", "Salesforce", "black-forest-labs",
+            "stabilityai", "Lightricks", "Wan-AI", "hexgrad", "kyutai", "sesame", "ServiceNow-AI", "swiss-ai", "arcee-ai",
+            "PrimeIntellect", "NousResearch", "Zyphra", "jinaai", "BAAI", "Alibaba-NLP", "intfloat", "nomic-ai"]
+
+
+def frontier(f: pd.DataFrame, n: int, since: str, providers=None) -> pd.DataFrame:
+    """The n most-downloaded original releases from the frontier providers created on or after `since`."""
+    prov = set(providers or FRONTIER)
+    g = f[f["author"].isin(prov) & (f["created_at"] >= pd.Timestamp(since, tz="UTC"))]
+    if "origin" in g:
+        g = g[g["origin"] == "original"]
+    g = g.sort_values("downloads", ascending=False).head(n).copy()
+    g["stratum"], g["weight"] = "frontier", 1.0
+    return g
+
+
 def stratify(f: pd.DataFrame, top_n: int, rest_n: int, min_per: int, seed: int, originals: int = 0) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
     f = f.sort_values("downloads", ascending=False).reset_index(drop=True)
@@ -55,13 +76,22 @@ if __name__ == "__main__":
     ap.add_argument("--rest", type=int, default=500)
     ap.add_argument("--min-per-stratum", type=int, default=2)
     ap.add_argument("--originals", type=int, default=0, help="also read the N most-downloaded original releases in full")
+    ap.add_argument("--frontier", type=int, default=0, help="read the N most-downloaded originals from frontier providers created since --since")
+    ap.add_argument("--since", default="2025-11-01", help="frontier window start (YYYY-MM-DD)")
+    ap.add_argument("--providers", default="", help="comma-separated provider list (default: built-in FRONTIER)")
     ap.add_argument("--seed", type=int, default=2026)
     a = ap.parse_args()
     f = pd.read_parquet(a.frame)
     s = stratify(f, a.top, a.rest, a.min_per_stratum, a.seed, a.originals)
+    if a.frontier:
+        fr = frontier(f, a.frontier, a.since, a.providers.split(",") if a.providers else None)
+        s.loc[s["id"].isin(fr["id"]), "also_frontier"] = True   # already read in another stratum: flag, do not read twice
+        s = pd.concat([s, fr[~fr["id"].isin(s["id"])]], ignore_index=True)
+        s["also_frontier"] = s["also_frontier"].fillna(False).astype(bool) | (s["stratum"] == "frontier")
     s.to_parquet(a.out, index=False)
     info = {"frame": len(f), "sample": len(s), "seed": a.seed, "top": a.top, "rest_target": a.rest,
-            "strata": int(s["stratum"].nunique()), "weight_sum": round(float(s["weight"].sum()))}
+            "strata": int(s["stratum"].nunique()), "frontier_since": a.since if a.frontier else None,
+            "frontier_repos": int(s.get("also_frontier", pd.Series(dtype=bool)).sum()) if a.frontier else 0, "weight_sum": round(float(s["weight"].sum()))}
     with open(os.path.join(os.path.dirname(a.out) or ".", "sample_info.json"), "w") as fh:
         json.dump(info, fh, indent=2)
     print(json.dumps(info, indent=2))

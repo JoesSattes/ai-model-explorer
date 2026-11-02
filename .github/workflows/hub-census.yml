@@ -7,7 +7,10 @@ on:
     inputs:
       top:      { description: "Most-downloaded repos to read (all of them)", default: "500" }
       originals: { description: "Most-downloaded ORIGINAL releases to read in full (main models, not quantized/fine-tuned copies)", default: "1000" }
+      frontier: { description: "Recent originals from frontier providers (Qwen, DeepSeek, Google, Meta, Mistral, NVIDIA, ...)", default: "400" }
+      since:    { description: "Frontier window start, YYYY-MM-DD", default: "2025-11-01" }
       rest:     { description: "Random repos from the rest of the Hub (stratified)", default: "500" }
+      publish:  { description: "Publish to this HF dataset (owner/name), blank = no. Needs secret HF_WRITE_TOKEN", default: "" }
       seed:     { description: "Random seed", default: "2026" }
       workers:  { description: "Repos read in parallel", default: "4" }
       timeout:  { description: "Seconds allowed per repo", default: "180" }
@@ -43,7 +46,7 @@ jobs:
           PYTHONUNBUFFERED: "1"
         run: python frame.py
       - name: Draw sample
-        run: python sample.py --top ${{ inputs.top }} --originals ${{ inputs.originals }} --rest ${{ inputs.rest }} --seed ${{ inputs.seed }}
+        run: python sample.py --top ${{ inputs.top }} --originals ${{ inputs.originals }} --frontier ${{ inputs.frontier }} --since ${{ inputs.since }} --rest ${{ inputs.rest }} --seed ${{ inputs.seed }}
       - name: Read headers
         timeout-minutes: 320
         run: python crawl.py --workers ${{ inputs.workers }} --timeout ${{ inputs.timeout }}
@@ -52,6 +55,12 @@ jobs:
         run: |
           python summarize.py
           cat out/report/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish dataset
+        if: ${{ inputs.publish != '' }}
+        env:
+          HF_TOKEN: ${{ secrets.HF_WRITE_TOKEN }}
+          PUBLISH: ${{ inputs.publish }}
+        run: python publish.py "$PUBLISH"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

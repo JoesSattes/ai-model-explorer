@@ -114,6 +114,9 @@ def main(path, outdir):
             same = ((gk["family_manifest"] == gk["family_config"]) | gk["family_config"].isna()).mean() if len(gk) else float("nan")
             L.append(f"| {k} | {len(g)} | {len(gk)/len(g)*100:.0f}% | {(gk['has_config'] != True).mean()*100:.0f}% | {same*100:.0f}% |")  # noqa: E712
 
+    if "config_hp" in d:
+        L += field_accuracy(d)
+
     errs = d[d["status"].isin(["error", "no_weights"])]["error"].fillna("").str.slice(0, 80).value_counts().head(10)
     if len(errs):
         L += ["", "## Most common failure messages", ""] + [f"- `{k}` × {v}" for k, v in errs.items()]
@@ -122,6 +125,49 @@ def main(path, outdir):
     open(os.path.join(outdir, "summary.md"), "w").write("\n".join(L) + "\n")
     figures(d, groups, outdir)
     print("\n".join(L))
+
+
+FIELDS = ["d", "layers", "heads", "kv_heads", "head_dim", "ffn", "vocab", "experts"]
+
+
+def _score(rows, field, fused):
+    hit = n = 0
+    for _, r in rows.iterrows():
+        ref = (r["config_hp"] or {}).get(field)
+        if ref is None or (field == "ffn" and (r["config_hp"] or {}).get("experts")):
+            continue
+        ours = (r["hp"] or {}).get(field)
+        if fused and isinstance(r.get("hp_fused"), dict) and r["hp_fused"].get(field) is not None:
+            ours = r["hp_fused"][field]
+        n += 1
+        hit += ours is not None and abs(float(ours) - float(ref)) < 1e-6
+    return hit, n
+
+
+def field_accuracy(d):
+    """Per-field agreement with config.json on the main models, from the weights alone and after config fusion."""
+    ok = d[(d["status"] == "ok") & d["has_config"].fillna(False)]
+    created = pd.to_datetime(ok.get("created_at"), errors="coerce", utc=True) if "created_at" in ok else None
+    sets = [("Original releases (top)", ok[(ok["stratum"] == "top") & (ok["origin"] == "original")]),
+            ("Frontier providers, recent", ok[ok.get("also_frontier", pd.Series(False, index=ok.index)).fillna(False).astype(bool)])]
+    if created is not None:
+        sets.append(("Created in 2026", ok[created >= pd.Timestamp("2026-01-01", tz="UTC")]))
+    L = ["", "## Weights vs config.json, field by field (repos with a config)", "",
+         "Each cell: weights alone / with config fused (heads, kv_heads, head_dim need the config to split width into heads × size).", "",
+         "| field | " + " | ".join(f"{k} (n={len(g)})" for k, g in sets) + " |", "|---|" + "---|" * len(sets)]
+    for f in FIELDS:
+        cells = []
+        for _, g in sets:
+            h0, n0 = _score(g, f, False)
+            h1, n1 = _score(g, f, True)
+            cells.append("-" if not n0 else f"{h0/n0*100:.1f}% / {h1/n1*100:.1f}% ({n0})")
+        L.append(f"| {f} | " + " | ".join(cells) + " |")
+    fam = []
+    for _, g in sets:
+        x = g[g["family_config"].notna()]
+        fam.append("-" if not len(x) else f"{(x['family_manifest'] == x['family_config']).mean()*100:.1f}% ({len(x)})")
+    L.append("| family | " + " | ".join(fam) + " |")
+    return L
 
 
 def figures(d, groups, outdir):
