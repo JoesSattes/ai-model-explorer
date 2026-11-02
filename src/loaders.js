@@ -10,7 +10,7 @@ const utf8 = new TextDecoder();
 async function safetensorsHeader(url, size) {
   const h = await rangeGet(url, 0, 7), n = Number(new DataView(h.buffer, h.byteOffset, 8).getBigUint64(0, true));
   if (!(n > 0 && n < 200e6)) throw new Error("not a safetensors file");
-  const j = JSON.parse(utf8.decode(await rangeGet(url, 8, 8 + n - 1))); const meta = j.__metadata__; delete j.__metadata__;
+  const raw = utf8.decode(await rangeGet(url, 8, 8 + n - 1)); let j; try { j = JSON.parse(raw); } catch (e) { j = JSON.parse(raw.replace(/(?<=[:\[,]\s*)-?(Infinity|NaN)(?=\s*[,\]}])/g, 'null')); } const meta = j.__metadata__; delete j.__metadata__;
   return {tensors: j, bytes: 8 + n, meta};
 }
 
@@ -90,7 +90,7 @@ function unpickle(b) {
       case 0x73: { const v = pop(), k = pop(); stack[stack.length - 1][k] = v; break; } // SETITEM
       case 0x75: { const it = popMark(), d = stack[stack.length - 1]; for (let k = 0; k < it.length; k += 2) d[it[k]] = it[k + 1]; break; } // SETITEMS
       case 0x61: { const v = pop(); stack[stack.length - 1].push(v); break; } // APPEND
-      case 0x65: { const it = popMark(); stack[stack.length - 1].push(...it); break; } // APPENDS
+      case 0x65: { const it = popMark(), top = stack[stack.length - 1]; for (const x of it) top.push(x); break; } // APPENDS
       case 0x52: { const args = pop(), f = pop(); stack.push(call(f, args)); break; } // REDUCE
       case 0x81: { const args = pop(), cls = pop(); stack.push(call(cls, args)); break; } // NEWOBJ
       case 0x62: { const st = pop(), o = stack[stack.length - 1]; if (o && typeof o === "object" && st && typeof st === "object" && !Array.isArray(st)) Object.assign(o, st); break; } // BUILD

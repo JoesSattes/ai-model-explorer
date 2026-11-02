@@ -78,7 +78,14 @@ def _child(repo, token, q):
     except ConnectionError as e:
         q.put({"status": "network", "error": str(e)[:200]})
     except Exception as e:  # noqa: BLE001 - every failure is data here
-        q.put({"status": "error", "error": f"{type(e).__name__}: {e}"[:300]})
+        msg = f"{type(e).__name__}: {e}"
+        if "gated repository" in msg:
+            st = "gated"
+        elif "old pickle format" in msg:
+            st = "legacy_pickle"   # pre-1.6 torch.save: no zip index, would need the whole file
+        else:
+            st = "error"
+        q.put({"status": st, "error": msg[:300]})
 
 
 def run(sample: pd.DataFrame, out: str, workers: int, timeout: float, gap: float, token):

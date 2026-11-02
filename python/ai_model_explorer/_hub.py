@@ -37,7 +37,7 @@ class Hub:
                     self.bytes_read += len(body)
                     return r.status, body
             except urllib.error.HTTPError as e:
-                if e.code in (429, 502, 503, 504) and attempt < self.retries:
+                if e.code in (429, 499, 500, 502, 503, 504) and attempt < self.retries:
                     # rate limited or briefly unavailable: wait as told (Retry-After), else back off exponentially
                     ra = e.headers.get("Retry-After") if e.headers else None
                     wait = float(ra) if ra and ra.replace(".", "", 1).isdigit() else min(2 ** attempt * 2, 60)

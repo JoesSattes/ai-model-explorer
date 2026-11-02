@@ -72,7 +72,7 @@ function buildTree(T) {
     for (let i = 0; i < parts.length - 1; i++) { const t = parts[i]; if (!node.kids.has(t)) node.kids.set(t, {path: node.path ? node.path + "." + t : t, tok: t, kids: new Map(), ts: [], parent: node}); node = node.kids.get(t); }
     node.ts.push(n);
   }
-  const fill = nd => { nd.all = [...nd.ts]; nd.mods = nd.ts.length ? 1 : 0; for (const k of nd.kids.values()) { fill(k); nd.all.push(...k.all); nd.mods += k.mods; } };
+  const fill = nd => { nd.all = [...nd.ts]; nd.mods = nd.ts.length ? 1 : 0; for (const k of nd.kids.values()) { fill(k); for (const t of k.all) nd.all.push(t); nd.mods += k.mods; } };
   fill(rootN); return rootN;
 }
 const walk = (nd, f) => { f(nd); for (const k of nd.kids.values()) walk(k, f); };
