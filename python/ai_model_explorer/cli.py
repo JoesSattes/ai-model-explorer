@@ -64,7 +64,7 @@ def main(argv=None) -> int:
             cfg = json.load(f)
     try:
         r = inspect(a.model, token=a.token, config=cfg, include_tensors=a.tensors)
-    except (PermissionError, FileNotFoundError, ValueError, RuntimeError) as e:
+    except (PermissionError, FileNotFoundError, ValueError, RuntimeError, ConnectionError, OSError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
     print(json.dumps(r, indent=1, ensure_ascii=False) if a.json else summary(r))
