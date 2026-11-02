@@ -40,7 +40,7 @@ def main(path, outdir):
     groups = [(f"Top {len(top)} by downloads", top.assign(weight=1.0)), (f"Hub-wide (weighted, n={len(rnd)})", rnd)]
     L = ["# Hub census, pilot", "", f"Repos probed: **{len(d)}**  ·  crawled {d['crawled_at'].min()} → {d['crawled_at'].max()}", ""]
 
-    statuses = ["ok", "gated", "no_weights", "not_found", "timeout", "network", "error"]
+    statuses = ["ok", "gated", "no_weights", "legacy_pickle", "not_found", "timeout", "network", "error"]
     L += ["## What happened when we read each repo", "", "| status | " + " | ".join(g for g, _ in groups) + " |",
           "|---|" + "---|" * len(groups)]
     for s in statuses:
@@ -72,13 +72,12 @@ def main(path, outdir):
               f"- seconds per repo, median: **{o['t_total_s'].median():.1f}s** (p95 {o['t_total_s'].quantile(.95):.1f}s)",
               f"- time spent waiting on rate limits: {d.get('rate_limit_wait_s', pd.Series([0])).fillna(0).sum():.0f}s total"]
 
-        fam = Counter()
-        for _, r in o.iterrows():
-            fam[r["family_manifest"] or "?"] += r["weight"] if r["stratum"] != "top" else 0
-        L += ["", "## Family by weights alone (Hub-wide, weighted share)", "", "| family | share |", "|---|---|"]
-        tot = sum(fam.values()) or 1
-        for k, v in fam.most_common():
-            L.append(f"| {k} | {v/tot*100:.1f}% |")
+        r_ok = o[o["stratum"] != "top"]
+        L += ["", "## Family by weights alone (Hub-wide, weighted share, 95% CI, n = repos behind it)", "",
+              "| family | share | n |", "|---|---|---|"]
+        for k, cnt in r_ok["family_manifest"].fillna("?").value_counts().items():
+            p_, ci = wprop(r_ok["family_manifest"].fillna("?") == k, r_ok["weight"])
+            L.append(f"| {k} | {fmt(p_, ci)} | {cnt} |")
 
         L += ["", "## Popularity vs readability", "", "| status | median downloads (30d) | median likes | repos |", "|---|---|---|---|"]
         for s, g in d.groupby("status"):
@@ -103,7 +102,7 @@ def figures(d, groups, outdir):
         return
     plt.rcParams.update({"font.size": 10, "axes.edgecolor": INK2, "axes.labelcolor": INK, "xtick.color": INK2,
                          "ytick.color": INK2, "figure.facecolor": SURF, "axes.facecolor": SURF})
-    st = ["ok", "gated", "no_weights", "not_found", "timeout", "error"]
+    st = ["ok", "gated", "no_weights", "legacy_pickle", "timeout", "error"]
     fig, ax = plt.subplots(figsize=(7, 3.2))
     h = 0.38
     for i, ((label, p), c) in enumerate(zip(groups, (BLUE, ORANGE))):
