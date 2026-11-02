@@ -47,7 +47,7 @@ function build(def) {
   let M;
   if (def.graphs) { M = {A: anatomyFromOps(def.graphs), graphs: def.graphs, meta: def.meta, kind: "ops"}; }
   else if (def.tensors) {
-    const I = ArchInfer.infer(def.tensors), N = ArchInfer.normalize(def.tensors).T, auto = metaFromIR(I, def.cfg || null, def.label);
+    const I = ArchInfer.infer(def.tensors); if (def.cfg) I.family = ArchInfer.familyFromConfig(I, def.cfg); const N = ArchInfer.normalize(def.tensors).T, auto = metaFromIR(I, def.cfg || null, def.label);
     const meta = Object.assign({}, auto, def.meta || {}); if (I.family === "transducer" || I.family === "diffusion") meta.family = auto.family; ["layer_pattern", "irFamily", "quant", "joint", "timestep", "experts"].forEach(k => { if (auto[k] != null && auto[k] !== 0) meta[k] = auto[k]; });
     M = {A: anatomyFromIR(I, N, meta), meta, kind: def.kind || "tensors", IR: I, T: N}; }
   M.id = def.id; M.label = def.label; M.note = def.note; M.viz = def.viz; M.group = def.group; M.cfg = def.cfg || null;
@@ -717,6 +717,7 @@ function wire() {
   $("#hf").addEventListener("keydown", e => { if (e.key === "Enter") $("#hfGo").click(); });
   $("#cfgOpen").onclick = () => $("#cfgDlg").classList.add("open"); $("#cfgClose").onclick = () => $("#cfgDlg").classList.remove("open");
   $("#cfgGo").onclick = () => { try { const cfg = JSON.parse($("#cfgTxt").value); const r = tensorsFromConfig(cfg); $("#cfgDlg").classList.remove("open"); addOwn({tensors: r.tensors, meta: r.meta, cfg, kind: "config", label: (cfg._name_or_path || r.meta.model_type || "config") + "", noteKey: "n_cfg", noteVars: {mt: r.meta.model_type}}, r.meta.model_type); } catch (e) { $("#cfgErr").textContent = t("e_cfg") + e.message; } };
+  { const pc = $("#pipCopy"); if (pc) pc.onclick = async () => { const code = pc.querySelector("code"), old = code.textContent; try { await navigator.clipboard.writeText(old); code.textContent = t("copied"); } catch (e) { code.textContent = old; } setTimeout(() => code.textContent = old, 1500); }; }
   $("#copyBib").onclick = async () => { try { await navigator.clipboard.writeText($("#citeBib").textContent); $("#copyBib").textContent = t("copied"); } catch (e) { $("#copyBib").textContent = t("cite_fail"); } setTimeout(() => $("#copyBib").textContent = t("cite_copy"), 1800); };
   $("#copyMd").onclick = async () => { try { await navigator.clipboard.writeText(S.md); $("#copyMd").textContent = t("copied"); } catch (e) { $("#copyMd").textContent = t("copy_fail"); } setTimeout(() => $("#copyMd").textContent = t("copy_md"), 1800); };
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), {threshold: 0, rootMargin: "0px 0px -6% 0px"}); $$(".reveal").forEach(el => io.observe(el));

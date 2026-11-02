@@ -54,6 +54,47 @@ deepseek-ai/DeepSeek-V3
 
 Exit code is 0 on success and 1 on a readable error (gated repo, repo not found, no network).
 
+### `insights`, `memory`, `compare`, `plot`, `report`
+
+```bash
+ai-model-explorer insights deepseek-ai/DeepSeek-V3
+```
+```
+  - 684.49B parameters, 688.6 GB of weights stored as fp8. At 16-bit that would be 1.4 TB, at 8-bit 684.5 GB, at 4-bit 342.2 GB.
+  - Includes a multi-token-prediction layer of 13.46B parameters, used for speculative decoding; the main model is 671.03B.
+  - Mixture of experts: 256 experts, 8 used per token, so about 37.55B parameters (5.5%) do the work for each token, while all 684.49B must sit in memory.
+  - Where the parameters sit: mixture of experts 98%, attention 2%.
+  - KV cache (compressed latent attention): 70.3 KB per token at 16-bit, so 2.3 GB for one 32k-token sequence and 9.2 GB at 128k.
+  - config.json agrees with the weights.
+```
+
+```bash
+ai-model-explorer memory Qwen/Qwen3-8B --context 32768 --weight-bits 4
+```
+```
+  weights (4-bit):  4.1 GB
+  KV cache (16-bit, 1 × 32,768 tokens):  4.8 GB
+  total:            8.9 GB  (activations and runtime overhead not included)
+```
+
+```bash
+ai-model-explorer compare Qwen/Qwen3-8B Qwen/Qwen3-30B-A3B-GPTQ-Int4 openai/whisper-large-v3
+```
+| Model | Family | Params | Active | Stored | Storage | Layers | Width | Heads | KV heads | Experts | Vocab | KV/token (16-bit) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Qwen/Qwen3-8B | decoder | 8.19B | 8.19B | 16.4 GB | unquantized | 36 | 4096 | 32 | 8 | – | 151936 | 147.5 KB |
+| Qwen/Qwen3-30B-A3B-GPTQ-Int4 | decoder | 30.53B | 3.35B | 16.9 GB | gptq | 48 | 2048 | 32 | 4 | 128 | 151936 | 98.3 KB |
+| openai/whisper-large-v3 | encoder-decoder | 1.54B | 1.54B | 3.1 GB | unquantized | 32 | 1280 | 20 | 20 | – | 51866 | 163.8 KB |
+
+`--csv` or `--json` for scripts.
+
+```bash
+ai-model-explorer plot deepseek-ai/DeepSeek-V3 -o deepseek.png          # also .svg or .pdf, --theme dark
+ai-model-explorer report deepseek-ai/DeepSeek-V3 -o deepseek.html       # diagram, insights, tables, memory
+```
+
+The diagram puts the components in data order, draws every layer stack as a strip of blocks coloured by block type (a faded block marks a multi-token-prediction layer), and ends with a bar of where the parameters sit. The report is one HTML file with no external dependencies, so it can be attached or shared as is.
+
 ### `open`: run the website on your machine
 
 ```bash
@@ -66,6 +107,40 @@ ai-model-explorer open --port 8080 --no-browser
 The page is served from the installed package on `127.0.0.1`. Files you drop are read locally. Hugging Face repos are fetched by your browser, as on the public site.
 
 ## Python
+
+```python
+from ai_model_explorer import explore, compare, compare_table
+
+m = explore("deepseek-ai/DeepSeek-V3")
+m                                   # <Model deepseek-ai/DeepSeek-V3: decoder, 684.49B parameters>
+m.params, m.active_params           # 684489845504, 37552297472
+m.hp["heads"], m.hp["kv_heads"]     # 128, 128   (config.json, checked against the weights)
+m.breakdown("kind")                 # [{'name': 'mixture of experts', 'params': ..., 'share': 0.976, ...}, ...]
+m.kv_cache_bytes_per_token()        # 70272      (latent attention: 61 layers × (512 + 64) × 2 bytes)
+m.memory(context=32768, weight_bits=4)
+m.insights()                        # list of plain-language findings
+m.plot("deepseek.png")              # returns the matplotlib Figure
+m.report("deepseek.html")
+m.to_json("deepseek.json")
+
+print(compare_table(compare(["Qwen/Qwen3-8B", "Qwen/Qwen3-30B-A3B-GPTQ-Int4"])))
+```
+
+| `Model` member | What it gives |
+|---|---|
+| `name`, `family`, `params`, `stored_bytes`, `hp`, `components`, `config` | the basics; `hp` has heads and KV heads from `config.json` when it agrees with the weights |
+| `active_params` | parameters used per token: the total for dense models; for mixtures of experts only the experts a token visits, without multi-token-prediction layers |
+| `breakdown(by="kind" \| "component" \| "stack")` | parameters, share, stored bytes and tensor count per group |
+| `kv_cache_bytes_per_token(bits=16)` | KV cache one token adds over all attention layers; handles grouped-query and latent attention, skips state-space layers |
+| `memory(context, batch, weight_bits, kv_bits)` | weights at a chosen precision plus the KV cache (activations not included) |
+| `insights()` | findings in plain language, most useful first |
+| `plot(path=None, theme="light")` | the anatomy diagram; `.png`, `.svg` or `.pdf` |
+| `report(path, theme="light")` | self-contained HTML report |
+| `summary()`, `to_dict()`, `to_json(path=None)` | text summary and raw data |
+
+`compare(models)` takes repo ids, paths or `Model` objects and returns one dict per model; `compare_table(rows)` turns them into Markdown.
+
+The lower-level `inspect(model, token=None, config=None, include_tensors=False) -> dict` returns the raw result that `Model` wraps:
 
 ```python
 from ai_model_explorer import inspect, summary
@@ -107,7 +182,7 @@ for repo in ["Qwen/Qwen3-8B", "meta-llama/Llama-3.2-1B", "openai/whisper-large-v
 |---|---|
 | `source` | where the manifest came from: `{"kind": "huggingface", "repo", "weight_bytes", "downloads", "hub_params"}` or `{"kind": "local", "path"}` |
 | `files_read`, `header_bytes`, `tensor_count` | how much was read: weight files whose header was fetched, bytes, tensors |
-| `family` | `decoder`, `encoder`, `encoder-decoder` (cross-attention), `prefix-lm` (an encoder's output fed into a decoder-only LLM, as in most vision-language and audio LLMs), `transducer`, `diffusion`, or `unknown` |
+| `family` | as declared by `config.json` when present, otherwise from the shapes: `decoder`, `encoder`, `encoder-decoder` (cross-attention), `prefix-lm` (an encoder's output fed into a decoder-only LLM, as in most vision-language and audio LLMs), `transducer`, `diffusion`, or `unknown` |
 | `totals` | `params` (logical parameters, quantized storage unpacked) and `bytes` (as stored) |
 | `hyperparameters` | read from the weights alone: `d` (width), `layers`, `heads`, `kv_heads`, `head_dim`, `ffn`, `experts`, `vocab`, `tie` (tied embedding), `attn_layers`, `ssm_layers`, `kv_bytes_per_token_bf16`, … |
 | `hyperparameters_with_config` | the same, with heads, KV heads, head size and active experts from `config.json` when the config agrees with the weights |
@@ -116,6 +191,8 @@ for repo in ["Qwen/Qwen3-8B", "meta-llama/Llama-3.2-1B", "openai/whisper-large-v
 | `components[].stacks` | repeated layers: `path`, `n` (blocks), `types` (block types with `label`, `count`, `d` and `regions`), `mtp` (true when the last block is a multi-token-prediction layer) |
 | `edges` | how components connect: `{"from", "to", "via"}`, e.g. encoder → decoder via cross-attention |
 | `evidence` | sentences explaining non-obvious decisions, e.g. why a layer was read as a multi-token-prediction head |
+| `breakdown` | parameters and stored bytes `by_kind`, `by_component` and `by_stack`, plus the size of any multi-token-prediction layer (`mtp`) |
+| `config` | the `config.json` that was used, if any |
 | `config_check` | per component: config values for `heads`, `kv_heads`, `head_dim`, `topk`, and whether they are `consistent` with the weights |
 | `tensors` | only with `include_tensors` / `--tensors`: for every tensor, `comp`, `stack`, `block`, `kind` (`attn`, `ffn`, `moe`, `ssm`, `conv`, `norm`, `embed`, `head`, …), `region` and `role` |
 

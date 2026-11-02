@@ -245,6 +245,7 @@ footer{padding:44px 0 40px;color:var(--soft);font-size:14.5px;border-top:1px sol
 footer .fname{font-size:40px;font-weight:700;letter-spacing:-.03em;color:var(--ink);margin-bottom:10px}
 footer .fl{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}footer a{color:var(--ink)}
 .credit a{color:var(--ink)}
+.pipchip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--soft)}.pipchip button{display:inline-flex;align-items:center;gap:8px;background:var(--glass2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:var(--ink);cursor:pointer;font:inherit}.pipchip button:hover{border-color:var(--blue)}.pipchip code{font-family:'IBM Plex Mono',monospace;font-size:12.5px}.pipchip a{color:var(--soft)}
 #about .about{max-width:860px;padding:40px 0 10px}#about h2{font-size:26px;margin:28px 0 10px;color:var(--ink)}#about h3{font-size:17px;margin:18px 0 4px;color:var(--ink)}#about p{color:var(--soft);line-height:1.65;margin:0 0 10px}#about code{font-family:'IBM Plex Mono',monospace;font-size:.92em;background:var(--glass2);padding:1px 6px;border-radius:6px;color:var(--ink)}#about a{color:var(--ink)}
 footer .cite{margin-top:16px;max-width:860px}footer .cite summary{cursor:pointer;color:var(--ink);font-weight:600}footer .citeref{margin:10px 0 8px;color:var(--soft)}
 footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,127,127,.25));border-radius:10px;padding:12px 14px;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);white-space:pre-wrap;word-break:break-word;margin-bottom:8px}
@@ -282,6 +283,7 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
       </div>
       <div id="ownNote" role="status" aria-live="polite"></div>
       <p class="howread" data-ih="how_read"><b>อ่านอะไรบ้าง</b> header ของ safetensors (ชื่อ, shape, dtype ของทุก tensor) กับ config.json รวมกันปกติไม่ถึง 200 KB ส่วนไฟล์ .pt อ่านแค่สารบัญ ทุกอย่างประมวลผลในเบราว์เซอร์</p>
+      <div class="pipchip"><span data-i="pip_lead">มีใน Python ด้วย</span><button type="button" id="pipCopy" title="Copy"><code>pip install ai-model-explorer</code><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><a href="https://pypi.org/project/ai-model-explorer/" data-i="pip_more">PyPI</a></div>
     </div>
     <div class="panel lib" id="picker" aria-label="Model library"></div>
   </div>
@@ -347,7 +349,7 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
   <p data-i="about_p1">วางชื่อ repo บน Hugging Face หรือลากไฟล์ .safetensors, .tflite หรือ config.json มาวาง เว็บจะอ่านแค่ header ของไฟล์ safetensors ซึ่งมีชื่อ ขนาด และชนิดข้อมูลของทุก tensor รวมกันไม่กี่สิบ KB จึงไม่ต้องโหลด weight เลย จากรายการนี้เว็บหา layer ที่ซ้ำกัน แยกว่าแต่ละส่วนคือ attention, feed-forward, mixture of experts, SSM หรือ linear attention, convolution, embedding, norm หรือ output head และนับจำนวน parameter ได้ตรง รวมถึงโมเดลที่เก็บแบบ FP8, NVFP4, GPTQ, AWQ, MXFP4, MLX และ bitsandbytes</p>
   <p data-i="about_p2">ใช้ได้หลายตระกูล: LLM แบบ decoder-only เช่น Llama, Qwen, DeepSeek, Gemma, gpt-oss · โมเดลเสียงเช่น Whisper, Parakeet · โมเดลภาพ+ภาษา · diffusion transformer · embedding model ทุกค่าบนหน้ามีป้ายบอกว่าวัดจาก weight, อ่านจาก config.json หรือประมาณ</p>
   <p data-ih="about_p3"><b>แม่นแค่ไหน</b> ทดสอบกับ 510 สถาปัตยกรรมใน transformers: แยกส่วนของ tensor ถูก 96.8% ขณะที่กฎซึ่งอ่านแค่ชื่อ tensor ได้ 82.3% และแม้เปลี่ยนชื่อทุก tensor เป็นคำสุ่มก็ยังถูก 95.0% กับโมเดลยอดนิยมบน Hugging Face 191 ตัว จำนวน parameter ตรงกับตัวเลขของ Hub 163 จาก 170 ตัว วิธีและผลทั้งหมดอยู่ใน <a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy">paper</a></p>
-  <p data-ih="about_pip"><b>ใช้ใน terminal หรือ Python</b> <code>pip install ai-model-explorer</code> แล้วรัน <code>ai-model-explorer inspect Qwen/Qwen3-8B</code> ได้ผลเดียวกับเว็บ ส่งออกเป็น JSON ได้ ดูที่ <a href="https://pypi.org/project/ai-model-explorer/">PyPI</a></p>
+  <p data-ih="about_pip"><b>ใช้ใน terminal หรือ Python</b> <code>pip install ai-model-explorer</code> แล้วรัน <code>ai-model-explorer inspect Qwen/Qwen3-8B</code> ได้ผลเดียวกับเว็บ ยังมีคำสั่งวาดรูป diagram (<code>plot</code>), ดึง insight (<code>insights</code>), ประมาณ memory (<code>memory</code>), เทียบหลายโมเดล (<code>compare</code>) และออกรายงาน HTML (<code>report</code>) ดูที่ <a href="https://pypi.org/project/ai-model-explorer/">PyPI</a></p>
   <h2 data-i="faq_h">คำถามที่พบบ่อย</h2>
   <h3 data-i="faq_q1">ต้องโหลดโมเดลก่อนไหม</h3><p data-i="faq_a1">ไม่ต้อง สำหรับ repo บน Hugging Face เว็บขอแค่ไบต์ส่วน header ของแต่ละไฟล์ ปกติรวมไม่ถึง 200 KB แม้โมเดลจะใหญ่หลายร้อย GB ก็ตาม</p>
   <h3 data-i="faq_q2">ไฟล์ของฉันถูกส่งขึ้นเซิร์ฟเวอร์ไหม</h3><p data-i="faq_a2">ไม่ ไฟล์ที่ลากมาวางถูกอ่านในเบราว์เซอร์ของคุณเอง ไม่มีเซิร์ฟเวอร์ และโมเดลที่เปิดไว้จะถูกเก็บในเบราว์เซอร์ เข้าครั้งหน้าไม่ต้องโหลดใหม่</p>
@@ -528,7 +530,8 @@ window.I18N = {
   about_p1: ["วางชื่อ repo บน Hugging Face หรือลากไฟล์ .safetensors, .tflite หรือ config.json มาวาง เว็บจะอ่านแค่ header ของไฟล์ safetensors ซึ่งมีชื่อ ขนาด และชนิดข้อมูลของทุก tensor รวมกันไม่กี่สิบ KB จึงไม่ต้องโหลด weight เลย จากรายการนี้เว็บหา layer ที่ซ้ำกัน แยกว่าแต่ละส่วนคือ attention, feed-forward, mixture of experts, SSM หรือ linear attention, convolution, embedding, norm หรือ output head และนับจำนวน parameter ได้ตรง รวมถึงโมเดลที่เก็บแบบ FP8, NVFP4, GPTQ, AWQ, MXFP4, MLX และ bitsandbytes", "Paste a Hugging Face repo id, or drop a .safetensors, .tflite or config.json file. The page reads only the safetensors header: a few tens of kilobytes that list every tensor's name, shape and type. The weights are never downloaded. From that list it finds the repeated layers, labels each part as attention, feed-forward, mixture of experts, SSM or linear attention, convolution, embedding, norm or output head, and counts parameters exactly, including checkpoints stored as FP8, NVFP4, GPTQ, AWQ, MXFP4, MLX or bitsandbytes."],
   about_p2: ["ใช้ได้หลายตระกูล: LLM แบบ decoder-only เช่น Llama, Qwen, DeepSeek, Gemma, gpt-oss · โมเดลเสียงเช่น Whisper, Parakeet · โมเดลภาพ+ภาษา · diffusion transformer · embedding model ทุกค่าบนหน้ามีป้ายบอกว่าวัดจาก weight, อ่านจาก config.json หรือประมาณ", "It works across model families: decoder-only LLMs such as Llama, Qwen, DeepSeek, Gemma and gpt-oss, speech models such as Whisper and Parakeet, vision-language models, diffusion transformers and embedding models. Every value on the page says whether it was measured from the weights, read from config.json, or estimated."],
   about_p3: ["<b>แม่นแค่ไหน</b> ทดสอบกับ 510 สถาปัตยกรรมใน transformers: แยกส่วนของ tensor ถูก 96.8% ขณะที่กฎซึ่งอ่านแค่ชื่อ tensor ได้ 82.3% และแม้เปลี่ยนชื่อทุก tensor เป็นคำสุ่มก็ยังถูก 95.0% กับโมเดลยอดนิยมบน Hugging Face 191 ตัว จำนวน parameter ตรงกับตัวเลขของ Hub 163 จาก 170 ตัว วิธีและผลทั้งหมดอยู่ใน <a href=\"https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy\">paper</a>", "<b>How accurate is it?</b> On 510 architectures from the transformers library, 96.8% of tensors get the right role, against 82.3% for the best rule set that reads names only, and 95.0% when every name is replaced by a random token. On 191 popular Hugging Face checkpoints, parameter totals match the Hub's own count for 163 of 170. The method and full results are in the <a href=\"https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy\">paper</a>."],
-  about_pip: ["<b>ใช้ใน terminal หรือ Python</b> <code>pip install ai-model-explorer</code> แล้วรัน <code>ai-model-explorer inspect Qwen/Qwen3-8B</code> ได้ผลเดียวกับเว็บ ส่งออกเป็น JSON ได้ ดูที่ <a href=\"https://pypi.org/project/ai-model-explorer/\">PyPI</a>", "<b>From the terminal or Python:</b> <code>pip install ai-model-explorer</code>, then <code>ai-model-explorer inspect Qwen/Qwen3-8B</code> gives the same result as the site, with JSON output for scripts. See <a href=\"https://pypi.org/project/ai-model-explorer/\">PyPI</a>."],
+  pip_lead: ["มีใน Python ด้วย", "Also for Python"], pip_more: ["PyPI", "PyPI"],
+  about_pip: ["<b>ใช้ใน terminal หรือ Python</b> <code>pip install ai-model-explorer</code> แล้วรัน <code>ai-model-explorer inspect Qwen/Qwen3-8B</code> ได้ผลเดียวกับเว็บ ยังมีคำสั่งวาดรูป diagram (<code>plot</code>), ดึง insight (<code>insights</code>), ประมาณ memory (<code>memory</code>), เทียบหลายโมเดล (<code>compare</code>) และออกรายงาน HTML (<code>report</code>) ดูที่ <a href=\"https://pypi.org/project/ai-model-explorer/\">PyPI</a>", "<b>From the terminal or Python:</b> <code>pip install ai-model-explorer</code>, then <code>ai-model-explorer inspect Qwen/Qwen3-8B</code> gives the same result as the site. It also draws the diagram (<code>plot</code>), lists insights (<code>insights</code>), estimates memory (<code>memory</code>), compares models (<code>compare</code>) and writes an HTML report (<code>report</code>). See <a href=\"https://pypi.org/project/ai-model-explorer/\">PyPI</a>."],
   faq_h: ["คำถามที่พบบ่อย", "FAQ"],
   faq_q1: ["ต้องโหลดโมเดลก่อนไหม", "Do I need to download the model?"],
   faq_a1: ["ไม่ต้อง สำหรับ repo บน Hugging Face เว็บขอแค่ไบต์ส่วน header ของแต่ละไฟล์ ปกติรวมไม่ถึง 200 KB แม้โมเดลจะใหญ่หลายร้อย GB ก็ตาม", "No. For a Hugging Face repo the page requests only the header bytes of each file, usually under 200 KB in total, even for checkpoints of hundreds of gigabytes."],
@@ -1435,9 +1438,23 @@ function familyOf(o) {
   const enc = o.comps.filter(c => c.role === "encoder");
   if (o.joint) return "transducer";
   if (o.timestep || k.mod && b.modality === "latent") return "diffusion";
-  if (enc.length && b.hasHead) return o.comps.some(c => c.stacks.some(s => s.types.some(t => t.regions.some(r => r.kind === "cross")))) ? "encoder-decoder" : "prefix-lm";
+  const cross = o.comps.some(c => c.stacks.some(s => s.types.some(t => t.regions.some(r => r.kind === "cross"))));
+  if (enc.length && cross) return "encoder-decoder"; // an encoder feeding a decoder through cross-attention, head tied or not
+  if (enc.length && b.hasHead) return "prefix-lm";
   if (b.hasHead) return "decoder";
-  return "encoder";
+  return "encoder"; // also tied-head decoders when there is no config: shapes cannot tell them apart (familyFromConfig can)
+}
+
+// The family as the checkpoint's own config declares it (architectures, is_encoder_decoder), used when a config exists.
+function familyFromConfig(I, cfg) {
+  if (!cfg || !I) return I ? I.family : null;
+  if (/^(transducer|diffusion)$/.test(I.family)) return I.family;
+  const archs = [].concat(cfg.architectures || [], (cfg.text_config || {}).architectures || []).join(" ");
+  const enc = (I.comps || []).some(c => c.role === "encoder");
+  if (cfg.is_encoder_decoder || /Seq2Seq|ForSpeechSeq2Seq/.test(archs)) return "encoder-decoder";
+  if (/ForCausalLM|LMHeadModel|ForConditionalGeneration|ForImageTextToText|ForMultimodalLM/.test(archs)) return I.family === "encoder-decoder" ? I.family : enc ? "prefix-lm" : "decoder";
+  if (/ForMaskedLM|ForSequenceClassification|ForTokenClassification|ForQuestionAnswering|ForImageClassification|ForPreTraining/.test(archs)) return enc ? I.family : "encoder";
+  return I.family;
 }
 
 
@@ -1467,7 +1484,7 @@ function fuseConfig(I, cfg) {
   return out;
 }
 
-const api = {infer, normalize, buildTree, classify, fuseConfig};
+const api = {infer, normalize, buildTree, classify, fuseConfig, familyFromConfig};
 if (typeof module !== "undefined") module.exports = api; else root.ArchInfer = api;
 })(typeof window !== "undefined" ? window : globalThis);
 </script>
@@ -2027,7 +2044,7 @@ function build(def) {
   let M;
   if (def.graphs) { M = {A: anatomyFromOps(def.graphs), graphs: def.graphs, meta: def.meta, kind: "ops"}; }
   else if (def.tensors) {
-    const I = ArchInfer.infer(def.tensors), N = ArchInfer.normalize(def.tensors).T, auto = metaFromIR(I, def.cfg || null, def.label);
+    const I = ArchInfer.infer(def.tensors); if (def.cfg) I.family = ArchInfer.familyFromConfig(I, def.cfg); const N = ArchInfer.normalize(def.tensors).T, auto = metaFromIR(I, def.cfg || null, def.label);
     const meta = Object.assign({}, auto, def.meta || {}); if (I.family === "transducer" || I.family === "diffusion") meta.family = auto.family; ["layer_pattern", "irFamily", "quant", "joint", "timestep", "experts"].forEach(k => { if (auto[k] != null && auto[k] !== 0) meta[k] = auto[k]; });
     M = {A: anatomyFromIR(I, N, meta), meta, kind: def.kind || "tensors", IR: I, T: N}; }
   M.id = def.id; M.label = def.label; M.note = def.note; M.viz = def.viz; M.group = def.group; M.cfg = def.cfg || null;
@@ -2697,6 +2714,7 @@ function wire() {
   $("#hf").addEventListener("keydown", e => { if (e.key === "Enter") $("#hfGo").click(); });
   $("#cfgOpen").onclick = () => $("#cfgDlg").classList.add("open"); $("#cfgClose").onclick = () => $("#cfgDlg").classList.remove("open");
   $("#cfgGo").onclick = () => { try { const cfg = JSON.parse($("#cfgTxt").value); const r = tensorsFromConfig(cfg); $("#cfgDlg").classList.remove("open"); addOwn({tensors: r.tensors, meta: r.meta, cfg, kind: "config", label: (cfg._name_or_path || r.meta.model_type || "config") + "", noteKey: "n_cfg", noteVars: {mt: r.meta.model_type}}, r.meta.model_type); } catch (e) { $("#cfgErr").textContent = t("e_cfg") + e.message; } };
+  { const pc = $("#pipCopy"); if (pc) pc.onclick = async () => { const code = pc.querySelector("code"), old = code.textContent; try { await navigator.clipboard.writeText(old); code.textContent = t("copied"); } catch (e) { code.textContent = old; } setTimeout(() => code.textContent = old, 1500); }; }
   $("#copyBib").onclick = async () => { try { await navigator.clipboard.writeText($("#citeBib").textContent); $("#copyBib").textContent = t("copied"); } catch (e) { $("#copyBib").textContent = t("cite_fail"); } setTimeout(() => $("#copyBib").textContent = t("cite_copy"), 1800); };
   $("#copyMd").onclick = async () => { try { await navigator.clipboard.writeText(S.md); $("#copyMd").textContent = t("copied"); } catch (e) { $("#copyMd").textContent = t("copy_fail"); } setTimeout(() => $("#copyMd").textContent = t("copy_md"), 1800); };
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), {threshold: 0, rootMargin: "0px 0px -6% 0px"}); $$(".reveal").forEach(el => io.observe(el));

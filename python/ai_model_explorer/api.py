@@ -96,6 +96,9 @@ def inspect(model: Union[str, os.PathLike], token: Optional[str] = None, config:
         cfg = config
     anatomy = eng.infer(tensors)
     check = eng.fuse(anatomy, cfg) if cfg else None
+    logical = eng.normalize(tensors)
+    if cfg:
+        anatomy["family"] = eng.family({"family": anatomy.get("family"), "comps": anatomy.get("comps")}, cfg)
     out = {
         "source": source,
         "files_read": nfiles,
@@ -112,8 +115,40 @@ def inspect(model: Union[str, os.PathLike], token: Optional[str] = None, config:
         "has_config": cfg is not None,
     }
     out["hyperparameters_with_config"] = _merge_hp(anatomy, check)
+    out["breakdown"] = _breakdown(anatomy.get("tensors") or {}, logical, anatomy.get("comps") or [])
+    out["config"] = cfg
     if include_tensors:
         out["tensors"] = anatomy.get("tensors")
+    return out
+
+
+def _prod(s) -> int:
+    p = 1
+    for x in s or []:
+        p *= x
+    return p
+
+
+def _breakdown(roles: dict, logical: dict, comps: list) -> dict:
+    """Parameters and stored bytes grouped by part type, by component and by layer stack, plus the size of any
+    multi-token-prediction layers (used for speculative decoding, not for ordinary next-token prediction)."""
+    out = {"by_kind": {}, "by_component": {}, "by_stack": {}, "mtp": {"params": 0, "expert_params": 0}}
+    mtp_items = [st["mtpItem"] + "." for c in comps for st in c.get("stacks") or [] if st.get("mtp") and st.get("mtpItem")]
+    for name, r in roles.items():
+        shape, nbytes = logical.get(name, [[], 0])
+        n = _prod(shape)
+        if mtp_items and any(name.startswith(p) for p in mtp_items):
+            out["mtp"]["params"] += n
+            if r.get("role") == "expert":
+                out["mtp"]["expert_params"] += n
+        for key, val in (("by_kind", r.get("kind") or "other"), ("by_component", r.get("comp") or "(none)"),
+                         ("by_stack", r.get("stack") or "(outside stacks)")):
+            d = out[key].setdefault(val, {"params": 0, "bytes": 0, "tensors": 0})
+            d["params"] += n
+            d["bytes"] += nbytes
+            d["tensors"] += 1
+    for key in ("by_kind", "by_component", "by_stack"):
+        out[key] = dict(sorted(out[key].items(), key=lambda kv: -kv[1]["params"]))
     return out
 
 

@@ -35,7 +35,7 @@ command-line tool and a Python library.
 - **Plan quantization and edge deployment.** See which parts hold the parameters, which layers carry a KV cache, and how each tensor is already stored (FP8, NVFP4, GPTQ, AWQ, MXFP4, MLX, bitsandbytes).
 - **Understand new architectures quickly.** Hybrid attention / state-space / mixture-of-experts stacks, multi-token-prediction layers, vision and audio encoders feeding an LLM: each is labelled, with the evidence behind the label.
 - **Check what a model card or config claims.** Parameter totals come from the weights, and `config.json` is checked against them.
-- **Script it.** `pip install ai-model-explorer` gives a CLI and a Python API that return JSON, for batch analysis or for AI agents.
+- **Script it.** `pip install ai-model-explorer` gives a CLI and a Python API: insights, memory estimates, side-by-side comparisons, diagrams as PNG/SVG/PDF and HTML reports, all returning plain data for batch analysis or AI agents.
 - **Private by design.** Files you open are parsed in your browser or on your machine. No server, no upload.
 
 ## Quick start
@@ -59,14 +59,30 @@ deepseek-ai/DeepSeek-V3
 ```
 Add `--json` for everything, `--tensors` for the role of every tensor, or run `ai-model-explorer open` to start the web app on your machine.
 
+More commands:
+
+| Command | What you get |
+|---|---|
+| `ai-model-explorer insights MODEL` | plain-language findings: active parameters per token, where the parameters sit, KV-cache cost at 32k and 128k, tied embeddings, hybrid layers |
+| `ai-model-explorer memory MODEL --context 32768 --weight-bits 4` | memory for the weights at any precision plus the KV cache |
+| `ai-model-explorer compare A B C` | a side-by-side table (Markdown, `--csv` or `--json`) |
+| `ai-model-explorer plot MODEL -o model.png` | the diagram below, as PNG, SVG or PDF |
+| `ai-model-explorer report MODEL -o model.html` | one self-contained HTML report: diagram, insights, tables, memory |
+
+![Diagram drawn by ai-model-explorer plot for DeepSeek-V3](assets/example-deepseek-v3.png)
+
 **Python.**
 ```python
-from ai_model_explorer import inspect, summary
+from ai_model_explorer import explore, compare, compare_table
 
-a = inspect("Qwen/Qwen3-8B")
-a["totals"]["params"]                    # 8190735360
-a["hyperparameters_with_config"]["kv_heads"]  # 8
-print(summary(a))
+m = explore("deepseek-ai/DeepSeek-V3")
+m.params, m.active_params        # 684489845504, 37552297472
+m.breakdown("kind")              # parameters per part type
+m.memory(context=32768, weight_bits=4)
+m.insights()
+m.plot("deepseek.png"); m.report("deepseek.html")
+
+print(compare_table(compare(["Qwen/Qwen3-8B", "Qwen/Qwen3-30B-A3B-GPTQ-Int4"])))
 ```
 Python 3.9+. No PyTorch, transformers or Node.js needed. Full reference: [docs/usage.md](docs/usage.md).
 
