@@ -42,8 +42,8 @@ def _local(path: Path):
     return tensors, cfg, read, len(files), None
 
 
-def _remote(repo: str, hub: Hub):
-    info = hub.model_info(repo)
+def _remote(repo: str, hub: Hub, info: Optional[dict] = None):
+    info = info or hub.model_info(repo)
     files = [{"n": s["rfilename"], "size": s.get("size") or 0} for s in info.get("siblings", [])]
     names = {f["n"] for f in files}
     base = f"https://huggingface.co/{repo}/resolve/main/"

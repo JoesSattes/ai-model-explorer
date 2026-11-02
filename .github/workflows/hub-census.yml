@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       top:      { description: "Most-downloaded repos to read (all of them)", default: "500" }
+      originals: { description: "Most-downloaded ORIGINAL releases to read in full (main models, not quantized/fine-tuned copies)", default: "1000" }
       rest:     { description: "Random repos from the rest of the Hub (stratified)", default: "500" }
       seed:     { description: "Random seed", default: "2026" }
       workers:  { description: "Repos read in parallel", default: "4" }
@@ -42,7 +43,7 @@ jobs:
           PYTHONUNBUFFERED: "1"
         run: python frame.py
       - name: Draw sample
-        run: python sample.py --top ${{ inputs.top }} --rest ${{ inputs.rest }} --seed ${{ inputs.seed }}
+        run: python sample.py --top ${{ inputs.top }} --originals ${{ inputs.originals }} --rest ${{ inputs.rest }} --seed ${{ inputs.seed }}
       - name: Read headers
         timeout-minutes: 320
         run: python crawl.py --workers ${{ inputs.workers }} --timeout ${{ inputs.timeout }}

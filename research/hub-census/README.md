@@ -7,7 +7,7 @@ config agree? This folder reads the safetensors headers of a **stratified sample
 | step | file | output |
 |---|---|---|
 | 1. frame | `frame.py` | every public model with downloads (30-day and all-time), likes, created/modified dates, library, task, tags, gated flag. From the daily [hub-stats](https://huggingface.co/datasets/cfahlgren1/hub-stats) dump, or the Hub API with `--api` |
-| 2. sample | `sample.py` | the top N by downloads (read in full) + a random sample of the rest, stratified by year × download tier × safetensors tag, with weights |
+| 2. sample | `sample.py` | the top N by downloads and the top N **original releases** (the Hub's `base_model:` tags mark quantized, fine-tuned, merged and adapter copies), both read in full, + a random sample of the rest, stratified by year × download tier × safetensors tag, with weights |
 | 3. crawl | `crawl.py` | one JSONL line per repo: status, family from weights alone and from config, params vs the Hub's own count, quantization, MoE / SSM, config disagreements, bytes read, time |
 | 4. summarize | `summarize.py` | `out/report/summary.md` with 95% intervals, `status.png`, `cost.png` |
 

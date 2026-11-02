@@ -99,6 +99,20 @@ def main(path, outdir):
             L.append(f"| {k} | {len(g)} | {g['r'].median():.3f} |")
         L.append(f"| no Hub count at all | {int(o['hub_params'].isna().sum())} | - |")
 
+    if "no_weights_kind" in d:
+        nw = d[d["status"] == "no_weights"]
+        L += ["", "## Why there were no weights to read", "", "| kind | " + " | ".join(g for g, _ in groups) + " |", "|---|" + "---|" * len(groups)]
+        for k in nw["no_weights_kind"].fillna("other").value_counts().index:
+            L.append(f"| {k} | " + " | ".join(fmt(*wprop(p["no_weights_kind"].fillna("other") == k, p["weight"])) for _, p in groups) + " |")
+    if "origin" in d and d["origin"].notna().any():
+        L += ["", "## Original releases vs derivatives (repos read in full, unweighted)", "",
+              "| origin | repos | readable | no config.json | family by weights = family by config |", "|---|---|---|---|---|"]
+        tops = d[d["stratum"] == "top"]
+        for k, g in tops.groupby(tops["origin"].fillna("?")):
+            gk = g[g["status"] == "ok"]
+            same = ((gk["family_manifest"] == gk["family_config"]) | gk["family_config"].isna()).mean() if len(gk) else float("nan")
+            L.append(f"| {k} | {len(g)} | {len(gk)/len(g)*100:.0f}% | {(gk['has_config'] != True).mean()*100:.0f}% | {same*100:.0f}% |")  # noqa: E712
+
     errs = d[d["status"].isin(["error", "no_weights"])]["error"].fillna("").str.slice(0, 80).value_counts().head(10)
     if len(errs):
         L += ["", "## Most common failure messages", ""] + [f"- `{k}` × {v}" for k, v in errs.items()]

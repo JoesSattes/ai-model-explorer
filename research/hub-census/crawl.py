@@ -14,7 +14,7 @@ Set HF_TOKEN for higher rate limits and access to gated repos you have accepted.
 import argparse, json, multiprocessing as mp, os, sys, time
 import pandas as pd
 
-KEEP = ["downloads", "downloads_all_time", "likes", "library", "pipeline_tag", "gated", "stratum", "weight"]
+KEEP = ["downloads", "downloads_all_time", "likes", "library", "pipeline_tag", "origin", "stratum", "weight"]
 
 
 def _kinds(comps):
@@ -32,7 +32,20 @@ def probe(repo: str, token):
     from ai_model_explorer.api import _remote
     t0 = time.time()
     hub = Hub(token)
-    tensors, cfg, read, nfiles, extra = _remote(repo, hub)
+    info = hub.model_info(repo)
+    names = [x.get("rfilename", "") for x in info.get("siblings", [])]
+    if not any(n.endswith((".safetensors", ".bin", ".pt", ".pth", ".ckpt")) for n in names):
+        kind = ("adapter" if any(n.endswith("adapter_config.json") for n in names) else
+                "gguf_only" if any(n.endswith(".gguf") for n in names) else
+                "onnx_only" if any(n.endswith(".onnx") for n in names) else
+                "mlpackage_only" if any(".mlpackage/" in n or ".mlmodelc/" in n for n in names) else
+                "keras_or_other" if any(n.endswith((".h5", ".keras", ".msgpack", ".zip", ".npz", ".nemo", ".tflite")) for n in names) else
+                "no_weight_files")
+        return {"status": "no_weights", "no_weights_kind": kind, "files": len(names)}
+    if any(n.endswith("adapter_model.safetensors") for n in names) and not any(
+            n.endswith(".safetensors") and "adapter" not in n for n in names):
+        return {"status": "no_weights", "no_weights_kind": "adapter", "files": len(names)}
+    tensors, cfg, read, nfiles, extra = _remote(repo, hub, info)
     t_fetch = time.time() - t0
     eng = extra.pop("engine")
     an = eng.infer(tensors)                       # manifest only: no config, no code
