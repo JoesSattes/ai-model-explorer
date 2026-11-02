@@ -1,0 +1,54 @@
+name: Hub census (pilot)
+
+# Reads safetensors headers of a stratified sample of Hugging Face repos.
+# Run it from the Actions tab. Optional secret HF_TOKEN raises rate limits and opens gated repos you have accepted.
+on:
+  workflow_dispatch:
+    inputs:
+      top:      { description: "Most-downloaded repos to read (all of them)", default: "500" }
+      rest:     { description: "Random repos from the rest of the Hub (stratified)", default: "500" }
+      seed:     { description: "Random seed", default: "2026" }
+      workers:  { description: "Repos read in parallel", default: "4" }
+      timeout:  { description: "Seconds allowed per repo", default: "180" }
+
+permissions:
+  contents: read
+
+jobs:
+  census:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    defaults:
+      run:
+        working-directory: research/hub-census
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install
+        run: pip install ../.. pandas pyarrow
+      - name: Sampling frame (every public model + popularity)
+        run: python frame.py
+      - name: Draw sample
+        run: python sample.py --top ${{ inputs.top }} --rest ${{ inputs.rest }} --seed ${{ inputs.seed }}
+      - name: Read headers
+        timeout-minutes: 320
+        run: python crawl.py --workers ${{ inputs.workers }} --timeout ${{ inputs.timeout }}
+      - name: Summarize
+        if: always()
+        run: |
+          python summarize.py
+          cat out/report/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hub-census-${{ inputs.seed }}-${{ github.run_id }}
+          path: |
+            research/hub-census/out/frame_stats.json
+            research/hub-census/out/sample_info.json
+            research/hub-census/out/sample.parquet
+            research/hub-census/out/census.jsonl
+            research/hub-census/out/report/
+          retention-days: 90
