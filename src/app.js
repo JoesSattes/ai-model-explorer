@@ -637,7 +637,7 @@ function insights() {
     if (lin) out.push([C.ok, "✓", t("i_hybrid", {l: lin, t: lin + full, f: full})]);
     if (D.head.mtp) out.push([C.blueL, "i", t("i_mtp", {b: fB(D.head.mtp.bytes)})]); }
   const m = M.meta;
-  if (m.experts) { const ex = M.IR && M.IR.hp ? M.IR.hp.expert_params : 0; out.push([C.mag, "i", t("i_moe", {e: m.experts, k: m.topk || "?", s: ex ? pct(ex, tot.params) : "?", a: ex && m.topk ? fP(tot.params - ex + ex * m.topk / m.experts) : "?"})]); }
+  if (m.experts) { const ex = M.IR && M.IR.hp ? M.IR.hp.expert_params : 0; out.push([C.mag, "i", t("i_moe", {e: m.experts, k: m.topk || "?", s: ex ? pct(ex, tot.params) : "?", a: ex && m.topk ? fP(tot.params - (M.IR.hp.mtp_params || 0) - (ex - (M.IR.hp.mtp_expert_params || 0)) * (1 - m.topk / m.experts)) : "?"})]); }
   if (m.quant && Object.keys(m.quant).length) out.push([C.amber, "i", t("i_quant", {q: Object.entries(m.quant).map(([k, v]) => `${k.toUpperCase()} ×${v}`).join(", ")})]);
   if (m.joint) out.push([C.blueL, "i", t(m.joint.durations ? "i_tdt" : "i_rnnt", {v: m.joint.labels, d: m.joint.durations, j: m.joint.j})]);
   if (m.timestep) out.push([C.blueL, "i", t("i_diff", {f: m.timestep.freq, w: m.timestep.width})]);
