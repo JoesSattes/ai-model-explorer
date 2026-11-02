@@ -14,7 +14,7 @@ Set HF_TOKEN for higher rate limits and access to gated repos you have accepted.
 import argparse, json, multiprocessing as mp, os, sys, time
 import pandas as pd
 
-KEEP = ["downloads", "downloads_all_time", "likes", "library", "pipeline_tag", "origin", "stratum", "weight"]
+KEEP = ["downloads", "downloads_all_time", "likes", "library", "pipeline_tag", "origin", "stratum", "weight", "also_frontier", "author", "created_at"]
 
 
 def _kinds(comps):
@@ -23,6 +23,49 @@ def _kinds(comps):
         for st in c.get("stacks") or []:
             out.append({"comp": c.get("id"), "n": st.get("n"), "kinds": st.get("kinds") or c.get("kinds"),
                         "pattern": st.get("pattern")})
+    return out
+
+
+TEXT_SUBS = ["text_config", "llm_config", "language_config", "thinker_config", "decoder", "encoder_config"]
+
+
+def config_hp(cfg):
+    """Hyperparameters the checkpoint's config.json declares: the reference the weights-only values are scored against."""
+    if not cfg:
+        return {}
+    tc = next((cfg[k] for k in TEXT_SUBS if isinstance(cfg.get(k), dict) and (cfg[k].get("hidden_size") or cfg[k].get("d_model")
+                                                                              or isinstance(cfg[k].get("text_config"), dict))), None)
+    src = [tc["text_config"], tc, cfg] if tc and isinstance(tc.get("text_config"), dict) else [tc, cfg] if tc else [cfg]
+
+    def g(*ks):
+        for s_ in src:
+            for k in ks:
+                v = s_.get(k)
+                if isinstance(v, (int, float)) and not isinstance(v, bool):
+                    return v
+        return None
+    return {"d": g("hidden_size", "d_model", "n_embd", "dim", "embed_dim"),
+            "layers": g("num_hidden_layers", "n_layer", "num_layers", "decoder_layers", "n_layers"),
+            "heads": g("num_attention_heads", "n_head", "num_heads", "decoder_attention_heads", "n_heads"),
+            "kv_heads": g("num_key_value_heads", "num_kv_heads", "n_kv_heads", "multi_query_group_num"),
+            "head_dim": g("head_dim", "kv_channels", "attention_head_dim"),
+            "ffn": g("intermediate_size", "ffn_dim", "d_ff", "n_inner", "decoder_ffn_dim"),
+            "vocab": g("vocab_size", "padded_vocab_size"),
+            "experts": g("num_local_experts", "num_experts", "n_routed_experts", "moe_num_experts"),
+            "topk": g("num_experts_per_tok", "moe_topk", "top_k", "num_selected_experts")}
+
+
+def dtype_stats(tensors):
+    out = {}
+    for v in tensors.values():
+        if not isinstance(v, dict) or "shape" not in v:
+            continue
+        n = 1
+        for x in v["shape"]:
+            n *= x
+        d = out.setdefault(v.get("dtype", "?"), [0, 0])
+        d[0] += 1
+        d[1] += n
     return out
 
 
@@ -58,8 +101,15 @@ def probe(repo: str, token):
     tot = an.get("totals") or {}
     hub_params = extra.get("hub_params")
     checked = [v for v in (check or {}).values() if isinstance(v, dict) and v.get("checked")]
+    fused = {}
+    if check:
+        b = next((c for c in an.get("comps") or [] if c.get("role") == "backbone"), None)
+        fused = (check.get(b["id"]) if b else None) or {}
     cfg = cfg or {}
     return {
+        "config_hp": config_hp(cfg),
+        "hp_fused": {k: fused.get(k) for k in ("heads", "kv_heads", "head_dim", "topk")} if fused else None,
+        "dtypes": dtype_stats(tensors),
         "status": "ok",
         "files_read": nfiles, "header_bytes": read, "weight_bytes": extra.get("weight_bytes"),
         "tensors": len(tensors),
