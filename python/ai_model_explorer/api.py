@@ -65,7 +65,7 @@ def _remote(repo: str, hub: Hub):
     if not mf:
         raise FileNotFoundError(f"{repo}: no .safetensors or PyTorch checkpoint found")
     weight_bytes = sum(f["size"] for f in files)
-    return mf["tensors"], cfg, mf["read"], mf["nfiles"], {"engine": eng, "weight_bytes": weight_bytes,
+    return mf["tensors"], cfg, mf["read"], mf["nfiles"], {"engine": eng, "weight_bytes": weight_bytes, "duplicates_skipped": mf.get("duplicates") or None,
                                                          "downloads": info.get("downloads"), "hub_params": (info.get("safetensors") or {}).get("total")}
 
 
@@ -94,9 +94,9 @@ def inspect(model: Union[str, os.PathLike], token: Optional[str] = None, config:
         source = {"kind": "huggingface", "repo": repo, **{k: v for k, v in extra.items() if v is not None}}
     if config is not None:
         cfg = config
-    anatomy = eng.infer(tensors)
+    anatomy = eng.infer(tensors, qhint=eng.quant_hint(cfg))
     check = eng.fuse(anatomy, cfg) if cfg else None
-    logical = eng.normalize(tensors)
+    logical = eng.normalize(tensors, qhint=eng.quant_hint(cfg))
     if cfg:
         anatomy["family"] = eng.family({"family": anatomy.get("family"), "comps": anatomy.get("comps")}, cfg)
     out = {

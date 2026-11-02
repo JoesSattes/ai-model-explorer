@@ -47,7 +47,7 @@ function build(def) {
   let M;
   if (def.graphs) { M = {A: anatomyFromOps(def.graphs), graphs: def.graphs, meta: def.meta, kind: "ops"}; }
   else if (def.tensors) {
-    const I = ArchInfer.infer(def.tensors); if (def.cfg) I.family = ArchInfer.familyFromConfig(I, def.cfg); const N = ArchInfer.normalize(def.tensors).T, auto = metaFromIR(I, def.cfg || null, def.label);
+    const I = ArchInfer.infer(def.tensors, {qhint: ArchInfer.quantHint(def.cfg)}); if (def.cfg) I.family = ArchInfer.familyFromConfig(I, def.cfg); const N = ArchInfer.normalize(def.tensors, ArchInfer.quantHint(def.cfg)).T, auto = metaFromIR(I, def.cfg || null, def.label);
     const meta = Object.assign({}, auto, def.meta || {}); if (I.family === "transducer" || I.family === "diffusion") meta.family = auto.family; ["layer_pattern", "irFamily", "quant", "joint", "timestep", "experts"].forEach(k => { if (auto[k] != null && auto[k] !== 0) meta[k] = auto[k]; });
     M = {A: anatomyFromIR(I, N, meta), meta, kind: def.kind || "tensors", IR: I, T: N}; }
   M.id = def.id; M.label = def.label; M.note = def.note; M.viz = def.viz; M.group = def.group; M.cfg = def.cfg || null;

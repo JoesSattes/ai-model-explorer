@@ -93,13 +93,20 @@ class Engine:
     def hf_manifest(self, repo: str, files: list, opt: dict):
         return self._await(f'Loaders.hfManifest({json.dumps(repo)}, {self._put("files", files)}, function () {{}}, {self._put("opt", opt)})')
 
-    def infer(self, tensors: dict, lex: bool = True) -> dict:
-        return self._await(f'ArchInfer.infer({self._put("t", tensors)}, {{lex: {"true" if lex else "false"}}})')
+    def infer(self, tensors: dict, lex: bool = True, qhint: Optional[dict] = None) -> dict:
+        h = json.dumps({k: v for k, v in (qhint or {}).items() if v is not None})
+        return self._await(f'ArchInfer.infer({self._put("t", tensors)}, {{lex: {"true" if lex else "false"}, qhint: {h}}})')
 
-    def normalize(self, tensors: dict) -> dict:
+    def quant_hint(self, cfg: Optional[dict]) -> dict:
+        """bits / group size declared in config.json, used to unpack MLX and compressed-tensors weights."""
+        if not cfg:
+            return {}
+        return self._await(f'ArchInfer.quantHint({self._put("c", cfg)})') or {}
+
+    def normalize(self, tensors: dict, qhint: Optional[dict] = None) -> dict:
         """Logical shape and stored bytes of every tensor after undoing quantized storage."""
         return self._await('(function (N) { var o = {}; for (var k in N.T) o[k] = [N.T[k].shape, N.T[k].bytes || 0]; return o; })'
-                           f'(ArchInfer.normalize({self._put("n", tensors)}))')
+                           f'(ArchInfer.normalize({self._put("n", tensors)}, {json.dumps({k: v for k, v in (qhint or {}).items() if v is not None})}))')
 
     def family(self, anatomy: dict, config: dict) -> str:
         return self._await(f'ArchInfer.familyFromConfig({self._put("fa", anatomy)}, {self._put("fc", config)})')
