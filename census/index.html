@@ -117,6 +117,28 @@ html[data-theme=dark] .pbtn.primary{background:linear-gradient(90deg,#e60012,#e5
 .dl{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
 footer{color:var(--dim);font-size:13px;padding:40px 0 60px;border-top:1px solid var(--border);margin-top:30px}
 .note{color:var(--dim);font-size:13px;margin-top:8px}
+.rv{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
+.icards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}@media(max-width:1000px){.icards{grid-template-columns:1fr 1fr}}@media(max-width:680px){.icards{grid-template-columns:1fr}}
+.ic{background:var(--surface);border:1px solid var(--border);border-radius:var(--rc);padding:18px;display:flex;flex-direction:column;gap:8px}
+html[data-theme=dark] .ic{background:rgba(255,255,255,.045);border-color:rgba(255,255,255,.10);border-radius:18px;backdrop-filter:blur(14px)}
+.ic .big{font-size:38px;font-weight:700;letter-spacing:-.02em;line-height:1}.ic .big small{font-size:15px;font-weight:500;color:var(--soft);margin-left:6px}
+html[data-theme=dark] .ic .big{background:linear-gradient(90deg,#ff5a67,#ff7cc4 60%,#a3abfa);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ic h3{font-size:16px}.ic p{color:var(--soft);font-size:14px}.ic .why{border-left:3px solid var(--dec);padding-left:10px}
+.ex{display:flex;flex-wrap:wrap;gap:6px}.ex a{font-size:12.5px;text-decoration:none;padding:3px 10px;border-radius:999px;background:var(--raised);color:var(--ink);border:1px solid var(--border)}.ex a:hover{border-color:var(--blue)}
+.ex a span{color:var(--dim);margin-left:4px}
+.ic .go{margin-top:auto;font-size:13px;color:var(--blue);background:none;border:0;cursor:pointer;text-align:left;padding:0;font:inherit;font-size:13px}
+.spark{height:34px;width:100%}
+.look{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;margin-top:14px}@media(max-width:900px){.look{grid-template-columns:1fr}}
+.lk h3{font-size:20px;word-break:break-all}.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.facts div{background:var(--raised);border-radius:10px;padding:10px 12px}html[data-theme=dark] .facts div{background:rgba(255,255,255,.05)}
+.facts b{display:block;font-size:18px}.facts span{color:var(--soft);font-size:12px}
+.pbar{margin:10px 0}.pbar .lab{display:flex;justify-content:space-between;font-size:13px;color:var(--soft)}.pbar .tr{height:8px;border-radius:99px;background:var(--raised);overflow:hidden;margin-top:4px}
+.pbar .tr i{display:block;height:100%;border-radius:99px;background:var(--s1);transition:width .8s ease}
+.dev{display:grid;grid-template-columns:auto repeat(5,1fr);gap:6px;font-size:12.5px;align-items:center;margin-top:8px}
+.dev .h{color:var(--dim);text-align:center}.dev .c{text-align:center;padding:6px 0;border-radius:8px;font-weight:600}
+.dev .y{background:rgba(27,175,122,.16);color:var(--ssm)}.dev .n{background:rgba(196,36,42,.12);color:var(--neg)}
+#lookq{width:100%;font-size:16px;padding:12px 16px}
 </style>
 </head>
 <body>
@@ -136,13 +158,20 @@ footer{color:var(--dim);font-size:13px;padding:40px 0 60px;border-top:1px solid 
  <p id="prelim" class="note" style="display:none;border:1px solid var(--line);border-radius:10px;padding:10px 14px;color:var(--soft)"></p>
 </header>
 
+<section id="lookup" class="rv">
+ <h2 data-t="look_h">Look up a model</h2>
+ <p class="sub" data-t="look_sub">Type any model from the census. See what it is made of, where it sits among popular models, and which devices it fits on.</p>
+ <div class="tools"><input id="lookq" list="ids" data-tp="look_ph" placeholder="e.g. Qwen/Qwen3-8B" autocomplete="off"><datalist id="ids"></datalist></div>
+ <div id="look"></div>
+</section>
+
 <section id="findings">
  <h2 data-t="find_h">Findings</h2>
  <p class="sub" data-t="find_sub">Popular repos: the most downloaded, the most downloaded original releases, and recent releases from leading providers. Test fixtures (tiny random-weight repos) are left out.</p>
- <ul class="find" id="find"></ul>
+ <div class="icards" id="find"></div>
 </section>
 
-<section>
+<section class="rv">
  <div class="grid2">
   <div class="card"><div class="ct" data-t="c1">Architecture by release year</div><div class="cs" data-t="c1s">% of popular original language models released that year</div><div class="legend" id="lg1"></div><svg id="ch1" viewBox="0 0 560 300" width="100%"></svg></div>
   <div class="card"><div class="ct" data-t="c2">The Hub's parameter count, by storage format</div><div class="cs" data-t="c2s">% of repos where the count shown on the Hub differs from the logical count read from the headers. For NVFP4 the Hub counts packed bytes; other gaps can be on either side</div><svg id="ch2" viewBox="0 0 560 300" width="100%"></svg></div>
@@ -153,19 +182,25 @@ footer{color:var(--dim);font-size:13px;padding:40px 0 60px;border-top:1px solid 
  </div>
 </section>
 
-<section id="models">
+<section class="rv">
+ <div class="card"><div class="ct" data-t="mm_h">Memory map of popular language models</div>
+ <div class="cs" data-t="mm_s">Each dot is a model: parameters (to hold) against KV cache per token (to grow with context). Lines: the most a device holds at 4-bit. Hover for the name, click to open its anatomy.</div>
+ <div class="legend" id="lgm"></div><svg id="mm" viewBox="0 0 1100 460" width="100%"></svg></div>
+</section>
+
+<section id="models" class="rv">
  <h2 data-t="tbl_h">Models</h2>
  <p class="sub" data-t="tbl_sub">The most downloaded readable models in the census. Click a name to open its full anatomy.</p>
  <div class="tools">
   <input id="q" type="search" data-tp="search" placeholder="Search models, e.g. qwen, whisper, deepseek">
-  <select id="ffam"></select><select id="fq"></select><select id="fy"></select><select id="fo"></select>
+  <select id="ffam"></select><select id="fk"></select><select id="fq"></select><select id="fy"></select><select id="fo"></select>
  </div>
  <div class="tbl"><table><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>
  <div class="pager"><button class="pbtn" id="prev">‹</button><span id="pinfo"></span><button class="pbtn" id="next">›</button></div>
  <p class="note" data-t="tbl_note">Params: logical parameters (quantized storage unpacked). Hub: ✓ when the Hub's own count agrees within 0.1%, otherwise our count ÷ the Hub's. KV/token: bytes of KV cache per token at 16 bit.</p>
 </section>
 
-<section id="data">
+<section id="data" class="rv">
  <h2 data-t="data_h">Data and method</h2>
  <p class="sub" data-t="data_sub">Every repo: status, popularity, the architecture recovered from the weights, the values its config.json declares, the Hub's own parameter count and the raw manifest, so the results can be re-scored. Code and the frozen recovery rules are public.</p>
  <div class="dl">
@@ -180,7 +215,21 @@ footer{color:var(--dim);font-size:13px;padding:40px 0 60px;border-top:1px solid 
 <div id="tip"></div>
 <script>
 const T={
- en:{nav_back:"Explorer",cta:"Open the explorer",cta2:"Browse models",nav_find:"Findings",nav_models:"Models",nav_data:"Data",h1:"Hub Weight Census: what AI models say about themselves",
+ en:{look_h:"Look up a model",look_sub:"Type any model from the census. See what it is made of, where it sits among popular models, and which devices it fits on.",look_ph:"e.g. Qwen/Qwen3-8B",
+  look_none:"Not in the census table. Open it in the explorer instead:",open_full:"Open the full anatomy",
+  f_params:"parameters",f_active:"active per token",f_store:"stored",f_wl:"width × layers",f_heads:"heads / KV heads",f_exp:"experts",f_vocab:"vocabulary",f_kv:"KV cache per token",f_kv32:"KV cache at 32k tokens",
+  pct_h:"Among popular language models",pct_p:"size",pct_kv:"KV cache per token",pct_v:"vocabulary",pct_txt:p=>`larger than ${p}%`,
+  dev_h:"Fits on (8k context, +10% runtime)",dev_as:"as stored",dev_4:"4-bit weights",hub_ok:"The Hub's parameter count agrees.",hub_bad:r=>`The Hub shows ${r}× fewer parameters than the weights hold.`,
+  mm_h:"Memory map of popular language models",mm_s:"Each dot is a model: parameters (to hold) against KV cache per token (to grow with context). Lines: the most a device holds at 4-bit. Hover for the name, click to open its anatomy.",
+  k_moe:"mixture of experts",k_hyb:"hybrid",k_dense:"dense",all_k:"Any architecture",k_lat:"latent attention",k_nocfg:"no config.json",
+  why:"Why it matters",see:"See them in the table →",
+  i_moe_t:"Mixture of experts is now the default for big models",i_moe_w:"Memory follows total parameters, speed follows active ones: a 30B-A3B model needs 30B in memory but computes like 3B.",
+  i_kv_t:"The KV cache, not the weights, often decides context length",i_kv_w:"Grouped-query and latent attention shrink it; at 32k tokens some models need more memory for the cache than for 4-bit weights.",
+  i_hyb_t:"Fewer attention layers, longer context",i_hyb_w:"Hybrid stacks keep a KV cache only in their attention layers, so memory grows several times slower with context.",
+  i_edge_t:"How much of what is popular runs on a laptop",i_edge_w:"Share of popular original language models released this year that fit a 16 GB laptop (12 GB usable) at 4-bit with an 8k context.",
+  i_hub_t:"The Hub's size badge can be wrong",i_hub_w:"For packed 4-bit formats the Hub counts bytes, not parameters. Read the header before you plan memory.",
+  i_cfg_t:"Many models ship no config.json",i_cfg_w:"Then the weights are the only specification, and tools that need a config cannot read them. This page reads them anyway.",
+  ex_active:"active",ex_kv:"KB/token",ex_x:"× off",nav_back:"Explorer",cta:"Open the explorer",cta2:"Browse models",nav_find:"Findings",nav_models:"Models",nav_data:"Data",h1:"Hub Weight Census: what AI models say about themselves",
   lead:"We read only the safetensors headers of thousands of Hugging Face repositories (names, shapes and storage of every tensor, never the weights) and recovered each model's architecture from them. Here is what the models people actually use are made of, how that changed year by year, and where the metadata around them is wrong.",
   k_read:"repos read",k_ok:"popular models analysed",k_nc:"of the whole Hub ship no config.json",k_hdr:"read per repo (median)",k_types:"model types",k_dl:"of all downloads go to the top 10,000",
   find_h:"Findings",find_sub:"Popular repos: the most downloaded, the most downloaded original releases, and recent releases from leading providers. Test fixtures (tiny random-weight repos) are left out.",
@@ -202,7 +251,21 @@ const T={
   f_hub:s=>`<b>The Hub's parameter count is wrong</b> for formats that pack two values per byte: ${s}.`,
   f_nc:(a,b)=>`<b>${a}%</b> of all Hub models and ${b}% of popular ones ship <b>no config.json</b>: the weights are their only specification.`,
   f_gguf:a=>`<b>${a}%</b> of popular repos without readable weights are GGUF-only (llama.cpp).`},
- th:{nav_back:"Explorer",cta:"เปิด explorer",cta2:"ดูรายชื่อโมเดล",nav_find:"สิ่งที่พบ",nav_models:"โมเดล",nav_data:"ข้อมูล",h1:"Hub Weight Census: โมเดล AI บอกอะไรเกี่ยวกับตัวเองบ้าง",
+ th:{look_h:"ค้นหาโมเดลของคุณ",look_sub:"พิมพ์ชื่อโมเดลใน census เพื่อดูว่าข้างในประกอบด้วยอะไร อยู่ตรงไหนเทียบกับโมเดลยอดนิยม และลงเครื่องไหนได้บ้าง",look_ph:"เช่น Qwen/Qwen3-8B",
+  look_none:"ไม่มีในตาราง census เปิดดูใน explorer แทนได้:",open_full:"เปิดดูโครงสร้างเต็ม",
+  f_params:"parameter",f_active:"ใช้จริงต่อ token",f_store:"ขนาดที่เก็บ",f_wl:"width × layers",f_heads:"heads / KV heads",f_exp:"experts",f_vocab:"vocabulary",f_kv:"KV cache ต่อ token",f_kv32:"KV cache ที่ 32k token",
+  pct_h:"เทียบกับ language model ยอดนิยม",pct_p:"ขนาด",pct_kv:"KV cache ต่อ token",pct_v:"vocabulary",pct_txt:p=>`ใหญ่กว่า ${p}%`,
+  dev_h:"ลงเครื่องได้ไหม (context 8k, เผื่อ runtime 10%)",dev_as:"ตามที่เก็บ",dev_4:"weights 4-bit",hub_ok:"ตัวเลข parameter บน Hub ตรงกับ weights",hub_bad:r=>`Hub แสดงจำนวน parameter น้อยกว่าที่ weights มีจริง ${r} เท่า`,
+  mm_h:"แผนที่หน่วยความจำของ language model ยอดนิยม",mm_s:"แต่ละจุดคือหนึ่งโมเดล: จำนวน parameter (ที่ต้องเก็บ) เทียบกับ KV cache ต่อ token (ที่โตตาม context) เส้นแนวตั้งคือขนาดสูงสุดที่แต่ละเครื่องรับได้ที่ 4-bit ชี้เพื่อดูชื่อ กดเพื่อเปิดโครงสร้าง",
+  k_moe:"mixture of experts",k_hyb:"hybrid",k_dense:"dense",all_k:"ทุกสถาปัตยกรรม",k_lat:"latent attention",k_nocfg:"ไม่มี config.json",
+  why:"ทำไมสำคัญ",see:"ดูในตาราง →",
+  i_moe_t:"Mixture of experts กลายเป็นค่าเริ่มต้นของโมเดลใหญ่",i_moe_w:"หน่วยความจำขึ้นกับ parameter ทั้งหมด ความเร็วขึ้นกับตัวที่ active โมเดล 30B-A3B ต้องมีแรมพอสำหรับ 30B แต่คำนวณเหมือน 3B",
+  i_kv_t:"KV cache มักเป็นตัวกำหนด context ไม่ใช่ weights",i_kv_w:"grouped-query และ latent attention ช่วยลดขนาด บางโมเดลที่ 32k token ใช้แรมกับ cache มากกว่า weights แบบ 4-bit อีก",
+  i_hyb_t:"attention น้อยลง context ยาวขึ้น",i_hyb_w:"hybrid stack เก็บ KV cache เฉพาะ layer ที่เป็น attention หน่วยความจำจึงโตตาม context ช้ากว่าหลายเท่า",
+  i_edge_t:"โมเดลยอดนิยมรันบนโน้ตบุ๊กได้แค่ไหน",i_edge_w:"สัดส่วน language model ต้นฉบับยอดนิยมที่ปล่อยปีนี้ ที่รันบนโน้ตบุ๊กแรม 16 GB (ใช้ได้จริง 12 GB) ได้ที่ 4-bit และ context 8k",
+  i_hub_t:"ขนาดที่ Hub แสดงอาจผิด",i_hub_w:"รูปแบบ 4-bit ที่อัดค่าไว้ Hub นับเป็น byte ไม่ใช่ parameter ควรอ่าน header ก่อนวางแผนหน่วยความจำ",
+  i_cfg_t:"หลายโมเดลไม่มี config.json",i_cfg_w:"weights จึงเป็นสเปกเดียวที่มี เครื่องมือที่ต้องพึ่ง config อ่านไม่ได้ แต่หน้านี้อ่านได้",
+  ex_active:"active",ex_kv:"KB/token",ex_x:"× ผิด",nav_back:"Explorer",cta:"เปิด explorer",cta2:"ดูรายชื่อโมเดล",nav_find:"สิ่งที่พบ",nav_models:"โมเดล",nav_data:"ข้อมูล",h1:"Hub Weight Census: โมเดล AI บอกอะไรเกี่ยวกับตัวเองบ้าง",
   lead:"เราอ่านแค่ header ของไฟล์ safetensors จาก repo บน Hugging Face หลายพันตัว (ชื่อ shape และรูปแบบการเก็บของทุก tensor โดยไม่โหลด weights เลย) แล้วถอดสถาปัตยกรรมของแต่ละโมเดลออกมา หน้านี้สรุปว่าโมเดลที่คนใช้จริงประกอบด้วยอะไร เปลี่ยนไปอย่างไรในแต่ละปี และข้อมูลประกอบตรงไหนที่ผิด",
   k_read:"repo ที่อ่าน",k_ok:"โมเดลยอดนิยมที่วิเคราะห์ได้",k_nc:"ของโมเดลทั้ง Hub ไม่มี config.json",k_hdr:"ที่อ่านต่อ repo (มัธยฐาน)",k_types:"ชนิดโมเดล",k_dl:"ของยอดดาวน์โหลดทั้งหมดอยู่ที่ 10,000 อันดับแรก",
   find_h:"สิ่งที่พบ",find_sub:"โมเดลยอดนิยม: ยอดดาวน์โหลดสูงสุด, ตัวต้นฉบับที่โหลดมากสุด และตัวที่ผู้พัฒนาหลักปล่อยช่วงหลัง ไม่รวม repo ทดสอบ (tiny random)",
@@ -227,24 +290,67 @@ const T={
 let L=(new URLSearchParams(location.search).get("lang"))||(()=>{try{return localStorage.getItem("mx_lang")}catch(e){}})()||((navigator.language||"").slice(0,2)==="th"?"th":"en");
 if(!T[L])L="en";
 const $=s=>document.querySelector(s),tip=$("#tip"),pct=x=>x==null?"–":Math.round(x*100),fmtN=n=>n==null?"–":n>=1e12?(n/1e12).toFixed(2)+"T":n>=1e9?(n/1e9).toFixed(n>=1e11?0:1)+"B":n>=1e6?(n/1e6).toFixed(n>=1e8?0:1)+"M":n>=1e3?(n/1e3).toFixed(0)+"K":String(n);
-const fmtB=b=>b==null?"–":b>=1e6?(b/1e6).toFixed(1)+" MB":b>=1e3?(b/1e3).toFixed(0)+" KB":b+" B";
+const fmtB=b=>b==null?"–":b>=1e12?(b/1e12).toFixed(2)+" TB":b>=1e9?(b/1e9).toFixed(b>=1e11?0:1)+" GB":b>=1e6?(b/1e6).toFixed(1)+" MB":b>=1e3?(b/1e3).toFixed(0)+" KB":Math.round(b)+" B";
 function showTip(e,h){tip.innerHTML=h;tip.style.display="block";const x=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8);tip.style.left=x+"px";tip.style.top=(e.clientY+14)+"px"}
 function hideTip(){tip.style.display="none"}
 let I=null,M=null;
 function applyLang(){document.documentElement.lang=L;const t=T[L];document.querySelectorAll("[data-t]").forEach(n=>{const k=n.dataset.t;if(t[k]&&typeof t[k]==="string")n.textContent=t[k]});
- $("#q").placeholder=t.search;document.querySelectorAll("#lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===L));
+ $("#q").placeholder=t.search;$("#lookq").placeholder=t.look_ph;document.querySelectorAll("#lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===L));
  const home=L==="th"?"../":"../en/";["#home","#back","#cta"].forEach(id=>$(id).href=home);try{localStorage.setItem("mx_lang",L)}catch(e){}
  if(I)render()}
-function theme(m){document.documentElement.dataset.theme=m;try{localStorage.setItem("mx_theme",m)}catch(e){}const tb=$("#themeBtn");tb.title=L==="th"?(m==="dark"?"สลับเป็นธีมสว่าง":"สลับเป็นธีมมืด"):(m==="dark"?"Switch to light theme":"Switch to dark theme");if(I)charts()}
+function theme(m){document.documentElement.dataset.theme=m;try{localStorage.setItem("mx_theme",m)}catch(e){}const tb=$("#themeBtn");tb.title=L==="th"?(m==="dark"?"สลับเป็นธีมสว่าง":"สลับเป็นธีมมืด"):(m==="dark"?"Switch to light theme":"Switch to dark theme");if(I){charts();memmap()}}
 function kpis(){const h=I.headline,t=T[L];const k=[[(h.repos_read||0).toLocaleString(),t.k_read],[(h.popular_readable||0).toLocaleString(),t.k_ok],[pct(h.hub_no_config)+"%",t.k_nc],[h.median_header_kb+" KB",t.k_hdr],[(h.model_types||0).toLocaleString(),t.k_types]];
  if(h.top10k_download_share)k.push([pct(h.top10k_download_share)+"%",t.k_dl]);$("#kpis").innerHTML=k.map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join("")}
-function findings(){const t=T[L],tr=I.trends.filter(r=>r.models>=30),a=tr[0],b=tr[tr.length-1],h=I.headline,out=[];
- if(a&&b){out.push(t.f_moe(pct(a.moe),pct(b.moe),a.year,b.year),t.f_hyb(pct(a.hybrid),pct(b.hybrid)),t.f_gqa(pct(a.gqa),pct(b.gqa)),t.f_shape(a.median_head_dim,b.median_head_dim,Math.round(a.median_vocab).toLocaleString(),Math.round(b.median_vocab).toLocaleString()),t.f_q(pct(a.quantized),pct(b.quantized)))}
- if(h.hub_no_config!=null)out.push(t.f_nc(pct(h.hub_no_config),pct(h.popular_no_config)));
- const bad=I.hub_count_by_storage.filter(r=>r.storage!=="unquantized"&&r.hub_count_differs>=.5&&r.median_true_over_hub>=1.2);
- if(bad.length)out.push(t.f_hub(bad.map(r=>`${r.storage} ${pct(r.hub_count_differs)}% / ${r.repos} repos (×${r.median_true_over_hub})`).join("; ")));
- const g=(I.no_weights_kind_popular||{}).gguf_only;if(g)out.push(t.f_gguf(pct(g)));
- $("#find").innerHTML=out.map(x=>`<li>${x}</li>`).join("")}
+const LMF=new Set(["decoder","prefix-lm"]),isLM=m=>LMF.has(m.fam),kindOf=m=>m.ssm>0?"hyb":m.E?"moe":"dense";
+const app=()=>L==="th"?"../":"../en/",link=id=>`${app()}#hf=${encodeURIComponent(id)}`;
+const DEV=[["Phone 12GB",12*.4],["Laptop 16GB",16*.75],["RTX 4090",24],["Mac 64GB",64*.75],["H100",80]];
+const need=(m,bits,ctx=8192)=>((bits?m.p*bits/8:(m.sb||m.p*2))+(m.kv||0)*ctx)*1.1;
+function pctile(arr,v){if(v==null||!arr.length)return null;let n=0;for(const x of arr)if(x<v)n++;return Math.round(n/arr.length*100)}
+let POP=null;function pop(){if(!POP){const lm=M.filter(isLM);POP={p:lm.map(m=>m.p).filter(Boolean).sort((a,b)=>a-b),kv:lm.map(m=>m.kv).filter(Boolean),v:lm.map(m=>m.V).filter(Boolean)}}return POP}
+function exChips(list,fmt){return `<div class="ex">${list.map(m=>`<a href="${link(m.id)}" title="${m.id}">${m.id.split("/")[1]||m.id}<span>${fmt?fmt(m):""}</span></a>`).join("")}</div>`}
+function spark(vals,color){if(!vals.length)return"";const W=260,H=34,mx=Math.max(...vals,1e-9),x=i=>4+i*(W-8)/Math.max(vals.length-1,1),y=v=>H-4-v/mx*(H-8);
+ return `<svg class="spark" viewBox="0 0 ${W} ${H}"><polyline fill="none" stroke="${css(color)}" stroke-width="2" points="${vals.map((v,i)=>x(i)+","+y(v)).join(" ")}"/>${vals.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="2.5" fill="${css(color)}"/>`).join("")}</svg>`}
+function findings(){const t=T[L],tr=I.trends.filter(r=>r.models>=30),b=tr[tr.length-1]||{},yr=b.year,h=I.headline,cards=[];
+ const recent=M.filter(m=>isLM(m)&&m.y===yr),top=(arr,k=4)=>arr.sort((a,b)=>b.dl-a.dl).slice(0,k);
+ cards.push({big:pct(b.moe)+"%",sub:yr,t:t.i_moe_t,w:t.i_moe_w,sp:spark(tr.map(r=>r.moe),"--s1"),ex:exChips(top(recent.filter(m=>m.E&&m.act)),m=>`${fmtN(m.p)} → ${fmtN(m.act)}`),go:{fk:"moe"}});
+ const kvs=M.filter(m=>isLM(m)&&m.kv&&m.p>5e8),big32=kvs.filter(m=>m.kv*32768>m.p*0.5).length;
+ cards.push({big:Math.round(big32/Math.max(kvs.length,1)*100)+"%",sub:L==="th"?"cache > weights":"cache > weights",t:t.i_kv_t,w:t.i_kv_w,sp:"",ex:exChips(top(kvs).length?kvs.slice().sort((a,b)=>b.dl-a.dl).slice(0,300).sort((a,b)=>a.kv/a.p-b.kv/b.p).slice(0,4):[],m=>`${Math.round(m.kv/1024)} ${t.ex_kv}`),go:{fk:"lat"}});
+ cards.push({big:pct(b.hybrid)+"%",sub:yr,t:t.i_hyb_t,w:t.i_hyb_w,sp:spark(tr.map(r=>r.hybrid),"--s2"),ex:exChips(top(M.filter(m=>isLM(m)&&m.ssm>0&&m.p>1e9))),go:{fk:"hyb"}});
+ const ro=recent.filter(m=>m.origin==="original"&&m.p),fit=ro.filter(m=>need(m,4)<=12e9).length;
+ cards.push({big:Math.round(fit/Math.max(ro.length,1)*100)+"%",sub:yr,t:t.i_edge_t,w:t.i_edge_w,sp:"",ex:exChips(top(ro.filter(m=>need(m,4)<=12e9&&m.p>1e9)),m=>fmtN(m.p)),go:{fy:String(yr)}});
+ const bad=I.hub_count_by_storage.find(r=>r.storage==="nvfp4"),wr=M.filter(m=>m.hub&&m.p/m.hub>1.2&&/nvfp4/.test(m.q));
+ cards.push({big:bad?pct(bad.hub_count_differs)+"%":"–",sub:"NVFP4",t:t.i_hub_t,w:t.i_hub_w,sp:"",ex:exChips(top(wr),m=>`${(m.p/m.hub).toFixed(2)}${t.ex_x}`),go:{fq:"nvfp4"}});
+ cards.push({big:pct(h.hub_no_config)+"%",sub:"Hub",t:t.i_cfg_t,w:t.i_cfg_w,sp:"",ex:exChips(top(M.filter(m=>!m.cfg&&m.p))),go:{fk:"nocfg"}});
+ $("#find").innerHTML=cards.map((c,i)=>`<div class="ic rv"><div class="big">${c.big}<small>${c.sub||""}</small></div><h3>${c.t}</h3>${c.sp}<p class="why"><b>${t.why}:</b> ${c.w}</p>${c.ex}<button class="go" data-i="${i}">${t.see}</button></div>`).join("");
+ document.querySelectorAll("#find .go").forEach(b=>b.onclick=()=>{const g=cards[+b.dataset.i].go;["#q","#ffam","#fq","#fy","#fo","#fk"].forEach(s=>$(s).value="");for(const[k,v]of Object.entries(g))$("#"+k).value=v;page=0;table();$("#models").scrollIntoView({behavior:"smooth"})});
+ reveal()}
+function lookup(id){const t=T[L],el=$("#look");if(!id){el.innerHTML="";return}
+ const m=M.find(x=>x.id.toLowerCase()===id.toLowerCase());
+ if(!m){el.innerHTML=`<div class="card"><p class="cs">${t.look_none}</p><a class="pbtn primary" href="${link(id)}">${t.open_full} → ${id}</a></div>`;return}
+ const P=pop(),f=(a,b)=>`<div><b>${a}</b><span>${b}</span></div>`,ratio=m.hub?m.p/m.hub:null;
+ const facts=[f(fmtN(m.p),t.f_params),f(m.act&&m.act!==m.p?fmtN(m.act):"–",t.f_active),f(fmtB(m.sb),t.f_store+(m.q?` · ${m.q}`:"")),f(`${m.d??"–"} × ${m.L??"–"}`,t.f_wl),f(`${m.H??"–"} / ${m.KV??"–"}`,t.f_heads),f(m.E??"–",t.f_exp),f(m.V?m.V.toLocaleString():"–",t.f_vocab),f(fmtB(m.kv),t.f_kv),f(m.kv?fmtB(m.kv*32768):"–",t.f_kv32)].join("");
+ const bar=(lab,v)=>v==null?"":`<div class="pbar"><div class="lab"><span>${lab}</span><span>${t.pct_txt(v)}</span></div><div class="tr"><i style="width:0" data-w="${v}%"></i></div></div>`;
+ const dev=`<div class="dev"><div></div>${DEV.map(d=>`<div class="h">${d[0]}</div>`).join("")}${[[t.dev_as,null],[t.dev_4,4]].map(([lab,bits])=>`<div class="h" style="text-align:left">${lab}</div>`+DEV.map(d=>{const ok=need(m,bits)<=d[1]*1e9;return `<div class="c ${ok?"y":"n"}">${ok?"✓":"✕"}</div>`}).join("")).join("")}</div>`;
+ el.innerHTML=`<div class="look"><div class="card lk"><span class="pill">${m.fam||"?"}</span> <span class="pill">${kindOf(m)==="moe"?t.k_moe:kindOf(m)==="hyb"?t.k_hyb:t.k_dense}</span> ${m.y?`<span class="pill">${m.y}</span>`:""}<h3 style="margin-top:8px">${m.id}</h3><div class="facts">${facts}</div>
+  <p class="note">${ratio==null?"":Math.abs(ratio-1)<=.001?t.hub_ok:t.hub_bad(ratio.toFixed(2))}</p><div class="dl"><a class="pbtn primary" href="${link(m.id)}">${t.open_full} →</a></div></div>
+  <div class="card"><div class="ct">${t.pct_h}</div>${isLM(m)?bar(t.pct_p,pctile(P.p,m.p))+bar(t.pct_kv,pctile(P.kv,m.kv))+bar(t.pct_v,pctile(P.v,m.V)):""}<div class="ct" style="margin-top:14px">${t.dev_h}</div>${dev}</div></div>`;
+ requestAnimationFrame(()=>el.querySelectorAll(".tr i").forEach(i=>i.style.width=i.dataset.w));memmap()}
+function memmap(){const t=T[L],svg=$("#mm"),W=1100,H=460,P={l:64,r:20,t:14,b:40};
+ const pts=M.filter(m=>isLM(m)&&m.p>5e7&&m.kv>0);if(!pts.length){svg.innerHTML="";return}
+ const lx=v=>Math.log10(v),x0=lx(5e7),x1=lx(Math.max(...pts.map(m=>m.p))*1.3),ky=pts.map(m=>m.kv),y0=lx(Math.min(...ky)*.8),y1=lx(Math.max(...ky)*1.3);
+ const X=v=>P.l+(lx(v)-x0)/(x1-x0)*(W-P.l-P.r),Y=v=>H-P.b-(lx(v)-y0)/(y1-y0)*(H-P.t-P.b);let s="";
+ for(let e=Math.ceil(x0);e<=x1;e++){const x=X(10**e);s+=`<line class="gl" x1="${x}" x2="${x}" y1="${P.t}" y2="${H-P.b}"/><text x="${x}" y="${H-P.b+18}" text-anchor="middle" font-size="12">${fmtN(10**e)}</text>`}
+ for(let e=Math.ceil(y0);e<=y1;e++){const y=Y(10**e);s+=`<line class="gl" x1="${P.l}" x2="${W-P.r}" y1="${y}" y2="${y}"/><text x="${P.l-8}" y="${y+4}" text-anchor="end" font-size="12">${fmtB(10**e)}</text>`}
+ DEV.forEach(([n,g],i)=>{const p=g*1e9/1.1/0.5;if(lx(p)<x0||lx(p)>x1)return;const x=X(p);s+=`<line x1="${x}" x2="${x}" y1="${P.t}" y2="${H-P.b}" stroke="${css("--dim")}" stroke-dasharray="4 4"/><text x="${x+4}" y="${P.t+12+(i%2)*14}" font-size="11">${n}</text>`});
+ const col={moe:"--s1",hyb:"--s2",dense:"--s3"};
+ pts.sort((a,b)=>a.dl-b.dl).forEach(m=>{const k=kindOf(m),r=Math.max(3,Math.min(9,Math.log10(m.dl+10)-1));s+=`<circle class="pt" cx="${X(m.p).toFixed(1)}" cy="${Y(m.kv).toFixed(1)}" r="${r.toFixed(1)}" fill="${css(col[k])}" fill-opacity=".75" stroke="${css("--surface")}" stroke-width="1" data-id="${m.id}" data-h="${encodeURIComponent(`<b>${m.id}</b><br>${fmtN(m.p)} · ${fmtB(m.kv)}/token${m.act&&m.act!==m.p?` · ${fmtN(m.act)} ${t.ex_active}`:""}<br><span style='color:var(--dim)'>${fmtN(m.dl)} downloads</span>`)}" style="cursor:pointer"/>`});
+ s+=`<text x="${(W+P.l)/2}" y="${H-6}" text-anchor="middle" font-size="12">${t.f_params}</text><text x="14" y="${(H)/2}" font-size="12" transform="rotate(-90 14 ${H/2})" text-anchor="middle">${t.f_kv}</text>`;
+ const sel=M.find(m=>m.id===($("#lookq").value||"").trim());if(sel&&isLM(sel)&&sel.kv>0&&sel.p>5e7)s+=`<circle cx="${X(sel.p)}" cy="${Y(sel.kv)}" r="14" fill="none" stroke="${css("--ink")}" stroke-width="2"/><text x="${X(sel.p)+18}" y="${Y(sel.kv)+4}" font-size="12" style="fill:var(--ink);font-weight:600">${sel.id.split("/")[1]}</text>`;
+ svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.innerHTML=s;hover(svg);svg.querySelectorAll(".pt").forEach(c=>c.onclick=()=>location.href=link(c.dataset.id));
+ legend($("#lgm"),[{c:"--s1",name:t.k_moe},{c:"--s2",name:t.k_hyb},{c:"--s3",name:t.k_dense}])}
+let ro=null;function reveal(){if(!ro)ro=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");ro.unobserve(e.target)}}),{threshold:.12});document.querySelectorAll(".rv:not(.in)").forEach(n=>ro.observe(n))}
+function countUp(){document.querySelectorAll(".kpi b").forEach(b=>{const txt=b.textContent,m=txt.match(/^([\d,.]+)(.*)$/);if(!m)return;const end=parseFloat(m[1].replace(/,/g,"")),dec=(m[1].split(".")[1]||"").length,t0=performance.now();
+ const step=now=>{const k=Math.min(1,(now-t0)/900),v=end*(1-Math.pow(1-k,3));b.textContent=(dec?v.toFixed(dec):Math.round(v).toLocaleString())+m[2];if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)})}
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 function lineChart(svg,rows,series,{yfmt=v=>v+"%",ymax=null,H=300,W=560}={}){const P={l:44,r:52,t:12,b:30};const xs=rows.map(r=>r.year),x0=Math.min(...xs),x1=Math.max(...xs);
  const vals=series.flatMap(s=>rows.map(r=>s.v(r))).filter(v=>v!=null),top=ymax||Math.max(...vals)*1.12;
@@ -274,8 +380,8 @@ function charts(){const t=T[L],tr=I.trends.filter(r=>r.models>=30);
 const COLS=[["id",0],["y",1],["fam",0],["p",1],["q",0],["d",1],["L",1],["H",1],["E",1],["V",1],["kv",1],["cfg",0],["hub",1],["dl",1]];
 let sortK="dl",sortD=-1,page=0;const PS=50;
 function opts(sel,label,vals){sel.innerHTML=`<option value="">${label}</option>`+vals.map(v=>`<option>${v}</option>`).join("")}
-function table(){const t=T[L],q=$("#q").value.trim().toLowerCase(),ff=$("#ffam").value,fq=$("#fq").value,fy=$("#fy").value,fo=$("#fo").value;
- let r=M.filter(m=>(!q||m.id.toLowerCase().includes(q))&&(!ff||m.fam===ff)&&(!fq||(m.q||t.unq)===fq||(m.q||"").split("+").includes(fq))&&(!fy||String(m.y)===fy)&&(!fo||(fo==="o"?m.origin==="original":m.origin!=="original")));
+function table(){const t=T[L],q=$("#q").value.trim().toLowerCase(),ff=$("#ffam").value,fq=$("#fq").value,fy=$("#fy").value,fo=$("#fo").value,fk=$("#fk").value;
+ let r=M.filter(m=>(!q||m.id.toLowerCase().includes(q))&&(!ff||m.fam===ff)&&(!fq||(m.q||t.unq)===fq||(m.q||"").split("+").includes(fq))&&(!fy||String(m.y)===fy)&&(!fo||(fo==="o"?m.origin==="original":m.origin!=="original"))&&(!fk||(fk==="lat"?m.lat||(m.KV&&m.H&&m.KV*8<=m.H):fk==="nocfg"?!m.cfg:kindOf(m)===fk)));
  r.sort((a,b)=>{const x=sortK==="hub"?(a.hub?a.p/a.hub:null):a[sortK],y=sortK==="hub"?(b.hub?b.p/b.hub:null):b[sortK];if(x==null)return 1;if(y==null)return -1;return (x>y?1:x<y?-1:0)*sortD});
  const n=r.length,pages=Math.max(1,Math.ceil(n/PS));page=Math.min(page,pages-1);const app=L==="th"?"../":"../en/";
  $("#thead").innerHTML=t.cols.map((c,i)=>`<th class="${COLS[i][1]?"num":""}" data-k="${COLS[i][0]}">${c}${sortK===COLS[i][0]?(sortD>0?" ▲":" ▼"):""}</th>`).join("");
@@ -285,15 +391,18 @@ function table(){const t=T[L],q=$("#q").value.trim().toLowerCase(),ff=$("#ffam")
  document.querySelectorAll("#thead th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;sortD=sortK===k?-sortD:(k==="id"?1:-1);sortK=k;table()})}
 function filters(){const t=T[L],uniq=f=>[...new Set(M.map(f).filter(Boolean))];
  opts($("#ffam"),t.all_fam,uniq(m=>m.fam).sort());opts($("#fq"),t.all_q,[t.unq,...uniq(m=>m.q).flatMap(q=>q.split("+")).filter((v,i,a)=>a.indexOf(v)===i).sort()]);
- opts($("#fy"),t.all_y,uniq(m=>m.y).sort((a,b)=>b-a));$("#fo").innerHTML=`<option value="">${t.all_o}</option><option value="o">${t.o_orig}</option><option value="c">${t.o_copy}</option>`}
-function render(){const pe=$("#prelim");pe.style.display=I.preliminary?"block":"none";pe.textContent=L==="th"?"ตัวเลขชุดนี้เป็นผลเบื้องต้น ระหว่างรอการรันรอบสุดท้ายที่แก้ข้อผิดพลาดแล้ว":"Preliminary numbers: the final run, with fixes to the recovery rules, is in progress.";kpis();findings();charts();filters();table();const c=I.headline.crawled;$("#crawled").textContent=c?` · ${T[L].crawled} ${c}`:""}
+ opts($("#fy"),t.all_y,uniq(m=>m.y).sort((a,b)=>b-a));$("#fo").innerHTML=`<option value="">${t.all_o}</option><option value="o">${t.o_orig}</option><option value="c">${t.o_copy}</option>`;
+ $("#fk").innerHTML=`<option value="">${t.all_k}</option><option value="moe">${t.k_moe}</option><option value="hyb">${t.k_hyb}</option><option value="dense">${t.k_dense}</option><option value="lat">${t.k_lat} / GQA ≥ 8×</option><option value="nocfg">${t.k_nocfg}</option>`;
+ $("#ids").innerHTML=M.slice(0,4000).map(m=>`<option value="${m.id}">`).join("")}
+function render(){POP=null;const pe=$("#prelim");pe.style.display=I.preliminary?"block":"none";pe.textContent=L==="th"?"ตัวเลขชุดนี้เป็นผลเบื้องต้น ระหว่างรอการรันรอบสุดท้ายที่แก้ข้อผิดพลาดแล้ว":"Preliminary numbers: the final run, with fixes to the recovery rules, is in progress.";kpis();countUp();findings();charts();memmap();filters();table();{const qm=new URLSearchParams(location.search).get("m");if(qm&&!$("#lookq").value){$("#lookq").value=qm;setTimeout(()=>$("#lookup").scrollIntoView({behavior:"smooth"}),300)}}if(!$("#lookq").value){const d=M.find(m=>/qwen3/i.test(m.id)&&isLM(m))||M[0];$("#lookq").value=d.id}lookup($("#lookq").value);const c=I.headline.crawled;$("#crawled").textContent=c?` · ${T[L].crawled} ${c}`:""}
 document.querySelectorAll("#lang button").forEach(b=>b.onclick=()=>{L=b.dataset.l;applyLang()});
 $("#themeBtn").onclick=()=>theme(document.documentElement.dataset.theme==="dark"?"light":"dark");
-["#q","#ffam","#fq","#fy","#fo"].forEach(s=>$(s).addEventListener("input",()=>{page=0;table()}));
+["#q","#ffam","#fq","#fy","#fo","#fk"].forEach(s=>$(s).addEventListener("input",()=>{page=0;table()}));
+$("#lookq").addEventListener("change",e=>lookup(e.target.value.trim()));$("#lookq").addEventListener("input",e=>{const v=e.target.value.trim();if(M&&M.some(m=>m.id===v))lookup(v)});
 $("#prev").onclick=()=>{page=Math.max(0,page-1);table()};$("#next").onclick=()=>{page++;table()};
 theme(document.documentElement.dataset.theme);
-Promise.all([fetch("data/insights.json").then(r=>r.json()),fetch("data/models.json").then(r=>r.json())]).then(([a,b])=>{I=a;M=b;if(I.dataset_url)$("#dsLink").href=I.dataset_url;applyLang()});
-applyLang();
+Promise.all([fetch("data/insights.json").then(r=>r.json()),fetch("data/models.json").then(r=>r.json())]).then(([a,b])=>{I=a;M=b;if(I.dataset_url)$("#dsLink").href=I.dataset_url;applyLang();reveal()});
+applyLang();reveal();
 </script>
 </body>
 </html>

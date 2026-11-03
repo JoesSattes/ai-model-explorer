@@ -114,7 +114,8 @@ function renderHero() {
   $("#cur").innerHTML = `<div><div class="xk">${t("now_showing")}</div><h3>${esc(M.label)}</h3>
     <div class="tags"><span class="tag e">${t("fam_" + f)}</span><span class="tag d">${t("mod_" + mod)}</span><span class="tag">${t("src_" + M.kind)}</span></div></div>
     <div class="kpis">${[[fP(params), t("kpi_weights")], [fB(bytes), t("kpi_size")], [String(nL), t("kpi_layers")], ops != null ? [String(ops), t("kpi_ops")] : [M.meta.vocab ? M.meta.vocab.toLocaleString() : "–", t("kpi_vocab")]].map(([b, s]) => `<div class="kpi"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("")}</div>
-    ${M.note ? `<p class="note">${esc(typeof M.note === "function" ? M.note() : M.note)}</p>` : ""}`;
+    ${M.note ? `<p class="note">${esc(typeof M.note === "function" ? M.note() : M.note)}</p>` : ""}
+    ${/^[\w.-]+\/[\w.-]+$/.test(M.label || "") ? `<p class="note"><a href="${/\/en\/(index\.html)?$/.test(location.pathname) ? "../" : ""}census/?m=${encodeURIComponent(M.label)}">${t("census_cmp")}</a></p>` : ""}`;
   $("#navModel").textContent = M.short || M.label;
 }
 (function heroCanvas() {

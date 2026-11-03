@@ -87,6 +87,19 @@ def no_config(ok, min_n=25):
     return sorted(out, key=lambda r: -r["no_config"])
 
 
+def active(r):
+    """Parameters used per token: all of them for dense models; for mixtures of experts only the routed share."""
+    h, f = r["hp"] or {}, r["hp_fused"] or {}
+    e, k, ex = h.get("experts"), f.get("topk") or h.get("experts_per_token"), h.get("expert_params")
+    if not r["params"]:
+        return None
+    if not e:
+        return r["params"]
+    if not (k and ex):
+        return None
+    return int(r["params"] - ex * (1 - k / e))
+
+
 def model_rows(ok, n=4000):
     rows = []
     for _, r in ok.sort_values("downloads", ascending=False).head(n).iterrows():
@@ -97,7 +110,8 @@ def model_rows(ok, n=4000):
                      "q": "+".join(sorted(r["quant"])) if isinstance(r["quant"], dict) and r["quant"] else "",
                      "d": h.get("d"), "L": h.get("layers"), "H": f.get("heads") or h.get("heads"), "KV": f.get("kv_heads") or h.get("kv_heads"),
                      "E": h.get("experts"), "V": h.get("vocab"), "kv": h.get("kv_bytes_per_token_bf16"),
-                     "ssm": h.get("ssm_layers") or 0, "cfg": bool(r["has_config"]), "lib": r.get("library")})
+                     "ssm": h.get("ssm_layers") or 0, "cfg": bool(r["has_config"]), "lib": r.get("library"),
+                     "sb": r.get("stored_bytes"), "act": active(r), "lat": bool(h.get("kv_latent")), "au": r["id"].split("/")[0]})
     return rows
 
 

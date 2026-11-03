@@ -416,7 +416,7 @@ window.I18N = {
   i_diff: ["Diffusion: timestep (sinusoid {f}) → MLP → {w} มิติ คุม adaLN ทุก block · เวลารวม = จำนวนขั้น × denoiser", "Diffusion: the timestep (sinusoid {f}) → MLP → {w} dims steers adaLN in every block. Total time = steps × denoiser."],
   // nav / hero
   brand: ["Model Explorer", "Model Explorer"],
-  nav_big: ["ภาพรวม", "Big picture"], nav_map: ["Layer map", "Layer map"], nav_concepts: ["แนวคิด", "Concepts"], nav_report: ["รายงาน", "Report"], nav_census: ["Hub Census", "Hub Census"],
+  nav_big: ["ภาพรวม", "Big picture"], nav_map: ["Layer map", "Layer map"], nav_concepts: ["แนวคิด", "Concepts"], nav_report: ["รายงาน", "Report"], nav_census: ["Hub Census", "Hub Census"], census_cmp: ["เทียบกับโมเดลยอดนิยมบน Hub (census) →", "Where it sits among popular Hub models (census) →"],
   hero_eyebrow: ["Squeeze Until It Breaks · AI Expo Thailand 2026", "Squeeze Until It Breaks · AI Expo Thailand 2026"],
   hero_h1: ["ดูข้างในโมเดล<br><span class=\"g\">ทีละส่วน</span> ก่อนลงมือบีบ", "See inside a model,<br><span class=\"g\">part by part</span>, before you squeeze it."],
   hero_sub: ["เลือก template ที่วิเคราะห์ไว้แล้ว หรือใส่โมเดลของคุณเอง: ไฟล์ .tflite, repo บน Hugging Face หรือ config.json เว็บจะแยกโมเดลออกเป็นส่วนๆ ให้อัตโนมัติ ไม่ว่าจะเป็น architecture แบบไหน", "Pick an analyzed template or bring your own model — a .tflite file, a Hugging Face repo or a config.json. The page splits any architecture into its parts automatically."],
@@ -2183,7 +2183,8 @@ function renderHero() {
   $("#cur").innerHTML = `<div><div class="xk">${t("now_showing")}</div><h3>${esc(M.label)}</h3>
     <div class="tags"><span class="tag e">${t("fam_" + f)}</span><span class="tag d">${t("mod_" + mod)}</span><span class="tag">${t("src_" + M.kind)}</span></div></div>
     <div class="kpis">${[[fP(params), t("kpi_weights")], [fB(bytes), t("kpi_size")], [String(nL), t("kpi_layers")], ops != null ? [String(ops), t("kpi_ops")] : [M.meta.vocab ? M.meta.vocab.toLocaleString() : "–", t("kpi_vocab")]].map(([b, s]) => `<div class="kpi"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("")}</div>
-    ${M.note ? `<p class="note">${esc(typeof M.note === "function" ? M.note() : M.note)}</p>` : ""}`;
+    ${M.note ? `<p class="note">${esc(typeof M.note === "function" ? M.note() : M.note)}</p>` : ""}
+    ${/^[\w.-]+\/[\w.-]+$/.test(M.label || "") ? `<p class="note"><a href="${/\/en\/(index\.html)?$/.test(location.pathname) ? "../" : ""}census/?m=${encodeURIComponent(M.label)}">${t("census_cmp")}</a></p>` : ""}`;
   $("#navModel").textContent = M.short || M.label;
 }
 (function heroCanvas() {
