@@ -90,7 +90,7 @@ html[data-theme=dark] h1{background:linear-gradient(90deg,#ff5a67,#ff7cc4 50%,#a
 .kpi,.card,.find li,.tbl{background:var(--surface);border:1px solid var(--border);border-radius:var(--rc)}
 html[data-theme=dark] .kpi,html[data-theme=dark] .card,html[data-theme=dark] .find li,html[data-theme=dark] .tbl{background:rgba(255,255,255,.045);border-color:rgba(255,255,255,.10);border-radius:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .kpi{padding:16px 18px}.kpi b{display:block;font-size:30px;font-weight:600;letter-spacing:-.01em}.kpi span{color:var(--soft);font-size:14px}
-section{padding:34px 0}h2{font-size:26px;margin-bottom:6px}
+section{padding:34px 0;scroll-margin-top:64px}h2{font-size:26px;margin-bottom:6px}
 html[data-theme=dark] h2{background:linear-gradient(90deg,#f4f5f8 40%,#c3c9ff);-webkit-background-clip:text;background-clip:text;color:transparent}
 .sub{color:var(--soft);max-width:820px;margin-bottom:18px}
 .find{display:grid;gap:10px;max-width:900px}.find li{list-style:none;padding:12px 16px;color:var(--soft)}.find li b{color:var(--ink)}
@@ -144,7 +144,7 @@ html[data-theme=dark] .ic .big{background:linear-gradient(90deg,#ff5a67,#ff7cc4 
 <body>
 <nav class="top"><div class="wrap">
  <a class="brand" id="home" href="../en/"><img src="../assets/logo.svg" width="24" height="24" alt=""><span>AI Model Explorer</span></a>
- <a class="l" id="back" href="../en/">← <span data-t="nav_back">Explorer</span></a><a class="l" href="#findings" data-t="nav_find">Findings</a><a class="l" href="#models" data-t="nav_models">Models</a><a class="l" href="#data" data-t="nav_data">Data</a>
+ <a class="l" id="back" href="../en/">← <span data-t="nav_back">Explorer</span></a><a class="l" href="#board" data-t="bd_h">Deploy-Ready board</a><a class="l" href="#findings" data-t="nav_find">Findings</a><a class="l" href="#models" data-t="nav_models">Models</a><a class="l" href="#data" data-t="nav_data">Data</a>
  <span class="sp"></span>
  <button class="theme" id="themeBtn" type="button" aria-label="Theme"><svg class="sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
  <div class="lang" id="lang" role="group" aria-label="Language"><button data-l="th">TH</button><button data-l="en">EN</button></div>
@@ -163,6 +163,13 @@ html[data-theme=dark] .ic .big{background:linear-gradient(90deg,#ff5a67,#ff7cc4 
  <p class="sub" data-t="look_sub">Type any model from the census. See what it is made of, where it sits among popular models, and which devices it fits on.</p>
  <div class="tools"><input id="lookq" list="ids" data-tp="look_ph" placeholder="e.g. Qwen/Qwen3-8B" autocomplete="off"><datalist id="ids"></datalist></div>
  <div id="look"></div>
+</section>
+
+<section id="board" class="rv">
+ <h2 data-t="bd_h">Deploy-Ready board</h2>
+ <p class="sub" data-t="bd_sub">Models submitted by their authors and users. Each is read from its headers and placed by the memory it needs at 4-bit with an 8k context, with five checks on its metadata. Submit yours and get a badge for the model card.</p>
+ <div class="dl" style="margin-bottom:14px"><a class="pbtn primary" id="submitBtn" target="_blank" rel="noopener" data-t="bd_submit">Submit a model</a><span class="note" data-t="bd_how" style="align-self:center">Opens a GitHub issue; a bot replies within minutes.</span></div>
+ <div class="tbl"><table><thead><tr id="bhead"></tr></thead><tbody id="bbody"></tbody></table></div>
 </section>
 
 <section id="findings">
@@ -215,7 +222,9 @@ html[data-theme=dark] .ic .big{background:linear-gradient(90deg,#ff5a67,#ff7cc4 
 <div id="tip"></div>
 <script>
 const T={
- en:{look_h:"Look up a model",look_sub:"Type any model from the census. See what it is made of, where it sits among popular models, and which devices it fits on.",look_ph:"e.g. Qwen/Qwen3-8B",
+ en:{bd_h:"Deploy-Ready board",bd_sub:"Models submitted by their authors and users. Each is read from its headers and placed by the memory it needs at 4-bit with an 8k context, with five checks on its metadata. Submit yours and get a badge for the model card.",bd_submit:"Submit a model",bd_how:"Opens a GitHub issue; a bot replies within minutes.",
+  bd_cols:["Model","Fits on","Checks","Params","Active","Storage","KV/token","4-bit + 8k","Submitted"],bd_empty:"No submissions yet. Be the first:",
+  chk:{"safetensors":"safetensors","config.json":"config.json","config agrees with weights":"config agrees with weights","Hub parameter count correct":"Hub parameter count correct","license declared":"license declared"},look_submit:"Submit it to the board",look_h:"Look up a model",look_sub:"Type any model from the census. See what it is made of, where it sits among popular models, and which devices it fits on.",look_ph:"e.g. Qwen/Qwen3-8B",
   look_none:"Not in the census table. Open it in the explorer instead:",open_full:"Open the full anatomy",
   f_params:"parameters",f_active:"active per token",f_store:"stored",f_wl:"width × layers",f_heads:"heads / KV heads",f_exp:"experts",f_vocab:"vocabulary",f_kv:"KV cache per token",f_kv32:"KV cache at 32k tokens",
   pct_h:"Among popular language models",pct_p:"size",pct_kv:"KV cache per token",pct_v:"vocabulary",pct_txt:p=>`larger than ${p}%`,
@@ -251,7 +260,9 @@ const T={
   f_hub:s=>`<b>The Hub's parameter count is wrong</b> for formats that pack two values per byte: ${s}.`,
   f_nc:(a,b)=>`<b>${a}%</b> of all Hub models and ${b}% of popular ones ship <b>no config.json</b>: the weights are their only specification.`,
   f_gguf:a=>`<b>${a}%</b> of popular repos without readable weights are GGUF-only (llama.cpp).`},
- th:{look_h:"ค้นหาโมเดลของคุณ",look_sub:"พิมพ์ชื่อโมเดลใน census เพื่อดูว่าข้างในประกอบด้วยอะไร อยู่ตรงไหนเทียบกับโมเดลยอดนิยม และลงเครื่องไหนได้บ้าง",look_ph:"เช่น Qwen/Qwen3-8B",
+ th:{bd_h:"Deploy-Ready board",bd_sub:"โมเดลที่เจ้าของหรือผู้ใช้ส่งเข้ามา อ่านจาก header แล้วจัดระดับตามหน่วยความจำที่ต้องใช้ที่ 4-bit และ context 8k พร้อมเช็ก metadata 5 ข้อ ส่งโมเดลของคุณแล้วรับ badge ไปติดใน model card",bd_submit:"ส่งโมเดล",bd_how:"เปิด GitHub issue แล้ว bot จะตอบกลับภายในไม่กี่นาที",
+  bd_cols:["โมเดล","ลงเครื่อง","เช็ก","Params","Active","การเก็บ","KV/token","4-bit + 8k","ส่งเมื่อ"],bd_empty:"ยังไม่มีใครส่ง เป็นคนแรกได้เลย:",
+  chk:{"safetensors":"safetensors","config.json":"มี config.json","config agrees with weights":"config ตรงกับ weights","Hub parameter count correct":"ตัวเลข params บน Hub ถูก","license declared":"ระบุ license"},look_submit:"ส่งโมเดลนี้ขึ้น board",look_h:"ค้นหาโมเดลของคุณ",look_sub:"พิมพ์ชื่อโมเดลใน census เพื่อดูว่าข้างในประกอบด้วยอะไร อยู่ตรงไหนเทียบกับโมเดลยอดนิยม และลงเครื่องไหนได้บ้าง",look_ph:"เช่น Qwen/Qwen3-8B",
   look_none:"ไม่มีในตาราง census เปิดดูใน explorer แทนได้:",open_full:"เปิดดูโครงสร้างเต็ม",
   f_params:"parameter",f_active:"ใช้จริงต่อ token",f_store:"ขนาดที่เก็บ",f_wl:"width × layers",f_heads:"heads / KV heads",f_exp:"experts",f_vocab:"vocabulary",f_kv:"KV cache ต่อ token",f_kv32:"KV cache ที่ 32k token",
   pct_h:"เทียบกับ language model ยอดนิยม",pct_p:"ขนาด",pct_kv:"KV cache ต่อ token",pct_v:"vocabulary",pct_txt:p=>`ใหญ่กว่า ${p}%`,
@@ -293,7 +304,7 @@ const $=s=>document.querySelector(s),tip=$("#tip"),pct=x=>x==null?"–":Math.rou
 const fmtB=b=>b==null?"–":b>=1e12?(b/1e12).toFixed(2)+" TB":b>=1e9?(b/1e9).toFixed(b>=1e11?0:1)+" GB":b>=1e6?(b/1e6).toFixed(1)+" MB":b>=1e3?(b/1e3).toFixed(0)+" KB":Math.round(b)+" B";
 function showTip(e,h){tip.innerHTML=h;tip.style.display="block";const x=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8);tip.style.left=x+"px";tip.style.top=(e.clientY+14)+"px"}
 function hideTip(){tip.style.display="none"}
-let I=null,M=null;
+let I=null,M=null,B=[];
 function applyLang(){document.documentElement.lang=L;const t=T[L];document.querySelectorAll("[data-t]").forEach(n=>{const k=n.dataset.t;if(t[k]&&typeof t[k]==="string")n.textContent=t[k]});
  $("#q").placeholder=t.search;$("#lookq").placeholder=t.look_ph;document.querySelectorAll("#lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===L));
  const home=L==="th"?"../":"../en/";["#home","#back","#cta"].forEach(id=>$(id).href=home);try{localStorage.setItem("mx_lang",L)}catch(e){}
@@ -326,7 +337,7 @@ function findings(){const t=T[L],tr=I.trends.filter(r=>r.models>=30),b=tr[tr.len
  reveal()}
 function lookup(id){const t=T[L],el=$("#look");if(!id){el.innerHTML="";return}
  const m=M.find(x=>x.id.toLowerCase()===id.toLowerCase());
- if(!m){el.innerHTML=`<div class="card"><p class="cs">${t.look_none}</p><a class="pbtn primary" href="${link(id)}">${t.open_full} → ${id}</a></div>`;return}
+ if(!m){el.innerHTML=`<div class="card"><p class="cs">${t.look_none}</p><div class="dl"><a class="pbtn primary" href="${link(id)}">${t.open_full} → ${id}</a><a class="pbtn" target="_blank" rel="noopener" href="${ISSUE(id)}">${t.look_submit}</a></div></div>`;return}
  const P=pop(),f=(a,b)=>`<div><b>${a}</b><span>${b}</span></div>`,ratio=m.hub?m.p/m.hub:null;
  const facts=[f(fmtN(m.p),t.f_params),f(m.act&&m.act!==m.p?fmtN(m.act):"–",t.f_active),f(fmtB(m.sb),t.f_store+(m.q?` · ${m.q}`:"")),f(`${m.d??"–"} × ${m.L??"–"}`,t.f_wl),f(`${m.H??"–"} / ${m.KV??"–"}`,t.f_heads),f(m.E??"–",t.f_exp),f(m.V?m.V.toLocaleString():"–",t.f_vocab),f(fmtB(m.kv),t.f_kv),f(m.kv?fmtB(m.kv*32768):"–",t.f_kv32)].join("");
  const bar=(lab,v)=>v==null?"":`<div class="pbar"><div class="lab"><span>${lab}</span><span>${t.pct_txt(v)}</span></div><div class="tr"><i style="width:0" data-w="${v}%"></i></div></div>`;
@@ -348,6 +359,14 @@ function memmap(){const t=T[L],svg=$("#mm"),W=1100,H=460,P={l:64,r:20,t:14,b:40}
  const sel=M.find(m=>m.id===($("#lookq").value||"").trim());if(sel&&isLM(sel)&&sel.kv>0&&sel.p>5e7)s+=`<circle cx="${X(sel.p)}" cy="${Y(sel.kv)}" r="14" fill="none" stroke="${css("--ink")}" stroke-width="2"/><text x="${X(sel.p)+18}" y="${Y(sel.kv)+4}" font-size="12" style="fill:var(--ink);font-weight:600">${sel.id.split("/")[1]}</text>`;
  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.innerHTML=s;hover(svg);svg.querySelectorAll(".pt").forEach(c=>c.onclick=()=>location.href=link(c.dataset.id));
  legend($("#lgm"),[{c:"--s1",name:t.k_moe},{c:"--s2",name:t.k_hyb},{c:"--s3",name:t.k_dense}])}
+
+const ISSUE=id=>`https://github.com/JoesSattes/ai-model-explorer/issues/new?template=submit-model.yml&title=${encodeURIComponent("[Model] "+(id||""))}${id?"&repo="+encodeURIComponent(id):""}`;
+const TIERC={"Phone":"--s3","Laptop":"--s3","Desktop GPU":"--s4","Workstation":"--s2","Cluster":"--neg"};
+function board(){const t=T[L];$("#submitBtn").href=ISSUE("");$("#bhead").innerHTML=t.bd_cols.map((c,i)=>`<th class="${i>2&&i<8?"num":""}">${c}</th>`).join("");
+ if(!B.length){$("#bbody").innerHTML=`<tr><td colspan="9" style="padding:18px;color:var(--soft)">${t.bd_empty} <a class="pbtn" href="${ISSUE("")}" target="_blank" rel="noopener">${t.bd_submit}</a></td></tr>`;return}
+ $("#bbody").innerHTML=B.map(b=>`<tr><td><a href="${link(b.id)}">${b.id}</a></td><td><span class="pill" style="color:var(${TIERC[b.tier]||"--soft"})">${b.tier}</span></td>
+  <td title="${Object.entries(b.checks).map(([k,v])=>(v?"✓ ":"✕ ")+(t.chk[k]||k)).join("\n")}">${Object.values(b.checks).map(v=>v?"●":"○").join("")} ${b.score}/5</td>
+  <td class="num">${fmtN(b.params)}</td><td class="num">${b.active&&b.active!==b.params?fmtN(b.active):"–"}</td><td class="num">${b.storage}</td><td class="num">${fmtB(b.kv_bytes_per_token)}</td><td class="num">${fmtB(b.need_4bit_8k_bytes)}</td><td class="num">${b.submitted}</td></tr>`).join("")}
 let ro=null;function reveal(){if(!ro)ro=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");ro.unobserve(e.target)}}),{threshold:.12});document.querySelectorAll(".rv:not(.in)").forEach(n=>ro.observe(n))}
 function countUp(){document.querySelectorAll(".kpi b").forEach(b=>{const txt=b.textContent,m=txt.match(/^([\d,.]+)(.*)$/);if(!m)return;const end=parseFloat(m[1].replace(/,/g,"")),dec=(m[1].split(".")[1]||"").length,t0=performance.now();
  const step=now=>{const k=Math.min(1,(now-t0)/900),v=end*(1-Math.pow(1-k,3));b.textContent=(dec?v.toFixed(dec):Math.round(v).toLocaleString())+m[2];if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)})}
@@ -394,14 +413,14 @@ function filters(){const t=T[L],uniq=f=>[...new Set(M.map(f).filter(Boolean))];
  opts($("#fy"),t.all_y,uniq(m=>m.y).sort((a,b)=>b-a));$("#fo").innerHTML=`<option value="">${t.all_o}</option><option value="o">${t.o_orig}</option><option value="c">${t.o_copy}</option>`;
  $("#fk").innerHTML=`<option value="">${t.all_k}</option><option value="moe">${t.k_moe}</option><option value="hyb">${t.k_hyb}</option><option value="dense">${t.k_dense}</option><option value="lat">${t.k_lat} / GQA ≥ 8×</option><option value="nocfg">${t.k_nocfg}</option>`;
  $("#ids").innerHTML=M.slice(0,4000).map(m=>`<option value="${m.id}">`).join("")}
-function render(){POP=null;const pe=$("#prelim");pe.style.display=I.preliminary?"block":"none";pe.textContent=L==="th"?"ตัวเลขชุดนี้เป็นผลเบื้องต้น ระหว่างรอการรันรอบสุดท้ายที่แก้ข้อผิดพลาดแล้ว":"Preliminary numbers: the final run, with fixes to the recovery rules, is in progress.";kpis();countUp();findings();charts();memmap();filters();table();{const qm=new URLSearchParams(location.search).get("m");if(qm&&!$("#lookq").value){$("#lookq").value=qm;setTimeout(()=>$("#lookup").scrollIntoView({behavior:"smooth"}),300)}}if(!$("#lookq").value){const d=M.find(m=>/qwen3/i.test(m.id)&&isLM(m))||M[0];$("#lookq").value=d.id}lookup($("#lookq").value);const c=I.headline.crawled;$("#crawled").textContent=c?` · ${T[L].crawled} ${c}`:""}
+function render(){POP=null;const pe=$("#prelim");pe.style.display=I.preliminary?"block":"none";pe.textContent=L==="th"?"ตัวเลขชุดนี้เป็นผลเบื้องต้น ระหว่างรอการรันรอบสุดท้ายที่แก้ข้อผิดพลาดแล้ว":"Preliminary numbers: the final run, with fixes to the recovery rules, is in progress.";kpis();countUp();board();findings();charts();memmap();filters();table();{const qm=new URLSearchParams(location.search).get("m");if(qm&&!$("#lookq").value){$("#lookq").value=qm;setTimeout(()=>$("#lookup").scrollIntoView({behavior:"smooth"}),300)}}if(!$("#lookq").value){const d=M.find(m=>/qwen3/i.test(m.id)&&isLM(m))||M[0];$("#lookq").value=d.id}lookup($("#lookq").value);const c=I.headline.crawled;$("#crawled").textContent=c?` · ${T[L].crawled} ${c}`:""}
 document.querySelectorAll("#lang button").forEach(b=>b.onclick=()=>{L=b.dataset.l;applyLang()});
 $("#themeBtn").onclick=()=>theme(document.documentElement.dataset.theme==="dark"?"light":"dark");
 ["#q","#ffam","#fq","#fy","#fo","#fk"].forEach(s=>$(s).addEventListener("input",()=>{page=0;table()}));
 $("#lookq").addEventListener("change",e=>lookup(e.target.value.trim()));$("#lookq").addEventListener("input",e=>{const v=e.target.value.trim();if(M&&M.some(m=>m.id===v))lookup(v)});
 $("#prev").onclick=()=>{page=Math.max(0,page-1);table()};$("#next").onclick=()=>{page++;table()};
 theme(document.documentElement.dataset.theme);
-Promise.all([fetch("data/insights.json").then(r=>r.json()),fetch("data/models.json").then(r=>r.json())]).then(([a,b])=>{I=a;M=b;if(I.dataset_url)$("#dsLink").href=I.dataset_url;applyLang();reveal()});
+Promise.all([fetch("data/insights.json").then(r=>r.json()),fetch("data/models.json").then(r=>r.json()),fetch("data/community.json").then(r=>r.ok?r.json():[]).catch(()=>[])]).then(([a,b,c])=>{I=a;M=b;B=c||[];if(I.dataset_url)$("#dsLink").href=I.dataset_url;applyLang();reveal()});
 applyLang();reveal();
 </script>
 </body>

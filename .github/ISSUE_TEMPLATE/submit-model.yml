@@ -1,0 +1,24 @@
+name: Submit a model to the Deploy-Ready board
+description: Add a Hugging Face model to the board. A bot reads its safetensors headers (never the weights) and replies here within minutes.
+title: "[Model] "
+labels: ["model-submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The bot reads only the public headers of the repository: architecture, parameters, storage format, KV cache per
+        token, and whether `config.json` and the Hub's own parameter count agree with the weights. It then adds the model
+        to https://joessattes.github.io/ai-model-explorer/census/ and gives you a badge for your model card.
+  - type: input
+    id: repo
+    attributes:
+      label: Hugging Face repo
+      description: owner/name, e.g. Qwen/Qwen3-8B. Public, non-gated repositories only.
+      placeholder: owner/name
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything we should know (optional)
+      description: Target device, what the model is for, a paper link.

@@ -1,0 +1,75 @@
+name: Model submission
+
+# Someone opens a "Submit a model" issue; this reads the repo's headers, replies with the result and a badge,
+# adds the model to the Deploy-Ready board on the census page, and closes the issue.
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: deploy-ready-board
+  cancel-in-progress: false
+
+jobs:
+  read:
+    if: contains(github.event.issue.labels.*.name, 'model-submission') || startsWith(github.event.issue.title, '[Model]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+      ISSUE: ${{ github.event.issue.number }}
+    steps:
+      - name: Labels
+        run: |
+          gh label create model-submission --color 5b6bf0 --description "Submitted to the Deploy-Ready board" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
+          gh label create on-board --color 2ea44f --description "Added to the Deploy-Ready board" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
+          gh label create could-not-read --color e05d44 --description "The bot could not read the repo" -R "$GITHUB_REPOSITORY" 2>/dev/null || true
+          gh issue edit "$ISSUE" --add-label model-submission -R "$GITHUB_REPOSITORY" || true
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - name: Install
+        run: pip install . pandas pyarrow
+      - name: Repo id from the issue form
+        id: form
+        env:
+          BODY: ${{ github.event.issue.body }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import os, re
+          m = re.search(r"###\s*Hugging Face repo\s+(?:https?://huggingface\.co/)?(\S+)", os.environ.get("BODY", ""))
+          rid = m.group(1).strip().rstrip("/") if m else ""
+          print("repo=" + (rid if re.fullmatch(r"[A-Za-z0-9][\w.-]{0,95}/[\w.-]{1,95}", rid) else ""))
+          PY
+      - name: Read and score
+        id: run
+        env:
+          REPO: ${{ steps.form.outputs.repo }}
+        run: |
+          set +e
+          python research/hub-census/submit.py "$REPO" "$ISSUE" census/data/community.json census/badge > comment.md
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+      - name: Reply
+        run: gh issue comment "$ISSUE" --body-file comment.md
+      - name: Add to the board
+        if: steps.run.outputs.code == '0'
+        env:
+          REPO: ${{ steps.form.outputs.repo }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898341+github-actions[bot]@users.noreply.github.com"
+          git add census/data/community.json census/badge
+          git commit -m "Deploy-Ready board: $REPO (#$ISSUE)" || exit 0
+          for i in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
+          gh issue edit "$ISSUE" --add-label on-board || true
+          gh issue close "$ISSUE" --reason completed
+      - name: Could not read
+        if: steps.run.outputs.code != '0'
+        run: gh issue edit "$ISSUE" --add-label could-not-read || true
