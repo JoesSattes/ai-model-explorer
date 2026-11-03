@@ -76,6 +76,7 @@ footer{color:var(--dim);font-size:13px;padding:40px 0 60px;border-top:1px solid 
  <h1 data-t="h1">Hub Weight Census: what AI models say about themselves</h1>
  <p class="lead" data-t="lead">We read only the safetensors headers of thousands of Hugging Face repositories (names, shapes and storage of every tensor, never the weights) and recovered each model's architecture from them. Here is what the models people actually use are made of, how that changed year by year, and where the metadata around them is wrong.</p>
  <div class="kpis" id="kpis"></div>
+ <p id="prelim" class="note" style="display:none;border:1px solid var(--line);border-radius:10px;padding:10px 14px;color:var(--soft)"></p>
 </header>
 
 <section id="findings">
@@ -227,7 +228,7 @@ function table(){const t=T[L],q=$("#q").value.trim().toLowerCase(),ff=$("#ffam")
 function filters(){const t=T[L],uniq=f=>[...new Set(M.map(f).filter(Boolean))];
  opts($("#ffam"),t.all_fam,uniq(m=>m.fam).sort());opts($("#fq"),t.all_q,[t.unq,...uniq(m=>m.q).flatMap(q=>q.split("+")).filter((v,i,a)=>a.indexOf(v)===i).sort()]);
  opts($("#fy"),t.all_y,uniq(m=>m.y).sort((a,b)=>b-a));$("#fo").innerHTML=`<option value="">${t.all_o}</option><option value="o">${t.o_orig}</option><option value="c">${t.o_copy}</option>`}
-function render(){kpis();findings();charts();filters();table();const c=I.headline.crawled;$("#crawled").textContent=c?` · ${T[L].crawled} ${c}`:""}
+function render(){const pe=$("#prelim");pe.style.display=I.preliminary?"block":"none";pe.textContent=L==="th"?"ตัวเลขชุดนี้เป็นผลเบื้องต้น ระหว่างรอการรันรอบสุดท้ายที่แก้ข้อผิดพลาดแล้ว":"Preliminary numbers: the final run, with fixes to the recovery rules, is in progress.";kpis();findings();charts();filters();table();const c=I.headline.crawled;$("#crawled").textContent=c?` · ${T[L].crawled} ${c}`:""}
 document.querySelectorAll("#lang button").forEach(b=>b.onclick=()=>{L=b.dataset.l;applyLang()});
 document.querySelectorAll("#theme button").forEach(b=>b.onclick=()=>theme(b.dataset.m));
 ["#q","#ffam","#fq","#fy","#fo"].forEach(s=>$(s).addEventListener("input",()=>{page=0;table()}));
