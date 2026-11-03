@@ -16,7 +16,7 @@ config agree? This folder reads the safetensors headers of a **stratified sample
 `--frontier N --since DATE` adds the N most-downloaded original releases from leading providers created after DATE
 (list in `sample.py`). It measures how the method holds up on the newest architectures. It is **not** a clean holdout
 for releases before 2026-11-03: the recovery rules were last tuned on that date with census data in view. Rules are frozen
-at commit `39368cf` (2026-11-03, "rules-2026-11-03"; `src/infer.js` and `src/loaders.js` at that commit); re-running with `--since 2026-11-04` later gives a prospective holdout on models the rules
+at commit `HEAD_PLACEHOLDER` (2026-11-03, "rules-2026-11-03"; `src/infer.js` and `src/loaders.js` at that commit); re-running with `--since 2026-11-04` later gives a prospective holdout on models the rules
 have never seen.
 
 ## Publishing
