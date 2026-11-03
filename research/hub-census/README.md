@@ -27,6 +27,15 @@ have never seen.
 
 ## Publishing
 
+**Actions → Publish datasets → Run workflow** with the run ID of a finished census run. It re-scores the run with the
+current rules, scores per-tensor roles against the corpus (`roles.js`), publishes `<you>/hub-weight-census` and
+`<you>/manifest-anatomy-corpus` (the labelled 510-architecture corpus, `research/data/corpus-510.jsonl.gz`), groups both
+in a collection "AI Model Explorer" on your Hugging Face profile, and refreshes the website's census page. It needs a
+repository secret `HF_WRITE_TOKEN` with write access; the owner is read from the token.
+
+### By hand
+
+
 `python publish.py owner/name` uploads the run with a dataset card and datasheet (needs a write token). In the workflow,
 fill the `publish` input and add a repository secret `HF_WRITE_TOKEN`.
 

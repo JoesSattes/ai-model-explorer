@@ -179,7 +179,9 @@ def main(census, outdir):
     status = pop["status"].value_counts(normalize=True).round(4).to_dict()
     nwk = pop[pop["status"] == "no_weights"]["no_weights_kind"].value_counts(normalize=True).round(4).to_dict() if "no_weights_kind" in pop else {}
     head = headline(d, pop, ok, os.path.dirname(census))
-    out = {"headline": head, "repos": len(d), "popular_repos": len(pop), "status_popular": status, "no_weights_kind_popular": nwk,
+    rp = os.path.join(os.path.dirname(census), "roles.json")
+    roles = {k: v for k, v in json.load(open(rp)).items() if k != "rows"} if os.path.exists(rp) else None
+    out = {"headline": head, "roles": roles, "repos": len(d), "popular_repos": len(pop), "status_popular": status, "no_weights_kind_popular": nwk,
            "trends": T, "storage_by_year": S, "hub_count_by_storage": H, "no_config_by_library": C[:25]}
     json.dump(json.loads(json.dumps(out, default=float).replace("NaN", "null")), open(os.path.join(outdir, "insights.json"), "w"), indent=1)
     def clean(v):  # JSON has no NaN
@@ -204,6 +206,10 @@ def main(census, outdir):
     if bad:
         L.append("- **The Hub's parameter count is wrong** for packed formats: " + "; ".join(
             f"{r['storage']} {r['hub_count_differs']*100:.0f}% of {r['repos']} repos (true/Hub median {r['median_true_over_hub']}x)" for r in bad[:4]) + ".")
+    if roles and roles.get("all", {}).get("repos"):
+        r = roles["all"]
+        L.append(f"- **Per-tensor roles on real checkpoints**: {r['macro']*100:.1f}% (macro) on {r['repos']:,} repos of {r['types']} model types, "
+                 f"labels carried over from the corpus; {r['share_99']*100:.0f}% of repos reach 99%. Name rules with MoE: {r['v1moe']*100:.1f}%, llama.cpp table: {r['gguf']*100:.1f}%.")
     gg = nwk.get("gguf_only")
     if gg:
         L.append(f"- **{gg*100:.0f}%** of popular repos without readable weights are GGUF-only (llama.cpp format).")

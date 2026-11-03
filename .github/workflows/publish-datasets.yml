@@ -1,0 +1,80 @@
+name: Publish datasets
+
+# Takes a finished "Hub census" run, re-scores it with the current rules, and publishes
+#   <you>/hub-weight-census        the census, with raw manifests, findings and charts
+#   <you>/manifest-anatomy-corpus  the labelled corpus of 510 architectures
+# into a collection "AI Model Explorer" on your Hugging Face profile, then refreshes the census page of the website.
+# Needs a repository secret HF_WRITE_TOKEN (a Hugging Face token with write access). The owner is read from the token.
+on:
+  workflow_dispatch:
+    inputs:
+      census_run_id: { description: "Run ID of the Hub census run (the number in its URL)", required: true }
+      census_name:   { description: "Census dataset name", default: "hub-weight-census" }
+      corpus_name:   { description: "Corpus dataset name", default: "manifest-anatomy-corpus" }
+      update_site:   { description: "Refresh the website's census page with this run", type: boolean, default: true }
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      HF_TOKEN: ${{ secrets.HF_WRITE_TOKEN }}
+    defaults:
+      run:
+        working-directory: research/hub-census
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - name: Install
+        run: pip install ../.. pandas pyarrow huggingface_hub matplotlib
+      - name: Hugging Face account
+        id: who
+        run: |
+          test -n "$HF_TOKEN" || { echo "::error::add the repository secret HF_WRITE_TOKEN (write access)"; exit 1; }
+          echo "owner=$(python -c 'from huggingface_hub import HfApi; print(HfApi().whoami()["name"])')" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: hub-census-*
+          run-id: ${{ inputs.census_run_id }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: research/hub-census/out
+      - name: Re-score with the current rules
+        run: |
+          python rescore.py
+          node roles.js ../data/corpus-510.jsonl.gz out/census_manifests.jsonl.gz out/census.jsonl > out/roles.json
+          python summarize.py
+          python insights.py
+          cat out/insights/insights.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish census
+        env:
+          NAME: ${{ steps.who.outputs.owner }}/${{ inputs.census_name }}
+        run: python publish.py "$NAME"
+      - name: Publish corpus
+        env:
+          NAME: ${{ steps.who.outputs.owner }}/${{ inputs.corpus_name }}
+        run: python publish_corpus.py "$NAME"
+      - name: Collection on the profile
+        env:
+          OWNER: ${{ steps.who.outputs.owner }}
+          A: ${{ steps.who.outputs.owner }}/${{ inputs.census_name }}
+          B: ${{ steps.who.outputs.owner }}/${{ inputs.corpus_name }}
+        run: python collection.py "$OWNER" "$A" "$B"
+      - name: Refresh the census page
+        if: ${{ inputs.update_site }}
+        env:
+          URL: https://huggingface.co/datasets/${{ steps.who.outputs.owner }}/${{ inputs.census_name }}
+        run: |
+          python site_data.py out ../../census/data "$URL"
+          cd ../..
+          git config user.name "github-actions[bot]"
+          git config user.email "41898341+github-actions[bot]@users.noreply.github.com"
+          git add census/data
+          git diff --cached --quiet || { git commit -m "census page: data from run ${{ inputs.census_run_id }}"; git push; }

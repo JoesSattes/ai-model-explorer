@@ -40,6 +40,10 @@ for readable repos: `family_manifest` (weights only), `family_config`, `params`,
 `quant`, `dtypes`, `hp` (weights only), `hp_fused`, `config_hp` (as declared), `components`, `stacks`,
 `config_checked` / `config_consistent` with the widths behind any mismatch, `header_bytes`, `weight_bytes`, timings.
 
+`census_manifests.jsonl.gz`: for every readable repo, the raw manifest (name, dtype, shape of every tensor) and its
+config.json, so any field can be recomputed (`rescore.py`). `roles.json`: per-tensor role accuracy on repos whose model
+type is in the companion corpus ([manifest-anatomy-corpus]({corpus_url})), with labels carried over by index-masked name.
+
 ## Datasheet
 
 - **Motivation.** Measure how much of the public model ecosystem can be described from weight metadata alone, how
@@ -87,14 +91,15 @@ def main(repo, out="out"):
     findings = open(ins).read().split("\n", 2)[-1] if os.path.exists(ins) else "(run insights.py)"
     n = info.get("sample", 0)
     size = "1K<n<10K" if n < 10_000 else "10K<n<100K" if n < 100_000 else "100K<n<1M"
-    card = CARD.format(size=size, hdr=hdr, frac=frac, date=datetime.date.today().isoformat(), findings=findings,
+    owner = repo.split("/")[0]
+    card = CARD.format(corpus_url=f"https://huggingface.co/datasets/{owner}/manifest-anatomy-corpus", size=size, hdr=hdr, frac=frac, date=datetime.date.today().isoformat(), findings=findings,
                        sample="\n".join(f"- {k}: {v}" for k, v in info.items()), since=info.get("frontier_since") or "-",
                        summary=summ.split("\n", 2)[-1])
     open(os.path.join(out, "README.md"), "w").write(card)
     api = HfApi(token=os.environ.get("HF_TOKEN"))
     api.create_repo(repo, repo_type="dataset", exist_ok=True)
     api.upload_folder(repo_id=repo, repo_type="dataset", folder_path=out,
-                      allow_patterns=["README.md", "census.jsonl", "census_manifests.jsonl.gz", "sample.parquet", "frame_stats.json",
+                      allow_patterns=["README.md", "census.jsonl", "census_manifests.jsonl.gz", "roles.json", "sample.parquet", "frame_stats.json",
                                       "sample_info.json", "report/*", "insights/*"],
                       commit_message="census run " + datetime.date.today().isoformat())
     print("published https://huggingface.co/datasets/" + repo)
