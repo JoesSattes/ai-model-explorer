@@ -205,10 +205,12 @@ class Model:
         return write_report(self, path, theme=theme)
 
 
-def explore(model, token: Optional[str] = None, config: Optional[dict] = None, include_tensors: bool = False) -> Model:
-    """Inspect a Hugging Face repo or local .safetensors and return a Model you can analyse, plot and report."""
+def explore(model, token: Optional[str] = None, config: Optional[dict] = None, include_tensors: bool = False,
+            cache: bool = True) -> Model:
+    """Inspect a Hugging Face repo or local .safetensors and return a Model you can analyse, plot and report.
+    Headers are cached per repo commit (~/.cache/ai-model-explorer), so a second look is instant."""
     from .api import inspect
-    return Model(inspect(model, token=token, config=config, include_tensors=include_tensors))
+    return Model(inspect(model, token=token, config=config, include_tensors=include_tensors, cache=cache))
 
 
 def compare(models: Iterable, token: Optional[str] = None) -> List[dict]:

@@ -95,6 +95,29 @@ def main(argv=None) -> int:
     c.add_argument("--csv", action="store_true", help="print CSV instead of a Markdown table")
     c.add_argument("--json", action="store_true", help="print JSON")
 
+    f = sub.add_parser("fits", help="will it fit on a device? longest context that fits, and what would make it fit")
+    _model_args(f)
+    f.add_argument("device", help="device name (see --list-devices) or memory in GB, e.g. rtx-4090, mac-64, 24")
+    f.add_argument("--context", type=int, default=8192)
+    f.add_argument("--batch", type=int, default=1)
+    f.add_argument("--weight-bits", type=float, default=None)
+    f.add_argument("--kv-bits", type=int, default=16)
+
+    d = sub.add_parser("diff", help="what differs between two checkpoints (fine-tune vs base, quantized vs original)")
+    d.add_argument("a")
+    d.add_argument("b")
+    d.add_argument("--token")
+    d.add_argument("--json", action="store_true")
+
+    sc = sub.add_parser("scan", help="inspect many repos (args or a file, one per line) into one table")
+    sc.add_argument("repos", nargs="*", help="repo ids; or use --file")
+    sc.add_argument("--file", help="text file with one repo id per line")
+    sc.add_argument("--token")
+    sc.add_argument("--workers", type=int, default=4)
+    sc.add_argument("-o", "--output", help="write CSV here (default: print CSV)")
+
+    sub.add_parser("devices", help="list the device names known to 'fits'")
+
     o = sub.add_parser("open", help="open the web app in your browser (runs locally)")
     o.add_argument("model", nargs="?", help="Hugging Face repo to load right away, e.g. Qwen/Qwen3-8B")
     o.add_argument("--port", type=int, default=0, help="port (default: any free port)")
@@ -107,7 +130,36 @@ def main(argv=None) -> int:
         return 0
 
     from .model import compare, compare_table, explore, fmt_b
+    from . import tools
     try:
+        if a.cmd == "devices":
+            for k, v in tools.DEVICES.items():
+                print(f"  {k:22} {v:6.1f} GB usable")
+            return 0
+        if a.cmd == "diff":
+            rows = tools.diff(a.a, a.b, token=a.token)
+            print(json.dumps(rows, indent=1) if a.json else tools.diff_text(rows, a.a, a.b))
+            return 0
+        if a.cmd == "scan":
+            repos = list(a.repos) + (open(a.file, encoding="utf-8").read().splitlines() if a.file else [])
+            rows = tools.scan(repos, token=a.token, workers=a.workers)
+            out = tools.to_csv(rows)
+            if a.output:
+                open(a.output, "w", encoding="utf-8").write(out)
+                bad = sum(1 for r in rows if r.get("error"))
+                print(f"wrote {a.output}: {len(rows) - bad} read, {bad} failed")
+            else:
+                print(out, end="")
+            return 0
+        if a.cmd == "fits":
+            dev = float(a.device) if a.device.replace(".", "", 1).isdigit() else a.device
+            if isinstance(dev, str) and dev.lower() not in tools.DEVICES:
+                print(f"error: unknown device '{dev}'. Run 'ai-model-explorer devices', or give memory in GB.", file=sys.stderr)
+                return 1
+            r = tools.fits(explore(a.model, token=a.token, config=_load_cfg(a.config)), dev, context=a.context, batch=a.batch,
+                           weight_bits=a.weight_bits, kv_bits=a.kv_bits)
+            print(tools.fits_text(r))
+            return 0
         if a.cmd == "compare":
             rows = compare(a.models, token=a.token)
             if a.json:

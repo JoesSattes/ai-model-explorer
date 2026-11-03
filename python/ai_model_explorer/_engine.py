@@ -6,6 +6,9 @@ cross the boundary as latin-1 strings (one char per byte), which QuickJS turns b
 from __future__ import annotations
 
 import json
+import os
+import shutil
+import subprocess
 from importlib import resources
 from typing import Callable, Optional
 
@@ -39,6 +42,15 @@ function fetch(url, opts) {
   });
 }
 var module = undefined;
+"""
+
+
+_NODE_RUNNER = r"""
+const A = require(process.argv[1]); let s = ""; process.stdin.setEncoding("utf8");
+process.stdin.on("data", c => s += c); process.stdin.on("end", () => { const q = JSON.parse(s);
+  const anatomy = A.infer(q.t, {lex: q.lex, qhint: q.h}), N = A.normalize(q.t, q.h).T, logical = {};
+  for (const k in N) logical[k] = [N[k].shape, N[k].bytes || 0];
+  process.stdout.write(JSON.stringify({anatomy, logical})); });
 """
 
 
@@ -104,6 +116,23 @@ class Engine:
     def hf_manifest(self, repo: str, files: list, opt: dict):
         return self._await(f'Loaders.hfManifest({json.dumps(repo)}, {self._put("files", files)}, function () {{}}, {self._put("opt", opt)})')
 
+    def analyze(self, tensors: dict, qhint: Optional[dict] = None, lex: bool = True):
+        """Anatomy and logical tensor table in one pass. Uses Node.js when installed (3-7x faster on large models,
+        e.g. DeepSeek-V3: ~4 s instead of ~15 s); otherwise the embedded QuickJS. Set AME_JS=quickjs to force it."""
+        h = {k: v for k, v in (qhint or {}).items() if v is not None}
+        node = None if os.environ.get("AME_JS") == "quickjs" else shutil.which("node")
+        if node and len(tensors) > 2000:
+            try:
+                with resources.as_file(resources.files("ai_model_explorer").joinpath("js", "infer.js")) as path:
+                    r = subprocess.run([node, "-e", _NODE_RUNNER, str(path)], input=json.dumps(_finite({"t": tensors, "h": h, "lex": lex})),
+                                       capture_output=True, text=True, timeout=600)
+                if r.returncode == 0:
+                    o = json.loads(r.stdout)
+                    return o["anatomy"], o["logical"]
+            except (OSError, subprocess.SubprocessError, ValueError):
+                pass  # fall back to QuickJS
+        return self.infer(tensors, lex=lex, qhint=h), self.normalize(tensors, qhint=h)
+
     def infer(self, tensors: dict, lex: bool = True, qhint: Optional[dict] = None) -> dict:
         h = json.dumps({k: v for k, v in (qhint or {}).items() if v is not None})
         return self._await(f'ArchInfer.infer({self._put("t", tensors)}, {{lex: {"true" if lex else "false"}, qhint: {h}}})')
@@ -123,4 +152,5 @@ class Engine:
         return self._await(f'ArchInfer.familyFromConfig({self._put("fa", anatomy)}, {self._put("fc", config)})')
 
     def fuse(self, anatomy: dict, config: dict):
-        return self._await(f'ArchInfer.fuseConfig({self._put("a", anatomy)}, {self._put("c", config)})')
+        slim = {"comps": anatomy.get("comps"), "hp": anatomy.get("hp"), "family": anatomy.get("family")}  # the per-tensor map is not needed
+        return self._await(f'ArchInfer.fuseConfig({self._put("a", slim)}, {self._put("c", config)})')

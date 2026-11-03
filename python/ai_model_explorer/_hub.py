@@ -7,7 +7,8 @@ import re
 import time
 import urllib.error
 import urllib.request
-from typing import Optional
+from concurrent.futures import ThreadPoolExecutor
+from typing import Iterable, Optional
 
 from . import __version__
 
@@ -21,10 +22,13 @@ class Hub:
         self.retries = retries
         self.bytes_read = 0
         self.waited = 0.0
+        self._ranges = {}  # (url, range) -> (status, body): headers fetched ahead in parallel
 
     def get(self, url: str, rng: Optional[str] = None):
         """Return (status, body bytes). Never raises for HTTP errors; the caller decides."""
         url = url.replace("https://huggingface.co", ENDPOINT, 1)
+        if rng and (url, rng) in self._ranges:
+            return self._ranges.pop((url, rng))
         h = {"User-Agent": f"ai-model-explorer/{__version__}"}
         if rng:
             h["Range"] = rng
@@ -52,6 +56,24 @@ class Hub:
                 host = urllib.request.urlparse(url).netloc
                 raise ConnectionError(f"cannot reach {host}: {getattr(e, 'reason', e)}") from None
         return 599, b""
+
+    def prefetch_headers(self, urls: Iterable[str], workers: int = 8) -> None:
+        """Fetch the safetensors headers of many files at once (two small range requests per file), so the
+        sequential reader finds them waiting. Shards of a large model arrive in the time of one."""
+        urls = [u.replace("https://huggingface.co", ENDPOINT, 1) for u in urls]
+        if len(urls) < 2:
+            return
+
+        def one(u):
+            st, b = self.get(u, "bytes=0-7")
+            if st not in (200, 206) or len(b) < 8:
+                return
+            self._ranges[(u, "bytes=0-7")] = (st, b[:8])
+            n = int.from_bytes(b[:8], "little")
+            if 0 < n < 200_000_000:
+                self._ranges[(u, f"bytes=8-{8 + n - 1}")] = self.get(u, f"bytes=8-{8 + n - 1}")
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            list(ex.map(one, urls))
 
     def json(self, url: str):
         st, body = self.get(url)

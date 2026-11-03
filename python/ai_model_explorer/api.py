@@ -42,8 +42,27 @@ def _local(path: Path):
     return tensors, cfg, read, len(files), None
 
 
-def _remote(repo: str, hub: Hub, info: Optional[dict] = None):
+CACHE_DIR = Path(os.environ.get("AME_CACHE", Path.home() / ".cache" / "ai-model-explorer"))
+
+
+def _cache_path(repo: str, sha: Optional[str]) -> Optional[Path]:
+    if not sha or os.environ.get("AME_NO_CACHE"):
+        return None
+    return CACHE_DIR / (repo.replace("/", "--") + "@" + sha[:12] + ".json")
+
+
+def _remote(repo: str, hub: Hub, info: Optional[dict] = None, cache: bool = True):
     info = info or hub.model_info(repo)
+    extra_info = {"downloads": info.get("downloads"), "hub_params": (info.get("safetensors") or {}).get("total"),
+                  "weight_bytes": sum(s.get("size") or 0 for s in info.get("siblings", [])), "revision": info.get("sha")}
+    cp = _cache_path(repo, info.get("sha")) if cache else None
+    if cp and cp.exists():  # same commit, same headers: nothing to fetch
+        try:
+            c = json.loads(cp.read_text(encoding="utf-8"))
+            return c["tensors"], c["cfg"], c["read"], c["nfiles"], {"engine": Engine(fetch=hub.get), **extra_info,
+                                                                    "duplicates_skipped": c.get("dups"), "cached": True}
+        except Exception:  # a broken cache file is simply refetched
+            pass
     files = [{"n": s["rfilename"], "size": s.get("size") or 0} for s in info.get("siblings", [])]
     names = {f["n"] for f in files}
     base = f"https://huggingface.co/{repo}/resolve/main/"
@@ -61,21 +80,30 @@ def _remote(repo: str, hub: Hub, info: Optional[dict] = None):
     opt = {"prefer": (cfg or {}).get("default_size"),
            "only": [k for k, v in (mi or {}).items() if not k.startswith("_") and isinstance(v, list) and v and v[0]] if mi else None}
     eng = Engine(fetch=hub.get)
+    st = [f["n"] for f in files if f["n"].endswith(".safetensors") and not re.search(r"(^|/)(checkpoint-\d+|runs|global_step\d+)/", f["n"])]
+    if 1 < len(st) <= 96:
+        hub.prefetch_headers([base + n for n in st])
     mf = eng.hf_manifest(repo, files, opt)
     if not mf:
         raise FileNotFoundError(f"{repo}: no .safetensors or PyTorch checkpoint found")
-    weight_bytes = sum(f["size"] for f in files)
-    return mf["tensors"], cfg, mf["read"], mf["nfiles"], {"engine": eng, "weight_bytes": weight_bytes, "duplicates_skipped": mf.get("duplicates") or None,
-                                                         "downloads": info.get("downloads"), "hub_params": (info.get("safetensors") or {}).get("total")}
+    if cp:
+        try:
+            cp.parent.mkdir(parents=True, exist_ok=True)
+            cp.write_text(json.dumps({"tensors": mf["tensors"], "cfg": cfg, "read": mf["read"], "nfiles": mf["nfiles"],
+                                      "dups": mf.get("duplicates") or None}), encoding="utf-8")
+        except OSError:
+            pass
+    return mf["tensors"], cfg, mf["read"], mf["nfiles"], {"engine": eng, **extra_info, "duplicates_skipped": mf.get("duplicates") or None}
 
 
 def inspect(model: Union[str, os.PathLike], token: Optional[str] = None, config: Optional[dict] = None,
-            include_tensors: bool = False) -> dict:
+            include_tensors: bool = False, cache: bool = True) -> dict:
     """Recover a model's anatomy without downloading its weights.
 
     model:  a Hugging Face repo id ("Qwen/Qwen3-8B", or a huggingface.co URL), a .safetensors file, or a folder of them.
     token:  Hugging Face token for gated or private repos (default: $HF_TOKEN).
     config: a config.json dict to fuse instead of the repo's own.
+    cache:  keep the headers of each repo commit under ~/.cache/ai-model-explorer (or $AME_CACHE) and reuse them.
     Returns a JSON-serializable dict: family, totals, hyperparameters, components with their layer stacks and block
     types, edges between components, quantization, the config check, and how many bytes were read.
     """
@@ -89,14 +117,13 @@ def inspect(model: Union[str, os.PathLike], token: Optional[str] = None, config:
         if not m:
             raise ValueError("expected a Hugging Face repo id (owner/name) or a path to .safetensors")
         repo = re.sub(r"/(tree|blob|resolve)/.*$", "", m.group(1))
-        tensors, cfg, read, nfiles, extra = _remote(repo, Hub(token))
+        tensors, cfg, read, nfiles, extra = _remote(repo, Hub(token), cache=cache)
         eng = extra.pop("engine")
         source = {"kind": "huggingface", "repo": repo, **{k: v for k, v in extra.items() if v is not None}}
     if config is not None:
         cfg = config
-    anatomy = eng.infer(tensors, qhint=eng.quant_hint(cfg))
+    anatomy, logical = eng.analyze(tensors, qhint=eng.quant_hint(cfg))
     check = eng.fuse(anatomy, cfg) if cfg else None
-    logical = eng.normalize(tensors, qhint=eng.quant_hint(cfg))
     if cfg:
         anatomy["family"] = eng.family({"family": anatomy.get("family"), "comps": anatomy.get("comps")}, cfg)
     out = {
@@ -166,6 +193,11 @@ def _merge_hp(anatomy: dict, check) -> dict:
             if main.get(k_src):
                 hp[k_dst] = main[k_src]
         hp["head_dim_from"] = "config.json, checked against the weights"
+    elif main and main.get("skipped"):  # latent attention: head widths cannot be checked, but the counts still come from config
+        for k_src, k_dst in (("heads", "heads"), ("topk", "experts_per_token")):
+            if main.get(k_src):
+                hp[k_dst] = main[k_src]
+        hp["head_dim_from"] = "config.json (latent attention: not checkable against the shapes)"
     return hp
 
 

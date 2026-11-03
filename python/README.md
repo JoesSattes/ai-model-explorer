@@ -45,6 +45,9 @@ deepseek-ai/DeepSeek-V3
 | `ai-model-explorer compare A B C` | side-by-side table (Markdown, `--csv` or `--json`) |
 | `ai-model-explorer plot MODEL -o model.png` | the anatomy diagram as PNG, SVG or PDF (`--theme dark`) |
 | `ai-model-explorer report MODEL -o model.html` | one self-contained HTML report: diagram, insights, tables, memory |
+| `ai-model-explorer fits MODEL rtx-4090 --context 32768` | does it fit on a device (or `24` GB)? the longest context that fits, and the cheapest precision that would make it fit (`devices` lists the names) |
+| `ai-model-explorer diff A B` | what changed between two checkpoints: a fine-tune vs its base, a quantized copy vs the original, two versions |
+| `ai-model-explorer scan --file repos.txt -o table.csv` | many repos into one CSV (in parallel; failures become rows with an error) |
 | `ai-model-explorer open [MODEL]` | the web app on your machine (`--lang th` for Thai) |
 
 ![Diagram drawn by ai-model-explorer plot for DeepSeek-V3](https://raw.githubusercontent.com/JoesSattes/ai-model-explorer/main/assets/example-deepseek-v3.png)
@@ -68,6 +71,11 @@ m.plot("deepseek.png")                # matplotlib Figure; .png, .svg or .pdf
 m.report("deepseek.html")
 
 print(compare_table(compare(["Qwen/Qwen3-8B", "Qwen/Qwen3-30B-A3B-GPTQ-Int4"])))
+
+from ai_model_explorer import fits, diff, scan
+fits("Qwen/Qwen3-8B", "rtx-4090", context=32768)   # {'fits': True, 'max_context': ..., 'suggestion': ...}
+diff("Qwen/Qwen3-8B", "Qwen/Qwen3-8B-FP8")         # [{'field': 'quantization', 'a': 'none', 'b': 'fp8'}, ...]
+rows = scan(open("repos.txt").read().split())      # one dict per repo
 ```
 
 `explore()` returns a `Model`; `inspect()` returns the raw dict it wraps. Every field and method is described in the
@@ -91,8 +99,10 @@ with the Hub's own count for 163 of 170.
 
 ## How it runs
 The analysis is the same JavaScript that powers the website (`infer.js`, `loaders.js`), run in an embedded QuickJS
-engine, so the Python and web results match. Python 3.9+, two dependencies (`quickjs`, and `matplotlib` for diagrams), no PyTorch, transformers or
-Node.js. A typical model takes well under a second; the largest manifests (DeepSeek-V3, 92k tensors) take about ten.
+engine, so the Python and web results match. Python 3.9+, two dependencies (`quickjs`, and `matplotlib` for diagrams), no PyTorch or transformers.
+A typical model takes well under a second. Headers of a sharded model are fetched in parallel, and each repo commit's
+headers are cached (`~/.cache/ai-model-explorer`, or `$AME_CACHE`; `cache=False` or `AME_NO_CACHE=1` to skip). If Node.js
+is installed, large manifests are analysed with it (DeepSeek-V3: about 5 s instead of 15; `AME_JS=quickjs` to opt out).
 
 ## Citation
 Sattaya Singkul. 2026. *Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy.*

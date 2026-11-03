@@ -103,11 +103,11 @@ def probe(repo: str, token):
 
 def analyze(eng, tensors, cfg, meta):
     """Everything the weights (and config, when present) say. Shared by crawl.py and rescore.py."""
-    an = eng.infer(tensors)                       # manifest only: no config, no code
+    an, _ = eng.analyze(tensors)                  # manifest only: no config, no code
     fam_manifest = an.get("family")
     hint = eng.quant_hint(cfg)
     if cfg and any(hint.values()) and an.get("quant"):  # bits/group from config change the unpacked shapes: count again with them
-        an = eng.infer(tensors, qhint=hint)
+        an, _ = eng.analyze(tensors, qhint=hint)
     check = eng.fuse(an, cfg) if cfg else None
     fam_cfg = eng.family({"family": fam_manifest, "comps": an.get("comps")}, cfg) if cfg else None
     tot = an.get("totals") or {}

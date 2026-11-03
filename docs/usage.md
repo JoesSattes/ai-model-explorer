@@ -95,6 +95,23 @@ ai-model-explorer report deepseek-ai/DeepSeek-V3 -o deepseek.html       # diagra
 
 The diagram puts the components in data order, draws every layer stack as a strip of blocks coloured by block type (a faded block marks a multi-token-prediction layer), and ends with a bar of where the parameters sit. The report is one HTML file with no external dependencies, so it can be attached or shared as is.
 
+### `fits`, `diff`, `scan`: practical questions
+
+```bash
+ai-model-explorer fits Qwen/Qwen3-8B rtx-4090 --context 32768      # or a size in GB: fits MODEL 24
+ai-model-explorer devices                                            # the device names fits knows
+ai-model-explorer diff Qwen/Qwen3-8B Qwen/Qwen3-8B-FP8               # fine-tune vs base, quantized vs original
+ai-model-explorer scan --file repos.txt -o table.csv --workers 8     # many repos into one CSV
+```
+
+`fits` adds 10% for runtime buffers to weights + KV cache, reports the longest context that fits, and, when it does not
+fit, the first of 8-bit weights, 4-bit weights, 4-bit weights with 8-bit or 4-bit KV cache that would. Unified-memory
+devices (Mac, Jetson, phones) count only the share an app can normally use.
+
+`diff` lists only what differs: family, parameters, stored size, quantization, every hyperparameter, components and block
+types. `scan` writes one row per repo (family, parameters, active parameters, storage, hyperparameters, KV bytes per
+token, the Hub's own count and whether it matches, config check, bytes read); a repo that fails becomes a row with `error`.
+
 ### `open`: run the website on your machine
 
 ```bash
@@ -205,6 +222,6 @@ for repo in ["Qwen/Qwen3-8B", "meta-llama/Llama-3.2-1B", "openai/whisper-large-v
 ## Limits
 
 - Heads, KV heads and head size can't always be told apart from shapes alone (a projection of width 4096 can be 32×128 or 64×64). With `config.json` they're taken from the config after checking it against the weights; without it they're estimates and marked as such.
-- Very large manifests take longer in Python: DeepSeek-V3 (92k tensors) takes about ten seconds, a typical 7B model well under one.
+- Very large manifests take longer in Python: DeepSeek-V3 (92k tensors) takes about 15 seconds with the embedded engine, about 5 with Node.js installed; a typical 7B model well under one. A second look at the same repo commit reuses cached headers.
 - Old pickle-only checkpoints without a zip index can't be read without downloading them.
 - On Linux ARM there's no prebuilt wheel of the `quickjs` dependency yet, so pip compiles it and needs a C compiler.
