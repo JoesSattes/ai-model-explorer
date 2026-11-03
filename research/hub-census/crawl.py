@@ -11,7 +11,7 @@ Failure handling
   over --timeout seconds    -> "timeout" (the process is killed)
 Set HF_TOKEN for higher rate limits and access to gated repos you have accepted.
 """
-import argparse, json, multiprocessing as mp, os, sys, time
+import argparse, gzip, json, multiprocessing as mp, os, sys, time
 import pandas as pd
 
 KEEP = ["downloads", "downloads_all_time", "likes", "library", "pipeline_tag", "origin", "stratum", "weight", "also_frontier", "author", "created_at"]
@@ -91,6 +91,18 @@ def probe(repo: str, token):
     tensors, cfg, read, nfiles, extra = _remote(repo, hub, info)
     t_fetch = time.time() - t0
     eng = extra.pop("engine")
+    meta = {"files_read": nfiles, "header_bytes": read, "weight_bytes": extra.get("weight_bytes"),
+            "hub_params": extra.get("hub_params"), "duplicates_skipped": extra.get("duplicates_skipped")}
+    out = analyze(eng, tensors, cfg, meta)
+    out.update({"rate_limit_wait_s": round(hub.waited, 1), "t_fetch_s": round(t_fetch, 2), "t_total_s": round(time.time() - t0, 2)})
+    # the raw manifest and config, so later rule changes can be re-scored offline (rescore.py) without crawling again
+    out["_raw"] = {"tensors": {n: [v.get("dtype"), v.get("shape")] for n, v in tensors.items() if isinstance(v, dict)},
+                   "config": cfg, "meta": meta}
+    return out
+
+
+def analyze(eng, tensors, cfg, meta):
+    """Everything the weights (and config, when present) say. Shared by crawl.py and rescore.py."""
     an = eng.infer(tensors)                       # manifest only: no config, no code
     fam_manifest = an.get("family")
     hint = eng.quant_hint(cfg)
@@ -99,7 +111,7 @@ def probe(repo: str, token):
     check = eng.fuse(an, cfg) if cfg else None
     fam_cfg = eng.family({"family": fam_manifest, "comps": an.get("comps")}, cfg) if cfg else None
     tot = an.get("totals") or {}
-    hub_params = extra.get("hub_params")
+    hub_params = meta.get("hub_params")
     checked = [v for v in (check or {}).values() if isinstance(v, dict) and v.get("checked")]
     fused = {}
     if check:
@@ -111,11 +123,10 @@ def probe(repo: str, token):
         "hp_fused": {k: fused.get(k) for k in ("heads", "kv_heads", "head_dim", "topk")} if fused else None,
         "dtypes": dtype_stats(tensors),
         "status": "ok",
-        "files_read": nfiles, "header_bytes": read, "weight_bytes": extra.get("weight_bytes"),
+        **meta,
         "tensors": len(tensors),
         "family_manifest": fam_manifest, "family_config": fam_cfg,
         "params": tot.get("params"), "stored_bytes": tot.get("bytes"),
-        "hub_params": hub_params, "duplicates_skipped": extra.get("duplicates_skipped"),
         "params_match_hub": (abs(tot.get("params", 0) - hub_params) / hub_params <= 0.001) if hub_params else None,
         "quant": an.get("quant"),
         "hp": an.get("hp"),
@@ -128,8 +139,6 @@ def probe(repo: str, token):
         "config_checked": len(checked),
         "config_consistent": sum(1 for v in checked if v.get("consistent")),
         "config_mismatch": [v for v in checked if not v.get("consistent")][:3],
-        "rate_limit_wait_s": round(hub.waited, 1),
-        "t_fetch_s": round(t_fetch, 2), "t_total_s": round(time.time() - t0, 2),
     }
 
 
@@ -172,6 +181,10 @@ def run(sample: pd.DataFrame, out: str, workers: int, timeout: float, gap: float
     with open(out, "a") as fh:
         def finish(rid, res, row, t):
             nonlocal n
+            raw = res.pop("_raw", None)
+            if raw is not None:
+                with gzip.open(out.replace(".jsonl", "") + "_manifests.jsonl.gz", "at") as mz:
+                    mz.write(json.dumps({"id": rid, **raw}, default=str) + "\n")
             rec = {"id": rid, **{k: row.get(k) for k in KEEP}, **res, "wall_s": round(t, 2),
                    "crawled_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
             fh.write(json.dumps(rec, default=str) + "\n")

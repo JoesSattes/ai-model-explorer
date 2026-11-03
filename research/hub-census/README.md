@@ -11,6 +11,12 @@ config agree? This folder reads the safetensors headers of a **stratified sample
 | 3. crawl | `crawl.py` | one JSONL line per repo: status, family from weights alone and from config, params vs the Hub's own count, quantization, MoE / SSM, config disagreements, bytes read, time |
 | 4. summarize | `summarize.py` | `out/report/summary.md` with 95% intervals, `status.png`, `cost.png` |
 
+## Re-scoring without crawling again
+
+`crawl.py` also writes `out/census_manifests.jsonl.gz`: every readable repo's tensor names, dtypes, shapes and config.
+After a change to the recovery rules, `python rescore.py && python summarize.py` recomputes every weights-derived field
+offline in minutes; popularity, status and timing fields are kept.
+
 ## Frontier stratum and the holdout question
 
 `--frontier N --since DATE` adds the N most-downloaded original releases from leading providers created after DATE

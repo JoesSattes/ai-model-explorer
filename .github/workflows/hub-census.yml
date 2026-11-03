@@ -70,5 +70,6 @@ jobs:
             research/hub-census/out/sample_info.json
             research/hub-census/out/sample.parquet
             research/hub-census/out/census.jsonl
+            research/hub-census/out/census_manifests.jsonl.gz
             research/hub-census/out/report/
           retention-days: 90
