@@ -2,48 +2,152 @@
  "headline": {
   "hub_models": 3206528,
   "top10k_download_share": 0.9528,
-  "repos_read": 13219,
-  "popular_read": 10222,
-  "popular_readable": 6853,
-  "popular_no_config": 0.1491,
-  "hub_no_config": 0.2688,
-  "median_header_kb": 82.1,
-  "median_fraction_read": 2.1716972971559698e-05,
-  "median_seconds": 0.92,
-  "model_types": 684,
-  "providers": 1735,
-  "released_2026": 2147,
+  "repos_read": 12974,
+  "popular_read": 9978,
+  "popular_readable": 6667,
+  "popular_no_config": 0.153,
+  "hub_no_config": 0.2775,
+  "median_header_kb": 80.4,
+  "median_fraction_read": 2.164604128176508e-05,
+  "median_seconds": 1.81,
+  "model_types": 660,
+  "providers": 1737,
+  "released_2026": 1953,
   "crawled": "2026-11-03"
  },
- "roles": null,
- "repos": 13219,
- "popular_repos": 10222,
+ "roles": {
+  "all": {
+   "repos": 2269,
+   "types": 167,
+   "macro": 0.986608371524539,
+   "share_99": 0.9246364037020715,
+   "v1moe": 0.9528953763589335,
+   "gguf": 0.33232665115093785
+  },
+  "originals": {
+   "repos": 1346,
+   "types": 150,
+   "macro": 0.9843324051984035,
+   "share_99": 0.9034175334323923,
+   "v1moe": 0.9413795475847625,
+   "gguf": 0.24817132022530383
+  },
+  "frontier": {
+   "repos": 72,
+   "types": 26,
+   "macro": 0.9974504308617868,
+   "share_99": 0.9305555555555556,
+   "v1moe": 0.9680042375251756,
+   "gguf": 0.5756470802358913
+  },
+  "released_2026": {
+   "repos": 419,
+   "types": 60,
+   "macro": 0.9899314777604695,
+   "share_99": 0.954653937947494,
+   "v1moe": 0.9767073934261329,
+   "gguf": 0.3897726394726311
+  },
+  "quantized_copies": {
+   "repos": 120,
+   "types": 27,
+   "macro": 0.9876121962931484,
+   "share_99": 0.925,
+   "v1moe": 0.977799495704639,
+   "gguf": 0.2918044050005416
+  },
+  "errors": 0,
+  "worst_types": [
+   {
+    "type": "albert",
+    "repos": 6,
+    "macro": 0.4093288339451615
+   },
+   {
+    "type": "vits",
+    "repos": 12,
+    "macro": 0.7137745874864035
+   },
+   {
+    "type": "gpt_neox",
+    "repos": 29,
+    "macro": 0.7447850391103293
+   },
+   {
+    "type": "d_fine",
+    "repos": 5,
+    "macro": 0.7568460158755632
+   },
+   {
+    "type": "rt_detr",
+    "repos": 5,
+    "macro": 0.8371490724759398
+   },
+   {
+    "type": "rt_detr_v2",
+    "repos": 5,
+    "macro": 0.8374685165072533
+   },
+   {
+    "type": "sam2_video",
+    "repos": 7,
+    "macro": 0.8727486447086001
+   },
+   {
+    "type": "siglip",
+    "repos": 25,
+    "macro": 0.9415148481241593
+   },
+   {
+    "type": "minicpmv4_6",
+    "repos": 6,
+    "macro": 0.9444934685593283
+   },
+   {
+    "type": "bart",
+    "repos": 19,
+    "macro": 0.9446851344398502
+   },
+   {
+    "type": "idefics3",
+    "repos": 7,
+    "macro": 0.9799941169827227
+   },
+   {
+    "type": "falcon",
+    "repos": 8,
+    "macro": 0.9815905743740795
+   }
+  ]
+ },
+ "repos": 12974,
+ "popular_repos": 9978,
  "status_popular": {
-  "ok": 0.6704,
-  "no_weights": 0.2694,
-  "legacy_pickle": 0.027,
-  "gated": 0.0191,
-  "error": 0.0093,
-  "timeout": 0.0046,
+  "ok": 0.6682,
+  "no_weights": 0.2712,
+  "legacy_pickle": 0.0275,
+  "gated": 0.0196,
+  "timeout": 0.0095,
+  "error": 0.0038,
   "not_found": 0.0002
  },
  "no_weights_kind_popular": {
-  "gguf_only": 0.8539,
-  "onnx_only": 0.0663,
-  "no_weight_files": 0.059,
-  "keras_or_other": 0.0146,
-  "adapter": 0.0062
+  "gguf_only": 0.8654,
+  "onnx_only": 0.0671,
+  "no_weight_files": 0.0478,
+  "keras_or_other": 0.0137,
+  "adapter": 0.0059
  },
  "trends": [
   {
    "year": 2022,
-   "models": 120,
+   "models": 125,
    "moe": 0.0,
-   "hybrid": 0.058,
+   "hybrid": 0.056,
    "latent_attention": 0.0,
    "gqa": 0.0,
    "quantized": 0.0,
-   "median_params": 166965137.0,
+   "median_params": 175620096.0,
    "median_d": 768.0,
    "median_layers": 12.0,
    "median_head_dim": 64.0,
@@ -52,27 +156,27 @@
   },
   {
    "year": 2023,
-   "models": 167,
-   "moe": 0.012,
-   "hybrid": 0.042,
+   "models": 179,
+   "moe": 0.017,
+   "hybrid": 0.039,
    "latent_attention": 0.0,
-   "gqa": 0.24,
-   "quantized": 0.012,
-   "median_params": 1418270720.0,
-   "median_d": 2048.0,
-   "median_layers": 24.0,
+   "gqa": 0.274,
+   "quantized": 0.011,
+   "median_params": 2779683840.0,
+   "median_d": 2560.0,
+   "median_layers": 32.0,
    "median_head_dim": 64.0,
    "median_vocab": 49408.0,
-   "median_kv_bytes_per_token": 122880.0
+   "median_kv_bytes_per_token": 131072.0
   },
   {
    "year": 2024,
-   "models": 429,
-   "moe": 0.093,
-   "hybrid": 0.014,
-   "latent_attention": 0.012,
-   "gqa": 0.65,
-   "quantized": 0.056,
+   "models": 434,
+   "moe": 0.088,
+   "hybrid": 0.021,
+   "latent_attention": 0.007,
+   "gqa": 0.647,
+   "quantized": 0.048,
    "median_params": 8030261248.0,
    "median_d": 4096.0,
    "median_layers": 32.0,
@@ -82,28 +186,28 @@
   },
   {
    "year": 2025,
-   "models": 447,
-   "moe": 0.183,
-   "hybrid": 0.034,
-   "latent_attention": 0.027,
-   "gqa": 0.537,
-   "quantized": 0.094,
-   "median_params": 2128056576.0,
+   "models": 420,
+   "moe": 0.162,
+   "hybrid": 0.043,
+   "latent_attention": 0.019,
+   "gqa": 0.538,
+   "quantized": 0.079,
+   "median_params": 2096307133.5,
    "median_d": 2048.0,
    "median_layers": 28.0,
    "median_head_dim": 128.0,
-   "median_vocab": 151552.0,
+   "median_vocab": 132608.0,
    "median_kv_bytes_per_token": 98304.0
   },
   {
    "year": 2026,
-   "models": 668,
-   "moe": 0.334,
-   "hybrid": 0.205,
-   "latent_attention": 0.084,
-   "gqa": 0.72,
-   "quantized": 0.21,
-   "median_params": 8397556472.0,
+   "models": 567,
+   "moe": 0.312,
+   "hybrid": 0.212,
+   "latent_attention": 0.065,
+   "gqa": 0.707,
+   "quantized": 0.199,
+   "median_params": 8019881710.0,
    "median_d": 2560.0,
    "median_layers": 32.0,
    "median_head_dim": 128.0,
@@ -124,9 +228,9 @@
   },
   {
    "year": 2024,
-   "unquantized": 0.913,
+   "unquantized": 0.915,
    "awq": 0.022,
-   "fp8": 0.022,
+   "fp8": 0.02,
    "bnb4": 0.02,
    "mlx": 0.016,
    "gptq": 0.004,
@@ -135,67 +239,62 @@
   },
   {
    "year": 2025,
-   "unquantized": 0.843,
-   "fp8": 0.047,
-   "mlx": 0.041,
+   "unquantized": 0.833,
+   "mlx": 0.06,
+   "fp8": 0.042,
    "bnb4": 0.02,
-   "nvfp4": 0.013,
    "compressed-tensors": 0.012,
+   "nvfp4": 0.012,
    "awq": 0.011,
-   "int8": 0.004,
    "mxfp4": 0.004,
-   "gptq": 0.003,
+   "int8": 0.004,
+   "gptq": 0.002,
    "fp8+nvfp4": 0.001,
    "fp8+int8+nvfp4": 0.001
   },
   {
    "year": 2026,
-   "unquantized": 0.693,
-   "mlx": 0.08,
-   "fp8": 0.065,
+   "unquantized": 0.684,
+   "mlx": 0.087,
+   "fp8": 0.054,
    "nvfp4": 0.035,
-   "compressed-tensors": 0.029,
-   "fp8+nvfp4": 0.026,
+   "compressed-tensors": 0.031,
    "int8": 0.026,
-   "gptq": 0.011,
-   "fp8+int8": 0.008,
-   "awq": 0.008,
-   "bnb4": 0.007,
-   "int8+nvfp4": 0.005,
+   "fp8+nvfp4": 0.026,
+   "gptq": 0.012,
+   "awq": 0.009,
+   "bnb4": 0.008,
+   "fp8+mxfp4": 0.007,
+   "fp8+int8": 0.007,
+   "int8+nvfp4": 0.006,
    "fp8+int8+nvfp4": 0.002,
-   "fp8+mlx+nvfp4": 0.001,
+   "fp8+mlx+nvfp4": 0.002,
+   "fp8+mxfp4+nvfp4": 0.002,
    "compressed-tensors+fp8+int8+nvfp4": 0.001,
-   "fp8+gptq": 0.0,
-   "bnb4+fp8": 0.0,
-   "compressed-tensors+int8": 0.0,
-   "bnb4+fp8+nvfp4": 0.0,
-   "mxfp4": 0.0
+   "fp8+gptq": 0.001,
+   "bnb4+fp8": 0.001,
+   "compressed-tensors+int8": 0.001,
+   "bnb4+fp8+nvfp4": 0.001
   }
  ],
  "hub_count_by_storage": [
   {
    "storage": "unquantized",
-   "repos": 4370,
-   "hub_count_differs": 0.075,
+   "repos": 4225,
+   "hub_count_differs": 0.074,
    "median_true_over_hub": 1.351
   },
   {
    "storage": "mlx",
-   "repos": 245,
-   "hub_count_differs": 0.192,
-   "median_true_over_hub": 1.089
+   "repos": 253,
+   "hub_count_differs": 0.202,
+   "median_true_over_hub": 1.188
   },
   {
    "storage": "fp8",
-   "repos": 196,
-   "hub_count_differs": 0.122,
-   "median_true_over_hub": 0.833
-  },
-  {
-   "storage": "compressed-tensors",
-   "repos": 81,
-   "hub_count_differs": 0.531,
-   "median_true_over_hub": 1.033
+   "repos": 148,
+   "hub_count_differs": 0.068,
+   "median_true_over_hub": 1.019
   },
   {
    "storage": "bnb4",
@@ -204,10 +303,16 @@
    "median_true_over_hub": 0.974
   },
   {
-   "storage": "nvfp4",
+   "storage": "compressed-tensors",
    "repos": 79,
-   "hub_count_differs": 0.899,
-   "median_true_over_hub": 1.767
+   "hub_count_differs": 0.544,
+   "median_true_over_hub": 1.033
+  },
+  {
+   "storage": "nvfp4",
+   "repos": 70,
+   "hub_count_differs": 0.886,
+   "median_true_over_hub": 1.758
   },
   {
    "storage": "awq",
@@ -217,32 +322,38 @@
   },
   {
    "storage": "fp8+nvfp4",
-   "repos": 45,
+   "repos": 39,
    "hub_count_differs": 1.0,
-   "median_true_over_hub": 1.529
+   "median_true_over_hub": 1.539
   },
   {
    "storage": "gptq",
-   "repos": 34,
-   "hub_count_differs": 0.353,
+   "repos": 32,
+   "hub_count_differs": 0.375,
    "median_true_over_hub": 4.828
   },
   {
    "storage": "int8",
-   "repos": 21,
-   "hub_count_differs": 0.286,
+   "repos": 17,
+   "hub_count_differs": 0.294,
    "median_true_over_hub": 0.944
   },
   {
+   "storage": "fp8+mxfp4",
+   "repos": 14,
+   "hub_count_differs": 0.143,
+   "median_true_over_hub": 1.941
+  },
+  {
    "storage": "fp8+int8",
-   "repos": 12,
-   "hub_count_differs": 0.667,
+   "repos": 8,
+   "hub_count_differs": 0.875,
    "median_true_over_hub": 0.52
   },
   {
    "storage": "mxfp4",
-   "repos": 8,
-   "hub_count_differs": 0.375,
+   "repos": 7,
+   "hub_count_differs": 0.286,
    "median_true_over_hub": 0.972
   }
  ],
@@ -254,7 +365,7 @@
   },
   {
    "library": "diffusion-single-file",
-   "repos": 156,
+   "repos": 158,
    "no_config": 0.994
   },
   {
@@ -269,8 +380,8 @@
   },
   {
    "library": "diffusers",
-   "repos": 536,
-   "no_config": 0.868
+   "repos": 567,
+   "no_config": 0.873
   },
   {
    "library": "open_clip",
@@ -278,38 +389,33 @@
    "no_config": 0.667
   },
   {
-   "library": "stable-baselines3",
-   "repos": 25,
-   "no_config": 0.44
-  },
-  {
    "library": "pytorch",
-   "repos": 30,
-   "no_config": 0.267
+   "repos": 39,
+   "no_config": 0.231
   },
   {
    "library": "(none)",
-   "repos": 1367,
-   "no_config": 0.215
-  },
-  {
-   "library": "mlx",
-   "repos": 165,
-   "no_config": 0.006
+   "repos": 1317,
+   "no_config": 0.229
   },
   {
    "library": "transformers",
-   "repos": 4667,
+   "repos": 4534,
    "no_config": 0.003
   },
   {
    "library": "Model Optimizer",
-   "repos": 41,
+   "repos": 34,
    "no_config": 0.0
   },
   {
    "library": "lerobot",
-   "repos": 41,
+   "repos": 32,
+   "no_config": 0.0
+  },
+  {
+   "library": "mlx",
+   "repos": 175,
    "no_config": 0.0
   },
   {
@@ -324,9 +430,10 @@
   },
   {
    "library": "vllm",
-   "repos": 61,
+   "repos": 67,
    "no_config": 0.0
   }
  ],
- "preliminary": true
+ "preliminary": false,
+ "dataset_url": "https://huggingface.co/datasets/JoesSattes/hub-weight-census"
 }
