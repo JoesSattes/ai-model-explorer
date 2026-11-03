@@ -55,6 +55,15 @@ recorded with the repo's popularity, so the report shows *what share of the Hub 
 Rate limits (429) are retried with `Retry-After` and back-off. Each repo runs in its own process with a
 hard time limit. The crawl appends as it goes, so it can be stopped and restarted.
 
+## Labels and the board
+
+`labels.py` tags each readable repo from its Hub tags: leading provider or not, its relation to its parent (original,
+fine-tune, quantized copy, merge, adapter), and whether it is built for Thai (TH, TH/EN, or multilingual with Thai).
+Two corrections to the Hub's `base_model` relation: a derivative of the same owner's model (an instruct release of its own
+base) counts as that owner's original, and a repo tagged quantized whose safetensors are not quantized (it carries an ONNX
+export, say) counts as a fine-tune. `board_seed.py` fills the Deploy-Ready board from a census run and from
+`board_extra.txt`, scoring every row with `submit.score`.
+
 ## Run
 
 On GitHub: **Actions → Hub census (pilot) → Run workflow**. Results are attached to the run as an

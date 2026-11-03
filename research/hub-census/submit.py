@@ -6,6 +6,9 @@ Exit code 0 when the repo was read, 2 when it could not be (the comment explains
 """
 import datetime, json, multiprocessing as mp, os, re, sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import labels  # noqa: E402
+
 TIERS = [(4.8e9, "Phone"), (12e9, "Laptop"), (24e9, "Desktop GPU"), (80e9, "Workstation"), (float("inf"), "Cluster")]
 COLORS = {"Phone": "2ea44f", "Laptop": "44cc11", "Desktop GPU": "dfb317", "Workstation": "fe7d37", "Cluster": "e05d44"}
 SITE = "https://joessattes.github.io/ai-model-explorer"
@@ -36,6 +39,9 @@ def _child(repo, q):
             info = Hub(os.environ.get("HF_TOKEN")).model_info(repo)
             r["license"] = (info.get("cardData") or {}).get("license")
             r["downloads"], r["likes"] = info.get("downloads"), info.get("likes")
+            r["tags"], r["created_at"] = info.get("tags") or [], info.get("createdAt")
+            r["pipeline_tag"] = r.get("pipeline_tag") or info.get("pipeline_tag")
+            r["origin"] = r.get("origin") or labels.hub_origin(r["tags"])
         except Exception:
             pass
         q.put(r)
@@ -94,7 +100,10 @@ def main(repo, issue, board_path, badge_dir):
     s = score(r)
     board = json.load(open(board_path)) if os.path.exists(board_path) else []
     board = [b for b in board if b.get("id") != repo]
-    board.append({"id": repo, "issue": int(issue), "submitted": datetime.date.today().isoformat(), **s})
+    tags = r.get("tags") or []
+    board.append({"id": repo, "issue": int(issue), "submitted": datetime.date.today().isoformat(), "src": "submitted",
+                  "th": labels.thai(repo, tags, s["family"]), "origin": labels.origin(r.get("origin"), r.get("quant") or {}, repo, tags),
+                  "lab": labels.is_lab(repo), "pt": r.get("pipeline_tag"), **s})
     board.sort(key=lambda b: (-b["score"], b["need_4bit_8k_bytes"]))
     json.dump(board, open(board_path, "w"), indent=1)
     os.makedirs(badge_dir, exist_ok=True)

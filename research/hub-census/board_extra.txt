@@ -1,0 +1,34 @@
+# Models read live for the Deploy-Ready board when the census did not cover them.
+# One per line: owner/name [groups, comma-separated; default thai]. Repos that cannot be read are skipped.
+# Thai
+scb10x/llama3.1-typhoon2-8b-instruct thai
+scb10x/llama3.1-typhoon2-70b-instruct thai
+scb10x/typhoon2-qwen2.5-7b-instruct thai
+scb10x/typhoon2.1-gemma3-4b thai
+scb10x/typhoon2.1-gemma3-12b thai
+scb10x/typhoon-7b thai
+typhoon-ai/typhoon2.1-gemma3-4b thai
+typhoon-ai/typhoon2.1-gemma3-12b thai
+typhoon-ai/typhoon2.5-qwen3-30b-a3b thai
+typhoon-ai/typhoon-translate-4b thai
+typhoon-ai/typhoon-ocr-7b thai
+openthaigpt/openthaigpt1.5-14b-instruct thai
+openthaigpt/openthaigpt1.5-72b-instruct thai
+openthaigpt/openthaigpt-r1-32b-instruct thai
+nectec/Pathumma-llm-text-1.0.0 thai
+nectec/Pathumma-llm-vision-1.0.0 thai
+KBTG-Labs/THaLLE-0.1-7B-fa thai
+airesearch/WangchanLION7B thai
+airesearch/LLaMa3-8b-WangchanX-sft-Full thai
+biodatlab/whisper-th-large-v3-combined thai
+biodatlab/whisper-th-medium-combined thai
+# Southeast Asia, Thai included
+aisingapore/Llama-SEA-LION-v3-8B-IT thai
+aisingapore/Llama-SEA-LION-v3.5-8B-R thai
+aisingapore/Gemma-SEA-LION-v4-27B-IT thai
+aisingapore/Qwen-SEA-LION-v4-32B-IT thai
+SeaLLMs/SeaLLMs-v3-7B-Chat thai
+SeaLLMs/SeaLLMs-v3-1.5B-Chat thai
+sail/Sailor2-1B-Chat thai
+sail/Sailor2-8B-Chat thai
+sail/Sailor2-20B-Chat thai

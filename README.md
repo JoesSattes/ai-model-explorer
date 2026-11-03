@@ -94,6 +94,9 @@ Submit any public Hugging Face model: [open a submission](https://github.com/Joe
 A bot reads its headers, replies with family, parameters (and active parameters), storage, KV cache per token, the memory
 it needs at 4-bit with an 8k context, and five metadata checks, then adds it to the
 [board](https://joessattes.github.io/ai-model-explorer/census/#board) and gives you a badge for the model card.
+The board starts filled, scored the same way: the leading providers' most used releases, the most downloaded language
+models, and models built for Thai (TH, TH/EN) or multilingual models that read Thai. Repos the census did not cover are
+listed in [board_extra.txt](research/hub-census/board_extra.txt) and read by the *Refresh the Deploy-Ready board* workflow.
 
 ## What is new here
 Reading a safetensors header is standard: the Hugging Face Hub does it to show parameter counts, and several viewers list tensor names and shapes. What this project adds is the **interpretation**: turning that list into an architecture without the model's config or code.

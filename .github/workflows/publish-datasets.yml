@@ -69,6 +69,7 @@ jobs:
           URL: https://huggingface.co/datasets/${{ steps.who.outputs.owner }}/${{ inputs.census_name }}
         run: |
           python site_data.py out ../../census/data "$URL"
+          python board_seed.py --census out/census.jsonl --out ../../census/data/board.json
           cd ../..
           git config user.name "github-actions[bot]"
           git config user.email "41898341+github-actions[bot]@users.noreply.github.com"

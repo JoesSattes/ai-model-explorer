@@ -139,6 +139,26 @@ html[data-theme=dark] .ic .big{background:linear-gradient(90deg,#ff5a67,#ff7cc4 
 .dev .h{color:var(--dim);text-align:center}.dev .c{text-align:center;padding:6px 0;border-radius:8px;font-weight:600}
 .dev .y{background:rgba(27,175,122,.16);color:var(--ssm)}.dev .n{background:rgba(196,36,42,.12);color:var(--neg)}
 #lookq{width:100%;font-size:16px;padding:12px 16px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.tab{font:inherit;font-size:13.5px;padding:6px 14px;border-radius:999px;border:1px solid var(--control);background:var(--surface);color:var(--soft);cursor:pointer}
+.tab b{font-weight:600;margin-left:6px;color:var(--dim)}.tab.on{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}.tab.on b{color:inherit;opacity:.75}
+html[data-theme=dark] .tab{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16)}
+html[data-theme=dark] .tab.on{background:linear-gradient(90deg,#e60012,#e5007d);border-color:transparent;color:#fff}
+.tchips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--dim)}
+.tchip{font:inherit;font-size:12.5px;padding:3px 10px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--soft);cursor:pointer}
+.tchip.on{border-color:var(--ink);color:var(--ink);font-weight:600}
+.nm{font:inherit;background:none;border:0;color:var(--ink);cursor:pointer;padding:0;text-align:left}.nm:hover{text-decoration:underline}
+.ext{color:var(--dim)!important;margin-left:6px;font-size:12px}.ext:hover{color:var(--blue)!important}
+.bdg{display:inline-block;font-size:11px;font-weight:600;padding:0 6px;border-radius:999px;margin-left:6px;vertical-align:1px}
+.bdg.lab{background:var(--te-bg);color:var(--te-fg)}.bdg.th{background:var(--ts-bg);color:var(--ts-fg)}.bdg.sub{background:var(--td-bg);color:var(--td-fg)}
+.rel{font-size:12px;color:var(--soft)}.rel.original{color:var(--ink);font-weight:600}
+tbody tr{cursor:pointer}tbody tr:hover td{background:var(--raised)}tbody tr.sel td{background:var(--sel)}
+html[data-theme=dark] tbody tr:hover td{background:rgba(255,255,255,.04)}
+.mapwrap{display:grid;grid-template-columns:1fr 300px;gap:16px;margin-bottom:16px}@media(max-width:1000px){.mapwrap{grid-template-columns:1fr}}
+#mm{touch-action:manipulation;cursor:crosshair}#mm .pt{pointer-events:none}
+#mmsel .facts{grid-template-columns:1fr 1fr}#mmsel h3{font-size:16px;word-break:break-all;margin:6px 0 2px}
+.mmhint{color:var(--dim);font-size:13px}
+@keyframes pulse{0%{r:8}50%{r:15}100%{r:8}}.hv{animation:pulse 1.2s ease-in-out infinite}
 </style>
 </head>
 <body>
@@ -167,9 +187,12 @@ html[data-theme=dark] .ic .big{background:linear-gradient(90deg,#ff5a67,#ff7cc4 
 
 <section id="board" class="rv">
  <h2 data-t="bd_h">Deploy-Ready board</h2>
- <p class="sub" data-t="bd_sub">Models submitted by their authors and users. Each is read from its headers and placed by the memory it needs at 4-bit with an 8k context, with five checks on its metadata. Submit yours and get a badge for the model card.</p>
+ <p class="sub" data-t="bd_sub">Leading providers' releases, the most downloaded language models, models built for Thai, and models submitted by their authors. Each is read from its headers and placed by the memory it needs at 4-bit with an 8k context, with five checks on its metadata. Submit yours and get a badge for the model card.</p>
  <div class="dl" style="margin-bottom:14px"><a class="pbtn primary" id="submitBtn" target="_blank" rel="noopener" data-t="bd_submit">Submit a model</a><span class="note" data-t="bd_how" style="align-self:center">Opens a GitHub issue; a bot replies within minutes.</span></div>
+ <div class="tabs" id="btabs"></div>
+ <div class="tools"><input id="bq" type="search" data-tp="bd_search" placeholder="Search the board"><div class="tchips" id="btiers"></div></div>
  <div class="tbl"><table><thead><tr id="bhead"></tr></thead><tbody id="bbody"></tbody></table></div>
+ <div class="pager"><button class="pbtn" id="bmore"></button><span class="note" id="bnote" style="margin:0"></span></div>
 </section>
 
 <section id="findings">
@@ -189,18 +212,19 @@ html[data-theme=dark] .ic .big{background:linear-gradient(90deg,#ff5a67,#ff7cc4 
  </div>
 </section>
 
-<section class="rv">
- <div class="card"><div class="ct" data-t="mm_h">Memory map of popular language models</div>
- <div class="cs" data-t="mm_s">Each dot is a model: parameters (to hold) against KV cache per token (to grow with context). Lines: the most a device holds at 4-bit. Hover for the name, click to open its anatomy.</div>
- <div class="legend" id="lgm"></div><svg id="mm" viewBox="0 0 1100 460" width="100%"></svg></div>
-</section>
 
 <section id="models" class="rv">
  <h2 data-t="tbl_h">Models</h2>
  <p class="sub" data-t="tbl_sub">The most downloaded readable models in the census. Click a name to open its full anatomy.</p>
  <div class="tools">
   <input id="q" type="search" data-tp="search" placeholder="Search models, e.g. qwen, whisper, deepseek">
-  <select id="ffam"></select><select id="fk"></select><select id="fq"></select><select id="fy"></select><select id="fo"></select>
+  <select id="ffam"></select><select id="fk"></select><select id="fq"></select><select id="fy"></select><select id="fo"></select><select id="fl"></select>
+ </div>
+ <div class="mapwrap">
+  <div class="card"><div class="ct" data-t="mm_h">Memory map of popular language models</div>
+   <div class="cs" data-t="mm_s">Each dot is a language model in the table below, filters included: parameters (to hold) against KV cache per token (to grow with context). Dashed lines: the most a device holds at 4-bit. Point at a dot for its name; click it, or a row of the table, to select it.</div>
+   <div class="legend" id="lgm"></div><svg id="mm" viewBox="0 0 1100 460" width="100%"></svg></div>
+  <div class="card" id="mmsel"></div>
  </div>
  <div class="tbl"><table><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>
  <div class="pager"><button class="pbtn" id="prev">‹</button><span id="pinfo"></span><button class="pbtn" id="next">›</button></div>
@@ -222,14 +246,20 @@ html[data-theme=dark] .ic .big{background:linear-gradient(90deg,#ff5a67,#ff7cc4 
 <div id="tip"></div>
 <script>
 const T={
- en:{bd_h:"Deploy-Ready board",bd_sub:"Models submitted by their authors and users. Each is read from its headers and placed by the memory it needs at 4-bit with an 8k context, with five checks on its metadata. Submit yours and get a badge for the model card.",bd_submit:"Submit a model",bd_how:"Opens a GitHub issue; a bot replies within minutes.",
-  bd_cols:["Model","Fits on","Checks","Params","Active","Storage","KV/token","4-bit + 8k","Submitted"],bd_empty:"No submissions yet. Be the first:",
+ en:{bd_h:"Deploy-Ready board",bd_sub:"Leading providers' releases, the most downloaded language models, models built for Thai, and models submitted by their authors. Each is read from its headers and placed by the memory it needs at 4-bit with an 8k context, with five checks on its metadata. Submit yours and get a badge for the model card.",bd_submit:"Submit a model",bd_how:"Opens a GitHub issue; a bot replies within minutes.",
+  bd_cols:["Model","Release","Fits on","Checks","Params","Active","KV/token","4-bit + 8k","Downloads"],bd_empty:"Nothing matches.",
+  bd_tabs:{all:"All",lab:"Leading providers",popular:"Most downloaded LMs",thai:"Thai & multilingual",submitted:"Submitted"},bd_search:"Search the board",bd_tier:"Fits on:",bd_any:"any",
+  bd_more:n=>`Show all ${n}`,bd_less:"Show fewer",bd_note:"Scored from the census run; submitted models are read when the issue is opened.",
+  rel:{original:"original",finetune:"fine-tune",quantized:"quantized copy",merge:"merge",adapter:"adapter"},b_lab:"provider",b_sub:"submitted",
+  th_lab:{"TH":"TH","TH/EN":"TH/EN","Multilingual":"multi + TH"},all_l:"Any language",l_th:"Built for Thai (TH, TH/EN)",l_tha:"Reads Thai (incl. multilingual)",
+  o_lab:"Leading-provider releases",o_ft:"Fine-tunes",o_qz:"Quantized copies",o_mg:"Merges",o_ad:"Adapters",o_sub:"Submitted to the board",
+  sel_none:"Click a dot on the map or a row of the table.",sel_map:"Show on the map",sel_det:"Details",not_map:"Not on the map (not a language model, or no KV cache).",
   chk:{"safetensors":"safetensors","config.json":"config.json","config agrees with weights":"config agrees with weights","Hub parameter count correct":"Hub parameter count correct","license declared":"license declared"},look_submit:"Submit it to the board",look_h:"Look up a model",look_sub:"Type any model from the census. See what it is made of, where it sits among popular models, and which devices it fits on.",look_ph:"e.g. Qwen/Qwen3-8B",
   look_none:"Not in the census table. Open it in the explorer instead:",open_full:"Open the full anatomy",
   f_params:"parameters",f_active:"active per token",f_store:"stored",f_wl:"width × layers",f_heads:"heads / KV heads",f_exp:"experts",f_vocab:"vocabulary",f_kv:"KV cache per token",f_kv32:"KV cache at 32k tokens",
   pct_h:"Among popular language models",pct_p:"size",pct_kv:"KV cache per token",pct_v:"vocabulary",pct_txt:p=>`larger than ${p}%`,
   dev_h:"Fits on (8k context, +10% runtime)",dev_as:"as stored",dev_4:"4-bit weights",hub_ok:"The Hub's parameter count agrees.",hub_bad:r=>`The Hub shows ${r}× fewer parameters than the weights hold.`,
-  mm_h:"Memory map of popular language models",mm_s:"Each dot is a model: parameters (to hold) against KV cache per token (to grow with context). Lines: the most a device holds at 4-bit. Hover for the name, click to open its anatomy.",
+  mm_h:"Memory map of popular language models",mm_s:"Each dot is a language model in the table below, filters included: parameters (to hold) against KV cache per token (to grow with context). Dashed lines: the most a device holds at 4-bit. Point at a dot for its name; click it, or a row of the table, to select it.",
   k_moe:"mixture of experts",k_hyb:"hybrid",k_dense:"dense",all_k:"Any architecture",k_lat:"latent attention",k_nocfg:"no config.json",
   why:"Why it matters",see:"See them in the table →",
   i_moe_t:"Mixture of experts is now the default for big models",i_moe_w:"Memory follows total parameters, speed follows active ones: a 30B-A3B model needs 30B in memory but computes like 3B.",
@@ -244,12 +274,12 @@ const T={
   find_h:"Findings",find_sub:"Popular repos: the most downloaded, the most downloaded original releases, and recent releases from leading providers. Test fixtures (tiny random-weight repos) are left out.",
   c1:"Architecture by release year",c1s:"% of popular original language models released that year",c2:"The Hub's parameter count, by storage format",c2s:"% of repos where the count shown on the Hub differs from the logical count read from the headers. For NVFP4 the Hub counts packed bytes; other gaps can be on either side",
   c3:"Typical shape, by release year",c3s:"Median head size and vocabulary of popular original language models",c4:"When there is nothing to read",c4s:"Popular repos without safetensors or PyTorch weights, by what they ship instead",
-  tbl_h:"Models",tbl_sub:"The most downloaded readable models in the census. Click a name to open its full anatomy.",search:"Search models, e.g. qwen, whisper, deepseek",
+  tbl_h:"Models",tbl_sub:"The most downloaded readable models in the census, every readable release from the leading providers, models built for Thai and models submitted to the board. Click a row to select it on the map; ↗ opens its full anatomy.",search:"Search models, e.g. qwen, whisper, deepseek",
   tbl_note:"Params: logical parameters (quantized storage unpacked). Hub: ✓ when the Hub's own count agrees within 0.1%, otherwise our count ÷ the Hub's. KV/token: bytes of KV cache per token at 16 bit.",
   data_h:"Data and method",data_sub:"Every repo: status, popularity, the architecture recovered from the weights, the values its config.json declares, the Hub's own parameter count and the raw manifest, so the results can be re-scored. Code and the frozen recovery rules are public.",
   dl_code:"Census code",dl_ds:"Dataset on Hugging Face",dl_paper:"Paper",foot:"Read from public metadata only; no weights were downloaded.",crawled:"Crawled",
-  all_fam:"All families",all_q:"Any storage",all_y:"Any year",all_o:"Originals and copies",o_orig:"Original releases",o_copy:"Derivatives",unq:"unquantized",
-  cols:["Model","Year","Family","Params","Storage","Width","Layers","Heads / KV","Experts","Vocab","KV/token","Config","Hub","Downloads"],
+  all_fam:"All families",all_q:"Any storage",all_y:"Any year",all_o:"Originals and derivatives",o_orig:"Original releases",o_copy:"All derivatives",unq:"unquantized",
+  cols:["Model","Release","Year","Family","Params","Storage","Width","Layers","Heads / KV","Experts","Vocab","KV/token","Config","Hub","Downloads"],
   moe:"mixture of experts",hybrid:"hybrid (state-space / linear attention)",gqa:"grouped-query attention",quantized:"published quantized",hd:"head size",vocab:"vocabulary (thousands)",
   gguf_only:"GGUF only (llama.cpp)",onnx_only:"ONNX only",no_weight_files:"no weight files",keras_or_other:"Keras / other",adapter:"adapter only",mlpackage_only:"Core ML only",
   f_moe:(a,b,y0,y1)=>`<b>Mixture of experts</b> went from ${a}% of popular original language models released in ${y0} to <b>${b}%</b> in ${y1}.`,
@@ -260,14 +290,20 @@ const T={
   f_hub:s=>`<b>The Hub's parameter count is wrong</b> for formats that pack two values per byte: ${s}.`,
   f_nc:(a,b)=>`<b>${a}%</b> of all Hub models and ${b}% of popular ones ship <b>no config.json</b>: the weights are their only specification.`,
   f_gguf:a=>`<b>${a}%</b> of popular repos without readable weights are GGUF-only (llama.cpp).`},
- th:{bd_h:"Deploy-Ready board",bd_sub:"โมเดลที่เจ้าของหรือผู้ใช้ส่งเข้ามา อ่านจาก header แล้วจัดระดับตามหน่วยความจำที่ต้องใช้ที่ 4-bit และ context 8k พร้อมเช็ก metadata 5 ข้อ ส่งโมเดลของคุณแล้วรับ badge ไปติดใน model card",bd_submit:"ส่งโมเดล",bd_how:"เปิด GitHub issue แล้ว bot จะตอบกลับภายในไม่กี่นาที",
-  bd_cols:["โมเดล","ลงเครื่อง","เช็ก","Params","Active","การเก็บ","KV/token","4-bit + 8k","ส่งเมื่อ"],bd_empty:"ยังไม่มีใครส่ง เป็นคนแรกได้เลย:",
+ th:{bd_h:"Deploy-Ready board",bd_sub:"โมเดลจากผู้พัฒนาหลัก language model ที่โหลดมากสุด โมเดลภาษาไทย และโมเดลที่เจ้าของส่งเข้ามา อ่านจาก header แล้วจัดระดับตามหน่วยความจำที่ต้องใช้ที่ 4-bit และ context 8k พร้อมเช็ก metadata 5 ข้อ ส่งโมเดลของคุณแล้วรับ badge ไปติดใน model card",bd_submit:"ส่งโมเดล",bd_how:"เปิด GitHub issue แล้ว bot จะตอบกลับภายในไม่กี่นาที",
+  bd_cols:["โมเดล","ที่มา","ลงเครื่อง","เช็ก","Params","Active","KV/token","4-bit + 8k","ดาวน์โหลด"],bd_empty:"ไม่มีโมเดลที่ตรงเงื่อนไข",
+  bd_tabs:{all:"ทั้งหมด",lab:"ผู้พัฒนาหลัก",popular:"LM ที่โหลดมากสุด",thai:"ภาษาไทยและหลายภาษา",submitted:"ส่งเข้ามา"},bd_search:"ค้นหาใน board",bd_tier:"ลงเครื่อง:",bd_any:"ทั้งหมด",
+  bd_more:n=>`แสดงทั้งหมด ${n}`,bd_less:"แสดงน้อยลง",bd_note:"คะแนนมาจากรอบ census ส่วนโมเดลที่ส่งเข้ามาจะอ่านตอนเปิด issue",
+  rel:{original:"ต้นฉบับ",finetune:"fine-tune",quantized:"quantize ต่อ",merge:"merge",adapter:"adapter"},b_lab:"เจ้าหลัก",b_sub:"ส่งเข้ามา",
+  th_lab:{"TH":"TH","TH/EN":"TH/EN","Multilingual":"หลายภาษา+TH"},all_l:"ทุกภาษา",l_th:"ทำมาเพื่อภาษาไทย (TH, TH/EN)",l_tha:"อ่านภาษาไทยได้ (รวมหลายภาษา)",
+  o_lab:"ตัวที่ผู้พัฒนาหลักปล่อย",o_ft:"Fine-tune",o_qz:"Quantize ต่อ",o_mg:"Merge",o_ad:"Adapter",o_sub:"ส่งขึ้น board",
+  sel_none:"กดจุดบนแผนที่ หรือกดแถวในตาราง",sel_map:"ดูบนแผนที่",sel_det:"รายละเอียด",not_map:"ไม่อยู่บนแผนที่ (ไม่ใช่ language model หรือไม่มี KV cache)",
   chk:{"safetensors":"safetensors","config.json":"มี config.json","config agrees with weights":"config ตรงกับ weights","Hub parameter count correct":"ตัวเลข params บน Hub ถูก","license declared":"ระบุ license"},look_submit:"ส่งโมเดลนี้ขึ้น board",look_h:"ค้นหาโมเดลของคุณ",look_sub:"พิมพ์ชื่อโมเดลใน census เพื่อดูว่าข้างในประกอบด้วยอะไร อยู่ตรงไหนเทียบกับโมเดลยอดนิยม และลงเครื่องไหนได้บ้าง",look_ph:"เช่น Qwen/Qwen3-8B",
   look_none:"ไม่มีในตาราง census เปิดดูใน explorer แทนได้:",open_full:"เปิดดูโครงสร้างเต็ม",
   f_params:"parameter",f_active:"ใช้จริงต่อ token",f_store:"ขนาดที่เก็บ",f_wl:"width × layers",f_heads:"heads / KV heads",f_exp:"experts",f_vocab:"vocabulary",f_kv:"KV cache ต่อ token",f_kv32:"KV cache ที่ 32k token",
   pct_h:"เทียบกับ language model ยอดนิยม",pct_p:"ขนาด",pct_kv:"KV cache ต่อ token",pct_v:"vocabulary",pct_txt:p=>`ใหญ่กว่า ${p}%`,
   dev_h:"ลงเครื่องได้ไหม (context 8k, เผื่อ runtime 10%)",dev_as:"ตามที่เก็บ",dev_4:"weights 4-bit",hub_ok:"ตัวเลข parameter บน Hub ตรงกับ weights",hub_bad:r=>`Hub แสดงจำนวน parameter น้อยกว่าที่ weights มีจริง ${r} เท่า`,
-  mm_h:"แผนที่หน่วยความจำของ language model ยอดนิยม",mm_s:"แต่ละจุดคือหนึ่งโมเดล: จำนวน parameter (ที่ต้องเก็บ) เทียบกับ KV cache ต่อ token (ที่โตตาม context) เส้นแนวตั้งคือขนาดสูงสุดที่แต่ละเครื่องรับได้ที่ 4-bit ชี้เพื่อดูชื่อ กดเพื่อเปิดโครงสร้าง",
+  mm_h:"แผนที่หน่วยความจำของ language model ยอดนิยม",mm_s:"แต่ละจุดคือ language model ในตารางด้านล่าง (ตามตัวกรองที่เลือก): จำนวน parameter (ที่ต้องเก็บ) เทียบกับ KV cache ต่อ token (ที่โตตาม context) เส้นประคือขนาดสูงสุดที่แต่ละเครื่องรับได้ที่ 4-bit ชี้จุดเพื่อดูชื่อ กดจุดหรือแถวในตารางเพื่อเลือก",
   k_moe:"mixture of experts",k_hyb:"hybrid",k_dense:"dense",all_k:"ทุกสถาปัตยกรรม",k_lat:"latent attention",k_nocfg:"ไม่มี config.json",
   why:"ทำไมสำคัญ",see:"ดูในตาราง →",
   i_moe_t:"Mixture of experts กลายเป็นค่าเริ่มต้นของโมเดลใหญ่",i_moe_w:"หน่วยความจำขึ้นกับ parameter ทั้งหมด ความเร็วขึ้นกับตัวที่ active โมเดล 30B-A3B ต้องมีแรมพอสำหรับ 30B แต่คำนวณเหมือน 3B",
@@ -282,12 +318,12 @@ const T={
   find_h:"สิ่งที่พบ",find_sub:"โมเดลยอดนิยม: ยอดดาวน์โหลดสูงสุด, ตัวต้นฉบับที่โหลดมากสุด และตัวที่ผู้พัฒนาหลักปล่อยช่วงหลัง ไม่รวม repo ทดสอบ (tiny random)",
   c1:"สถาปัตยกรรมตามปีที่ปล่อย",c1s:"% ของ language model ต้นฉบับยอดนิยมที่ปล่อยในปีนั้น",c2:"จำนวน parameter ที่ Hub แสดง แยกตามรูปแบบการเก็บ",c2s:"% ของ repo ที่ตัวเลขบน Hub ไม่ตรงกับจำนวนที่อ่านจาก header กรณี NVFP4 Hub นับ byte ที่อัดไว้ ส่วนรูปแบบอื่นอาจคลาดได้ทั้งสองฝั่ง",
   c3:"รูปร่างทั่วไปตามปี",c3s:"ค่ามัธยฐานของขนาด head และ vocabulary",c4:"เมื่อไม่มีอะไรให้อ่าน",c4s:"repo ยอดนิยมที่ไม่มี weights แบบ safetensors หรือ PyTorch แยกตามสิ่งที่ปล่อยแทน",
-  tbl_h:"โมเดล",tbl_sub:"โมเดลที่อ่านได้และมียอดดาวน์โหลดสูงสุดใน census กดชื่อเพื่อเปิดดูโครงสร้างเต็ม",search:"ค้นหาโมเดล เช่น qwen, whisper, deepseek",
+  tbl_h:"โมเดล",tbl_sub:"โมเดลที่อ่านได้และโหลดมากสุดใน census รวมทุกตัวที่ผู้พัฒนาหลักปล่อย โมเดลภาษาไทย และโมเดลที่ส่งขึ้น board กดแถวเพื่อเลือกบนแผนที่ ↗ เปิดดูโครงสร้างเต็ม",search:"ค้นหาโมเดล เช่น qwen, whisper, deepseek",
   tbl_note:"Params: จำนวน parameter จริง (แกะ quantization แล้ว) · Hub: ✓ เมื่อตัวเลขของ Hub ตรงภายใน 0.1% ไม่งั้นแสดงอัตราส่วนของเรา ÷ Hub · KV/token: ขนาด KV cache ต่อ token ที่ 16 บิต",
   data_h:"ข้อมูลและวิธีการ",data_sub:"ทุก repo มีสถานะ ความนิยม สถาปัตยกรรมที่ถอดจาก weights ค่าที่ config.json ประกาศ ตัวเลขของ Hub และ manifest ดิบไว้ให้คำนวณซ้ำได้ โค้ดและกฎที่ล็อกไว้เปิดสาธารณะ",
   dl_code:"โค้ด census",dl_ds:"Dataset บน Hugging Face",dl_paper:"Paper",foot:"อ่านจาก metadata สาธารณะเท่านั้น ไม่มีการโหลด weights",crawled:"เก็บข้อมูลเมื่อ",
-  all_fam:"ทุกตระกูล",all_q:"ทุกรูปแบบการเก็บ",all_y:"ทุกปี",all_o:"ต้นฉบับและตัวต่อยอด",o_orig:"ต้นฉบับ",o_copy:"ตัวต่อยอด",unq:"ไม่ quantize",
-  cols:["โมเดล","ปี","ตระกูล","Params","การเก็บ","Width","Layers","Heads / KV","Experts","Vocab","KV/token","Config","Hub","ดาวน์โหลด"],
+  all_fam:"ทุกตระกูล",all_q:"ทุกรูปแบบการเก็บ",all_y:"ทุกปี",all_o:"ต้นฉบับและตัวต่อยอด",o_orig:"ต้นฉบับ",o_copy:"ตัวต่อยอดทั้งหมด",unq:"ไม่ quantize",
+  cols:["โมเดล","ที่มา","ปี","ตระกูล","Params","การเก็บ","Width","Layers","Heads / KV","Experts","Vocab","KV/token","Config","Hub","ดาวน์โหลด"],
   moe:"mixture of experts",hybrid:"hybrid (state-space / linear attention)",gqa:"grouped-query attention",quantized:"ปล่อยแบบ quantize มาเลย",hd:"ขนาด head",vocab:"vocabulary (พัน)",
   gguf_only:"มีแต่ GGUF (llama.cpp)",onnx_only:"มีแต่ ONNX",no_weight_files:"ไม่มีไฟล์ weights",keras_or_other:"Keras / อื่นๆ",adapter:"มีแต่ adapter",mlpackage_only:"มีแต่ Core ML",
   f_moe:(a,b,y0,y1)=>`<b>Mixture of experts</b> เพิ่มจาก ${a}% ของ language model ต้นฉบับยอดนิยมที่ปล่อยปี ${y0} เป็น <b>${b}%</b> ในปี ${y1}`,
@@ -305,7 +341,7 @@ const fmtB=b=>b==null?"–":b>=1e12?(b/1e12).toFixed(2)+" TB":b>=1e9?(b/1e9).toF
 function showTip(e,h){tip.innerHTML=h;tip.style.display="block";const x=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8);tip.style.left=x+"px";tip.style.top=(e.clientY+14)+"px"}
 function hideTip(){tip.style.display="none"}
 let I=null,M=null,B=[];
-function applyLang(){document.documentElement.lang=L;const t=T[L];document.querySelectorAll("[data-t]").forEach(n=>{const k=n.dataset.t;if(t[k]&&typeof t[k]==="string")n.textContent=t[k]});
+function applyLang(){document.documentElement.lang=L;const t=T[L];document.querySelectorAll("[data-t]").forEach(n=>{const k=n.dataset.t;if(t[k]&&typeof t[k]==="string")n.textContent=t[k]});document.querySelectorAll("[data-tp]").forEach(n=>{const k=n.dataset.tp;if(typeof t[k]==="string")n.placeholder=t[k]});
  $("#q").placeholder=t.search;$("#lookq").placeholder=t.look_ph;document.querySelectorAll("#lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===L));
  const home=L==="th"?"../":"../en/";["#home","#back","#cta"].forEach(id=>$(id).href=home);try{localStorage.setItem("mx_lang",L)}catch(e){}
  if(I)render()}
@@ -333,7 +369,7 @@ function findings(){const t=T[L],tr=I.trends.filter(r=>r.models>=30),b=tr[tr.len
  cards.push({big:bad?pct(bad.hub_count_differs)+"%":"–",sub:"NVFP4",t:t.i_hub_t,w:t.i_hub_w,sp:"",ex:exChips(top(wr),m=>`${(m.p/m.hub).toFixed(2)}${t.ex_x}`),go:{fq:"nvfp4"}});
  cards.push({big:pct(h.hub_no_config)+"%",sub:"Hub",t:t.i_cfg_t,w:t.i_cfg_w,sp:"",ex:exChips(top(M.filter(m=>!m.cfg&&m.p))),go:{fk:"nocfg"}});
  $("#find").innerHTML=cards.map((c,i)=>`<div class="ic rv"><div class="big">${c.big}<small>${c.sub||""}</small></div><h3>${c.t}</h3>${c.sp}<p class="why"><b>${t.why}:</b> ${c.w}</p>${c.ex}<button class="go" data-i="${i}">${t.see}</button></div>`).join("");
- document.querySelectorAll("#find .go").forEach(b=>b.onclick=()=>{const g=cards[+b.dataset.i].go;["#q","#ffam","#fq","#fy","#fo","#fk"].forEach(s=>$(s).value="");for(const[k,v]of Object.entries(g))$("#"+k).value=v;page=0;table();$("#models").scrollIntoView({behavior:"smooth"})});
+ document.querySelectorAll("#find .go").forEach(b=>b.onclick=()=>{const g=cards[+b.dataset.i].go;["#q","#ffam","#fq","#fy","#fo","#fk","#fl"].forEach(s=>$(s).value="");for(const[k,v]of Object.entries(g))$("#"+k).value=v;page=0;table();$("#models").scrollIntoView({behavior:"smooth"})});
  reveal()}
 function lookup(id){const t=T[L],el=$("#look");if(!id){el.innerHTML="";return}
  const m=M.find(x=>x.id.toLowerCase()===id.toLowerCase());
@@ -342,31 +378,80 @@ function lookup(id){const t=T[L],el=$("#look");if(!id){el.innerHTML="";return}
  const facts=[f(fmtN(m.p),t.f_params),f(m.act&&m.act!==m.p?fmtN(m.act):"–",t.f_active),f(fmtB(m.sb),t.f_store+(m.q?` · ${m.q}`:"")),f(`${m.d??"–"} × ${m.L??"–"}`,t.f_wl),f(`${m.H??"–"} / ${m.KV??"–"}`,t.f_heads),f(m.E??"–",t.f_exp),f(m.V?m.V.toLocaleString():"–",t.f_vocab),f(fmtB(m.kv),t.f_kv),f(m.kv?fmtB(m.kv*32768):"–",t.f_kv32)].join("");
  const bar=(lab,v)=>v==null?"":`<div class="pbar"><div class="lab"><span>${lab}</span><span>${t.pct_txt(v)}</span></div><div class="tr"><i style="width:0" data-w="${v}%"></i></div></div>`;
  const dev=`<div class="dev"><div></div>${DEV.map(d=>`<div class="h">${d[0]}</div>`).join("")}${[[t.dev_as,null],[t.dev_4,4]].map(([lab,bits])=>`<div class="h" style="text-align:left">${lab}</div>`+DEV.map(d=>{const ok=need(m,bits)<=d[1]*1e9;return `<div class="c ${ok?"y":"n"}">${ok?"✓":"✕"}</div>`}).join("")).join("")}</div>`;
- el.innerHTML=`<div class="look"><div class="card lk"><span class="pill">${m.fam||"?"}</span> <span class="pill">${kindOf(m)==="moe"?t.k_moe:kindOf(m)==="hyb"?t.k_hyb:t.k_dense}</span> ${m.y?`<span class="pill">${m.y}</span>`:""}<h3 style="margin-top:8px">${m.id}</h3><div class="facts">${facts}</div>
-  <p class="note">${ratio==null?"":Math.abs(ratio-1)<=.001?t.hub_ok:t.hub_bad(ratio.toFixed(2))}</p><div class="dl"><a class="pbtn primary" href="${link(m.id)}">${t.open_full} →</a></div></div>
+ SEL=m.id;el.innerHTML=`<div class="look"><div class="card lk">${relTxt(m)}${pills(m)} <span class="pill">${m.fam||"?"}</span> <span class="pill">${kindOf(m)==="moe"?t.k_moe:kindOf(m)==="hyb"?t.k_hyb:t.k_dense}</span> ${m.y?`<span class="pill">${m.y}</span>`:""}<h3 style="margin-top:8px">${m.id}</h3><div class="facts">${facts}</div>
+  <p class="note">${ratio==null?"":Math.abs(ratio-1)<=.001?t.hub_ok:t.hub_bad(ratio.toFixed(2))}</p><div class="dl"><a class="pbtn primary" href="${link(m.id)}">${t.open_full} →</a>${onMap(m)?`<button class="pbtn" id="toMap">${t.sel_map}</button>`:""}</div></div>
   <div class="card"><div class="ct">${t.pct_h}</div>${isLM(m)?bar(t.pct_p,pctile(P.p,m.p))+bar(t.pct_kv,pctile(P.kv,m.kv))+bar(t.pct_v,pctile(P.v,m.V)):""}<div class="ct" style="margin-top:14px">${t.dev_h}</div>${dev}</div></div>`;
- requestAnimationFrame(()=>el.querySelectorAll(".tr i").forEach(i=>i.style.width=i.dataset.w));memmap()}
+ requestAnimationFrame(()=>el.querySelectorAll(".tr i").forEach(i=>i.style.width=i.dataset.w));const tm=$("#toMap");if(tm)tm.onclick=()=>{$("#mm").scrollIntoView({behavior:"smooth",block:"center"});setTimeout(()=>flash(m.id),500)};
+ if(typeof memmap==="function"&&MMX){memmap();selCard()}}
+const UNSAFE=/nsfw|uncensored|abliterat|porn|hentai|lewd|erotic|nude/i,GENP=new Set(["","text-generation","text2text-generation","image-text-to-text","conversational","any-to-any","audio-text-to-text","visual-question-answering","video-text-to-text"]);
+const onMap=m=>isLM(m)&&m.p>5e7&&m.kv>0&&GENP.has(m.pt||"")&&!UNSAFE.test(m.id);
+let SEL=null,MMP=[],MMX=null;
+function select(id,{scroll}={}){SEL=id;$("#lookq").value=id;lookup(id);selCard();document.querySelectorAll("#tbody tr,#bbody tr").forEach(r=>r.classList.toggle("sel",r.dataset.id===id));if(scroll)$(scroll).scrollIntoView({behavior:"smooth",block:"start"})}
+function pills(m){const t=T[L];return `${m.lab?`<span class="bdg lab">★ ${t.b_lab}</span>`:""}${m.th?`<span class="bdg th">${t.th_lab[m.th]||m.th}</span>`:""}${m.src==="submitted"?`<span class="bdg sub">${t.b_sub}</span>`:""}`}
+function relTxt(m){const t=T[L],o=m.origin||"original";return `<span class="rel ${o}">${t.rel[o]||o}</span>`}
+function selCard(){const t=T[L],el=$("#mmsel"),m=SEL&&M.find(x=>x.id===SEL);
+ if(!m){el.innerHTML=`<div class="ct">${t.mm_h.split(" of ")[0]}</div><p class="mmhint">${t.sel_none}</p>`;return}
+ const f=(a,b)=>`<div><b>${a}</b><span>${b}</span></div>`,tier=TIERS.find(([g])=>need(m,4)<=g*1e9);
+ el.innerHTML=`<span class="pill">${m.fam||"?"}</span> ${relTxt(m)}${pills(m)}<h3>${m.id}</h3>
+  <div class="facts">${f(fmtN(m.p),t.f_params)}${f(m.act&&m.act!==m.p?fmtN(m.act):"–",t.f_active)}${f(fmtB(m.kv),t.f_kv)}${f(fmtB(need(m,4)),"4-bit + 8k")}</div>
+  ${tier?`<p class="note">${t.bd_cols[2]}: <b style="color:var(${TIERC[tier[1]]})">${tier[1]}</b></p>`:""}${onMap(m)?"":`<p class="note">${t.not_map}</p>`}
+  <div class="dl"><button class="pbtn" id="selDet">${t.sel_det}</button><a class="pbtn primary" href="${link(m.id)}">${t.open_full} ↗</a></div>`;
+ $("#selDet").onclick=()=>$("#lookup").scrollIntoView({behavior:"smooth"})}
 function memmap(){const t=T[L],svg=$("#mm"),W=1100,H=460,P={l:64,r:20,t:14,b:40};
- const pts=M.filter(m=>isLM(m)&&m.p>5e7&&m.kv>0);if(!pts.length){svg.innerHTML="";return}
- const lx=v=>Math.log10(v),x0=lx(5e7),x1=lx(Math.max(...pts.map(m=>m.p))*1.3),ky=pts.map(m=>m.kv),y0=lx(Math.min(...ky)*.8),y1=lx(Math.max(...ky)*1.3);
+ const pts=view().filter(onMap),all=M.filter(onMap);if(!all.length){svg.innerHTML="";return}
+ const lx=v=>Math.log10(v),x0=lx(5e7),x1=lx(Math.max(...all.map(m=>m.p))*1.3),ky=all.map(m=>m.kv),y0=lx(Math.min(...ky)*.8),y1=lx(Math.max(...ky)*1.3);
  const X=v=>P.l+(lx(v)-x0)/(x1-x0)*(W-P.l-P.r),Y=v=>H-P.b-(lx(v)-y0)/(y1-y0)*(H-P.t-P.b);let s="";
  for(let e=Math.ceil(x0);e<=x1;e++){const x=X(10**e);s+=`<line class="gl" x1="${x}" x2="${x}" y1="${P.t}" y2="${H-P.b}"/><text x="${x}" y="${H-P.b+18}" text-anchor="middle" font-size="12">${fmtN(10**e)}</text>`}
  for(let e=Math.ceil(y0);e<=y1;e++){const y=Y(10**e);s+=`<line class="gl" x1="${P.l}" x2="${W-P.r}" y1="${y}" y2="${y}"/><text x="${P.l-8}" y="${y+4}" text-anchor="end" font-size="12">${fmtB(10**e)}</text>`}
  DEV.forEach(([n,g],i)=>{const p=g*1e9/1.1/0.5;if(lx(p)<x0||lx(p)>x1)return;const x=X(p);s+=`<line x1="${x}" x2="${x}" y1="${P.t}" y2="${H-P.b}" stroke="${css("--dim")}" stroke-dasharray="4 4"/><text x="${x+4}" y="${P.t+12+(i%2)*14}" font-size="11">${n}</text>`});
- const col={moe:"--s1",hyb:"--s2",dense:"--s3"};
- pts.sort((a,b)=>a.dl-b.dl).forEach(m=>{const k=kindOf(m),r=Math.max(3,Math.min(9,Math.log10(m.dl+10)-1));s+=`<circle class="pt" cx="${X(m.p).toFixed(1)}" cy="${Y(m.kv).toFixed(1)}" r="${r.toFixed(1)}" fill="${css(col[k])}" fill-opacity=".75" stroke="${css("--surface")}" stroke-width="1" data-id="${m.id}" data-h="${encodeURIComponent(`<b>${m.id}</b><br>${fmtN(m.p)} · ${fmtB(m.kv)}/token${m.act&&m.act!==m.p?` · ${fmtN(m.act)} ${t.ex_active}`:""}<br><span style='color:var(--dim)'>${fmtN(m.dl)} downloads</span>`)}" style="cursor:pointer"/>`});
+ const col={moe:"--s1",hyb:"--s2",dense:"--s3"};MMP=[];
+ pts.slice().sort((a,b)=>a.dl-b.dl).forEach(m=>{const k=kindOf(m),r=Math.max(3.5,Math.min(9,Math.log10(m.dl+10)-1)),x=X(m.p),y=Y(m.kv);MMP.push({m,x,y,r});
+  s+=`<circle class="pt" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${css(col[k])}" fill-opacity="${m.src==="submitted"?1:.72}" stroke="${css(m.src==="submitted"?"--ink":"--surface")}" stroke-width="${m.src==="submitted"?2:1}"/>`});
+ // names of the most downloaded dots, without overlaps
+ const placed=[],lab=MMP.slice().sort((a,b)=>b.m.dl-a.m.dl).filter(p=>p.m.id!==SEL);
+ for(const p of lab){if(placed.length>=10)break;const name=p.m.id.split("/")[1],w=name.length*6.4,bx=p.x+p.r+4,by=p.y-6;
+  if(bx+w>W-P.r||placed.some(q=>bx<q[0]+q[2]&&bx+w>q[0]&&by<q[1]+14&&by+14>q[1]))continue;placed.push([bx,by,w]);
+  s+=`<text x="${bx}" y="${by+10}" font-size="11.5" style="fill:var(--ink);opacity:.8;pointer-events:none">${name}</text>`}
  s+=`<text x="${(W+P.l)/2}" y="${H-6}" text-anchor="middle" font-size="12">${t.f_params}</text><text x="14" y="${(H)/2}" font-size="12" transform="rotate(-90 14 ${H/2})" text-anchor="middle">${t.f_kv}</text>`;
- const sel=M.find(m=>m.id===($("#lookq").value||"").trim());if(sel&&isLM(sel)&&sel.kv>0&&sel.p>5e7)s+=`<circle cx="${X(sel.p)}" cy="${Y(sel.kv)}" r="14" fill="none" stroke="${css("--ink")}" stroke-width="2"/><text x="${X(sel.p)+18}" y="${Y(sel.kv)+4}" font-size="12" style="fill:var(--ink);font-weight:600">${sel.id.split("/")[1]}</text>`;
- svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.innerHTML=s;hover(svg);svg.querySelectorAll(".pt").forEach(c=>c.onclick=()=>location.href=link(c.dataset.id));
+ const sel=SEL&&M.find(m=>m.id===SEL);if(sel&&onMap(sel)){const x=X(sel.p),y=Y(sel.kv),name=sel.id.split("/")[1],right=x+18+name.length*7<W-P.r;
+  s+=`<circle cx="${x}" cy="${y}" r="14" fill="none" stroke="${css("--ink")}" stroke-width="2.5"/><text x="${right?x+20:x-20}" y="${y+4}" text-anchor="${right?"start":"end"}" font-size="13" style="fill:var(--ink);font-weight:700;paint-order:stroke;stroke:var(--surface);stroke-width:4px">${name}</text>`}
+ s+=`<circle id="hvr" r="0" fill="none" stroke="${css("--ink")}" stroke-width="2" style="pointer-events:none"/>`;
+ svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.innerHTML=s;MMX={X,Y};
  legend($("#lgm"),[{c:"--s1",name:t.k_moe},{c:"--s2",name:t.k_hyb},{c:"--s3",name:t.k_dense}])}
+function nearest(e){const svg=$("#mm"),pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(svg.getScreenCTM().inverse());
+ let best=null,bd=22*22;for(const p of MMP){const d=(p.x-q.x)**2+(p.y-q.y)**2;if(d<bd){bd=d;best=p}}return best}
+function hoverDot(p,e){const h=$("#hvr");if(!h)return;if(!p){h.setAttribute("r",0);h.classList.remove("hv");hideTip();return}
+ h.setAttribute("cx",p.x);h.setAttribute("cy",p.y);h.setAttribute("r",p.r+5);const t=T[L],m=p.m;
+ if(e)showTip(e,`<b>${m.id}</b>${pills(m)}<br>${relTxt(m)} · ${fmtN(m.p)}${m.act&&m.act!==m.p?` (${fmtN(m.act)} ${t.ex_active})`:""} · ${fmtB(m.kv)}/token<br><span style='color:var(--dim)'>${fmtN(m.dl)} downloads</span>`)}
+function flash(id){const p=MMP.find(q=>q.m.id===id),h=$("#hvr");if(!h)return;if(!p){h.setAttribute("r",0);h.classList.remove("hv");return}h.setAttribute("cx",p.x);h.setAttribute("cy",p.y);h.setAttribute("r",p.r+5);h.classList.add("hv")}
+(()=>{const svg=$("#mm");svg.addEventListener("pointermove",e=>hoverDot(nearest(e),e));svg.addEventListener("pointerleave",()=>hoverDot(null));
+ svg.addEventListener("click",e=>{const p=nearest(e);if(p){select(p.m.id);hideTip()}})})();
 
 const ISSUE=id=>`https://github.com/JoesSattes/ai-model-explorer/issues/new?template=submit-model.yml&title=${encodeURIComponent("[Model] "+(id||""))}${id?"&repo="+encodeURIComponent(id):""}`;
-const TIERC={"Phone":"--s3","Laptop":"--s3","Desktop GPU":"--s4","Workstation":"--s2","Cluster":"--neg"};
-function board(){const t=T[L];$("#submitBtn").href=ISSUE("");$("#bhead").innerHTML=t.bd_cols.map((c,i)=>`<th class="${i>2&&i<8?"num":""}">${c}</th>`).join("");
- if(!B.length){$("#bbody").innerHTML=`<tr><td colspan="9" style="padding:18px;color:var(--soft)">${t.bd_empty} <a class="pbtn" href="${ISSUE("")}" target="_blank" rel="noopener">${t.bd_submit}</a></td></tr>`;return}
- $("#bbody").innerHTML=B.map(b=>`<tr><td><a href="${link(b.id)}">${b.id}</a></td><td><span class="pill" style="color:var(${TIERC[b.tier]||"--soft"})">${b.tier}</span></td>
+const TIERC={"Phone":"--s3","Laptop":"--s3","Desktop GPU":"--s4","Workstation":"--s2","Cluster":"--neg"},TIERS=[[4.8,"Phone"],[12,"Laptop"],[24,"Desktop GPU"],[80,"Workstation"],[1e9,"Cluster"]];
+let BT="all",BTIER="",BLANG="",BALL=false,BSORT="downloads",BSD=-1;const THR={"TH":0,"TH/EN":0,"Multilingual":1};
+const inTab=(b,k)=>k==="all"||(k==="submitted"?b.src==="submitted":(b.groups||[]).includes(k));
+function board(){const t=T[L];$("#submitBtn").href=ISSUE("");
+ const tabs=["all","lab","popular","thai","submitted"].map(k=>[k,B.filter(b=>inTab(b,k)).length]);
+ $("#btabs").innerHTML=tabs.map(([k,n])=>`<button class="tab ${BT===k?"on":""}" data-k="${k}">${t.bd_tabs[k]}<b>${n}</b></button>`).join("");
+ $("#btabs").querySelectorAll(".tab").forEach(b=>b.onclick=()=>{BT=b.dataset.k;BLANG="";BALL=false;board()});
+ $("#btiers").innerHTML=(BT==="thai"?[["",t.bd_any],["TH","TH"],["TH/EN","TH/EN"],["Multilingual",t.th_lab.Multilingual]].map(([k,n])=>`<button class="tchip lg ${BLANG===k?"on":""}" data-k="${k}">${n}</button>`).join("")+`<span style="width:12px"></span>`:"")+`<span>${t.bd_tier}</span>`+[["",t.bd_any],...TIERS.map(x=>[x[1],x[1]])].map(([k,n])=>`<button class="tchip ${BTIER===k?"on":""}" data-k="${k}">${n}</button>`).join("");
+ $("#btiers").querySelectorAll(".tchip").forEach(b=>b.onclick=()=>{if(b.classList.contains("lg"))BLANG=b.dataset.k;else BTIER=b.dataset.k;board()});
+ const K=["id","origin","need_4bit_8k_bytes","score","params","active","kv_bytes_per_token","need_4bit_8k_bytes","downloads"];
+ $("#bhead").innerHTML=t.bd_cols.map((c,i)=>`<th class="${i>2?"num":""}" data-i="${i}">${c}${BSORT===K[i]&&i!==2?(BSD>0?" ▲":" ▼"):""}</th>`).join("");
+ $("#bhead").querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=K[+th.dataset.i];BSD=BSORT===k?-BSD:(k==="id"?1:-1);BSORT=k;board()});
+ const q=$("#bq").value.trim().toLowerCase();
+ let r=B.filter(b=>inTab(b,BT)&&(!BTIER||b.tier===BTIER)&&(BT!=="thai"||!BLANG||b.th===BLANG)&&(!q||b.id.toLowerCase().includes(q)));
+ r.sort((a,b)=>{if(BT==="thai"&&BSORT==="downloads"&&a.th!==b.th){const d=(THR[a.th]??2)-(THR[b.th]??2);if(d)return d}const x=a[BSORT],y=b[BSORT];if(x==null)return 1;if(y==null)return -1;return(x>y?1:x<y?-1:0)*BSD});
+ const show=BALL?r:r.slice(0,15);
+ $("#bbody").innerHTML=show.length?show.map(b=>`<tr data-id="${b.id}" class="${b.id===SEL?"sel":""}"><td><button class="nm">${b.id}</button>${pills(b)}<a class="ext" href="${link(b.id)}" title="${t.open_full}">↗</a></td><td>${relTxt(b)}</td><td><span class="pill" style="color:var(${TIERC[b.tier]||"--soft"})">${b.tier}</span></td>
   <td title="${Object.entries(b.checks).map(([k,v])=>(v?"✓ ":"✕ ")+(t.chk[k]||k)).join("\n")}">${Object.values(b.checks).map(v=>v?"●":"○").join("")} ${b.score}/5</td>
-  <td class="num">${fmtN(b.params)}</td><td class="num">${b.active&&b.active!==b.params?fmtN(b.active):"–"}</td><td class="num">${b.storage}</td><td class="num">${fmtB(b.kv_bytes_per_token)}</td><td class="num">${fmtB(b.need_4bit_8k_bytes)}</td><td class="num">${b.submitted}</td></tr>`).join("")}
+  <td class="num">${fmtN(b.params)}</td><td class="num">${b.active&&b.active!==b.params?fmtN(b.active):"–"}</td><td class="num">${fmtB(b.kv_bytes_per_token)}</td><td class="num">${fmtB(b.need_4bit_8k_bytes)}</td><td class="num">${b.src==="submitted"?`<a href="https://github.com/JoesSattes/ai-model-explorer/issues/${b.issue}" target="_blank" rel="noopener">#${b.issue}</a>`:fmtN(b.downloads)}</td></tr>`).join("")
+  :`<tr><td colspan="9" style="padding:18px;color:var(--soft)">${t.bd_empty} <a class="pbtn" href="${ISSUE("")}" target="_blank" rel="noopener">${t.bd_submit}</a></td></tr>`;
+ rowEvents($("#bbody"),"#lookup");
+ const more=$("#bmore");more.style.display=r.length>15?"":"none";more.textContent=BALL?t.bd_less:t.bd_more(r.length);more.onclick=()=>{BALL=!BALL;board()};$("#bnote").textContent=t.bd_note}
+function rowEvents(tb,scroll){tb.querySelectorAll("tr[data-id]").forEach(tr=>{tr.onmouseenter=()=>flash(tr.dataset.id);tr.onmouseleave=()=>flash(null);
+ tr.onclick=e=>{if(e.target.closest("a"))return;select(tr.dataset.id,{scroll})}})}
 let ro=null;function reveal(){if(!ro)ro=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");ro.unobserve(e.target)}}),{threshold:.12});document.querySelectorAll(".rv:not(.in)").forEach(n=>ro.observe(n))}
 function countUp(){document.querySelectorAll(".kpi b").forEach(b=>{const txt=b.textContent,m=txt.match(/^([\d,.]+)(.*)$/);if(!m)return;const end=parseFloat(m[1].replace(/,/g,"")),dec=(m[1].split(".")[1]||"").length,t0=performance.now();
  const step=now=>{const k=Math.min(1,(now-t0)/900),v=end*(1-Math.pow(1-k,3));b.textContent=(dec?v.toFixed(dec):Math.round(v).toLocaleString())+m[2];if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)})}
@@ -396,31 +481,46 @@ function charts(){const t=T[L],tr=I.trends.filter(r=>r.models>=30);
  lineChart($("#ch3b"),tr,[{k:"v",c:"--s1",name:t.vocab,v:r=>r.median_vocab/1000}],{yfmt:v=>String(v),H:220,W:280});
  const nw=Object.entries(I.no_weights_kind_popular||{}).sort((a,b)=>b[1]-a[1]);barChart($("#ch4"),nw.map(([k,v])=>({label:t[k]||k,v:Math.round(v*100),tip:`<b>${t[k]||k}</b>: ${pct(v)}%`})),{H:260})}
 // ---- table
-const COLS=[["id",0],["y",1],["fam",0],["p",1],["q",0],["d",1],["L",1],["H",1],["E",1],["V",1],["kv",1],["cfg",0],["hub",1],["dl",1]];
+const COLS=[["id",0],["origin",0],["y",1],["fam",0],["p",1],["q",0],["d",1],["L",1],["H",1],["E",1],["V",1],["kv",1],["cfg",0],["hub",1],["dl",1]];
 let sortK="dl",sortD=-1,page=0;const PS=50;
 function opts(sel,label,vals){sel.innerHTML=`<option value="">${label}</option>`+vals.map(v=>`<option>${v}</option>`).join("")}
-function table(){const t=T[L],q=$("#q").value.trim().toLowerCase(),ff=$("#ffam").value,fq=$("#fq").value,fy=$("#fy").value,fo=$("#fo").value,fk=$("#fk").value;
- let r=M.filter(m=>(!q||m.id.toLowerCase().includes(q))&&(!ff||m.fam===ff)&&(!fq||(m.q||t.unq)===fq||(m.q||"").split("+").includes(fq))&&(!fy||String(m.y)===fy)&&(!fo||(fo==="o"?m.origin==="original":m.origin!=="original"))&&(!fk||(fk==="lat"?m.lat||(m.KV&&m.H&&m.KV*8<=m.H):fk==="nocfg"?!m.cfg:kindOf(m)===fk)));
+function view(){const t=T[L],q=$("#q").value.trim().toLowerCase(),ff=$("#ffam").value,fq=$("#fq").value,fy=$("#fy").value,fo=$("#fo").value,fk=$("#fk").value,fl=$("#fl").value;
+ return M.filter(m=>(!q||m.id.toLowerCase().includes(q))&&(!ff||m.fam===ff)&&(!fq||(m.q||t.unq)===fq||(m.q||"").split("+").includes(fq))&&(!fy||String(m.y)===fy)
+  &&(!fo||(fo==="lab"?m.lab&&m.origin==="original":fo==="o"?m.origin==="original":fo==="c"?m.origin!=="original":fo==="sub"?m.src==="submitted":m.origin===fo))
+  &&(!fl||(fl==="th"?m.th==="TH"||m.th==="TH/EN":!!m.th))
+  &&(!fk||(fk==="lat"?m.lat||(m.KV&&m.H&&m.KV*8<=m.H):fk==="nocfg"?!m.cfg:kindOf(m)===fk)))}
+function table(){const t=T[L];let r=view();
  r.sort((a,b)=>{const x=sortK==="hub"?(a.hub?a.p/a.hub:null):a[sortK],y=sortK==="hub"?(b.hub?b.p/b.hub:null):b[sortK];if(x==null)return 1;if(y==null)return -1;return (x>y?1:x<y?-1:0)*sortD});
- const n=r.length,pages=Math.max(1,Math.ceil(n/PS));page=Math.min(page,pages-1);const app=L==="th"?"../":"../en/";
+ const n=r.length,pages=Math.max(1,Math.ceil(n/PS));page=Math.min(page,pages-1);
  $("#thead").innerHTML=t.cols.map((c,i)=>`<th class="${COLS[i][1]?"num":""}" data-k="${COLS[i][0]}">${c}${sortK===COLS[i][0]?(sortD>0?" ▲":" ▼"):""}</th>`).join("");
  $("#tbody").innerHTML=r.slice(page*PS,page*PS+PS).map(m=>{const ratio=m.hub?m.p/m.hub:null,ok=ratio!=null&&Math.abs(ratio-1)<=.001;
-  return `<tr><td><a href="${app}#hf=${encodeURIComponent(m.id)}">${m.id}</a></td><td class="num">${m.y||"–"}</td><td><span class="pill">${m.fam||"?"}</span></td><td class="num">${fmtN(m.p)}</td><td>${m.q||t.unq}</td><td class="num">${m.d??"–"}</td><td class="num">${m.L??"–"}</td><td class="num">${m.H??"–"} / ${m.KV??"–"}</td><td class="num">${m.E??"–"}</td><td class="num">${m.V?m.V.toLocaleString():"–"}</td><td class="num">${fmtB(m.kv)}</td><td>${m.cfg?"✓":"–"}</td><td class="num ${ratio!=null&&!ok?"warn":""}">${ratio==null?"–":ok?"✓":"×"+ratio.toFixed(2)}</td><td class="num">${fmtN(m.dl)}</td></tr>`}).join("");
- $("#pinfo").textContent=`${(page*PS+1).toLocaleString()}–${Math.min(n,page*PS+PS).toLocaleString()} / ${n.toLocaleString()}`;
- document.querySelectorAll("#thead th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;sortD=sortK===k?-sortD:(k==="id"?1:-1);sortK=k;table()})}
-function filters(){const t=T[L],uniq=f=>[...new Set(M.map(f).filter(Boolean))];
+  return `<tr data-id="${m.id}" class="${m.id===SEL?"sel":""}"><td><button class="nm">${m.id}</button>${pills(m)}<a class="ext" href="${link(m.id)}" title="${t.open_full}">↗</a></td><td>${relTxt(m)}</td><td class="num">${m.y||"–"}</td><td><span class="pill">${m.fam||"?"}</span></td><td class="num">${fmtN(m.p)}</td><td>${m.q||t.unq}</td><td class="num">${m.d??"–"}</td><td class="num">${m.L??"–"}</td><td class="num">${m.H??"–"} / ${m.KV??"–"}</td><td class="num">${m.E??"–"}</td><td class="num">${m.V?m.V.toLocaleString():"–"}</td><td class="num">${fmtB(m.kv)}</td><td>${m.cfg?"✓":"–"}</td><td class="num ${ratio!=null&&!ok?"warn":""}">${ratio==null?"–":ok?"✓":"×"+ratio.toFixed(2)}</td><td class="num">${fmtN(m.dl)}</td></tr>`}).join("");
+ $("#pinfo").textContent=`${n?(page*PS+1).toLocaleString():0}–${Math.min(n,page*PS+PS).toLocaleString()} / ${n.toLocaleString()}`;
+ document.querySelectorAll("#thead th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;sortD=sortK===k?-sortD:(k==="id"||k==="origin"?1:-1);sortK=k;table()});
+ rowEvents($("#tbody"));memmap()}
+function filters(){const t=T[L],uniq=f=>[...new Set(M.map(f).filter(Boolean))],keep=["#ffam","#fq","#fy","#fo","#fk","#fl"].map(x=>$(x).value);
  opts($("#ffam"),t.all_fam,uniq(m=>m.fam).sort());opts($("#fq"),t.all_q,[t.unq,...uniq(m=>m.q).flatMap(q=>q.split("+")).filter((v,i,a)=>a.indexOf(v)===i).sort()]);
- opts($("#fy"),t.all_y,uniq(m=>m.y).sort((a,b)=>b-a));$("#fo").innerHTML=`<option value="">${t.all_o}</option><option value="o">${t.o_orig}</option><option value="c">${t.o_copy}</option>`;
+ opts($("#fy"),t.all_y,uniq(m=>m.y).sort((a,b)=>b-a));
+ $("#fo").innerHTML=`<option value="">${t.all_o}</option><option value="lab">★ ${t.o_lab}</option><option value="o">${t.o_orig}</option><option value="c">${t.o_copy}</option><option value="finetune">· ${t.o_ft}</option><option value="quantized">· ${t.o_qz}</option><option value="merge">· ${t.o_mg}</option><option value="adapter">· ${t.o_ad}</option><option value="sub">${t.o_sub}</option>`;
+ $("#fl").innerHTML=`<option value="">${t.all_l}</option><option value="th">${t.l_th}</option><option value="tha">${t.l_tha}</option>`;
  $("#fk").innerHTML=`<option value="">${t.all_k}</option><option value="moe">${t.k_moe}</option><option value="hyb">${t.k_hyb}</option><option value="dense">${t.k_dense}</option><option value="lat">${t.k_lat} / GQA ≥ 8×</option><option value="nocfg">${t.k_nocfg}</option>`;
- $("#ids").innerHTML=M.slice(0,4000).map(m=>`<option value="${m.id}">`).join("")}
+ ["#ffam","#fq","#fy","#fo","#fk","#fl"].forEach((x,i)=>$(x).value=keep[i]);
+ $("#ids").innerHTML=M.map(m=>`<option value="${m.id}">`).join("")}
 function render(){POP=null;const pe=$("#prelim");pe.style.display=I.preliminary?"block":"none";pe.textContent=L==="th"?"ตัวเลขชุดนี้เป็นผลเบื้องต้น ระหว่างรอการรันรอบสุดท้ายที่แก้ข้อผิดพลาดแล้ว":"Preliminary numbers: the final run, with fixes to the recovery rules, is in progress.";kpis();countUp();board();findings();charts();memmap();filters();table();{const qm=new URLSearchParams(location.search).get("m");if(qm&&!$("#lookq").value){$("#lookq").value=qm;setTimeout(()=>$("#lookup").scrollIntoView({behavior:"smooth"}),300)}}if(!$("#lookq").value){const d=M.find(m=>/qwen3/i.test(m.id)&&isLM(m))||M[0];$("#lookq").value=d.id}lookup($("#lookq").value);const c=I.headline.crawled;$("#crawled").textContent=c?` · ${T[L].crawled} ${c}`:""}
 document.querySelectorAll("#lang button").forEach(b=>b.onclick=()=>{L=b.dataset.l;applyLang()});
 $("#themeBtn").onclick=()=>theme(document.documentElement.dataset.theme==="dark"?"light":"dark");
-["#q","#ffam","#fq","#fy","#fo","#fk"].forEach(s=>$(s).addEventListener("input",()=>{page=0;table()}));
+["#q","#ffam","#fq","#fy","#fo","#fk","#fl"].forEach(s=>$(s).addEventListener("input",()=>{page=0;table()}));$("#bq").addEventListener("input",()=>{BALL=false;board()});
 $("#lookq").addEventListener("change",e=>lookup(e.target.value.trim()));$("#lookq").addEventListener("input",e=>{const v=e.target.value.trim();if(M&&M.some(m=>m.id===v))lookup(v)});
 $("#prev").onclick=()=>{page=Math.max(0,page-1);table()};$("#next").onclick=()=>{page++;table()};
 theme(document.documentElement.dataset.theme);
-Promise.all([fetch("data/insights.json").then(r=>r.json()),fetch("data/models.json").then(r=>r.json()),fetch("data/community.json").then(r=>r.ok?r.json():[]).catch(()=>[])]).then(([a,b,c])=>{I=a;M=b;B=c||[];if(I.dataset_url)$("#dsLink").href=I.dataset_url;applyLang();reveal()});
+const getJ=u=>fetch(u).then(r=>r.ok?r.json():[]).catch(()=>[]);
+function toRow(b){return {id:b.id,dl:b.downloads||0,likes:b.likes||0,y:b.y||null,origin:b.origin||"original",lab:!!b.lab,th:b.th||null,pt:b.pt||"",src:b.src,fam:b.family,p:b.params,
+ hub:b.checks&&b.checks["Hub parameter count correct"]?b.params:null,q:b.storage==="unquantized"?"":b.storage,d:b.d,L:b.layers,H:b.heads,KV:b.kv_heads,E:b.experts,V:b.vocab,kv:b.kv_bytes_per_token,
+ ssm:b.ssm_layers||0,cfg:!!(b.checks&&b.checks["config.json"]),sb:b.stored_bytes,act:b.active,lat:false}}
+Promise.all([getJ("data/insights.json"),getJ("data/models.json"),getJ("data/board.json"),getJ("data/community.json")]).then(([a,b,bd,c])=>{I=a;M=b;
+ const sub=(c||[]).map(x=>({...x,src:"submitted",groups:[...new Set([...(x.groups||[]),...((bd||[]).find(y=>y.id===x.id)||{}).groups||[]])]}));
+ B=[...sub,...(bd||[]).filter(x=>!sub.some(y=>y.id===x.id))];
+ const ids=new Set(M.map(m=>m.id));B.forEach(x=>{if(!ids.has(x.id))M.push(toRow(x));else if(x.src==="submitted")Object.assign(M.find(m=>m.id===x.id),{src:"submitted"})});if(I.dataset_url)$("#dsLink").href=I.dataset_url;applyLang();reveal()});
 applyLang();reveal();
 </script>
 </body>

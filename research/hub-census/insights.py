@@ -9,6 +9,8 @@ is wrong, and which repos ship no specification but their weights. Writes:
 import argparse, json, math, os
 import pandas as pd
 
+import labels
+
 BLUE, ORANGE, AQUA, YELLOW, INK, INK2, GRID, SURF = "#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#0b0b0b", "#52514e", "#e6e5e0", "#fcfcfb"
 LM = ("decoder", "prefix-lm")
 
@@ -100,12 +102,21 @@ def active(r):
     return int(r["params"] - ex * (1 - k / e))
 
 
-def model_rows(ok, n=4000):
+def model_rows(ok, extra=None, tags=None, n=4000):
+    """The n most downloaded readable models, plus every readable model from a leading provider or built for Thai."""
+    tags = tags or {}
+    top = ok.sort_values("downloads", ascending=False).head(n)
+    if extra is not None:
+        keep = lambda r: labels.is_lab(r["id"]) or bool(labels.thai(r["id"], tags.get(r["id"], []), r["family_manifest"]))
+        more = extra[extra.apply(keep, axis=1)]
+        top = pd.concat([top, more[~more["id"].isin(top["id"])]]).sort_values("downloads", ascending=False)
     rows = []
-    for _, r in ok.sort_values("downloads", ascending=False).head(n).iterrows():
+    for _, r in top.iterrows():
         h, f = r["hp"] or {}, r["hp_fused"] or {}
+        tg, q = tags.get(r["id"], []), r["quant"] if isinstance(r["quant"], dict) else {}
         rows.append({"id": r["id"], "dl": int(r["downloads"] or 0), "likes": int(r["likes"] or 0),
-                     "y": int(r["year"]) if not math.isnan(r["year"]) else None, "origin": r.get("origin"),
+                     "y": int(r["year"]) if not math.isnan(r["year"]) else None, "origin": labels.origin(r.get("origin"), q, r["id"], tg),
+                     "lab": labels.is_lab(r["id"]), "th": labels.thai(r["id"], tg, r["family_manifest"]), "pt": r.get("pipeline_tag"), "lic": labels.license_of(tg),
                      "fam": r["family_manifest"], "p": r["params"], "hub": r["hub_params"] if r["hub_params"] == r["hub_params"] else None,
                      "q": "+".join(sorted(r["quant"])) if isinstance(r["quant"], dict) and r["quant"] else "",
                      "d": h.get("d"), "L": h.get("layers"), "H": f.get("heads") or h.get("heads"), "KV": f.get("kv_heads") or h.get("kv_heads"),
@@ -200,7 +211,8 @@ def main(census, outdir):
     json.dump(json.loads(json.dumps(out, default=float).replace("NaN", "null")), open(os.path.join(outdir, "insights.json"), "w"), indent=1)
     def clean(v):  # JSON has no NaN
         return None if isinstance(v, float) and v != v else v
-    rows = [{k: clean(v) for k, v in r.items()} for r in model_rows(ok)]
+    readable = d[(d["status"] == "ok") & ~d["id"].str.contains(FIXTURE, case=False, regex=True)]
+    rows = [{k: clean(v) for k, v in r.items()} for r in model_rows(ok, readable, labels.tags_by_id(census))]
     json.dump(rows, open(os.path.join(outdir, "models.json"), "w"), separators=(",", ":"), default=float, allow_nan=False)
     chart_trends(T, os.path.join(outdir, "trends.png"))
     chart_hub(H, os.path.join(outdir, "storage.png"))
