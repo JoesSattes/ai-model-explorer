@@ -7,13 +7,33 @@ After a rule change, run this instead of crawling the Hub again:
     python summarize.py
 Popularity, status and timing fields are kept; everything derived from the weights is recomputed.
 """
-import argparse, gzip, json, os, sys
+import argparse, gzip, json, multiprocessing as mp, os, sys
 
 from ai_model_explorer._engine import Engine
 from crawl import analyze
 
 
-def main(census, out):
+_eng = None
+
+
+def _init():
+    global _eng
+    _eng = Engine()
+
+
+def _one(line):
+    global _eng
+    m = json.loads(line)
+    tensors = {k: {"dtype": d, "shape": s} for k, (d, s) in m["tensors"].items()}
+    try:
+        return m["id"], analyze(_eng, tensors, m.get("config"), m.get("meta") or {})
+    except Exception as e:  # noqa: BLE001
+        _eng = Engine()  # a failed evaluation can leave the JS context in a bad state
+        return m["id"], {"status": "error", "error": f"rescore: {type(e).__name__}: {e}"[:300]}
+
+
+def main(census, out, workers=None):
+    workers = workers or os.cpu_count() or 1
     recs = {}
     with open(census) as fh:
         for line in fh:
@@ -22,21 +42,20 @@ def main(census, out):
     man = census.replace(".jsonl", "") + "_manifests.jsonl.gz"
     if not os.path.exists(man):
         sys.exit(f"{man} not found: this crawl predates raw manifests, crawl again once")
-    eng, n, bad = Engine(), 0, 0
-    with gzip.open(man, "rt") as fh:
-        for line in fh:
-            m = json.loads(line)
-            if m["id"] not in recs:
-                continue
-            tensors = {k: {"dtype": d, "shape": s} for k, (d, s) in m["tensors"].items()}
-            try:
-                new = analyze(eng, tensors, m.get("config"), m.get("meta") or {})
-            except Exception as e:  # noqa: BLE001
-                new = {"status": "error", "error": f"rescore: {type(e).__name__}: {e}"[:300]}
-                bad += 1
-                eng = Engine()  # a failed evaluation can leave the JS context in a bad state
-            recs[m["id"]].update(new)
+    def todo():
+        with gzip.open(man, "rt") as fh:
+            for line in fh:
+                i = line[8:line.index('"', 8)] if line.startswith('{"id": "') else json.loads(line)["id"]
+                if i in recs:
+                    yield line
+    n = bad = 0
+    with mp.Pool(workers, initializer=_init) as pool:
+        for rid, new in pool.imap_unordered(_one, todo(), chunksize=8):
+            recs[rid].update(new)
             n += 1
+            bad += new.get("status") == "error" and str(new.get("error", "")).startswith("rescore:")
+            if n % 1000 == 0:
+                print(f"{n} re-scored", flush=True)
     tmp = out + ".tmp"
     with open(tmp, "w") as fh:
         for r in recs.values():
@@ -49,5 +68,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--census", default="out/census.jsonl")
     ap.add_argument("--out", default="out/census.jsonl")
+    ap.add_argument("--workers", type=int, default=None, help="processes (default: all cores)")
     a = ap.parse_args()
-    main(a.census, a.out)
+    main(a.census, a.out, a.workers)

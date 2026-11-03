@@ -9,10 +9,10 @@
 
 Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026.
 """
-__version__ = "0.3.0"
+__version__ = "1.0.0"
 
 from .api import inspect, summary  # noqa: E402
 from .model import Model, compare, compare_table, explore  # noqa: E402
-from .tools import DEVICES, diff, fits, scan  # noqa: E402
+from .tools import DEVICES, census, diff, fits, ready, scan  # noqa: E402
 
-__all__ = ["explore", "compare", "compare_table", "Model", "inspect", "summary", "fits", "diff", "scan", "DEVICES", "__version__"]
+__all__ = ["explore", "compare", "compare_table", "Model", "inspect", "summary", "fits", "diff", "scan", "DEVICES", "ready", "census", "__version__"]

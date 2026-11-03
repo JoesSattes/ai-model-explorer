@@ -54,7 +54,8 @@ def _cache_path(repo: str, sha: Optional[str]) -> Optional[Path]:
 def _remote(repo: str, hub: Hub, info: Optional[dict] = None, cache: bool = True):
     info = info or hub.model_info(repo)
     extra_info = {"downloads": info.get("downloads"), "hub_params": (info.get("safetensors") or {}).get("total"),
-                  "weight_bytes": sum(s.get("size") or 0 for s in info.get("siblings", [])), "revision": info.get("sha")}
+                  "weight_bytes": sum(s.get("size") or 0 for s in info.get("siblings", [])), "revision": info.get("sha"),
+                  "license": (info.get("cardData") or {}).get("license"), "pipeline_tag": info.get("pipeline_tag"), "tags": info.get("tags")}
     cp = _cache_path(repo, info.get("sha")) if cache else None
     if cp and cp.exists():  # same commit, same headers: nothing to fetch
         try:

@@ -25,6 +25,8 @@ jobs:
           python -m pip install dist/*.whl
           ai-model-explorer --version
           python -c "import ai_model_explorer"
+          python -m pip install pytest
+          cd /tmp && python -m pytest -q "$GITHUB_WORKSPACE/python/tests"
       - uses: actions/upload-artifact@v4
         with:
           name: dist

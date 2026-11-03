@@ -119,3 +119,95 @@ def to_csv(rows: List[dict]) -> str:
     w.writeheader()
     w.writerows(rows)
     return buf.getvalue()
+
+
+# ---- the Deploy-Ready board, locally
+TIERS = [(4.8e9, "Phone"), (12e9, "Laptop"), (24e9, "Desktop GPU"), (80e9, "Workstation"), (float("inf"), "Cluster")]
+SITE = "https://joessattes.github.io/ai-model-explorer"
+SUBMIT = "https://github.com/JoesSattes/ai-model-explorer/issues/new?template=submit-model.yml"
+
+
+def ready(model: Union[str, Model], token: Optional[str] = None) -> dict:
+    """The Deploy-Ready board's verdict for one model, computed on your machine: the smallest device class it fits at
+    4-bit weights with an 8k context (+10% runtime) and five metadata checks. Same rules as the board."""
+    m = model if isinstance(model, Model) else explore(model, token=token)
+    d, src = m.data, m.data.get("source") or {}
+    kv = m.kv_cache_bytes_per_token(16) or 0
+    need = (m.params * 0.5 + kv * 8192) * 1.1
+    tier = next(name for lim, name in TIERS if need <= lim)
+    chk = [v for v in (d.get("config_check") or {}).values() if isinstance(v, dict) and v.get("checked")]
+    hub = src.get("hub_params")
+    checks = {"safetensors": (d.get("files_read") or 0) > 0, "config.json": bool(d.get("has_config")),
+              "config agrees with weights": bool(chk) and all(v.get("consistent") for v in chk),
+              "Hub parameter count correct": bool(hub) and abs(m.params - hub) / hub <= 0.001,
+              "license declared": bool(src.get("license"))}
+    repo = src.get("repo")
+    return {"model": m.name, "tier": tier, "need_4bit_8k_bytes": int(need), "params": m.params, "active_params": m.active_params,
+            "kv_bytes_per_token": kv, "checks": checks, "score": sum(checks.values()),
+            "submit_url": f"{SUBMIT}&repo={repo}&title=%5BModel%5D%20{repo}" if repo else None}
+
+
+def ready_text(r: dict) -> str:
+    out = [f"{r['model']}: fits on {r['tier']}  (4-bit weights, 8k context: {fmt_b(r['need_4bit_8k_bytes'])})",
+           f"  {fmt_n(r['params'])} parameters" + (f", {fmt_n(r['active_params'])} active per token"
+                                                    if r["active_params"] and r["active_params"] != r["params"] else "")
+           + (f", KV cache {fmt_b(r['kv_bytes_per_token'])} per token" if r["kv_bytes_per_token"] else "")]
+    out += [f"  {'✓' if v else '✗'} {k}" for k, v in r["checks"].items()]
+    out.append(f"  score {r['score']}/5")
+    if r["submit_url"]:
+        out.append(f"  put it on the board and get a badge: {r['submit_url']}")
+    return "\n".join(out)
+
+
+def _census_rows(refresh: bool = False) -> List[dict]:
+    """The census table the website shows (popular readable models), cached for a day."""
+    import json, os, time, urllib.request
+    from .api import CACHE_DIR
+    p = CACHE_DIR / "census-models.json"
+    if not refresh and p.exists() and time.time() - p.stat().st_mtime < 86400:
+        return json.loads(p.read_text(encoding="utf-8"))
+    req = urllib.request.Request(f"{SITE}/census/data/models.json", headers={"User-Agent": "ai-model-explorer"})
+    data = urllib.request.urlopen(req, timeout=60).read()
+    rows = json.loads(data)
+    if not os.environ.get("AME_NO_CACHE"):
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes(data)
+    return rows
+
+
+def census(model: Union[str, Model], token: Optional[str] = None, rows: Optional[List[dict]] = None, n: int = 5) -> dict:
+    """Where a model sits among the popular language models of the Hub Weight Census: size and KV-cache percentiles,
+    and the popular models closest to it in size and cache (what people deploy at that budget)."""
+    import math
+    m = model if isinstance(model, Model) else explore(model, token=token)
+    rows = rows if rows is not None else _census_rows()
+    lm = [r for r in rows if r.get("fam") in ("decoder", "prefix-lm") and r.get("p") and r.get("kv")]
+    kv = m.kv_cache_bytes_per_token(16)
+    pct = lambda xs, v: round(100 * sum(1 for x in xs if x < v) / len(xs)) if xs and v else None
+    near = []
+    if kv:
+        dist = lambda r: math.hypot(math.log10(r["p"] / m.params), math.log10(r["kv"] / kv))
+        near = sorted((r for r in lm if r["id"] != m.name and r.get("origin") == "original"), key=dist)[:n]
+    me = next((r for r in rows if r["id"] == m.name), None)
+    return {"model": m.name, "in_census": me is not None, "release": (me or {}).get("origin"), "provider": (me or {}).get("lab"),
+            "thai": (me or {}).get("th"), "params_percentile": pct([r["p"] for r in lm], m.params),
+            "kv_percentile": pct([r["kv"] for r in lm], kv), "popular_models": len(lm),
+            "nearest": [{"id": r["id"], "params": r["p"], "kv_bytes_per_token": r["kv"], "downloads": r["dl"]} for r in near],
+            "page": f"{SITE}/census/?m={m.name}"}
+
+
+def census_text(r: dict) -> str:
+    out = [r["model"] + ("" if r["in_census"] else "  (not in the census table; compared anyway)")]
+    if r["in_census"]:
+        out.append("  " + ", ".join(x for x in [r["release"] and f"release: {r['release']}", r["provider"] and "leading provider",
+                                                r["thai"] and f"Thai: {r['thai']}"] if x))
+    if r["params_percentile"] is not None:
+        out.append(f"  larger than {r['params_percentile']}% of {r['popular_models']:,} popular language models")
+    if r["kv_percentile"] is not None:
+        out.append(f"  KV cache per token larger than {r['kv_percentile']}% of them")
+    if r["nearest"]:
+        out.append("  closest popular originals (size and KV cache):")
+        out += [f"    {x['id']:48} {fmt_n(x['params']):>7}  {fmt_b(x['kv_bytes_per_token']):>9}/token  {fmt_n(x['downloads']):>6} downloads"
+                for x in r["nearest"]]
+    out.append(f"  on the web: {r['page']}")
+    return "\n".join(out)

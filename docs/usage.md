@@ -112,6 +112,23 @@ devices (Mac, Jetson, phones) count only the share an app can normally use.
 types. `scan` writes one row per repo (family, parameters, active parameters, storage, hyperparameters, KV bytes per
 token, the Hub's own count and whether it matches, config check, bytes read); a repo that fails becomes a row with `error`.
 
+### `ready`, `census`: the Deploy-Ready board and the Hub census, from the terminal
+
+```bash
+ai-model-explorer ready Qwen/Qwen3-8B             # device class at 4-bit / 8k context and five metadata checks
+ai-model-explorer ready my-org/my-model --submit  # same, then opens the board submission in the browser
+ai-model-explorer census Qwen/Qwen3-8B            # where it sits among the Hub's popular language models
+```
+
+`ready` applies the board's rules on your machine: memory for 4-bit weights and an 8k-token KV cache plus 10%, placed
+in Phone (≤ 4.8 GB), Laptop (≤ 12), Desktop GPU (≤ 24), Workstation (≤ 80) or Cluster; then safetensors, config.json,
+config agrees with the weights, the Hub's parameter count is right, and a license is declared. Run it before you submit.
+
+`census` downloads the census table the website shows (cached for a day; `--refresh` to fetch it again) and reports the
+model's size and KV-cache percentiles among popular language models, its release type (original, fine-tune, quantized
+copy, merge, adapter), whether it comes from a leading provider or is built for Thai, and the five popular original
+releases closest to it in size and cache.
+
 ### `open`: run the website on your machine
 
 ```bash

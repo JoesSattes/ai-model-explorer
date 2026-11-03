@@ -117,6 +117,16 @@ def main(argv=None) -> int:
     sc.add_argument("-o", "--output", help="write CSV here (default: print CSV)")
 
     sub.add_parser("devices", help="list the device names known to 'fits'")
+    rd = sub.add_parser("ready", help="the Deploy-Ready board's verdict: device class at 4-bit/8k and five metadata checks")
+    rd.add_argument("model")
+    rd.add_argument("--json", action="store_true")
+    rd.add_argument("--submit", action="store_true", help="open the board submission for this model in the browser")
+    cs = sub.add_parser("census", help="where a model sits among the Hub's popular language models")
+    cs.add_argument("model")
+    cs.add_argument("--json", action="store_true")
+    cs.add_argument("--refresh", action="store_true", help="download the census table again")
+    for x in (rd, cs):
+        x.add_argument("--token")
 
     o = sub.add_parser("open", help="open the web app in your browser (runs locally)")
     o.add_argument("model", nargs="?", help="Hugging Face repo to load right away, e.g. Qwen/Qwen3-8B")
@@ -135,6 +145,17 @@ def main(argv=None) -> int:
         if a.cmd == "devices":
             for k, v in tools.DEVICES.items():
                 print(f"  {k:22} {v:6.1f} GB usable")
+            return 0
+        if a.cmd == "ready":
+            r = tools.ready(a.model, token=a.token)
+            print(json.dumps(r, indent=1) if a.json else tools.ready_text(r))
+            if a.submit and r["submit_url"]:
+                import webbrowser
+                webbrowser.open(r["submit_url"])
+            return 0
+        if a.cmd == "census":
+            r = tools.census(a.model, token=a.token, rows=tools._census_rows(refresh=a.refresh))
+            print(json.dumps(r, indent=1) if a.json else tools.census_text(r))
             return 0
         if a.cmd == "diff":
             rows = tools.diff(a.a, a.b, token=a.token)

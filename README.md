@@ -69,6 +69,11 @@ More commands:
 | `ai-model-explorer compare A B C` | a side-by-side table (Markdown, `--csv` or `--json`) |
 | `ai-model-explorer plot MODEL -o model.png` | the diagram below, as PNG, SVG or PDF |
 | `ai-model-explorer report MODEL -o model.html` | one self-contained HTML report: diagram, insights, tables, memory |
+| `ai-model-explorer fits MODEL rtx-4090 --context 32768` | does it fit, the longest context that fits, and the cheapest setting that would |
+| `ai-model-explorer diff BASE FINETUNE` | what differs between two checkpoints |
+| `ai-model-explorer scan --file repos.txt -o table.csv` | many repos into one CSV |
+| `ai-model-explorer ready MODEL [--submit]` | the Deploy-Ready board's verdict on your machine, then a link to submit |
+| `ai-model-explorer census MODEL` | where it sits among the Hub's popular language models, and the closest popular releases |
 
 ![Diagram drawn by ai-model-explorer plot for DeepSeek-V3](assets/example-deepseek-v3.png)
 

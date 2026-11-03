@@ -22,7 +22,7 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 180
     env:
       HF_TOKEN: ${{ secrets.HF_WRITE_TOKEN }}
     defaults:
