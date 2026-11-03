@@ -6,7 +6,7 @@ The Space serves the same files as GitHub Pages; models are read from the Hub by
 import os, shutil, sys, tempfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-FILES = ["index.html", "en/index.html", "census/index.html", "census/data/insights.json", "census/data/models.json",
+FILES = ["index.html", "en/index.html", "census/index.html", "census/data/insights.json", "census/data/models.json", "census/data/community.json",
          "og.png", "LICENSE", "assets/logo.svg", "assets/logo-32.png", "assets/logo-180.png", "assets/logo-512.png"]
 
 README = """---
