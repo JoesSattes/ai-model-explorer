@@ -59,6 +59,7 @@ def test_fits_and_ready(llama):
     assert r["tier"] == "Phone" and r["checks"]["safetensors"] and r["checks"]["config.json"]
     assert r["checks"]["config agrees with weights"]
     assert r["submit_url"] is None          # a local folder cannot be submitted
+    assert r["checks"]["license declared"] is None and r["out_of"] == 3 and r["score"] == 3
 
 
 def test_diff_same(llama):
@@ -67,7 +68,9 @@ def test_diff_same(llama):
 
 def test_census_offline(llama):
     m = ame.explore(str(llama))
-    rows = [{"id": "a/x", "fam": "decoder", "p": 1e6, "kv": 1e3, "dl": 10, "origin": "original"},
-            {"id": "b/y", "fam": "decoder", "p": 1e9, "kv": 1e5, "dl": 20, "origin": "original"}]
+    rows = [{"id": "a/x", "fam": "decoder", "p": 6e7, "kv": 2e3, "dl": 10, "origin": "original", "pt": "text-generation"},
+            {"id": "b/y", "fam": "decoder", "p": 1e9, "kv": 1e5, "dl": 20, "origin": "original"},
+            {"id": "c/clip", "fam": "decoder", "p": 1.5e7, "kv": 2e3, "dl": 99, "origin": "original", "pt": "zero-shot-image-classification"}]
     r = tools.census(m, rows=rows)
-    assert r["params_percentile"] == 50 and r["nearest"][0]["id"] == "a/x"
+    assert r["popular_models"] == 2                    # the dual encoder is not a language model
+    assert r["nearest"][0]["id"] == "a/x" and r["page"] is None

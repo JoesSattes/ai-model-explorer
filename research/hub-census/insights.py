@@ -42,7 +42,7 @@ def trends(ok):
     orig = ok[(ok.get("origin") == "original") | ok.get("also_frontier", pd.Series(False, index=ok.index)).fillna(False).astype(bool)]
     lm = orig[ecosystem.is_lm(orig)].copy()
     lm["moe"] = lm["hp"].apply(lambda h: bool(hp(h, "experts")))
-    lm["hybrid"] = lm["hp"].apply(lambda h: (hp(h, "ssm_layers") or 0) > 0)
+    lm["hybrid"] = lm["hp"].apply(lambda h: (hp(h, "ssm_layers") or 0) > 0 and (hp(h, "attn_layers") or 0) > 0)
     lm["latent"] = lm["hp"].apply(lambda h: bool(hp(h, "kv_latent")))
     fh = lm["hp_fused"].apply(lambda f: hp(f, "heads")).fillna(lm["hp"].apply(lambda h: hp(h, "heads")))
     fk = lm["hp_fused"].apply(lambda f: hp(f, "kv_heads")).fillna(lm["hp"].apply(lambda h: hp(h, "kv_heads")))
@@ -51,10 +51,12 @@ def trends(ok):
     rows = []
     for y, g in lm[lm["year"].notna()].groupby("year"):
         med = lambda k: (lambda s: None if s.empty else float(s.median()))(pd.Series([hp(h, k) for h in g["hp"]]).dropna())
-        rows.append({"year": int(y), "models": len(g), "moe": round(g["moe"].mean(), 3), "hybrid": round(g["hybrid"].mean(), 3),
-                     "latent_attention": round(g["latent"].mean(), 3), "gqa": round(g["gqa"].mean(), 3),
-                     "quantized": round(g["quantized"].mean(), 3), "median_params": float(g["params"].median()),
-                     "median_d": med("d"), "median_layers": med("layers"), "median_head_dim": med("head_dim"),
+        rows.append({"year": int(y), "models": len(g), "moe": round(g["moe"].mean(), 4), "hybrid": round(g["hybrid"].mean(), 4),
+                     "latent_attention": round(g["latent"].mean(), 4), "gqa": round(g["gqa"].mean(), 4),
+                     "quantized": round(g["quantized"].mean(), 4), "median_params": float(g["params"].median()),
+                     "median_d": med("d"), "median_layers": med("layers"), "median_head_dim": (lambda v: None if v.empty else float(v.median()))(pd.Series(
+                         [(f or {}).get("head_dim") or ((h or {}).get("head_dim") if (h or {}).get("head_dim_from") not in (None, "prior") else None)
+                          for f, h in zip(g["hp_fused"], g["hp"])]).dropna()),  # observed head size only: config or q/k-norm width, never the prior
                      "median_vocab": med("vocab"), "median_kv_bytes_per_token": med("kv_bytes_per_token_bf16")})
     return rows
 
@@ -213,7 +215,7 @@ def eco_lines(E):
     li = D.get("lineage", {})
     if li.get("top_parent_owners"):
         o = li["top_parent_owners"][0]
-        L.append(f"- **One family feeds the ecosystem**: {P(o[1])} of derivatives in the census descend from {o[0]} models.")
+        L.append(f"- **Lineage**: {P(o[1])} of parent links among popular repos point to {o[0]} models.")
     kv = E.get("kv", {})
     if kv.get("fold_drop"):
         c = kv["cache_gt_weights_32k"]["years"]
@@ -225,7 +227,7 @@ def eco_lines(E):
                  f"top-k {m[1]['topk']['med']:.0f} → {m[-1]['topk']['med']:.0f}, active share of parameters {P(m[1]['active_ratio']['med'])} → {P(m[-1]['active_ratio']['med'])} ({m[1]['year']} → {m[-1]['year']}).")
     sc = E.get("scaling", {})
     if sc.get("d"):
-        L.append(f"- **How released models scale**: width ∝ N^{sc['d']['slope']}, depth ∝ N^{sc['layers']['slope']} (dense LMs, n={sc['d']['n']:,}): bigger models get wider faster than deeper.")
+        L.append(f"- **How released models scale**: width ∝ N^{sc['d']['slope']}, depth ∝ N^{sc['layers']['slope']} (dense LMs, n={sc['d']['n']:,}): larger models are wider rather than proportionally deeper.")
     st = E.get("storage", {})
     if st.get("f32_over_1b"):
         L.append(f"- **{P(st['f32_over_1b']['p'])} of popular models above 1B parameters still store FP32**: {st['f32_over_1b_tb']} TB that BF16 would halve.")
@@ -234,7 +236,7 @@ def eco_lines(E):
         L.append(f"- **Fits a 16 GB laptop at 4-bit, 8k context**: {P(de[0]['p'])} of original LMs released <=2022, {P(de[-1]['p'])} of {de[-1]['year']} releases.")
     md = E.get("metadata", {})
     if md.get("config_disagrees"):
-        L.append(f"- **Config agrees with the weights** in {P(1 - md['config_disagrees']['p'])} of checked repos; the Hub's parameter count is wrong for "
+        L.append(f"- **Config fields agree with the weight shapes** in {P(1 - md['config_disagrees']['p'])} of checked repos; the Hub's parameter count is wrong for "
                  f"{P(md['hub_count_wrong']['p'])} and missing for {P(md['hub_count_missing']['p'])}; {P(md['license_missing']['p'])} of popular repos declare no license.")
     return L
 
@@ -284,7 +286,7 @@ def main(census, outdir):
                  f"labels carried over from the corpus; {r['share_99']*100:.0f}% of repos reach 99%. Name rules with MoE: {r['v1moe']*100:.1f}%, llama.cpp table: {r['gguf']*100:.1f}%.")
     gg = nwk.get("gguf_only")
     if gg:
-        L.append(f"- **{gg*100:.0f}%** of popular repos without readable weights are GGUF-only (llama.cpp format).")
+        L.append(f"- **{gg*100:.0f}%** of popular repos with no safetensors or PyTorch weights are GGUF-only (llama.cpp format).")
     L += eco_lines(E)
     open(os.path.join(outdir, "insights.md"), "w").write("\n".join(L) + "\n")
     print("\n".join(L))

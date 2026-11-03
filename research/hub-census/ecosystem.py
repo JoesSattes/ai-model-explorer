@@ -5,7 +5,8 @@ Populations
   popular    repos read in full (top downloads and frontier providers), CI fixtures removed: a complete enumeration of
              what people use, so intervals describe the variability of the process, not sampling error
   original   popular repos the Hub does not tag as a derivative (or read as a frontier release)
-  LM         decoder and prefix-LM anatomy above 50M parameters with a text-generating Hub pipeline (or none)
+  LM         decoder or prefix-LM anatomy above 50M parameters with a text-generating Hub pipeline, or with no pipeline
+             and a config.json of a generative decoder / prefix-LM type (see is_lm)
   Hub-wide   all strata with sampling weights (Kish effective n)
 The Hub dates every repository older than March 2022 to 2 March 2022, so the first year bin reads "<=2022".
 
@@ -28,11 +29,21 @@ GEN = {"text-generation", "text2text-generation", "image-text-to-text", "any-to-
        "visual-question-answering", "conversational"}
 
 
+NOT_GEN = r"clip|siglip|flava|owl|esm|bert|roberta|layoutlm|fnet|dit|vit|wav2vec|hubert|whisper|t5|bart|led|bigbird|pegasus|marian|m2m"
+
+
 def is_lm(df):
-    """Generative language models: a decoder or prefix-LM anatomy above 50M parameters, and a Hub pipeline that generates
-    text (or none declared). The pipeline removes dual encoders and CTC speech models the family rules call decoders."""
+    """Generative language models: a decoder or prefix-LM anatomy above 50M parameters, and either a Hub pipeline that
+    generates text, or, when no pipeline is declared, a config.json whose own architecture is a decoder or prefix-LM of
+    a generative model type. Repos with neither are left out: the family rules alone place some dual encoders, CTC speech
+    models and encoder-decoders among decoders, which would otherwise contaminate the earliest years."""
     pt = df["pipeline_tag"].fillna("")
-    return df["family_manifest"].isin(LMF) & (df["params"] > 5e7) & (pt.isin(GEN) | (pt == ""))
+    fc = df["family_config"] if "family_config" in df else pd.Series(None, index=df.index)
+    mt = (df["config_model_type"] if "config_model_type" in df else pd.Series("", index=df.index)).fillna("").astype(str)
+    by_config = (pt == "") & fc.isin(LMF) & ~mt.str.contains(NOT_GEN, case=False, regex=True)
+    return df["family_manifest"].isin(LMF) & (df["params"] > 5e7) & (pt.isin(GEN) | by_config)
+
+
 RNG = np.random.default_rng(2026)
 BLUE, ORANGE, AQUA, YELLOW, RED, INK, INK2, GRID, SURF = "#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#c4242a", "#0b0b0b", "#52514e", "#e6e5e0", "#fcfcfb"
 
@@ -101,16 +112,24 @@ def spearman(x, y):
     return {"rho": round(float(r.statistic), 3), "p": float(r.pvalue), "n": int(len(x))}
 
 
-def loglog(x, y, B=2000):
+def loglog(x, y, groups=None, B=1000):
+    """Slope of log10(y) on log10(x). The interval resamples whole groups (providers) when given: checkpoints of one
+    family share their design, so treating them as independent would make the interval too narrow."""
     lx, ly = np.log10(np.asarray(x, float)), np.log10(np.asarray(y, float))
     ok = np.isfinite(lx) & np.isfinite(ly)
     lx, ly = lx[ok], ly[ok]
+    g = np.asarray(groups)[ok] if groups is not None else np.arange(len(lx))
     b, a = np.polyfit(lx, ly, 1)
     r2 = 1 - ((ly - (a + b * lx)) ** 2).sum() / ((ly - ly.mean()) ** 2).sum()
-    idx = RNG.integers(0, len(lx), (B, len(lx)))
-    bs = [np.polyfit(lx[i], ly[i], 1)[0] for i in idx[:400]]  # 400 resamples suffice for a slope
+    ug = np.unique(g)
+    idx = {k: np.flatnonzero(g == k) for k in ug}
+    bs = []
+    for _ in range(B):
+        pick = np.concatenate([idx[k] for k in RNG.choice(ug, len(ug))])
+        if np.ptp(lx[pick]) > 0:
+            bs.append(np.polyfit(lx[pick], ly[pick], 1)[0])
     return {"slope": round(float(b), 3), "lo": round(float(np.percentile(bs, 2.5)), 3), "hi": round(float(np.percentile(bs, 97.5)), 3),
-            "intercept": round(float(a), 3), "r2": round(float(r2), 3), "n": int(len(lx))}
+            "intercept": round(float(a), 3), "r2": round(float(r2), 3), "n": int(len(lx)), "clusters": int(len(ug))}
 
 
 def mwu(a, b):
@@ -126,8 +145,9 @@ def by_year(df, flag):
     g = df[df["year"].notna()].copy()
     g["yb"] = g["year"].clip(lower=2022).astype(int)
     rows = [{"year": int(y), **wilson(int(s[flag].sum()), len(s))} for y, s in g.groupby("yb")]
+    late = g[g["yb"] >= 2023]
     return {"years": rows, "armitage": armitage([r["year"] for r in rows], [r["k"] for r in rows], [r["n"] for r in rows]),
-            "logit": logit_trend(g["yb"], g[flag].astype(float))}
+            "logit": logit_trend(g["yb"], g[flag].astype(float)), "logit_from_2023": logit_trend(late["yb"], late[flag].astype(float))}
 
 
 # ---------------------------------------------------------------- data
@@ -186,11 +206,11 @@ def analyse(census, frame_stats=None):
     wb, hb = float(okall["weight_bytes"].sum()), float(okall["header_bytes"].sum())
     x = okall[(okall["tensors"] > 0) & (okall["header_bytes"] > 0)]
     F["cost"] = {"weight_bytes": wb, "header_bytes": hb, "ratio": round(wb / hb), "bytes_per_tensor": boot_median(x["header_bytes"] / x["tensors"]),
-                 "header_vs_tensors": loglog(x["tensors"], x["header_bytes"]), "seconds": boot_median(okall["t_total_s"].dropna())}
+                 "header_vs_tensors": loglog(x["tensors"], x["header_bytes"], x["author"].values), "seconds": boot_median(okall["t_total_s"].dropna())}
 
     # 2. architecture trends (original LMs)
     lm["moe"] = lm["experts"].fillna(0) > 0
-    lm["hybrid"] = lm["ssm_layers"].fillna(0) > 0
+    lm["hybrid"] = (lm["ssm_layers"].fillna(0) > 0) & (lm["attn_layers"].fillna(0) > 0)   # attention-free stacks (RWKV, Mamba) are not hybrids
     lm["gqa"] = (lm["fkv"].notna() & lm["fheads"].notna()) & (lm["fkv"] < lm["fheads"])
     lm["latent"] = lm["kv_latent"].fillna(False).astype(bool)
     lm["quant"] = lm["quant"].apply(lambda q: bool(q))
@@ -210,18 +230,21 @@ def analyse(census, frame_stats=None):
     # 4. attention memory: KV cache per token per billion parameters, and when the cache outweighs the weights
     kv = lm[lm["kv_bytes_per_token_bf16"].fillna(0) > 0].copy()
     kv["kvpb"] = kv["kv_bytes_per_token_bf16"] / (kv["params"] / 1e9)
-    kv["cache_gt_weights_32k"] = kv["kv_bytes_per_token_bf16"] * 32768 > kv["params"] * 0.5
+    lm["cache_gt_weights_32k"] = lm["kv_bytes_per_token_bf16"].fillna(0) * 32768 > lm["params"] * 0.5   # 16-bit cache vs 4-bit weights
     kv["yb"] = kv["year"].clip(lower=2022)
     rows = [{"year": int(y), "kv_per_b": boot_median(g["kvpb"])} for y, g in kv.groupby("yb")]
     first, last = rows[0]["kv_per_b"]["med"], rows[-1]["kv_per_b"]["med"]
+    late = kv[kv["yb"] >= 2023]
     F["kv"] = {"by_year": rows, "fold_drop": round(first / last, 1), "vs_year": spearman(kv["yb"], kv["kvpb"]),
-               "cache_gt_weights_32k": by_year(kv, "cache_gt_weights_32k"),
+               "vs_year_from_2023": spearman(late["yb"], late["kvpb"]),
+               "cache_gt_weights_32k": by_year(lm, "cache_gt_weights_32k"),
                "gqa_ratio_recent": boot_median((kv[kv["year"] >= 2025]["fheads"] / kv[kv["year"] >= 2025]["fkv"]).dropna())}
 
     # 5. shape scaling laws of released models: width and depth against parameters
     sc = lm[lm["d"].notna() & lm["layers"].notna() & ~lm["moe"]]
-    F["scaling"] = {"d": loglog(sc["params"], sc["d"]), "layers": loglog(sc["params"], sc["layers"]),
-                    "aspect": loglog(sc["params"], sc["d"] / sc["layers"]), "vocab": loglog(sc["params"], sc["vocab"].fillna(0).replace(0, np.nan))}
+    au = sc["author"].values
+    F["scaling"] = {"d": loglog(sc["params"], sc["d"], au), "layers": loglog(sc["params"], sc["layers"], au),
+                    "aspect": loglog(sc["params"], sc["d"] / sc["layers"], au), "vocab": loglog(sc["params"], sc["vocab"].fillna(0).replace(0, np.nan), au)}
 
     # 6. tied embeddings, by size
     t = lm[lm["tie"].notna()].copy()
@@ -264,6 +287,8 @@ def analyse(census, frame_stats=None):
         if isinstance(p, pd.DataFrame):
             p = p.iloc[0]
         ch, ph = r["hp"] or {}, p["hp"] or {}
+        if not ch.get("d") or not ph.get("d"):   # compare only where both anatomies were recovered
+            continue
         diff = {k: ch.get(k) != ph.get(k) for k in ("d", "layers", "vocab", "ffn", "heads")}
         rows.append({"rel": r["rel"], "same": not any(diff.values()), **{"diff_" + k: v for k, v in diff.items()},
                      "dparams": (r["params"] - p["params"]) / p["params"] if p["params"] else None})
@@ -273,7 +298,7 @@ def analyse(census, frame_stats=None):
                              "layers_changed": wilson(int(g["diff_layers"].sum()), len(g)),
                              "params_change_median": boot_median(g["dparams"].dropna())}
                        for rel, g in fd.groupby("rel") if rel in ("finetune", "quantized", "adapter") and len(g) >= 20} if len(fd) else {}
-    par = [p for t in d["tags"] for p in _parents(t)]
+    par = [p for t in pop["tags"] for p in _parents(t)]
     owners = collections.Counter(p.split("/")[0] for p in par)
     tot = sum(owners.values()) or 1
     eco["lineage"] = {"derivatives": len(par), "top_parent_owners": [[k, round(v / tot, 3)] for k, v in owners.most_common(8)],
@@ -370,7 +395,7 @@ def figures(F, outdir):
     a1.plot(x, [z["kv_per_b"]["med"] / 1e3 for z in r], color=BLUE, lw=2, marker="o", ms=3.5)
     a1.fill_between(x, [z["kv_per_b"]["lo"] / 1e3 for z in r], [z["kv_per_b"]["hi"] / 1e3 for z in r], color=BLUE, alpha=.15, lw=0)
     a1.set_yscale("log"); a1.set_xticks(x, [yl(v) for v in x]); a1.set_title("KV cache per token per billion params (KB)", fontsize=9, color=INK)
-    m = F["moe"]["by_year"]
+    m = [z for z in F["moe"]["by_year"] if z["n"] >= 20]   # years with too few mixtures of experts say nothing about a median
     x2 = [z["year"] for z in m]
     a2.plot(x2, [z["active_ratio"]["med"] * 100 if z["active_ratio"] else None for z in m], color=ORANGE, lw=2, marker="o", ms=3.5, label="active share of params")
     a2.set_ylabel("% active per token", color=INK2); a2.set_xticks(x2, [str(v) for v in x2])
@@ -379,7 +404,7 @@ def figures(F, outdir):
     b2.set_yscale("log", base=2); b2.tick_params(colors=INK2, labelsize=8.5)
     for s in ("top",):
         b2.spines[s].set_visible(False)
-    a2.set_title("Mixtures of experts: sparser every year", fontsize=9, color=INK)
+    a2.set_title("Mixtures of experts by creation year", fontsize=9, color=INK)
     h1, l1 = a2.get_legend_handles_labels(); h2, l2 = b2.get_legend_handles_labels()
     a2.legend(h1 + h2, l1 + l2, frameon=False, fontsize=7.5, loc="center right")
     fig.tight_layout()

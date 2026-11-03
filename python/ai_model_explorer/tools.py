@@ -136,14 +136,16 @@ def ready(model: Union[str, Model], token: Optional[str] = None) -> dict:
     need = (m.params * 0.5 + kv * 8192) * 1.1
     tier = next(name for lim, name in TIERS if need <= lim)
     chk = [v for v in (d.get("config_check") or {}).values() if isinstance(v, dict) and v.get("checked")]
-    hub = src.get("hub_params")
+    hub, repo = src.get("hub_params"), src.get("repo")
+    on_hub = src.get("kind") == "huggingface"
     checks = {"safetensors": (d.get("files_read") or 0) > 0, "config.json": bool(d.get("has_config")),
               "config agrees with weights": bool(chk) and all(v.get("consistent") for v in chk),
-              "Hub parameter count correct": bool(hub) and abs(m.params - hub) / hub <= 0.001,
-              "license declared": bool(src.get("license"))}
-    repo = src.get("repo")
+              # a local folder has no Hub metadata: these two do not apply (None) rather than fail
+              "Hub parameter count correct": (bool(hub) and abs(m.params - hub) / hub <= 0.001) if on_hub else None,
+              "license declared": bool(src.get("license")) if on_hub else None}
     return {"model": m.name, "tier": tier, "need_4bit_8k_bytes": int(need), "params": m.params, "active_params": m.active_params,
-            "kv_bytes_per_token": kv, "checks": checks, "score": sum(checks.values()),
+            "kv_bytes_per_token": kv, "checks": checks, "score": sum(1 for v in checks.values() if v),
+            "out_of": sum(1 for v in checks.values() if v is not None),
             "submit_url": f"{SUBMIT}&repo={repo}&title=%5BModel%5D%20{repo}" if repo else None}
 
 
@@ -152,8 +154,8 @@ def ready_text(r: dict) -> str:
            f"  {fmt_n(r['params'])} parameters" + (f", {fmt_n(r['active_params'])} active per token"
                                                     if r["active_params"] and r["active_params"] != r["params"] else "")
            + (f", KV cache {fmt_b(r['kv_bytes_per_token'])} per token" if r["kv_bytes_per_token"] else "")]
-    out += [f"  {'✓' if v else '✗'} {k}" for k, v in r["checks"].items()]
-    out.append(f"  score {r['score']}/5")
+    out += [f"  {'–' if v is None else '✓' if v else '✗'} {k}" + ("  (not on the Hub)" if v is None else "") for k, v in r["checks"].items()]
+    out.append(f"  score {r['score']}/{r['out_of']}")
     if r["submit_url"]:
         out.append(f"  put it on the board and get a badge: {r['submit_url']}")
     return "\n".join(out)
@@ -181,7 +183,12 @@ def census(model: Union[str, Model], token: Optional[str] = None, rows: Optional
     import math
     m = model if isinstance(model, Model) else explore(model, token=token)
     rows = rows if rows is not None else _census_rows()
-    lm = [r for r in rows if r.get("fam") in ("decoder", "prefix-lm") and r.get("p") and r.get("kv")]
+    # the census definition of a language model: decoder or prefix-LM anatomy above 50M parameters whose Hub pipeline
+    # generates text (or none is declared); the pipeline removes dual encoders and CTC models the family rules call decoders
+    gen = {"", "text-generation", "text2text-generation", "image-text-to-text", "any-to-any", "audio-text-to-text",
+           "video-text-to-text", "visual-question-answering", "conversational"}
+    lm = [r for r in rows if r.get("fam") in ("decoder", "prefix-lm") and (r.get("p") or 0) > 5e7 and r.get("kv")
+          and (r.get("pt") or "") in gen]
     kv = m.kv_cache_bytes_per_token(16)
     pct = lambda xs, v: round(100 * sum(1 for x in xs if x < v) / len(xs)) if xs and v else None
     near = []
@@ -193,7 +200,7 @@ def census(model: Union[str, Model], token: Optional[str] = None, rows: Optional
             "thai": (me or {}).get("th"), "params_percentile": pct([r["p"] for r in lm], m.params),
             "kv_percentile": pct([r["kv"] for r in lm], kv), "popular_models": len(lm),
             "nearest": [{"id": r["id"], "params": r["p"], "kv_bytes_per_token": r["kv"], "downloads": r["dl"]} for r in near],
-            "page": f"{SITE}/census/?m={m.name}"}
+            "page": f"{SITE}/census/?m={m.name}" if (m.data.get("source") or {}).get("kind") == "huggingface" else None}
 
 
 def census_text(r: dict) -> str:
@@ -209,5 +216,6 @@ def census_text(r: dict) -> str:
         out.append("  closest popular originals (size and KV cache):")
         out += [f"    {x['id']:48} {fmt_n(x['params']):>7}  {fmt_b(x['kv_bytes_per_token']):>9}/token  {fmt_n(x['downloads']):>6} downloads"
                 for x in r["nearest"]]
-    out.append(f"  on the web: {r['page']}")
+    if r["page"]:
+        out.append(f"  on the web: {r['page']}")
     return "\n".join(out)
