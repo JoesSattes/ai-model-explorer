@@ -1,7 +1,8 @@
-name: HF collection
+name: HF Space and collection
 
-# Only the last step of "Publish datasets": groups the datasets and the Space into the
-# collection "AI Model Explorer" on your Hugging Face profile. Needs HF_WRITE_TOKEN.
+# The last two steps of "Publish datasets", without the census re-score: republishes the explorer
+# as a static Space and groups the datasets and the Space into the collection "AI Model Explorer"
+# on your Hugging Face profile. Needs HF_WRITE_TOKEN.
 on:
   workflow_dispatch:
     inputs:
@@ -23,8 +24,12 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install huggingface_hub
+      - name: Hugging Face account
+        run: echo "OWNER=$(python -c 'from huggingface_hub import HfApi; print(HfApi().whoami()["name"])')" >> "$GITHUB_ENV"
+      - name: Explorer as a Space
+        if: ${{ inputs.space_name != '' }}
+        run: python space.py "$OWNER/${{ inputs.space_name }}" "$OWNER/${{ inputs.census_name }}" "$OWNER/${{ inputs.corpus_name }}"
       - name: Collection on the profile
         run: |
-          OWNER=$(python -c 'from huggingface_hub import HfApi; print(HfApi().whoami()["name"])')
           SPACE=""; [ -n "${{ inputs.space_name }}" ] && SPACE="space:$OWNER/${{ inputs.space_name }}"
           python collection.py "$OWNER" $SPACE "dataset:$OWNER/${{ inputs.census_name }}" "dataset:$OWNER/${{ inputs.corpus_name }}"

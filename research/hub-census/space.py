@@ -3,7 +3,7 @@
 usage: python space.py <owner/space-name> <census-dataset> <corpus-dataset>    (needs HF_TOKEN with write access)
 The Space serves the same files as GitHub Pages; models are read from the Hub by the visitor's browser.
 """
-import os, shutil, sys, tempfile
+import os, re, shutil, sys, tempfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 FILES = ["index.html", "en/index.html", "census/index.html", "census/data/insights.json", "census/data/models.json", "census/data/community.json", "census/data/board.json",
@@ -15,7 +15,7 @@ emoji: 🔍
 colorFrom: indigo
 colorTo: pink
 sdk: static
-app_file: en/index.html
+app_file: index.html
 pinned: true
 license: mit
 short_description: A model's architecture from its safetensors header
@@ -47,15 +47,40 @@ Also at https://joessattes.github.io/ai-model-explorer/ (Thai and English).
 """
 
 
+# The Space is served from the repository root. English is the landing page (index.html redirects to en/),
+# the Thai page moves to th.html, and every link names its index.html because the static host may not
+# resolve directory URLs.
+REDIRECT = ('<!doctype html><meta charset="utf-8"><title>AI Model Explorer</title>'
+            '<meta http-equiv="refresh" content="0; url=en/index.html">'
+            '<script>location.replace("en/index.html" + location.search + location.hash)</script>'
+            '<a href="en/index.html">AI Model Explorer</a>')
+DIR_LINK = re.compile(r'(["\'(}])((?:\.\./)?(?:census|en))/(?=["\'?#])')
+
+
+def _fix(path, extra=()):
+    s = open(path, encoding="utf-8").read()
+    s = DIR_LINK.sub(r"\1\2/index.html", s)
+    for a, b in extra:
+        s = s.replace(a, b)
+    open(path, "w", encoding="utf-8").write(s)
+
+
 def main(repo, census, corpus):
-    from huggingface_hub import HfApi
     tmp = tempfile.mkdtemp()
     for f in FILES:
         src = os.path.join(ROOT, f)
         if os.path.exists(src):
             os.makedirs(os.path.dirname(os.path.join(tmp, f)), exist_ok=True)
             shutil.copy(src, os.path.join(tmp, f))
+    os.replace(os.path.join(tmp, "index.html"), os.path.join(tmp, "th.html"))
+    open(os.path.join(tmp, "index.html"), "w", encoding="utf-8").write(REDIRECT)
+    _fix(os.path.join(tmp, "th.html"))
+    _fix(os.path.join(tmp, "en", "index.html"), [('PAGE_ALT="../"', 'PAGE_ALT="../th.html"')])
+    _fix(os.path.join(tmp, "census", "index.html"), [('href="../"', 'href="../th.html"')])
     open(os.path.join(tmp, "README.md"), "w", encoding="utf-8").write(README.format(census=census, corpus=corpus))
+    if repo == "--dry":
+        return tmp
+    from huggingface_hub import HfApi
     api = HfApi(token=os.environ.get("HF_TOKEN"))
     api.create_repo(repo, repo_type="space", space_sdk="static", exist_ok=True)
     api.upload_folder(repo_id=repo, repo_type="space", folder_path=tmp, commit_message="explorer from GitHub")
