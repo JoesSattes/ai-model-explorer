@@ -9,7 +9,7 @@ description = "See any Hugging Face model's architecture from its safetensors he
 readme = "python/README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "Sattaya Singkul", email = "joeysattaya@gmail.com" }]
+authors = [{ name = "Sattaya Singkul", email = "sattaya.singk@gmail.com" }]
 requires-python = ">=3.9"
 dependencies = ["quickjs>=1.19", "matplotlib>=3.5"]
 keywords = ["huggingface", "safetensors", "model architecture", "llm", "transformers", "mixture of experts", "visualization", "edge ai", "quantization"]

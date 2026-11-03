@@ -29,7 +29,7 @@ Evaluation: 96.8% per-tensor role accuracy on 510 transformers architectures (95
 - NVIDIA Nemotron 3.5 Super VL, Transcribe, ASR streaming and Embed NVFP4; Parakeet TDT 0.6B v3; FastH3 Omni FP8; Kumo Tabular and Relational, analysed automatically
 
 ## Author
-Sattaya Singkul (Jo) — Researcher, speech and edge AI. Portfolio: https://joessattes.github.io/Sattaya-AI-Website/ · GitHub: https://github.com/JoesSattes
+Sattaya Singkul (Jo) — Independent Researcher, Bangkok, Thailand; speech and edge AI. Portfolio: https://joessattes.github.io/Sattaya-AI-Website/ · GitHub: https://github.com/JoesSattes
 Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Contest", AI Expo Thailand 2026.
 
 ## Links

@@ -5,6 +5,8 @@ type: software
 authors:
   - family-names: Singkul
     given-names: Sattaya
+    affiliation: "Independent Researcher, Bangkok, Thailand"
+    email: "sattaya.singk@gmail.com"
     website: "https://joessattes.github.io/Sattaya-AI-Website/"
 repository-code: "https://github.com/JoesSattes/ai-model-explorer"
 url: "https://joessattes.github.io/ai-model-explorer/"
@@ -18,6 +20,7 @@ preferred-citation:
   authors:
     - family-names: Singkul
       given-names: Sattaya
+      affiliation: "Independent Researcher, Bangkok, Thailand"
   year: 2026
   url: "https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy"
   repository: "https://github.com/JoesSattes/ai-model-explorer/tree/main/paper"

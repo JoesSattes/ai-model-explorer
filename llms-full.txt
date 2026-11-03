@@ -74,7 +74,7 @@ Netron and Google's Model Explorer draw the operator graph of a model file you a
 - Which models? Any Hugging Face repo with safetensors weights (LLMs, speech, vision-language, diffusion, embedding models), .tflite files, and config.json for common families. Gated repos (those that require accepting a license) cannot be read and are reported as gated.
 
 ## Author
-Sattaya Singkul (Jo), researcher in speech and edge AI, Bangkok. Portfolio: https://joessattes.github.io/Sattaya-AI-Website/ · GitHub: https://github.com/JoesSattes
+Sattaya Singkul (Jo), Independent Researcher, Bangkok, Thailand; speech and edge AI. Portfolio: https://joessattes.github.io/Sattaya-AI-Website/ · GitHub: https://github.com/JoesSattes
 Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Contest", AI Expo Thailand 2026.
 
 ## Links
