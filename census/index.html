@@ -172,7 +172,7 @@ html[data-theme=dark] tbody tr:hover td{background:rgba(255,255,255,.04)}
 <div class="wrap">
 <header>
  <h1 data-t="h1">Hub Weight Census: what AI models say about themselves</h1>
- <p class="lead" data-t="lead">We read only the safetensors headers of thousands of Hugging Face repositories (names, shapes and storage of every tensor, never the weights) and recovered each model's architecture from them. Here is what the models people actually use are made of, how that changed year by year, and where the metadata around them is wrong.</p>
+ <p class="lead" data-t="lead">We read only the safetensors headers of 12,974 Hugging Face repositories (names, shapes and storage of every tensor, never the weights) and recovered each model's architecture from them. This page shows what widely used models are made of, how that has changed by year, and where their metadata is wrong.</p>
  <div class="dl" style="margin-top:20px"><a class="pbtn primary" id="cta" href="../en/" data-t="cta">Open the explorer</a><a class="pbtn" href="#models" data-t="cta2">Browse models</a></div>
  <div class="kpis" id="kpis"></div>
  <p id="prelim" class="note" style="display:none;border:1px solid var(--line);border-radius:10px;padding:10px 14px;color:var(--soft)"></p>
@@ -187,8 +187,8 @@ html[data-theme=dark] tbody tr:hover td{background:rgba(255,255,255,.04)}
 
 <section id="board" class="rv">
  <h2 data-t="bd_h">Deploy-Ready board</h2>
- <p class="sub" data-t="bd_sub">Leading providers' releases, the most downloaded language models, models built for Thai, and models submitted by their authors. Each is read from its headers and placed by the memory it needs at 4-bit with an 8k context, with five checks on its metadata. Submit yours and get a badge for the model card.</p>
- <div class="dl" style="margin-bottom:14px"><a class="pbtn primary" id="submitBtn" target="_blank" rel="noopener" data-t="bd_submit">Submit a model</a><span class="note" data-t="bd_how" style="align-self:center">Opens a GitHub issue; a bot replies within minutes.</span></div>
+ <p class="sub" data-t="bd_sub">Leading providers' releases, the most downloaded language models, Thai and multilingual models, and models submitted by users. Each is read from its headers, assigned the smallest device that holds it at 4-bit with an 8k context, and given five metadata checks. Submitted models receive a badge for their model card.</p>
+ <div class="dl" style="margin-bottom:14px"><a class="pbtn primary" id="submitBtn" target="_blank" rel="noopener" data-t="bd_submit">Submit a model</a><span class="note" data-t="bd_how" style="align-self:center">Opens a GitHub issue; a bot usually replies within minutes.</span></div>
  <div class="tabs" id="btabs"></div>
  <div class="tools"><input id="bq" type="search" data-tp="bd_search" placeholder="Search the board"><div class="tchips" id="btiers"></div></div>
  <div class="tbl"><table><thead><tr id="bhead"></tr></thead><tbody id="bbody"></tbody></table></div>
@@ -203,7 +203,7 @@ html[data-theme=dark] tbody tr:hover td{background:rgba(255,255,255,.04)}
 
 <section id="eco">
  <h2 data-t="eco_h">The ecosystem in numbers</h2>
- <p class="sub" data-t="eco_sub">What thousands of checkpoints show about how models are built, copied, stored and run. Each number carries its 95% interval and, for changes over time, a test for trend; the method is in the paper and the code in the census folder.</p>
+ <p class="sub" data-t="eco_sub">What thousands of checkpoints show about how models are built, copied, stored and run. Shares come with a 95% confidence interval, and changes over time with a trend test. The method is in the paper; the code is under research/hub-census.</p>
  <div class="icards" id="ecoc"></div>
 </section>
 
@@ -228,18 +228,18 @@ html[data-theme=dark] tbody tr:hover td{background:rgba(255,255,255,.04)}
  </div>
  <div class="mapwrap">
   <div class="card"><div class="ct" data-t="mm_h">Memory map of popular language models</div>
-   <div class="cs" data-t="mm_s">Each dot is a language model in the table below, filters included: parameters (to hold) against KV cache per token (to grow with context). Dashed lines: the most a device holds at 4-bit. Point at a dot for its name; click it, or a row of the table, to select it.</div>
+   <div class="cs" data-t="mm_s">Each dot is a language model from the table below (current filters apply), plotted by parameters (memory to hold) against KV cache per token (memory that grows with context). Dashed lines mark the largest model each device holds at 4-bit, weights only. Hover over a dot for its name; click it, or a row of the table, to select it.</div>
    <div class="legend" id="lgm"></div><svg id="mm" viewBox="0 0 1100 460" width="100%"></svg></div>
   <div class="card" id="mmsel"></div>
  </div>
  <div class="tbl"><table><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>
  <div class="pager"><button class="pbtn" id="prev">‹</button><span id="pinfo"></span><button class="pbtn" id="next">›</button></div>
- <p class="note" data-t="tbl_note">Params: logical parameters (quantized storage unpacked). Hub: ✓ when the Hub's own count agrees within 0.1%, otherwise our count ÷ the Hub's. KV/token: bytes of KV cache per token at 16 bit.</p>
+ <p class="note" data-t="tbl_note">Params: logical parameters (quantized storage unpacked). Hub: ✓ when the Hub's own count agrees within 0.1%, otherwise our count ÷ the Hub's. KV/token: bytes of KV cache per token at 16-bit.</p>
 </section>
 
 <section id="data" class="rv">
  <h2 data-t="data_h">Data and method</h2>
- <p class="sub" data-t="data_sub">Every repo: status, popularity, the architecture recovered from the weights, the values its config.json declares, the Hub's own parameter count and the raw manifest, so the results can be re-scored. Code and the frozen recovery rules are public.</p>
+ <p class="sub" data-t="data_sub">For every repo, the dataset gives status, popularity, the architecture recovered from the weights, the values its config.json declares, the Hub's own parameter count and the raw manifest, so the results can be recomputed. The code and the fixed recovery rules are public.</p>
  <div class="dl">
   <a class="pbtn" href="https://github.com/JoesSattes/ai-model-explorer/tree/main/research/hub-census" data-t="dl_code">Census code</a>
   <a class="pbtn primary" id="dsLink" href="https://huggingface.co/datasets/JoesSattes/hub-weight-census" data-t="dl_ds">Dataset on Hugging Face</a>
@@ -252,20 +252,20 @@ html[data-theme=dark] tbody tr:hover td{background:rgba(255,255,255,.04)}
 <div id="tip"></div>
 <script>
 const T={
- en:{eco_h:"The ecosystem in numbers",eco_sub:"What thousands of checkpoints show about how models are built, copied, stored and run. Each number carries its 95% interval and, for changes over time, a test for trend; the method is in the paper and the code in the census folder.",nav_eco:"Ecosystem",
-  e_copy_t:"Quantized copies punch above their number",e_copy_w:(r,d)=>`Quantized copies are ${r} of Hub repositories but take ${d} of downloads; with fine-tunes, close to half of all downloads go to a derivative rather than the original release.`,
-  e_same_t:"Fine-tunes keep the anatomy",e_same_w:(q,v)=>`Same width, depth, heads, FFN and vocabulary as the parent; ${q} of quantized copies too. When a fine-tune changes something, it is mostly the vocabulary (${v}).`,
-  e_lin_t:"One provider is the parent of a quarter of derivatives",e_lin_w:(o,s)=>`${s} of the parent links among popular repos point to ${o} models, more than the next five providers together. Repo counts over-represent a few providers' design choices.`,
-  e_kv_t:"Memory per token keeps falling",e_kv_w:(a,b)=>`KV cache per token per billion parameters: ${a} for models up to 2022, ${b} in 2026, as grouped-query and latent attention spread.`,
-  e_moe_t:"Experts multiply, active share falls",e_moe_w:(e0,e1,y0)=>`Median experts per layer ${e0} → ${e1} since ${y0}. Memory follows the total and speed the active part; the ratio of the two grew from about 3.6 to about 9.`,
-  e_sc_t:"Bigger models get wider, not deeper",e_sc_w:(a,b)=>`Across dense releases, width grows as N^${a} and depth as N^${b}; 2·${a} + ${b} is close to 1, as N ≈ 12·d²·L implies.`,
-  e_f32_t:"FP32 is still everywhere",e_f32_w:tb=>`Popular models above 1B parameters stored in FP32: ${tb} TB that BF16 would halve, downloaded on every machine that uses them.`,
-  e_meta_t:"Where the Hub's metadata falls short",e_meta_w:(m,l,c)=>`The Hub's parameter count is missing for another ${m}; ${l} of popular repos declare no license; config fields and weight shapes disagree in ${c}.`,
-  e_trend:"trend",e_ci:"95% interval",e_since:"since",bd_h:"Deploy-Ready board",bd_sub:"Leading providers' releases, the most downloaded language models, models built for Thai, and models submitted by their authors. Each is read from its headers and placed by the memory it needs at 4-bit with an 8k context, with five checks on its metadata. Submit yours and get a badge for the model card.",bd_submit:"Submit a model",bd_how:"Opens a GitHub issue; a bot replies within minutes.",
-  bd_cols:["Model","Release","Fits on","Checks","Params","Active","KV/token","4-bit + 8k","Downloads"],bd_empty:"Nothing matches.",
-  bd_tabs:{all:"All",lab:"Leading providers",popular:"Most downloaded LMs",thai:"Thai & multilingual",submitted:"Submitted"},bd_search:"Search the board",bd_tier:"Fits on:",bd_any:"any",
+ en:{eco_h:"The ecosystem in numbers",eco_sub:"What thousands of checkpoints show about how models are built, copied, stored and run. Shares come with a 95% confidence interval, and changes over time with a trend test. The method is in the paper; the code is under research/hub-census.",nav_eco:"Ecosystem",
+  e_copy_t:"Quantized copies get far more downloads than their share of repos",e_copy_w:(r,d,s)=>`Quantized copies are ${r} of Hub repositories but take ${d} of downloads; counting fine-tunes too, ${s} of downloads go to a derivative rather than an original release.`,
+  e_same_t:"Most fine-tunes keep the anatomy",e_same_w:(q,v)=>`Same width, depth, heads, FFN and vocabulary as the parent; ${q} of quantized copies too. The most common change is the vocabulary (${v} of fine-tunes).`,
+  e_lin_t:"One provider is the parent of nearly a quarter of derivatives",e_lin_w:(o,s)=>`${s} of the parent links among popular repos point to ${o} models, more than the next five providers combined. Counting repos therefore over-weights the design choices of a few providers.`,
+  e_kv_t:f=>`KV cache per token is ${f}× smaller than in models up to 2022`,e_kv_w:(a,b)=>`Median KV cache per token per billion parameters: ${a} for models up to 2022, ${b} in 2026, alongside the spread of grouped-query and latent attention.`,
+  e_moe_t:"Experts multiply, active share falls",e_moe_w:(e0,e1,y0)=>`Median experts per layer ${e0} → ${e1} since ${y0}. Memory follows total parameters and speed follows active ones; the total-to-active ratio rose from about 3.6 to about 9.`,
+  e_sc_t:"Bigger models grow mostly in width",e_sc_w:(a,b)=>`Across dense releases, width grows as N^${a} and depth as N^${b}; 2·${a} + ${b} is close to 1, as N ≈ 12·d²·L implies.`,
+  e_f32_t:"One in seven large models still ships in FP32",e_f32_w:tb=>`Popular models above 1B parameters that are stored in FP32 add up to ${tb} TB. BF16 would halve that, and every download pulls the full size.`,
+  e_meta_t:"Where the Hub's metadata falls short",e_meta_w:(m,l,c)=>`The Hub shows no parameter count for ${m} of readable popular repos; ${l} of popular repos declare no license; in ${c}, config.json and the weight shapes disagree.`,
+  e_ci:"95% CI",bd_h:"Deploy-Ready board",bd_sub:"Leading providers' releases, the most downloaded language models, Thai and multilingual models, and models submitted by users. Each is read from its headers, assigned the smallest device that holds it at 4-bit with an 8k context, and given five metadata checks. Submitted models receive a badge for their model card.",bd_submit:"Submit a model",bd_how:"Opens a GitHub issue; a bot usually replies within minutes.",
+  bd_cols:["Model","Origin","Fits on","Checks","Params","Active","KV/token","Memory (4-bit, 8k)","Downloads"],bd_empty:"Nothing matches.",
+  bd_tabs:{all:"All",lab:"Leading providers",popular:"Most downloaded language models",thai:"Thai & multilingual",submitted:"Submitted"},bd_search:"Search the board",bd_tier:"Fits on:",bd_any:"any",
   bd_more:n=>`Show all ${n}`,bd_less:"Show fewer",bd_note:"Scored from the census run; submitted models are read when the issue is opened.",
-  rel:{original:"original",finetune:"fine-tune",quantized:"quantized copy",merge:"merge",adapter:"adapter"},b_lab:"provider",b_sub:"submitted",
+  rel:{original:"original",finetune:"fine-tune",quantized:"quantized copy",merge:"merge",adapter:"adapter"},b_lab:"leading provider",b_sub:"submitted",
   th_lab:{"TH":"TH","TH/EN":"TH/EN","Multilingual":"multi + TH"},all_l:"Any language",l_th:"Built for Thai (TH, TH/EN)",l_tha:"Reads Thai (incl. multilingual)",
   o_lab:"Leading-provider releases",o_ft:"Fine-tunes",o_qz:"Quantized copies",o_mg:"Merges",o_ad:"Adapters",o_sub:"Submitted to the board",
   sel_none:"Click a dot on the map or a row of the table.",sel_map:"Show on the map",sel_det:"Details",not_map:"Not on the map (not a language model, or no KV cache).",
@@ -273,91 +273,75 @@ const T={
   look_none:"Not in the census table. Open it in the explorer instead:",open_full:"Open the full anatomy",
   f_params:"parameters",f_active:"active per token",f_store:"stored",f_wl:"width × layers",f_heads:"heads / KV heads",f_exp:"experts",f_vocab:"vocabulary",f_kv:"KV cache per token",f_kv32:"KV cache at 32k tokens",
   pct_h:"Among popular language models",pct_p:"size",pct_kv:"KV cache per token",pct_v:"vocabulary",pct_txt:p=>`larger than ${p}%`,
-  dev_h:"Fits on (8k context, +10% runtime)",dev_as:"as stored",dev_4:"4-bit weights",hub_ok:"The Hub's parameter count agrees.",hub_bad:r=>`The Hub shows ${r}× fewer parameters than the weights hold.`,
-  mm_h:"Memory map of popular language models",mm_s:"Each dot is a language model in the table below, filters included: parameters (to hold) against KV cache per token (to grow with context). Dashed lines: the most a device holds at 4-bit. Point at a dot for its name; click it, or a row of the table, to select it.",
+  dev_h:"Fits on (8k context, +10% runtime overhead)",dev_as:"as stored",dev_4:"4-bit weights",hub_ok:"The Hub's parameter count agrees.",hub_bad:r=>`The Hub's parameter count differs from the weights: ours ÷ Hub = ${r}.`,
+  mm_h:"Memory map of popular language models",mm_s:"Each dot is a language model from the table below (current filters apply), plotted by parameters (memory to hold) against KV cache per token (memory that grows with context). Dashed lines mark the largest model each device holds at 4-bit, weights only. Hover over a dot for its name; click it, or a row of the table, to select it.",
   k_moe:"mixture of experts",k_hyb:"hybrid",k_dense:"dense",all_k:"Any architecture",k_lat:"latent attention",k_nocfg:"no config.json",
   why:"Why it matters",see:"See them in the table →",
-  i_moe_t:"Mixture of experts is now the default for big models",i_moe_w:"Memory follows total parameters, speed follows active ones: a 30B-A3B model needs 30B in memory but computes like 3B.",
-  i_kv_t:"The KV cache, not the weights, often decides context length",i_kv_w:"Share of popular original language models created that year whose 16-bit cache at 32k tokens outweighs their 4-bit weights. Grouped-query and latent attention shrink the cache.",
-  i_hyb_t:"Fewer attention layers, longer context",i_hyb_w:"Hybrid stacks keep a KV cache only in their attention layers, so memory grows several times slower with context.",
-  i_edge_t:"How much of what is popular runs on a laptop",i_edge_w:"Share of popular original language models created that year that fit a 16 GB laptop (12 GB usable) at 4-bit with an 8k context.",
-  i_hub_t:"The Hub's size badge can be wrong",i_hub_w:"For packed 4-bit formats the Hub counts bytes, not parameters. Read the header before you plan memory.",
-  i_cfg_t:"Many models ship no config.json",i_cfg_w:"Then the weights are the only specification, and tools that need a config cannot read them. This page reads them anyway.",
-  ex_active:"active",ex_kv:"KB/token",ex_x:"× off",nav_back:"Explorer",cta:"Open the explorer",cta2:"Browse models",nav_find:"Findings",nav_models:"Models",nav_data:"Data",h1:"Hub Weight Census: what AI models say about themselves",
-  lead:"We read only the safetensors headers of thousands of Hugging Face repositories (names, shapes and storage of every tensor, never the weights) and recovered each model's architecture from them. Here is what the models people actually use are made of, how that changed year by year, and where the metadata around them is wrong.",
-  k_read:"repos read",k_ok:"popular models analysed",k_nc:"of the whole Hub ship no config.json",k_hdr:"read per repo (median)",k_types:"model types",k_dl:"of all downloads go to the top 10,000",
+  i_moe_t:"Mixture of experts is spreading fast",i_moe_w:"Memory follows total parameters, speed follows active ones: a 30B-A3B model needs 30B in memory but computes like 3B.",
+  i_kv_t:"At long context the KV cache can outweigh the weights",i_kv_w:"Share of popular original language models released that year whose 16-bit cache at 32k tokens outweighs their 4-bit weights. Grouped-query and latent attention shrink the cache.",
+  i_hyb_t:"Hybrid stacks keep less KV cache",i_hyb_w:"Hybrid stacks keep a KV cache only in their attention layers, so the cache grows with context only in those layers.",
+  i_edge_t:"How many popular models fit on a laptop",i_edge_w:"Share of popular original language models released that year that fit a 16 GB laptop (12 GB usable) at 4-bit with an 8k context.",
+  i_hub_t:"The Hub's parameter count can be wrong",i_hub_w:"For packed 4-bit formats the Hub counts bytes, not parameters. Read the header before you plan memory.",
+  i_cfg_t:"Many models ship no config.json",i_cfg_w:"Then the weights are the only specification, and tools that need a config cannot read them. The census reads their headers directly.",
+  ex_active:"active",ex_kv:"KB/token",ex_x:"× Hub",nav_back:"Explorer",cta:"Open the explorer",cta2:"Browse models",nav_find:"Findings",nav_models:"Models",nav_data:"Data",h1:"Hub Weight Census: what AI models say about themselves",
+  lead:"We read only the safetensors headers of 12,974 Hugging Face repositories (names, shapes and storage of every tensor, never the weights) and recovered each model's architecture from them. This page shows what widely used models are made of, how that has changed by year, and where their metadata is wrong.",
+  k_read:"repos read",k_ok:"popular models analyzed",k_nc:"of the whole Hub ship no config.json",k_hdr:"read per repo (median)",k_types:"model types",k_dl:"of all downloads go to the top 10,000",
   find_h:"Findings",find_sub:"Popular repos: the most downloaded, the most downloaded original releases, and recent releases from leading providers. Test fixtures (tiny random-weight repos) are left out.",
   c1:"Architecture by release year",c1s:"% of popular original language models released that year",c2:"The Hub's parameter count, by storage format",c2s:"% of repos where the count shown on the Hub differs from the logical count read from the headers. For NVFP4 the Hub counts packed bytes; other gaps can be on either side",
   c3:"Typical shape, by release year",c3s:"Median head size and vocabulary of popular original language models",c4:"When there is nothing to read",c4s:"Popular repos without safetensors or PyTorch weights, by what they ship instead",
   tbl_h:"Models",tbl_sub:"The most downloaded readable models in the census, every readable release from the leading providers, models built for Thai and models submitted to the board. Click a row to select it on the map; ↗ opens its full anatomy.",search:"Search models, e.g. qwen, whisper, deepseek",
-  tbl_note:"Params: logical parameters (quantized storage unpacked). Hub: ✓ when the Hub's own count agrees within 0.1%, otherwise our count ÷ the Hub's. KV/token: bytes of KV cache per token at 16 bit.",
-  data_h:"Data and method",data_sub:"Every repo: status, popularity, the architecture recovered from the weights, the values its config.json declares, the Hub's own parameter count and the raw manifest, so the results can be re-scored. Code and the frozen recovery rules are public.",
+  tbl_note:"Params: logical parameters (quantized storage unpacked). Hub: ✓ when the Hub's own count agrees within 0.1%, otherwise our count ÷ the Hub's. KV/token: bytes of KV cache per token at 16-bit.",
+  data_h:"Data and method",data_sub:"For every repo, the dataset gives status, popularity, the architecture recovered from the weights, the values its config.json declares, the Hub's own parameter count and the raw manifest, so the results can be recomputed. The code and the fixed recovery rules are public.",
   dl_code:"Census code",dl_ds:"Dataset on Hugging Face",dl_paper:"Paper",foot:"Read from public metadata only; no weights were downloaded.",crawled:"Crawled",
   all_fam:"All families",all_q:"Any storage",all_y:"Any year",all_o:"Originals and derivatives",o_orig:"Original releases",o_copy:"All derivatives",unq:"unquantized",
-  cols:["Model","Release","Year","Family","Params","Storage","Width","Layers","Heads / KV","Experts","Vocab","KV/token","Config","Hub","Downloads"],
+  cols:["Model","Origin","Year","Family","Params","Storage","Width","Layers","Heads / KV","Experts","Vocab","KV/token","Config","Hub","Downloads"],
   moe:"mixture of experts",hybrid:"hybrid (state-space / linear attention)",gqa:"grouped-query attention",quantized:"published quantized",hd:"head size",vocab:"vocabulary (thousands)",
-  gguf_only:"GGUF only (llama.cpp)",onnx_only:"ONNX only",no_weight_files:"no weight files",keras_or_other:"Keras / other",adapter:"adapter only",mlpackage_only:"Core ML only",
-  f_moe:(a,b,y0,y1)=>`<b>Mixture of experts</b> went from ${a}% of popular original language models released in ${y0} to <b>${b}%</b> in ${y1}.`,
-  f_hyb:(a,b)=>`<b>Hybrid stacks</b> that mix state-space or linear-attention layers with attention: ${a}% → <b>${b}%</b>.`,
-  f_gqa:(a,b)=>`<b>Grouped-query attention</b> (fewer KV heads than query heads): ${a}% → <b>${b}%</b>.`,
-  f_shape:(h0,h1,v0,v1)=>`Median <b>head size</b> ${h0} → ${h1}; median <b>vocabulary</b> ${v0} → ${v1} tokens.`,
-  f_q:(a,b)=>`Original releases <b>published already quantized</b> (FP8, NVFP4, MXFP4 …): ${a}% → <b>${b}%</b>.`,
-  f_hub:s=>`<b>The Hub's parameter count is wrong</b> for formats that pack two values per byte: ${s}.`,
-  f_nc:(a,b)=>`<b>${a}%</b> of all Hub models and ${b}% of popular ones ship <b>no config.json</b>: the weights are their only specification.`,
-  f_gguf:a=>`<b>${a}%</b> of popular repos with no safetensors or PyTorch weights are GGUF-only (llama.cpp).`},
- th:{eco_h:"ระบบนิเวศในตัวเลข",eco_sub:"สิ่งที่ checkpoint นับพันบอกว่าโมเดลถูกสร้าง ถูกก๊อปปี้ ถูกเก็บ และถูกรันอย่างไร ทุกตัวเลขมีช่วงความเชื่อมั่น 95% และถ้าเป็นการเปลี่ยนแปลงตามเวลามีการทดสอบแนวโน้มกำกับ วิธีการอยู่ใน paper ส่วนโค้ดอยู่ในโฟลเดอร์ census",nav_eco:"ระบบนิเวศ",
-  e_copy_t:"ตัว quantize ต่อได้ยอดโหลดเกินสัดส่วน",e_copy_w:(r,d)=>`repo ที่เป็น quantize ต่อมีแค่ ${r} ของ Hub แต่ได้ยอดโหลด ${d} รวมกับ fine-tune แล้วเกือบครึ่งของยอดโหลดทั้งหมดไปที่ตัวต่อยอด ไม่ใช่ตัวต้นฉบับ`,
-  e_same_t:"Fine-tune ไม่เปลี่ยนโครงสร้าง",e_same_w:(q,v)=>`width, depth, heads, FFN และ vocabulary เท่ากับตัวแม่ ส่วนตัว quantize ต่อก็ ${q} ถ้า fine-tune เปลี่ยนอะไรสักอย่าง ส่วนใหญ่คือ vocabulary (${v})`,
-  e_lin_t:"ผู้พัฒนารายเดียวเป็นต้นแบบของตัวต่อยอดเกือบหนึ่งในสี่",e_lin_w:(o,s)=>`${s} ของลิงก์ตัวแม่ใน repo ยอดนิยมชี้ไปที่โมเดลของ ${o} มากกว่าอีก 5 รายถัดไปรวมกัน การนับ repo จึงสะท้อนการออกแบบของผู้พัฒนาไม่กี่รายมากเกินจริง`,
-  e_kv_t:"หน่วยความจำต่อ token ลดลงเรื่อยๆ",e_kv_w:(a,b)=>`KV cache ต่อ token ต่อพันล้าน parameter: ${a} สำหรับโมเดลถึงปี 2022 เหลือ ${b} ในปี 2026 ไปพร้อมกับการแพร่ของ grouped-query และ latent attention`,
-  e_moe_t:"Expert มากขึ้น ส่วนที่ใช้จริงน้อยลง",e_moe_w:(e0,e1,y0)=>`จำนวน expert ต่อ layer (มัธยฐาน) ${e0} → ${e1} ตั้งแต่ ${y0} แรมขึ้นกับทั้งหมด ความเร็วขึ้นกับส่วนที่ active และอัตราส่วนของสองค่านี้เพิ่มจากราว 3.6 เป็นราว 9 เท่า`,
-  e_sc_t:"โมเดลใหญ่ขึ้นด้วยการกว้างขึ้น ไม่ใช่ลึกขึ้น",e_sc_w:(a,b)=>`ในโมเดล dense ที่ปล่อยออกมา width โตตาม N^${a} ส่วน depth ตาม N^${b} และ 2·${a} + ${b} ใกล้ 1 ตามที่ N ≈ 12·d²·L บอก`,
-  e_f32_t:"FP32 ยังมีอยู่ทุกที่",e_f32_w:tb=>`โมเดลยอดนิยมที่ใหญ่กว่า 1B แต่ยังเก็บแบบ FP32: ${tb} TB ที่ BF16 ลดได้ครึ่งหนึ่ง และทุกเครื่องที่ใช้ต้องโหลดเต็มขนาด`,
-  e_meta_t:"จุดที่ metadata บน Hub ยังขาด",e_meta_w:(m,l,c)=>`ตัวเลข params บน Hub ไม่มีเลยอีก ${m} repo ยอดนิยม ${l} ไม่ระบุ license และค่าใน config กับ shape ของ weights ไม่ตรงกัน ${c}`,
-  e_trend:"แนวโน้ม",e_ci:"ช่วง 95%",e_since:"ตั้งแต่",bd_h:"Deploy-Ready board",bd_sub:"โมเดลจากผู้พัฒนาหลัก language model ที่โหลดมากสุด โมเดลภาษาไทย และโมเดลที่เจ้าของส่งเข้ามา อ่านจาก header แล้วจัดระดับตามหน่วยความจำที่ต้องใช้ที่ 4-bit และ context 8k พร้อมเช็ก metadata 5 ข้อ ส่งโมเดลของคุณแล้วรับ badge ไปติดใน model card",bd_submit:"ส่งโมเดล",bd_how:"เปิด GitHub issue แล้ว bot จะตอบกลับภายในไม่กี่นาที",
-  bd_cols:["โมเดล","ที่มา","ลงเครื่อง","เช็ก","Params","Active","KV/token","4-bit + 8k","ดาวน์โหลด"],bd_empty:"ไม่มีโมเดลที่ตรงเงื่อนไข",
-  bd_tabs:{all:"ทั้งหมด",lab:"ผู้พัฒนาหลัก",popular:"LM ที่โหลดมากสุด",thai:"ภาษาไทยและหลายภาษา",submitted:"ส่งเข้ามา"},bd_search:"ค้นหาใน board",bd_tier:"ลงเครื่อง:",bd_any:"ทั้งหมด",
+  gguf_only:"GGUF only (llama.cpp)",onnx_only:"ONNX only",no_weight_files:"no weight files",keras_or_other:"Keras / other",adapter:"adapter only",mlpackage_only:"Core ML only"},
+ th:{eco_h:"ภาพรวม ecosystem",eco_sub:"checkpoint หลายพันตัวบอกอะไรเกี่ยวกับวิธีสร้าง ต่อยอด จัดเก็บ และรันโมเดล ค่าสัดส่วนแสดงช่วงความเชื่อมั่น 95% และการเปลี่ยนแปลงตามเวลามีการทดสอบแนวโน้มกำกับ วิธีการอยู่ใน paper ส่วนโค้ดอยู่ที่ research/hub-census",nav_eco:"Ecosystem",
+  e_copy_t:"ตัว quantize ได้ยอดดาวน์โหลดเกินสัดส่วนจำนวน repo",e_copy_w:(r,d,s)=>`repo ที่เป็นตัว quantize มีแค่ ${r} ของ Hub แต่มียอดดาวน์โหลด ${d} ของทั้งหมด เมื่อรวม fine-tune ด้วย ${s} ของยอดดาวน์โหลดไปที่โมเดลต่อยอด ไม่ใช่ตัวต้นฉบับ`,
+  e_same_t:"Fine-tune ส่วนใหญ่ไม่เปลี่ยนโครงสร้าง",e_same_w:(q,v)=>`width, depth, heads, FFN และ vocabulary เท่ากับโมเดลต้นแบบทุกค่า (ตัว quantize: ${q}) ส่วนที่ถูกเปลี่ยนบ่อยที่สุดคือ vocabulary (${v} ของ fine-tune ทั้งหมด)`,
+  e_lin_t:"ผู้พัฒนารายเดียวเป็นต้นแบบของโมเดลต่อยอดเกือบหนึ่งในสี่",e_lin_w:(o,s)=>`${s} ของลิงก์ไปยังโมเดลต้นแบบใน repo ยอดนิยมชี้ไปที่โมเดลของ ${o} มากกว่าอีก 5 รายถัดไปรวมกัน การนับ repo จึงสะท้อนการออกแบบของผู้พัฒนาไม่กี่รายมากเกินจริง`,
+  e_kv_t:f=>`KV cache ต่อ token เล็กลง ${f} เท่าเทียบกับโมเดลถึงปี 2022`,e_kv_w:(a,b)=>`KV cache ต่อ token ต่อพันล้าน parameter (มัธยฐาน): ${a} สำหรับโมเดลถึงปี 2022 เหลือ ${b} ในปี 2026 ควบคู่กับที่ grouped-query และ latent attention แพร่หลายขึ้น`,
+  e_moe_t:"Expert มากขึ้น ส่วนที่ใช้จริงน้อยลง",e_moe_w:(e0,e1,y0)=>`จำนวน expert ต่อ layer (มัธยฐาน) ${e0} → ${e1} ตั้งแต่ ${y0} หน่วยความจำขึ้นกับ parameter ทั้งหมด ความเร็วขึ้นกับส่วนที่ active และอัตราส่วนทั้งหมดต่อ active เพิ่มจากราว 3.6 เป็นราว 9 เท่า`,
+  e_sc_t:"โมเดลที่ใหญ่ขึ้นเพิ่มความกว้างมากกว่าความลึก",e_sc_w:(a,b)=>`ในโมเดล dense ที่ปล่อยออกมา width โตตาม N^${a} ส่วน depth ตาม N^${b} และ 2·${a} + ${b} ใกล้ 1 สอดคล้องกับสูตร N ≈ 12·d²·L`,
+  e_f32_t:"โมเดลใหญ่ราว 1 ใน 7 ยังเก็บเป็น FP32",e_f32_w:tb=>`โมเดลยอดนิยมที่ใหญ่กว่า 1B แต่ยังเก็บแบบ FP32: ${tb} TB ที่ BF16 ลดได้ครึ่งหนึ่ง และทุกเครื่องที่ใช้ต้องดาวน์โหลดเต็มขนาด`,
+  e_meta_t:"จุดที่ metadata บน Hub ยังขาด",e_meta_w:(m,l,c)=>`Hub ไม่แสดงจำนวน parameter ใน ${m} ของ repo ยอดนิยมที่อ่านได้ · ${l} ของ repo ยอดนิยมไม่ระบุ license · และ ${c} มีค่าใน config.json ไม่ตรงกับ shape ของ weights`,
+  e_ci:"ช่วงความเชื่อมั่น 95%",bd_h:"Deploy-Ready board",bd_sub:"โมเดลจากผู้พัฒนาหลัก language model ที่มียอดดาวน์โหลดสูงสุด โมเดลภาษาไทยและหลายภาษา และโมเดลที่ผู้ใช้ส่งเข้ามา แต่ละตัวอ่านจาก header แล้วระบุอุปกรณ์ที่เล็กที่สุดที่รันได้ที่ 4-bit และ context 8k พร้อมตรวจ metadata 5 ข้อ โมเดลที่ส่งเข้ามาจะได้ badge สำหรับ model card",bd_submit:"ส่งโมเดล",bd_how:"เปิด GitHub issue แล้ว bot จะตอบกลับภายในไม่กี่นาที",
+  bd_cols:["โมเดล","ประเภท","รันได้บน","การตรวจ","Params","Active","KV/token","หน่วยความจำ (4-bit, 8k)","ดาวน์โหลด"],bd_empty:"ไม่มีโมเดลที่ตรงเงื่อนไข",
+  bd_tabs:{all:"ทั้งหมด",lab:"ผู้พัฒนาหลัก",popular:"language model ที่ดาวน์โหลดมากที่สุด",thai:"ภาษาไทยและหลายภาษา",submitted:"ส่งเข้ามา"},bd_search:"ค้นหาใน board",bd_tier:"รันได้บน:",bd_any:"ทั้งหมด",
   bd_more:n=>`แสดงทั้งหมด ${n}`,bd_less:"แสดงน้อยลง",bd_note:"คะแนนมาจากรอบ census ส่วนโมเดลที่ส่งเข้ามาจะอ่านตอนเปิด issue",
-  rel:{original:"ต้นฉบับ",finetune:"fine-tune",quantized:"quantize ต่อ",merge:"merge",adapter:"adapter"},b_lab:"เจ้าหลัก",b_sub:"ส่งเข้ามา",
-  th_lab:{"TH":"TH","TH/EN":"TH/EN","Multilingual":"หลายภาษา+TH"},all_l:"ทุกภาษา",l_th:"ทำมาเพื่อภาษาไทย (TH, TH/EN)",l_tha:"อ่านภาษาไทยได้ (รวมหลายภาษา)",
-  o_lab:"ตัวที่ผู้พัฒนาหลักปล่อย",o_ft:"Fine-tune",o_qz:"Quantize ต่อ",o_mg:"Merge",o_ad:"Adapter",o_sub:"ส่งขึ้น board",
+  rel:{original:"ต้นฉบับ",finetune:"fine-tune",quantized:"ตัว quantize",merge:"merge",adapter:"adapter"},b_lab:"ผู้พัฒนาหลัก",b_sub:"ส่งเข้ามา",
+  th_lab:{"TH":"TH","TH/EN":"TH/EN","Multilingual":"หลายภาษา+TH"},all_l:"ทุกภาษา",l_th:"พัฒนาสำหรับภาษาไทย (TH, TH/EN)",l_tha:"รองรับภาษาไทย (รวมหลายภาษา)",
+  o_lab:"รุ่นจากผู้พัฒนาหลัก",o_ft:"Fine-tune",o_qz:"ตัว quantize",o_mg:"Merge",o_ad:"Adapter",o_sub:"ส่งขึ้น board",
   sel_none:"กดจุดบนแผนที่ หรือกดแถวในตาราง",sel_map:"ดูบนแผนที่",sel_det:"รายละเอียด",not_map:"ไม่อยู่บนแผนที่ (ไม่ใช่ language model หรือไม่มี KV cache)",
-  chk:{"safetensors":"safetensors","config.json":"มี config.json","config agrees with weights":"config ตรงกับ weights","Hub parameter count correct":"ตัวเลข params บน Hub ถูก","license declared":"ระบุ license"},look_submit:"ส่งโมเดลนี้ขึ้น board",look_h:"ค้นหาโมเดลของคุณ",look_sub:"พิมพ์ชื่อโมเดลใน census เพื่อดูว่าข้างในประกอบด้วยอะไร อยู่ตรงไหนเทียบกับโมเดลยอดนิยม และลงเครื่องไหนได้บ้าง",look_ph:"เช่น Qwen/Qwen3-8B",
+  chk:{"safetensors":"safetensors","config.json":"มี config.json","config agrees with weights":"config ตรงกับ weights","Hub parameter count correct":"จำนวน parameter บน Hub ถูกต้อง","license declared":"ระบุ license"},look_submit:"ส่งโมเดลนี้ขึ้น board",look_h:"ค้นหาโมเดล",look_sub:"พิมพ์ชื่อโมเดลใน census เพื่อดูว่าข้างในประกอบด้วยอะไร อยู่ตรงไหนเทียบกับโมเดลยอดนิยม และรันบนอุปกรณ์ใดได้บ้าง",look_ph:"เช่น Qwen/Qwen3-8B",
   look_none:"ไม่มีในตาราง census เปิดดูใน explorer แทนได้:",open_full:"เปิดดูโครงสร้างเต็ม",
   f_params:"parameter",f_active:"ใช้จริงต่อ token",f_store:"ขนาดที่เก็บ",f_wl:"width × layers",f_heads:"heads / KV heads",f_exp:"experts",f_vocab:"vocabulary",f_kv:"KV cache ต่อ token",f_kv32:"KV cache ที่ 32k token",
   pct_h:"เทียบกับ language model ยอดนิยม",pct_p:"ขนาด",pct_kv:"KV cache ต่อ token",pct_v:"vocabulary",pct_txt:p=>`ใหญ่กว่า ${p}%`,
-  dev_h:"ลงเครื่องได้ไหม (context 8k, เผื่อ runtime 10%)",dev_as:"ตามที่เก็บ",dev_4:"weights 4-bit",hub_ok:"ตัวเลข parameter บน Hub ตรงกับ weights",hub_bad:r=>`Hub แสดงจำนวน parameter น้อยกว่าที่ weights มีจริง ${r} เท่า`,
-  mm_h:"แผนที่หน่วยความจำของ language model ยอดนิยม",mm_s:"แต่ละจุดคือ language model ในตารางด้านล่าง (ตามตัวกรองที่เลือก): จำนวน parameter (ที่ต้องเก็บ) เทียบกับ KV cache ต่อ token (ที่โตตาม context) เส้นประคือขนาดสูงสุดที่แต่ละเครื่องรับได้ที่ 4-bit ชี้จุดเพื่อดูชื่อ กดจุดหรือแถวในตารางเพื่อเลือก",
+  dev_h:"รันบนอุปกรณ์ใดได้ (context 8k, เผื่อ overhead ของ runtime 10%)",dev_as:"ตามที่เก็บ",dev_4:"weights 4-bit",hub_ok:"ตัวเลข parameter บน Hub ตรงกับ weights",hub_bad:r=>`จำนวน parameter บน Hub ไม่ตรงกับ weights (ของเรา ÷ Hub = ${r})`,
+  mm_h:"แผนที่หน่วยความจำของ language model ยอดนิยม",mm_s:"แต่ละจุดคือ language model ในตารางด้านล่าง (ตามตัวกรองที่เลือก): จำนวน parameter (ที่ต้องเก็บ) เทียบกับ KV cache ต่อ token (ที่โตตาม context) เส้นประคือขนาดโมเดลสูงสุดที่แต่ละอุปกรณ์รับได้ที่ 4-bit (คิดเฉพาะ weights) วางเมาส์บนจุดเพื่อดูชื่อ กดจุดหรือแถวในตารางเพื่อเลือก",
   k_moe:"mixture of experts",k_hyb:"hybrid",k_dense:"dense",all_k:"ทุกสถาปัตยกรรม",k_lat:"latent attention",k_nocfg:"ไม่มี config.json",
   why:"ทำไมสำคัญ",see:"ดูในตาราง →",
-  i_moe_t:"Mixture of experts กลายเป็นค่าเริ่มต้นของโมเดลใหญ่",i_moe_w:"หน่วยความจำขึ้นกับ parameter ทั้งหมด ความเร็วขึ้นกับตัวที่ active โมเดล 30B-A3B ต้องมีแรมพอสำหรับ 30B แต่คำนวณเหมือน 3B",
-  i_kv_t:"KV cache มักเป็นตัวกำหนด context ไม่ใช่ weights",i_kv_w:"สัดส่วน language model ต้นฉบับยอดนิยมที่สร้างปีนั้น ที่ cache 16-bit ที่ 32k token ใหญ่กว่า weights แบบ 4-bit แล้ว grouped-query กับ latent attention ช่วยลดขนาด cache",
-  i_hyb_t:"attention น้อยลง context ยาวขึ้น",i_hyb_w:"hybrid stack เก็บ KV cache เฉพาะ layer ที่เป็น attention หน่วยความจำจึงโตตาม context ช้ากว่าหลายเท่า",
-  i_edge_t:"โมเดลยอดนิยมรันบนโน้ตบุ๊กได้แค่ไหน",i_edge_w:"สัดส่วน language model ต้นฉบับยอดนิยมที่สร้างปีนั้น ที่รันบนโน้ตบุ๊กแรม 16 GB (ใช้ได้จริง 12 GB) ได้ที่ 4-bit และ context 8k",
-  i_hub_t:"ขนาดที่ Hub แสดงอาจผิด",i_hub_w:"รูปแบบ 4-bit ที่อัดค่าไว้ Hub นับเป็น byte ไม่ใช่ parameter ควรอ่าน header ก่อนวางแผนหน่วยความจำ",
+  i_moe_t:"Mixture of experts แพร่หลายอย่างรวดเร็ว",i_moe_w:"หน่วยความจำขึ้นกับ parameter ทั้งหมด ความเร็วขึ้นกับตัวที่ active โมเดล 30B-A3B ต้องมีแรมพอสำหรับ 30B แต่คำนวณเหมือน 3B",
+  i_kv_t:"ที่ context ยาว KV cache อาจใหญ่กว่า weights",i_kv_w:"สัดส่วน language model ต้นฉบับยอดนิยมที่ปล่อยในปีนั้น ซึ่ง KV cache แบบ 16-bit ที่ 32k token ใหญ่กว่า weights แบบ 4-bit · grouped-query และ latent attention ช่วยลดขนาด cache",
+  i_hyb_t:"Hybrid stack ใช้ KV cache น้อยกว่า",i_hyb_w:"hybrid stack เก็บ KV cache เฉพาะ layer ที่เป็น attention cache จึงโตตาม context เฉพาะใน layer เหล่านั้น",
+  i_edge_t:"โมเดลยอดนิยมรันบนโน้ตบุ๊กได้แค่ไหน",i_edge_w:"สัดส่วน language model ต้นฉบับยอดนิยมที่ปล่อยในปีนั้น ที่รันบนโน้ตบุ๊กแรม 16 GB (ใช้ได้จริง 12 GB) ได้ที่ 4-bit และ context 8k",
+  i_hub_t:"จำนวน parameter ที่ Hub แสดงอาจผิด",i_hub_w:"สำหรับรูปแบบ 4-bit แบบ packed Hub นับจำนวน byte แทนจำนวน parameter ควรอ่าน header ก่อนประเมินหน่วยความจำ",
   i_cfg_t:"หลายโมเดลไม่มี config.json",i_cfg_w:"weights จึงเป็นสเปกเดียวที่มี เครื่องมือที่ต้องพึ่ง config อ่านไม่ได้ แต่หน้านี้อ่านได้",
-  ex_active:"active",ex_kv:"KB/token",ex_x:"× ผิด",nav_back:"Explorer",cta:"เปิด explorer",cta2:"ดูรายชื่อโมเดล",nav_find:"สิ่งที่พบ",nav_models:"โมเดล",nav_data:"ข้อมูล",h1:"Hub Weight Census: โมเดล AI บอกอะไรเกี่ยวกับตัวเองบ้าง",
-  lead:"เราอ่านแค่ header ของไฟล์ safetensors จาก repo บน Hugging Face หลายพันตัว (ชื่อ shape และรูปแบบการเก็บของทุก tensor โดยไม่โหลด weights เลย) แล้วถอดสถาปัตยกรรมของแต่ละโมเดลออกมา หน้านี้สรุปว่าโมเดลที่คนใช้จริงประกอบด้วยอะไร เปลี่ยนไปอย่างไรในแต่ละปี และข้อมูลประกอบตรงไหนที่ผิด",
+  ex_active:"active",ex_kv:"KB/token",ex_x:" เท่าของ Hub",nav_back:"Explorer",cta:"เปิด explorer",cta2:"ดูรายชื่อโมเดล",nav_find:"สิ่งที่พบ",nav_models:"โมเดล",nav_data:"ข้อมูล",h1:"Hub Weight Census: โมเดล AI บอกอะไรเกี่ยวกับตัวเองบ้าง",
+  lead:"เราอ่านแค่ header ของไฟล์ safetensors จาก 12,974 repo บน Hugging Face (ชื่อ shape และรูปแบบการเก็บของทุก tensor โดยไม่โหลด weights เลย) แล้วถอดสถาปัตยกรรมของแต่ละโมเดลออกมา หน้านี้สรุปว่าโมเดลที่คนใช้จริงประกอบด้วยอะไร เปลี่ยนไปอย่างไรในแต่ละปี และ metadata ผิดตรงไหนบ้าง",
   k_read:"repo ที่อ่าน",k_ok:"โมเดลยอดนิยมที่วิเคราะห์ได้",k_nc:"ของโมเดลทั้ง Hub ไม่มี config.json",k_hdr:"ที่อ่านต่อ repo (มัธยฐาน)",k_types:"ชนิดโมเดล",k_dl:"ของยอดดาวน์โหลดทั้งหมดอยู่ที่ 10,000 อันดับแรก",
-  find_h:"สิ่งที่พบ",find_sub:"โมเดลยอดนิยม: ยอดดาวน์โหลดสูงสุด, ตัวต้นฉบับที่โหลดมากสุด และตัวที่ผู้พัฒนาหลักปล่อยช่วงหลัง ไม่รวม repo ทดสอบ (tiny random)",
+  find_h:"สิ่งที่พบ",find_sub:"โมเดลยอดนิยม: ยอดดาวน์โหลดสูงสุด, ตัวต้นฉบับที่ดาวน์โหลดมากที่สุด และตัวที่ผู้พัฒนาหลักปล่อยช่วงหลัง ไม่รวม repo ทดสอบ (tiny random)",
   c1:"สถาปัตยกรรมตามปีที่ปล่อย",c1s:"% ของ language model ต้นฉบับยอดนิยมที่ปล่อยในปีนั้น",c2:"จำนวน parameter ที่ Hub แสดง แยกตามรูปแบบการเก็บ",c2s:"% ของ repo ที่ตัวเลขบน Hub ไม่ตรงกับจำนวนที่อ่านจาก header กรณี NVFP4 Hub นับ byte ที่อัดไว้ ส่วนรูปแบบอื่นอาจคลาดได้ทั้งสองฝั่ง",
-  c3:"รูปร่างทั่วไปตามปี",c3s:"ค่ามัธยฐานของขนาด head และ vocabulary",c4:"เมื่อไม่มีอะไรให้อ่าน",c4s:"repo ยอดนิยมที่ไม่มี weights แบบ safetensors หรือ PyTorch แยกตามสิ่งที่ปล่อยแทน",
-  tbl_h:"โมเดล",tbl_sub:"โมเดลที่อ่านได้และโหลดมากสุดใน census รวมทุกตัวที่ผู้พัฒนาหลักปล่อย โมเดลภาษาไทย และโมเดลที่ส่งขึ้น board กดแถวเพื่อเลือกบนแผนที่ ↗ เปิดดูโครงสร้างเต็ม",search:"ค้นหาโมเดล เช่น qwen, whisper, deepseek",
-  tbl_note:"Params: จำนวน parameter จริง (แกะ quantization แล้ว) · Hub: ✓ เมื่อตัวเลขของ Hub ตรงภายใน 0.1% ไม่งั้นแสดงอัตราส่วนของเรา ÷ Hub · KV/token: ขนาด KV cache ต่อ token ที่ 16 บิต",
+  c3:"ขนาดโดยทั่วไป แยกตามปีที่ปล่อย",c3s:"ค่ามัธยฐานของขนาด head และ vocabulary ของ language model ต้นฉบับยอดนิยม",c4:"เมื่อไม่มีอะไรให้อ่าน",c4s:"repo ยอดนิยมที่ไม่มี weights แบบ safetensors หรือ PyTorch แยกตามสิ่งที่ปล่อยแทน",
+  tbl_h:"โมเดล",tbl_sub:"โมเดลที่อ่านได้และดาวน์โหลดมากที่สุดใน census รวมทุกตัวที่ผู้พัฒนาหลักปล่อย โมเดลภาษาไทย และโมเดลที่ส่งขึ้น board กดแถวเพื่อเลือกบนแผนที่ ↗ เปิดดูโครงสร้างเต็ม",search:"ค้นหาโมเดล เช่น qwen, whisper, deepseek",
+  tbl_note:"Params: จำนวน parameter เชิงตรรกะ (unpack ค่าที่ quantize แล้ว) · Hub: ✓ เมื่อตัวเลขของ Hub ตรงภายใน 0.1% มิฉะนั้นแสดงอัตราส่วนของเรา ÷ Hub · KV/token: ขนาด KV cache ต่อ token ที่ 16-bit",
   data_h:"ข้อมูลและวิธีการ",data_sub:"ทุก repo มีสถานะ ความนิยม สถาปัตยกรรมที่ถอดจาก weights ค่าที่ config.json ประกาศ ตัวเลขของ Hub และ manifest ดิบไว้ให้คำนวณซ้ำได้ โค้ดและกฎที่ล็อกไว้เปิดสาธารณะ",
   dl_code:"โค้ด census",dl_ds:"Dataset บน Hugging Face",dl_paper:"Paper",foot:"อ่านจาก metadata สาธารณะเท่านั้น ไม่มีการโหลด weights",crawled:"เก็บข้อมูลเมื่อ",
-  all_fam:"ทุกตระกูล",all_q:"ทุกรูปแบบการเก็บ",all_y:"ทุกปี",all_o:"ต้นฉบับและตัวต่อยอด",o_orig:"ต้นฉบับ",o_copy:"ตัวต่อยอดทั้งหมด",unq:"ไม่ quantize",
+  all_fam:"ทุกตระกูล",all_q:"ทุกรูปแบบการเก็บ",all_y:"ทุกปี",all_o:"ต้นฉบับและโมเดลต่อยอด",o_orig:"ต้นฉบับ",o_copy:"โมเดลต่อยอดทั้งหมด",unq:"ไม่ได้ quantize",
   cols:["โมเดล","ที่มา","ปี","ตระกูล","Params","การเก็บ","Width","Layers","Heads / KV","Experts","Vocab","KV/token","Config","Hub","ดาวน์โหลด"],
-  moe:"mixture of experts",hybrid:"hybrid (state-space / linear attention)",gqa:"grouped-query attention",quantized:"ปล่อยแบบ quantize มาเลย",hd:"ขนาด head",vocab:"vocabulary (พัน)",
-  gguf_only:"มีแต่ GGUF (llama.cpp)",onnx_only:"มีแต่ ONNX",no_weight_files:"ไม่มีไฟล์ weights",keras_or_other:"Keras / อื่นๆ",adapter:"มีแต่ adapter",mlpackage_only:"มีแต่ Core ML",
-  f_moe:(a,b,y0,y1)=>`<b>Mixture of experts</b> เพิ่มจาก ${a}% ของ language model ต้นฉบับยอดนิยมที่ปล่อยปี ${y0} เป็น <b>${b}%</b> ในปี ${y1}`,
-  f_hyb:(a,b)=>`<b>Hybrid stack</b> ที่ผสม state-space หรือ linear attention กับ attention: ${a}% → <b>${b}%</b>`,
-  f_gqa:(a,b)=>`<b>Grouped-query attention</b> (KV head น้อยกว่า query head): ${a}% → <b>${b}%</b>`,
-  f_shape:(h0,h1,v0,v1)=>`มัธยฐาน<b>ขนาด head</b> ${h0} → ${h1}, <b>vocabulary</b> ${v0} → ${v1} token`,
-  f_q:(a,b)=>`ตัวต้นฉบับที่<b>ปล่อยแบบ quantize มาเลย</b> (FP8, NVFP4, MXFP4 …): ${a}% → <b>${b}%</b>`,
-  f_hub:s=>`<b>ตัวเลข parameter บน Hub ผิด</b> ในรูปแบบที่อัด 2 ค่าต่อ byte: ${s}`,
-  f_nc:(a,b)=>`<b>${a}%</b> ของโมเดลทั้ง Hub และ ${b}% ของตัวยอดนิยม <b>ไม่มี config.json</b> มีแค่ weights เป็นสเปก`,
-  f_gguf:a=>`<b>${a}%</b> ของ repo ยอดนิยมที่ไม่มีไฟล์ weights แบบ safetensors หรือ PyTorch เป็น GGUF ล้วน (llama.cpp)`}};
+  moe:"mixture of experts",hybrid:"hybrid (state-space / linear attention)",gqa:"grouped-query attention",quantized:"ปล่อยแบบ quantize ตั้งแต่แรก",hd:"ขนาด head",vocab:"vocabulary (พัน)",
+  gguf_only:"มีแต่ GGUF (llama.cpp)",onnx_only:"มีแต่ ONNX",no_weight_files:"ไม่มีไฟล์ weights",keras_or_other:"Keras / อื่นๆ",adapter:"มีแต่ adapter",mlpackage_only:"มีแต่ Core ML"}};
 let L=(new URLSearchParams(location.search).get("lang"))||(()=>{try{return localStorage.getItem("mx_lang")}catch(e){}})()||((navigator.language||"").slice(0,2)==="th"?"th":"en");
 if(!T[L])L="en";
 const $=s=>document.querySelector(s),tip=$("#tip"),pct=x=>x==null?"–":Math.round(x*100),fmtN=n=>n==null?"–":n>=1e12?(n/1e12).toFixed(2)+"T":n>=1e9?(n/1e9).toFixed(n>=1e11?0:1)+"B":n>=1e6?(n/1e6).toFixed(n>=1e8?0:1)+"M":n>=1e3?(n/1e3).toFixed(0)+"K":String(n);
@@ -403,14 +387,14 @@ function eco(){const t=T[L],E=I.ecosystem,el=$("#ecoc");if(!E){$("#eco").style.d
  const D=E.derivatives||{},h=D.hub||{},fi=D.fidelity||{},li=D.lineage||{},kv=E.kv||{},mo=(E.moe||{}).by_year||[],sc=E.scaling||{},st=E.storage||{},md=E.metadata||{},cards=[];
  const ids=new Set(M.map(m=>m.id)),chips=list=>`<div class="ex">${list.filter(i=>ids.has(i)).slice(0,4).map(i=>`<a href="#lookup" data-m="${i}">${i.split("/")[1]}</a>`).join("")}</div>`;
  const byDl=f=>M.filter(f).sort((a,b)=>b.dl-a.dl).map(m=>m.id);
- if(h.quantized)cards.push({big:"×"+h.quantized.lift.toFixed(1),sub:L==="th"?"ยอดโหลดต่อ repo":"downloads per repo",t:t.e_copy_t,w:t.e_copy_w(P(h.quantized.repo_share),P(h.quantized.download_share)),note:L==="th"?"ทั้ง Hub, 3.2 ล้าน repo":"whole Hub, 3.2M repos",ex:chips(byDl(m=>m.origin==="quantized")),go:{fo:"quantized"}});
+ if(h.quantized)cards.push({big:"×"+h.quantized.lift.toFixed(1),sub:L==="th"?"ยอดดาวน์โหลดต่อ repo เทียบค่าเฉลี่ย":"downloads per repo vs. average",t:t.e_copy_t,w:t.e_copy_w(P(h.quantized.repo_share),P(h.quantized.download_share),P(h.quantized.download_share+(h.finetune?h.finetune.download_share:0))),note:L==="th"?"ทั้ง Hub, 3.2 ล้าน repo":"whole Hub, 3.2M repos",ex:chips(byDl(m=>m.origin==="quantized")),go:{fo:"quantized"}});
  if(fi.finetune)cards.push({big:P(fi.finetune.identical.p),sub:"fine-tunes",t:t.e_same_t,w:t.e_same_w(P(fi.quantized&&fi.quantized.identical.p),P(fi.finetune.vocab_changed.p)),note:`${CI(fi.finetune.identical)} · n = ${fi.finetune.n}`,ex:chips(byDl(m=>m.origin==="finetune"&&onMap(m))),go:{fo:"finetune"}});
  if(li.top_parent_owners){const o=li.top_parent_owners[0];cards.push({big:P(o[1]),sub:o[0],t:t.e_lin_t,w:t.e_lin_w(o[0],P(o[1])),note:`n = ${li.derivatives.toLocaleString()} · HHI ${li.hhi}`,ex:chips((li.top_parents||[]).map(x=>x[0])),go:{q:o[0].toLowerCase()+"/"}})}
- if(kv.by_year){const a=kv.by_year[0].kv_per_b,b=kv.by_year[kv.by_year.length-1].kv_per_b;cards.push({big:Math.round(kv.fold_drop)+"×",sub:L==="th"?"ลดลง":"lower",t:t.e_kv_t,w:t.e_kv_w(fmtB(a.med),fmtB(b.med)),note:`Spearman ρ = ${kv.vs_year.rho} · ${PV(kv.vs_year.p)}`,sp:spark(kv.by_year.map(r=>r.kv_per_b.med/1e3),"--s1"),ex:chips(byDl(m=>isLM(m)&&m.y>=2025&&m.kv&&m.p>1e9&&m.kv/m.p<4e-6)),go:{fk:"lat"}})}
+ if(kv.by_year){const a=kv.by_year[0].kv_per_b,b=kv.by_year[kv.by_year.length-1].kv_per_b;cards.push({big:Math.round(kv.fold_drop)+"×",sub:L==="th"?"ลดลง":"lower",t:t.e_kv_t(Math.round(kv.fold_drop)),w:t.e_kv_w((a.med/1e3).toFixed(0)+" KB",(b.med/1e3).toFixed(1)+" KB"),note:`Spearman ρ = ${kv.vs_year.rho} · ${PV(kv.vs_year.p)}`,sp:spark(kv.by_year.map(r=>r.kv_per_b.med/1e3),"--s1"),ex:chips(byDl(m=>isLM(m)&&m.y>=2025&&m.kv&&m.p>1e9&&m.kv/m.p<4e-6)),go:{fk:"lat"}})}
  if(mo.length>1){const a=mo.find(m=>m.n>=20)||mo[0],b=mo[mo.length-1];if(b.active_ratio)cards.push({big:P(b.active_ratio.med),sub:(L==="th"?"active ต่อ token, ":"active per token, ")+b.year,t:t.e_moe_t,w:t.e_moe_w(Math.round(a.experts.med),Math.round(b.experts.med),a.year),note:`${CI(b.active_ratio)} · ${PV(E.moe.active_ratio_vs_year.p)}`,sp:spark(mo.map(m=>m.active_ratio?m.active_ratio.med:0),"--s2"),ex:chips(byDl(m=>isLM(m)&&m.E>=128&&m.act)),go:{fk:"moe"}})}
  if(sc.d)cards.push({big:`N<sup>${sc.d.slope.toFixed(2)}</sup>`,sub:L==="th"?"width":"width",t:t.e_sc_t,w:t.e_sc_w(sc.d.slope.toFixed(2),sc.layers.slope.toFixed(2)),note:`R² ${sc.d.r2} / ${sc.layers.r2} · n = ${sc.d.n.toLocaleString()}`,ex:"",go:{}});
  if(st.f32_over_1b)cards.push({big:P(st.f32_over_1b.p),sub:"> 1B, FP32",t:t.e_f32_t,w:t.e_f32_w(st.f32_over_1b_tb),note:`${CI(st.f32_over_1b)} · n = ${st.f32_over_1b.n.toLocaleString()}`,ex:chips(byDl(m=>m.p>1e9&&!m.q&&m.sb&&m.sb>m.p*3.5)),go:{}});
- if(md.hub_count_wrong)cards.push({big:P(md.hub_count_wrong.p),sub:L==="th"?"params บน Hub ผิด":"Hub count wrong",t:t.e_meta_t,w:t.e_meta_w(P(md.hub_count_missing.p),P(md.license_missing.p),P(md.config_disagrees.p)),note:`${CI(md.hub_count_wrong)} · n = ${md.hub_count_wrong.n.toLocaleString()}`,ex:"",go:{fk:"nocfg"}});
+ if(md.hub_count_wrong)cards.push({big:P(md.hub_count_wrong.p),sub:L==="th"?"จำนวน parameter บน Hub ผิด":"Hub count wrong",t:t.e_meta_t,w:t.e_meta_w(P(md.hub_count_missing.p),P(md.license_missing.p),P(md.config_disagrees.p)),note:`${CI(md.hub_count_wrong)} · n = ${md.hub_count_wrong.n.toLocaleString()}`,ex:"",go:{fk:"nocfg"}});
  el.innerHTML=cards.map((c,i)=>`<div class="ic rv"><div class="big">${c.big}<small>${c.sub||""}</small></div><h3>${c.t}</h3>${c.sp||""}<p>${c.w}</p><p class="note" style="margin-top:0">${c.note||""}</p>${c.ex||""}${Object.keys(c.go).length?`<button class="go" data-i="${i}">${t.see}</button>`:""}</div>`).join("");
  el.querySelectorAll(".go").forEach(b=>b.onclick=()=>{const g=cards[+b.dataset.i].go;["#q","#ffam","#fq","#fy","#fo","#fk","#fl"].forEach(s=>$(s).value="");for(const[k,v]of Object.entries(g))$("#"+k).value=v;page=0;table();$("#models").scrollIntoView({behavior:"smooth"})});
  el.querySelectorAll(".ex a").forEach(a=>a.onclick=e=>{e.preventDefault();select(a.dataset.m,{scroll:"#lookup"})})}

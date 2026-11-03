@@ -55,7 +55,7 @@ The method is described in the paper "Reading the Architecture off the Weights: 
 | Name-only baselines on the same corpus | rule set with MoE label 82.3%; llama.cpp tensor-name table 29.7% overall, covering about one model in five |
 | Parameter totals | exact for 510 of 510, also under NVFP4, FP8 and GPTQ storage |
 | Block lists (layer stacks) | recall 98.6%, precision 91.4% |
-| 191 popular Hugging Face checkpoints (DeepSeek-V3, Kimi K2, Qwen3, Llama 3.3, gpt-oss, Gemma 3, Whisper, SAM, SDXL, Wan and others) | parameter totals agree with the Hub's own count for 163 of 170; most differences come from the Hub counting packed 4-bit bytes |
+| 191 popular Hugging Face checkpoints (DeepSeek-V3, Kimi K2, Qwen3, Llama 3.3, gpt-oss, Gemma 3, Whisper, SAM, SDXL, Wan and others) | parameter totals agree with the Hub's own count for 149 of the 158 transformers-style checkpoints that show a count; most differences come from the Hub counting packed 4-bit bytes |
 | Bytes read per repo | median 79 KB |
 | Recovery time | median about 10 ms per model |
 

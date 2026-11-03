@@ -1,4 +1,4 @@
-"""Publish the labelled corpus (510 architectures, per-tensor ground truth) as a Hugging Face dataset.
+"""Publish the labeled corpus (510 architectures, per-tensor ground truth) as a Hugging Face dataset.
 
 usage: python publish_corpus.py <owner/name> [../data/corpus-510.jsonl.gz]   (needs HF_TOKEN with write access)
 """
@@ -24,9 +24,9 @@ their block types, hyperparameters, and the configuration.
 
 It is the benchmark of S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network
 Anatomy*, 2026 ([paper](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy),
-[code](https://github.com/JoesSattes/ai-model-explorer), [playground](https://joessattes.github.io/ai-model-explorer/)).
+[code](https://github.com/JoesSattes/ai-model-explorer), [web app](https://joessattes.github.io/ai-model-explorer/en/)).
 Its companion, [hub-weight-census](https://huggingface.co/datasets/{owner}/hub-weight-census), applies the same
-recovery to thousands of published checkpoints and carries these labels over to them by model type.
+recovery to 12,974 Hub repositories and carries these labels over to them by model type.
 
 ## Files
 
@@ -39,19 +39,19 @@ recovery to thousands of published checkpoints and carries these labels over to 
 - `type`: transformers model type; `name`; `cls`: the model class instantiated
 - `tensors`: `{{name: {{dtype, shape}}}}`, exactly what a safetensors header lists
 - `gt`: `{{name: {{kind, owner}}}}`: role (`attn`, `cross`, `ffn`, `moe`, `ssm`, `conv`, `rnn`, `norm`, `embed`, `head`,
-  `adapter`, `mod`, `other`) and the class that owns the tensor
+  `adapter`, `mod` (adaLN modulation), `other`) and the class that owns the tensor
 - `lists`: block lists with path, length, block-type sequence, item class, expert flag
 - `hp`: hyperparameters from the configuration; `cfg`: the configuration; `params`: parameter total; `n`: tensor count
 
 ## Use
 
 Score any architecture-recovery, model-search or conversion tool against `gt` and `lists`; the reference results are
-in the paper (96.8% macro role accuracy, 95.0% with every name hashed). Reproduce or extend with
+in the paper (96.8% macro role accuracy, 95.0% with every name replaced by a random token). Reproduce or extend with
 `research/build_corpus.py` and `research/eval.js` in the code repository.
 
 ## Limits
 
-Default configurations are small or untrained shapes, not released checkpoints; class names are an independent but
+Default configurations give small, untrained models whose shapes can differ from released checkpoints; class names are an independent but
 imperfect source of labels (see the paper's discussion). Model types that need remote code are not included.
 Built {date}. Configurations and shapes derive from `transformers` (Apache-2.0).
 """

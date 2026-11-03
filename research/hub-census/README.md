@@ -1,8 +1,9 @@
-# Hub census
+# Hub Weight Census
 
 What do the weights on the Hugging Face Hub actually say about themselves, and how often does the
 config agree? This folder reads the safetensors headers of a **stratified sample** of Hub repos
-(a few hundred KB per repo, no weights downloaded) and weights the results back to the whole Hub.
+(a median of 80 KB per repo, about 0.002% of the weight bytes; no weights downloaded) and reweights the results to
+represent the whole Hub. The run of 2026-11-03 read 12,974 repositories, 9,939 of them popular (6,633 readable).
 
 | step | file | output |
 |---|---|---|
@@ -29,17 +30,26 @@ have never seen.
 
 **Actions → Publish datasets → Run workflow** with the run ID of a finished census run. It re-scores the run with the
 current rules, scores per-tensor roles against the corpus (`roles.js`), publishes `<you>/hub-weight-census` and
-`<you>/manifest-anatomy-corpus` (the labelled 510-architecture corpus, `research/data/corpus-510.jsonl.gz`), groups both
+`<you>/manifest-anatomy-corpus` (the labeled 510-architecture corpus, `research/data/corpus-510.jsonl.gz`), groups both
 with the explorer as a static Space (`<you>/ai-model-explorer`) in a collection "AI Model Explorer" on your Hugging
 Face profile, and refreshes the website's census page. Both datasets carry a flat parquet table, so the Hub's dataset
 viewer can browse, search and filter them. It needs a
-repository secret `HF_WRITE_TOKEN` with write access; the owner is read from the token.
+repository secret `HF_WRITE_TOKEN` with write access, which the workflow passes to the scripts as the environment
+variable `HF_TOKEN`; the owner is read from the token. The published datasets are
+[JoesSattes/hub-weight-census](https://huggingface.co/datasets/JoesSattes/hub-weight-census) and
+[JoesSattes/manifest-anatomy-corpus](https://huggingface.co/datasets/JoesSattes/manifest-anatomy-corpus).
 
 ### By hand
 
+The scripts read a write token from the environment variable `HF_TOKEN` (in the workflow it comes from the
+`HF_WRITE_TOKEN` secret). From `research/hub-census/`, with a finished run in `out/`:
 
-`python publish.py owner/name` uploads the run with a dataset card and datasheet (needs a write token). In the workflow,
-fill the `publish` input and add a repository secret `HF_WRITE_TOKEN`.
+```bash
+export HF_TOKEN=hf_...   # write access
+python publish.py owner/hub-weight-census
+python publish_corpus.py owner/manifest-anatomy-corpus
+python space.py owner/ai-model-explorer owner/hub-weight-census owner/manifest-anatomy-corpus
+```
 
 ## Why a sample and not every repo
 
@@ -62,8 +72,8 @@ KV cache per token per billion parameters, how sparse mixtures of experts became
 tied embeddings by size, storage precision, the share of repos and of downloads by relation to a parent, whether
 derivatives keep the parent's architecture, how concentrated lineage is, metadata reliability, and the smallest device
 each original language model fits. Shares carry Wilson 95% intervals, medians bootstrap intervals; trends over release
-year use the Cochran-Armitage test and a logistic odds ratio per year, monotone trends Spearman's rho, shape scaling
-log-log slopes, two groups Mann-Whitney. Output: `out/insights/ecosystem.json` and `eco_*.png` / `eco_*.pdf`.
+year use the Cochran-Armitage test and a logistic odds ratio per year, Spearman's rho for monotone trends, log-log
+slopes for shape scaling, and Mann-Whitney U for two-group comparisons. Output: `out/insights/ecosystem.json` and `eco_*.png` / `eco_*.pdf`.
 Language models are decoder or prefix-LM anatomies above 50M parameters with a text-generating Hub pipeline (or none).
 The Hub dates every repository created before March 2022 to that month, so the first year bin reads "up to 2022".
 
@@ -85,6 +95,7 @@ higher rate limits.
 Locally:
 
 ```bash
-pip install ai-model-explorer pandas pyarrow
-python frame.py && python sample.py --top 500 --rest 500 && python crawl.py && python summarize.py
+pip install ai-model-explorer pandas pyarrow scipy huggingface_hub
+cd research/hub-census
+python frame.py && python sample.py --top 500 --rest 500 && python crawl.py && python summarize.py && python insights.py
 ```

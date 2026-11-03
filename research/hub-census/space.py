@@ -18,7 +18,7 @@ sdk: static
 app_file: en/index.html
 pinned: true
 license: mit
-short_description: Any model's architecture from its safetensors header
+short_description: A model's architecture from its safetensors header
 datasets:
 - {census}
 - {corpus}
@@ -32,13 +32,13 @@ tags:
 
 # AI Model Explorer
 
-Type any Hugging Face model id and see what it is made of: components, layer stacks, block types, the role of every
+Type a Hugging Face model id and see what it is made of: components, layer stacks, block types, the role of every
 tensor, parameters and storage format, KV cache per token, and whether `config.json` agrees with the weights. Only the
 safetensors headers are read (a few kilobytes to a few megabytes), never the weights.
 
-- **Hub census**: what thousands of popular models are made of, by release year: [`/census/`](census/index.html) ·
+- **Hub census**: the architecture of 12,974 Hub repositories, by release year: [`/census/`](census/index.html) ·
   dataset [{census}](https://huggingface.co/datasets/{census})
-- **Labelled corpus** of 510 architectures with per-tensor ground truth: [{corpus}](https://huggingface.co/datasets/{corpus})
+- **Labeled corpus** of 510 architectures with per-tensor ground truth: [{corpus}](https://huggingface.co/datasets/{corpus})
 - **Python**: `pip install ai-model-explorer` · **Code**: https://github.com/JoesSattes/ai-model-explorer
 - **Paper**: S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy*, 2026
   ([ResearchGate](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy))

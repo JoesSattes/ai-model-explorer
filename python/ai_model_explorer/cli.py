@@ -6,7 +6,13 @@
   ai-model-explorer report   MODEL -o report.html            self-contained HTML report
   ai-model-explorer memory   MODEL --context 32768           weights + KV cache estimate
   ai-model-explorer compare  MODEL MODEL ... [--csv|--json]  side-by-side table
-  ai-model-explorer open     [MODEL]                         the web app on your machine
+  ai-model-explorer fits     MODEL DEVICE [--context N]      will it fit; longest context that fits
+  ai-model-explorer diff     A B                             what differs between two checkpoints
+  ai-model-explorer scan     [REPOS] [--file F] [-o F.csv]   many repos into one CSV
+  ai-model-explorer ready    MODEL [--submit]                Deploy-Ready board verdict
+  ai-model-explorer census   MODEL                           position among the Hub's popular language models
+  ai-model-explorer devices                                  device names known to fits
+  ai-model-explorer open     [MODEL]                         the web app on your machine (also: no command)
 """
 from __future__ import annotations
 
@@ -45,7 +51,7 @@ def _serve(repo, port: int, lang: str, no_browser: bool) -> None:
 
 def _model_args(p):
     p.add_argument("model", help="Hugging Face repo id (owner/name), huggingface.co URL, .safetensors file or folder")
-    p.add_argument("--token", help="Hugging Face token for gated/private repos (default: $HF_TOKEN)")
+    p.add_argument("--token", help="Hugging Face token for gated/private repos (default: $HF_TOKEN, then $HUGGING_FACE_HUB_TOKEN)")
     p.add_argument("--config", help="path to a config.json to use instead of the repo's own")
 
 
@@ -58,7 +64,7 @@ def _load_cfg(path):
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="ai-model-explorer", formatter_class=argparse.RawDescriptionHelpFormatter,
-                                description="See any AI model's architecture from its safetensors header, without downloading weights.",
+                                description="Recover a model's architecture from its safetensors headers, without downloading the weights.",
                                 epilog=__doc__.split("\n", 2)[2])
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = p.add_subparsers(dest="cmd")
@@ -74,13 +80,13 @@ def main(argv=None) -> int:
     pl = sub.add_parser("plot", help="draw the anatomy to an image")
     _model_args(pl)
     pl.add_argument("-o", "--output", default="anatomy.png", help="output file: .png, .svg or .pdf (default anatomy.png)")
-    pl.add_argument("--theme", choices=["light", "dark"], default="light")
-    pl.add_argument("--dpi", type=int, default=200)
+    pl.add_argument("--theme", choices=["light", "dark"], default="light", help="diagram colors (default light)")
+    pl.add_argument("--dpi", type=int, default=200, help="image resolution for PNG (default 200)")
 
     r = sub.add_parser("report", help="write a self-contained HTML report")
     _model_args(r)
-    r.add_argument("-o", "--output", default="report.html")
-    r.add_argument("--theme", choices=["light", "dark"], default="light")
+    r.add_argument("-o", "--output", default="report.html", help="output HTML file (default report.html)")
+    r.add_argument("--theme", choices=["light", "dark"], default="light", help="report colors (default light)")
 
     m = sub.add_parser("memory", help="estimate memory for weights and KV cache")
     _model_args(m)
@@ -90,43 +96,43 @@ def main(argv=None) -> int:
     m.add_argument("--kv-bits", type=int, default=16, help="KV cache precision in bits (default 16)")
 
     c = sub.add_parser("compare", help="compare several models side by side")
-    c.add_argument("models", nargs="+")
-    c.add_argument("--token")
+    c.add_argument("models", nargs="+", help="repo ids, URLs, .safetensors files or folders")
+    c.add_argument("--token", help="Hugging Face token (default: $HF_TOKEN)")
     c.add_argument("--csv", action="store_true", help="print CSV instead of a Markdown table")
     c.add_argument("--json", action="store_true", help="print JSON")
 
     f = sub.add_parser("fits", help="will it fit on a device? longest context that fits, and what would make it fit")
     _model_args(f)
-    f.add_argument("device", help="device name (see --list-devices) or memory in GB, e.g. rtx-4090, mac-64, 24")
-    f.add_argument("--context", type=int, default=8192)
-    f.add_argument("--batch", type=int, default=1)
-    f.add_argument("--weight-bits", type=float, default=None)
-    f.add_argument("--kv-bits", type=int, default=16)
+    f.add_argument("device", help="device name (run 'ai-model-explorer devices') or memory in GB, e.g. rtx-4090, mac-64, 24")
+    f.add_argument("--context", type=int, default=8192, help="tokens per sequence (default 8192)")
+    f.add_argument("--batch", type=int, default=1, help="sequences at once (default 1)")
+    f.add_argument("--weight-bits", type=float, default=None, help="weight precision in bits (default: as stored)")
+    f.add_argument("--kv-bits", type=int, default=16, help="KV cache precision in bits (default 16)")
 
     d = sub.add_parser("diff", help="what differs between two checkpoints (fine-tune vs base, quantized vs original)")
-    d.add_argument("a")
-    d.add_argument("b")
-    d.add_argument("--token")
-    d.add_argument("--json", action="store_true")
+    d.add_argument("a", help="first checkpoint (e.g. the base)")
+    d.add_argument("b", help="second checkpoint (e.g. the fine-tune)")
+    d.add_argument("--token", help="Hugging Face token (default: $HF_TOKEN)")
+    d.add_argument("--json", action="store_true", help="print JSON")
 
     sc = sub.add_parser("scan", help="inspect many repos (args or a file, one per line) into one table")
     sc.add_argument("repos", nargs="*", help="repo ids; or use --file")
     sc.add_argument("--file", help="text file with one repo id per line")
-    sc.add_argument("--token")
-    sc.add_argument("--workers", type=int, default=4)
+    sc.add_argument("--token", help="Hugging Face token (default: $HF_TOKEN)")
+    sc.add_argument("--workers", type=int, default=4, help="parallel requests (default 4)")
     sc.add_argument("-o", "--output", help="write CSV here (default: print CSV)")
 
     sub.add_parser("devices", help="list the device names known to 'fits'")
     rd = sub.add_parser("ready", help="the Deploy-Ready board's verdict: device class at 4-bit/8k and five metadata checks")
-    rd.add_argument("model")
-    rd.add_argument("--json", action="store_true")
+    rd.add_argument("model", help="Hugging Face repo id, URL, .safetensors file or folder")
+    rd.add_argument("--json", action="store_true", help="print JSON")
     rd.add_argument("--submit", action="store_true", help="open the board submission for this model in the browser")
     cs = sub.add_parser("census", help="where a model sits among the Hub's popular language models")
-    cs.add_argument("model")
-    cs.add_argument("--json", action="store_true")
+    cs.add_argument("model", help="Hugging Face repo id, URL, .safetensors file or folder")
+    cs.add_argument("--json", action="store_true", help="print JSON")
     cs.add_argument("--refresh", action="store_true", help="download the census table again")
     for x in (rd, cs):
-        x.add_argument("--token")
+        x.add_argument("--token", help="Hugging Face token (default: $HF_TOKEN)")
 
     o = sub.add_parser("open", help="open the web app in your browser (runs locally)")
     o.add_argument("model", nargs="?", help="Hugging Face repo to load right away, e.g. Qwen/Qwen3-8B")

@@ -1,11 +1,13 @@
-"""AI Model Explorer: see any AI model's architecture from its weight manifest, without downloading the weights.
+"""AI Model Explorer: recover a model's architecture from its weight manifest, without downloading the weights.
 
-    from ai_model_explorer import explore, compare
+    from ai_model_explorer import explore, compare, fits, diff, ready, census
     m = explore("Qwen/Qwen3-8B")
     print(m.summary())
     m.insights(); m.breakdown("kind"); m.memory(context=32768)
     m.plot("qwen3.png"); m.report("qwen3.html")
-    fits("Qwen/Qwen3-8B", "rtx-4090", context=32768); diff("Qwen/Qwen3-8B", "Qwen/Qwen3-8B-FP8")
+    fits("Qwen/Qwen3-8B", "rtx-4090", context=32768)
+    diff("Qwen/Qwen3-8B", "Qwen/Qwen3-8B-FP8")
+    ready("Qwen/Qwen3-8B"); census("Qwen/Qwen3-8B")
 
 Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026.
 """

@@ -1,6 +1,6 @@
 # Using AI Model Explorer
 
-Three ways in: the website, the command line, and Python. All three run the same recovery code, so they give the same answer.
+AI Model Explorer has three interfaces: the website, the command line, and Python. All three run the same recovery code, so they give the same answer.
 
 - [Website](#website)
 - [Command line](#command-line)
@@ -14,19 +14,21 @@ Three ways in: the website, the command line, and Python. All three run the same
 Open https://joessattes.github.io/ai-model-explorer/en/ (Thai: https://joessattes.github.io/ai-model-explorer/).
 
 1. Type a Hugging Face repo id such as `Qwen/Qwen3-8B` and press **Load**, or drop a `.safetensors`, `.tflite` or `config.json` file on the page.
-2. **Anatomy** shows the components in data order (for example vision encoder → projector → language model). Each layer stack is a strip coloured by block type, and every value carries its source: measured from the weights, read from config, or estimated.
+2. **Anatomy** shows the components in data order (for example vision encoder → projector → language model). Each layer stack is a strip colored by block type, and every value carries its source: measured from the weights, read from config, or estimated.
 3. **Big picture** numbers the parts from input to output and plays a sample through them, showing what each part receives and returns.
 4. **Layer map** draws every layer to scale. Lenses switch the view between weights, compute, TFLite ops, precision and fragility.
 5. **Report** lists the findings and gives a Markdown table you can copy.
 
 Share a model with a link: `https://joessattes.github.io/ai-model-explorer/en/#hf=deepseek-ai/DeepSeek-V3` opens the page and loads that repo.
-Models you open are kept in your browser, so the next visit doesn't load them again.
+Models you open are kept in your browser, so the next visit does not load them again.
 
 ## Command line
 
 ```bash
 pip install ai-model-explorer
 ```
+
+Running `ai-model-explorer` with no command starts the local web app (the same as `open`). Use `ai-model-explorer --help` for the list of commands.
 
 ### `inspect`: print the anatomy
 
@@ -44,6 +46,8 @@ deepseek-ai/DeepSeek-V3
   config.json: agrees with the weights
 ```
 
+`layers` counts the main stack (61); the 62nd block is the multi-token-prediction layer.
+
 | Option | Effect |
 |---|---|
 | `MODEL` | repo id (`owner/name`), a `huggingface.co` URL, a `.safetensors` file, or a folder of them |
@@ -60,6 +64,7 @@ Exit code is 0 on success and 1 on a readable error (gated repo, repo not found,
 ai-model-explorer insights deepseek-ai/DeepSeek-V3
 ```
 ```
+deepseek-ai/DeepSeek-V3
   - 684.49B parameters, 688.6 GB of weights stored as fp8. At 16-bit that would be 1.4 TB, at 8-bit 684.5 GB, at 4-bit 342.2 GB.
   - Includes a multi-token-prediction layer of 13.46B parameters, used for speculative decoding; the main model is 671.03B.
   - Mixture of experts: 256 experts, 8 used per token, so about 37.55B parameters (5.5%) do the work for each token, while all 684.49B must sit in memory.
@@ -72,6 +77,7 @@ ai-model-explorer insights deepseek-ai/DeepSeek-V3
 ai-model-explorer memory Qwen/Qwen3-8B --context 32768 --weight-bits 4
 ```
 ```
+Qwen/Qwen3-8B
   weights (4-bit):  4.1 GB
   KV cache (16-bit, 1 × 32,768 tokens):  4.8 GB
   total:            8.9 GB  (activations and runtime overhead not included)
@@ -93,7 +99,18 @@ ai-model-explorer plot deepseek-ai/DeepSeek-V3 -o deepseek.png          # also .
 ai-model-explorer report deepseek-ai/DeepSeek-V3 -o deepseek.html       # diagram, insights, tables, memory
 ```
 
-The diagram puts the components in data order, draws every layer stack as a strip of blocks coloured by block type (a faded block marks a multi-token-prediction layer), and ends with a bar of where the parameters sit. The report is one HTML file with no external dependencies, so it can be attached or shared as is.
+The diagram puts the components in data order, draws every layer stack as a strip of blocks colored by block type (a faded block marks a multi-token-prediction layer), and ends with a bar of where the parameters sit. The report is one HTML file with no external dependencies, so it can be attached or shared as is.
+
+| Option | Commands | Effect |
+|---|---|---|
+| `--context N` | memory, fits | tokens per sequence (default 8192) |
+| `--batch N` | memory, fits | sequences at once (default 1) |
+| `--weight-bits B` | memory, fits | weight precision in bits (default: as stored) |
+| `--kv-bits B` | memory, fits | KV cache precision in bits (default 16) |
+| `-o FILE` | plot, report | output file (default `anatomy.png`, `report.html`) |
+| `--theme light\|dark` | plot, report | color theme (default `light`) |
+| `--dpi N` | plot | PNG resolution (default 200) |
+| `--token`, `--config` | insights, memory, plot, report, fits | as for `inspect` |
 
 ### `fits`, `diff`, `scan`: practical questions
 
@@ -111,6 +128,8 @@ devices (Mac, Jetson, phones) count only the share an app can normally use.
 `diff` lists only what differs: family, parameters, stored size, quantization, every hyperparameter, components and block
 types. `scan` writes one row per repo (family, parameters, active parameters, storage, hyperparameters, KV bytes per
 token, the Hub's own count and whether it matches, config check, bytes read); a repo that fails becomes a row with `error`.
+Repos come from the arguments, from `--file` (one repo id per line; blank lines and lines starting with `#` are
+skipped), or both. Without `-o` the CSV goes to standard output; `--workers` sets the number of parallel requests (default 4).
 
 ### `ready`, `census`: the Deploy-Ready board and the Hub census, from the terminal
 
@@ -128,6 +147,8 @@ config agrees with the weights, the Hub's parameter count is right, and a licens
 model's size and KV-cache percentiles among popular language models, its release type (original, fine-tune, quantized
 copy, merge, adapter), whether it comes from a leading provider or is built for Thai, and the five popular original
 releases closest to it in size and cache.
+
+`ready`, `census` and `diff` accept `--json` to print the raw result.
 
 ### `open`: run the website on your machine
 
@@ -187,8 +208,6 @@ print(a["hyperparameters_with_config"])    # width, layers, heads, kv heads, ffn
 local = inspect("./checkpoints/my-model")  # a folder of .safetensors, read offline
 ```
 
-`inspect(model, token=None, config=None, include_tensors=False) -> dict`
-
 | Argument | Meaning |
 |---|---|
 | `model` | repo id, `huggingface.co` URL, `.safetensors` path or folder |
@@ -234,11 +253,11 @@ for repo in ["Qwen/Qwen3-8B", "meta-llama/Llama-3.2-1B", "openai/whisper-large-v
 
 - **Gated or private repos** (Llama, Gemma, some FLUX models): accept the license on the model page, create a read token at https://huggingface.co/settings/tokens, then `export HF_TOKEN=hf_...` or pass `--token`. The token is sent only to Hugging Face.
 - **Mirror**: `export HF_ENDPOINT=https://your-mirror` to read through a Hugging Face mirror.
-- **Offline**: point `inspect` at local `.safetensors` files. Only the headers are read, so this is instant even for large checkpoints.
+- **Offline**: point `inspect` at local `.safetensors` files. Only the headers are read and no network is needed; the time depends on the tensor count (see [Limits](#limits)).
 
 ## Limits
 
-- Heads, KV heads and head size can't always be told apart from shapes alone (a projection of width 4096 can be 32×128 or 64×64). With `config.json` they're taken from the config after checking it against the weights; without it they're estimates and marked as such.
-- Very large manifests take longer in Python: DeepSeek-V3 (92k tensors) takes about 15 seconds with the embedded engine, about 5 with Node.js installed; a typical 7B model well under one. A second look at the same repo commit reuses cached headers.
-- Old pickle-only checkpoints without a zip index can't be read without downloading them.
-- On Linux ARM there's no prebuilt wheel of the `quickjs` dependency yet, so pip compiles it and needs a C compiler.
+- Heads, KV heads and head size cannot always be told apart from shapes alone (a projection of width 4096 can be 32×128 or 64×64). With `config.json` they are taken from the config after checking it against the weights; without it they are estimates and marked as such.
+- Very large manifests take longer in Python: DeepSeek-V3 (92k tensors) takes about 15 seconds with the embedded engine, about 5 with Node.js installed; a typical 7B model takes well under one second. A second look at the same repo commit reuses cached headers.
+- Old pickle-only checkpoints without a zip index cannot be read without downloading them.
+- On Linux ARM there is no prebuilt wheel of the `quickjs` dependency yet, so pip compiles it and needs a C compiler.

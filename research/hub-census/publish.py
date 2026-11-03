@@ -1,7 +1,8 @@
 """Publish a census run as a Hugging Face dataset, with a datasheet.
 
 usage: python publish.py <owner/dataset-name>      (needs HF_TOKEN with write access)
-Uploads census.jsonl, sample.parquet, frame_stats.json, sample_info.json and report/ from out/.
+Uploads census.parquet, census.jsonl, census_manifests.jsonl.gz, roles.json, sample.parquet, frame_stats.json,
+sample_info.json, report/ and insights/ from out/.
 """
 import datetime, json, os, sys
 
@@ -33,13 +34,18 @@ Explore it on the web: https://joessattes.github.io/ai-model-explorer/census/
 Strata: `top` (most downloaded, read in full), `original` releases (no `base_model:` derivative tag, read in full),
 `frontier` (originals from leading providers created since {since}), and a random sample of the rest of the Hub stratified
 by creation year x download tier x safetensors tag, with `weight` = stratum size / sampled. Weighted estimates describe
-the whole Hub; the top/original/frontier strata describe the models people actually use.
+the whole Hub; the top/original/frontier strata describe the most downloaded models.
 
 ## Files
 
 - `census.parquet`: one flat row per repo (shown in the viewer above): status, popularity, family, parameters, the Hub's
   count, storage format, width, layers, heads, KV heads, experts, vocabulary, KV bytes per token, and the values config.json declares.
 - `census.jsonl`: the full records, fields below.
+- `census_manifests.jsonl.gz`: the raw manifest and config.json of every readable repo (see below).
+- `roles.json`: per-tensor role accuracy on repos whose model type is in the companion corpus.
+- `sample.parquet`: the sampled repos with stratum and weight; `sample_info.json`: sample sizes and settings.
+- `frame_stats.json`: statistics of the full Hub frame the sample was drawn from.
+- `report/`: summary tables and charts; `insights/`: ecosystem findings (`ecosystem.json`, `insights.md`) and figures.
 
 ## Fields (census.jsonl)
 
@@ -51,7 +57,7 @@ for readable repos: `family_manifest` (weights only), `family_config`, `params`,
 
 `census_manifests.jsonl.gz`: for every readable repo, the raw manifest (name, dtype, shape of every tensor) and its
 config.json, so any field can be recomputed (`rescore.py`). `roles.json`: per-tensor role accuracy on repos whose model
-type is in the companion corpus ([manifest-anatomy-corpus]({corpus_url})), with labels carried over by index-masked name.
+type is in the companion corpus ([manifest-anatomy-corpus]({corpus_url})), with labels carried over by matching tensor names after layer indices are masked.
 
 ## Datasheet
 
@@ -59,10 +65,10 @@ type is in the companion corpus ([manifest-anatomy-corpus]({corpus_url})), with 
   often no other specification exists, and where the Hub's own metadata is wrong.
 - **Collection.** Public Hub API and HTTP range requests on safetensors headers; no weights downloaded, no gated
   content read (gated repos are recorded as such, with their public popularity stats only).
-- **Frame.** [cfahlgren1/hub-stats](https://huggingface.co/datasets/cfahlgren1/hub-stats) models snapshot of the run date.
+- **Frame.** [cfahlgren1/hub-stats](https://huggingface.co/datasets/cfahlgren1/hub-stats) models snapshot from the run date.
 - **Known limits.** `config_hp` is the reference, and configs can themselves be wrong; head counts need a config
-  (shapes give heads x head size only); MLX bit-width and group size trade off without a config; repos read in
-  pre-1.6 PyTorch pickle format are not parsed.
+  (shapes give heads x head size only); MLX bit-width and group size trade off without a config; repos stored only in
+  the pre-1.6 PyTorch pickle format are not parsed.
 - **Personal data.** None. Repository ids and authors are public account names.
 - **License.** MIT for this dataset; the models described keep their own licenses.
 

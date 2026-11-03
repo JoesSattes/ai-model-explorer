@@ -1,5 +1,5 @@
-"""Practical questions about one or many models: will it fit on this device, what changed between two checkpoints,
-and a whole list of repos in one table."""
+"""Practical questions about one or many models: whether it fits a device, what differs between two checkpoints,
+many repos in one table, the Deploy-Ready board's verdict, and where a model sits in the Hub Weight Census."""
 from __future__ import annotations
 
 import csv
@@ -9,7 +9,8 @@ from typing import Iterable, List, Optional, Union
 
 from .model import Model, explore, fmt_b, fmt_n
 
-# memory a model may use, in GB. Unified-memory machines keep ~25% for the system.
+# memory a model may use, in GB. Unified-memory devices count only the usable share: 75% (Mac, Jetson),
+# 60% (Raspberry Pi), 40% (phone).
 DEVICES = {
     "rtx-3060": 12, "rtx-4060": 8, "rtx-4060-ti-16": 16, "rtx-4070": 12, "rtx-4080": 16, "rtx-4090": 24, "rtx-5090": 32,
     "t4": 16, "l4": 24, "a10g": 24, "l40s": 48, "a100-40": 40, "a100-80": 80, "h100": 80, "h200": 141, "b200": 192,
@@ -22,7 +23,8 @@ DEVICES = {
 def fits(model: Union[str, Model], device: Union[str, float], context: int = 8192, batch: int = 1,
          weight_bits: Optional[float] = None, kv_bits: int = 16, overhead: float = 0.10, token: Optional[str] = None) -> dict:
     """Does the model fit in `device` (a name from DEVICES, or GB)? Weights + KV cache + `overhead` for runtime
-    buffers. Also returns the longest context that fits and cheaper settings that would make it fit."""
+    buffers. Also returns the longest context that fits and, if it does not fit, the first of
+    8-bit weights, 4-bit weights, 4-bit weights with 8-bit KV cache, or 4-bit weights with 4-bit KV cache that would."""
     m = model if isinstance(model, Model) else explore(model, token=token)
     have = (DEVICES[device.lower()] if isinstance(device, str) else float(device)) * 1e9
     mem = m.memory(context=context, batch=batch, weight_bits=weight_bits, kv_bits=kv_bits)
@@ -179,7 +181,7 @@ def _census_rows(refresh: bool = False) -> List[dict]:
 
 def census(model: Union[str, Model], token: Optional[str] = None, rows: Optional[List[dict]] = None, n: int = 5) -> dict:
     """Where a model sits among the popular language models of the Hub Weight Census: size and KV-cache percentiles,
-    and the popular models closest to it in size and cache (what people deploy at that budget)."""
+    and the popular original releases closest to it in parameters and KV cache per token."""
     import math
     m = model if isinstance(model, Model) else explore(model, token=token)
     rows = rows if rows is not None else _census_rows()

@@ -4,7 +4,7 @@
 
 <h1 align="center">AI Model Explorer</h1>
 
-<p align="center"><b>See inside any AI model on Hugging Face, part by part, without downloading the weights.</b></p>
+<p align="center"><b>See inside a Hugging Face model, part by part, from its safetensors headers alone.</b></p>
 
 <p align="center">
   <a href="https://pypi.org/project/ai-model-explorer/"><img src="https://img.shields.io/pypi/v/ai-model-explorer?color=8b96fa" alt="PyPI"></a>
@@ -17,6 +17,7 @@
   <a href="https://joessattes.github.io/ai-model-explorer/en/"><b>Open the web app</b></a> ·
   <a href="https://joessattes.github.io/ai-model-explorer/">ภาษาไทย</a> ·
   <a href="#what-is-new-here">What is new</a> ·
+  <a href="#hub-weight-census">Hub census</a> ·
   <a href="docs/usage.md">Docs</a> ·
   <a href="docs/how-it-works.md">How it works</a> ·
   <a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy">Paper</a>
@@ -26,18 +27,18 @@
 
 ## What it is
 AI Model Explorer works out a model's architecture from its weight manifest, the list of tensor names, shapes and
-types at the start of every safetensors file. It reads that header (a few tens of kilobytes, even for models of
-hundreds of gigabytes) and shows what the model is made of: its components, the repeated layers and what each one
+types at the start of every safetensors file. It reads that header (a median of 80 KB across 12,974 Hub repositories;
+about 12 MB for DeepSeek-V3's 689 GB) and shows what the model is made of: its components, the repeated layers and what each one
 does, how the parts connect, the exact parameter count and how every tensor is stored. It runs as a web page, a
 command-line tool and a Python library.
 
 ## Why use it
 - **Know a model before you download it.** DeepSeek-V3 is 689 GB of weights. Its anatomy takes 12 MB of headers and a few seconds.
 - **Plan quantization and edge deployment.** See which parts hold the parameters, which layers carry a KV cache, and how each tensor is already stored (FP8, NVFP4, GPTQ, AWQ, MXFP4, MLX, bitsandbytes).
-- **Understand new architectures quickly.** Hybrid attention / state-space / mixture-of-experts stacks, multi-token-prediction layers, vision and audio encoders feeding an LLM: each is labelled, with the evidence behind the label.
+- **Understand new architectures quickly.** Hybrid attention / state-space / mixture-of-experts stacks, multi-token-prediction layers, vision and audio encoders feeding an LLM: each is labeled, with the evidence behind the label.
 - **Check what a model card or config claims.** Parameter totals come from the weights, and `config.json` is checked against them.
-- **Script it.** `pip install ai-model-explorer` gives a CLI and a Python API: insights, memory estimates, side-by-side comparisons, diagrams as PNG/SVG/PDF and HTML reports, all returning plain data for batch analysis or AI agents.
-- **Private by design.** Files you open are parsed in your browser or on your machine. No server, no upload.
+- **Script it.** `pip install ai-model-explorer` gives a CLI and a Python API: insights, memory estimates, side-by-side comparisons, diagrams as PNG/SVG/PDF and HTML reports, with results as plain dicts or JSON for batch analysis.
+- **Local files stay local.** Files you open are parsed in your browser or on your machine and are never uploaded; Hub repos are read directly from Hugging Face.
 
 ## Quick start
 **Web.** Open https://joessattes.github.io/ai-model-explorer/en/, type a repo id such as `Qwen/Qwen3-8B` and press Load.
@@ -58,6 +59,7 @@ deepseek-ai/DeepSeek-V3
       model.layers: 62 blocks · Transformer ×3, Attn+MoE ×58, Attn+MoE ×1 (last one is a multi-token-prediction layer)
   config.json: agrees with the weights
 ```
+`layers` counts the main stack (61); the 62nd block is the multi-token-prediction layer.
 Add `--json` for everything, `--tensors` for the role of every tensor, or run `ai-model-explorer open` to start the web app on your machine.
 
 More commands:
@@ -72,8 +74,9 @@ More commands:
 | `ai-model-explorer fits MODEL rtx-4090 --context 32768` | does it fit, the longest context that fits, and the cheapest setting that would |
 | `ai-model-explorer diff BASE FINETUNE` | what differs between two checkpoints |
 | `ai-model-explorer scan --file repos.txt -o table.csv` | many repos into one CSV |
-| `ai-model-explorer ready MODEL [--submit]` | the Deploy-Ready board's verdict on your machine, then a link to submit |
+| `ai-model-explorer ready MODEL [--submit]` | smallest device class at 4-bit weights / 8k context and five metadata checks, as on the [Deploy-Ready board](#deploy-ready-board); `--submit` opens the submission |
 | `ai-model-explorer census MODEL` | where it sits among the Hub's popular language models, and the closest popular releases |
+| `ai-model-explorer devices` | the device names `fits` accepts |
 
 ![Diagram drawn by ai-model-explorer plot for DeepSeek-V3](assets/example-deepseek-v3.png)
 
@@ -99,14 +102,27 @@ Submit any public Hugging Face model: [open a submission](https://github.com/Joe
 A bot reads its headers, replies with family, parameters (and active parameters), storage, KV cache per token, the memory
 it needs at 4-bit with an 8k context, and five metadata checks, then adds it to the
 [board](https://joessattes.github.io/ai-model-explorer/census/#board) and gives you a badge for the model card.
-The board starts filled, scored the same way: the leading providers' most used releases, the most downloaded language
+The board is pre-seeded, with the same scoring, with the leading providers' most downloaded releases, the most downloaded language
 models, and models built for Thai (TH, TH/EN) or multilingual models that read Thai. Repos the census did not cover are
 listed in [board_extra.txt](research/hub-census/board_extra.txt) and read by the *Refresh the Deploy-Ready board* workflow.
+
+## Hub Weight Census
+The census applies the same header reading to a stratified sample of the Hub. The run of 2026-11-03 read 12,974
+repositories: 9,939 popular repositories (the most downloaded and the original releases) in full, 6,633 of them with
+readable weights, plus a random sample of the rest, reweighted to the whole Hub. The median read was 80 KB and 1.8 s per
+repo. Results carry 95% intervals and trend tests: architecture adoption by release year, KV cache per token, storage
+precision, derivative releases, metadata reliability, and the smallest device each language model fits.
+
+- Browse: [census page](https://joessattes.github.io/ai-model-explorer/census/)
+- Datasets: [JoesSattes/hub-weight-census](https://huggingface.co/datasets/JoesSattes/hub-weight-census) and
+  [JoesSattes/manifest-anatomy-corpus](https://huggingface.co/datasets/JoesSattes/manifest-anatomy-corpus)
+  (available once the *Publish datasets* workflow has run)
+- Method, sampling and statistics: [research/hub-census/README.md](research/hub-census/README.md)
 
 ## What is new here
 Reading a safetensors header is standard: the Hugging Face Hub does it to show parameter counts, and several viewers list tensor names and shapes. What this project adds is the **interpretation**: turning that list into an architecture without the model's config or code.
 
-| | Netron, Model Explorer | Safetensors viewers | [hf-mem](https://github.com/alvarobartt/hf-mem) | [HF Viewer](https://hfviewer.com) | llama.cpp name table | **AI Model Explorer** |
+| | Netron, Google Model Explorer | Safetensors viewers | [hf-mem](https://github.com/alvarobartt/hf-mem) | [HF Viewer](https://hfviewer.com) | llama.cpp name table | **AI Model Explorer** |
 |---|---|---|---|---|---|---|
 | Starts from a repo name, no weight download | no, needs the file | yes | yes | yes | n/a | **yes** |
 | What each tensor does (attention, MoE, SSM, …) | operators, not parts | no | no | from config and code | for listed families | **from the header alone** |
@@ -115,12 +131,14 @@ Reading a safetensors header is standard: the Hugging Face Hub does it to show p
 | Exact parameters under FP8 / NVFP4 / GPTQ | – | storage counts | storage bytes | – | – | **logical parameters, exact** |
 | KV cache per token | – | – | from config.json | – | – | **from the weights, incl. latent attention** |
 | Checks config.json against the weights | – | – | – | – | – | **yes** |
-| Published evaluation | – | – | – | – | – | **510 architectures + 191 Hub checkpoints** |
+| Evaluation published with the tool | not reported | not reported | not reported | not reported | not reported | **510 architectures, 191 Hub checkpoints, census of 12,974 repos** |
+
+In the table, – means not a feature of the tool and n/a means the row does not apply.
 
 The contributions, in short:
 1. **Manifest-only recovery.** Components, layer stacks, block types and a role for every tensor, from names, shapes and dtypes. Shapes carry most of the signal: with every name replaced by a random token, 95.0% of tensors still get the right role (96.8% with names; 82.3% for the best name-only rule set).
-2. **Quantized storage undone.** FP8, NVFP4, MXFP4, GPTQ, AWQ, MLX and bitsandbytes layouts are mapped back to logical tensors, so parameter counts are exact (510 of 510).
-3. **Config checked, not trusted.** Heads, KV heads and head size come from `config.json` only after they are checked against the projection widths; 5% of configs disagree with their weights.
+2. **Quantized storage undone.** FP8, NVFP4, MXFP4, GPTQ, AWQ, MLX and bitsandbytes layouts are mapped back to logical tensors; parameter counts are exact for all 510 corpus architectures, unquantized and under simulated NVFP4, FP8 and GPTQ storage.
+3. **Config checked, not trusted.** Heads, KV heads and head size come from `config.json` only after they are checked against the projection widths; 5% of configs in the 510-architecture corpus disagree with their weights; in the Hub census, 2.8% (127 of 4,601).
 4. **Per-token costs from the weights.** Active parameters for mixtures of experts (multi-token-prediction layers excluded) and KV cache including latent attention, matching published figures (DeepSeek-V3 37B active, Kimi K2 32B).
 5. **One implementation, three front ends.** The same `infer.js` runs the website, the CLI and the Python API.
 
@@ -142,13 +160,14 @@ Inputs: a Hugging Face repo id or URL, `.safetensors` files, `.tflite` (LiteRT) 
 | 510 architectures from `transformers`, labels from module classes the method never sees | 96.8% of tensors get the right role (macro), against 82.3% for the best name-only rule set; 95.0% with every name replaced by a random token |
 | Parameter totals on the same 510 | exact for all of them, also under NVFP4, FP8 and GPTQ storage |
 | Head geometry | 73% from shapes alone, 96–98% with `config.json`; 95% of configs agree with their weights |
-| 191 popular Hugging Face checkpoints (DeepSeek-V3, Kimi K2, Qwen3, Llama 3.3, gpt-oss, Gemma 3, Whisper, SAM, SDXL, Wan, …) | totals agree with the Hub's own count for 163 of 170, and 4 of the 7 differences are the Hub counting packed 4-bit bytes; median 79 KB read per repo |
+| 191 popular Hugging Face checkpoints (DeepSeek-V3, Kimi K2, Qwen3, Llama 3.3, gpt-oss, Gemma 3, Whisper, SAM, SDXL, Wan, …) | totals agree with the Hub's own count for 149 of the 158 transformers-style checkpoints that show a count (allowing for the 0-d scalars the Hub skips); of the 9 differences, 5 are packed 4-bit releases (3 NVFP4, 2 bitsandbytes) where the Hub counts packed storage, 2 are side files the Hub does not count (a speech codec, Phi-4-multimodal LoRA folders), 1 is FP8 DeepSeek-V3.1, whose Hub count includes block scales, and 1 is a robotics policy off by 72 elements (unexplained); median 79 KB read per repo |
+| Hub Weight Census: 5,016 readable popular repos with a Hub count | the Hub's count differs from the weights for 12.2% (611); breakdown by storage format on the [census page](https://joessattes.github.io/ai-model-explorer/census/) |
 
 Method and full results: [docs/how-it-works.md](docs/how-it-works.md) and the [paper](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy).
 Run the Hub benchmark yourself at [bench.html](https://joessattes.github.io/ai-model-explorer/bench.html).
 
 ## Compared with other tools
-[Netron](https://netron.app) and Google's [Model Explorer](https://github.com/google-ai-edge/model-explorer) draw the operator graph of a model file you already have, and they are the right tools for debugging a converted graph. [hf-mem](https://github.com/alvarobartt/hf-mem) is the quickest way to a memory number, and [HF Viewer](https://hfviewer.com) draws graphs from a model's config and code; see the table in [What is new here](#what-is-new-here). AI Model Explorer starts from a repo name, reads only headers, and groups tensors into architectural parts with sizes and storage formats. That makes it practical for checkpoints of hundreds of billions of parameters and for comparing many models in a script. For `.tflite` files it also shows the real op graph.
+[Netron](https://netron.app) and Google's [Model Explorer](https://github.com/google-ai-edge/model-explorer) draw the operator graph of a model file you already have, and they are the right tools for debugging a converted graph. [hf-mem](https://github.com/alvarobartt/hf-mem) gives a memory estimate directly, and [HF Viewer](https://hfviewer.com) draws graphs from a model's config and code; see the table in [What is new here](#what-is-new-here). AI Model Explorer starts from a repo name, reads only headers, and groups tensors into architectural parts with sizes and storage formats. That makes it practical for checkpoints of hundreds of billions of parameters and for comparing many models in a script. For `.tflite` files it also shows the real op graph.
 
 ## Repository
 | Path | What |
@@ -160,11 +179,13 @@ Run the Hub benchmark yourself at [bench.html](https://joessattes.github.io/ai-m
 | `bench/`, `bench.html` | the Hub checkpoint benchmark page |
 | `research/` | corpus builder, evaluation, baselines, results and the Hub export used in the paper |
 | `paper/` | the paper (PDF) |
-| `assets/` | logo |
+| `census/` | the census web page and its data (`insights.json`, `models.json`, `board.json`) |
+| `research/hub-census/` | census sampler, crawler, statistics and dataset publishing |
+| `assets/` | logo and the example diagram |
 
 ## Built-in examples in the web app
 - **Whisper medium (Thai)**: `biodatlab/distill-whisper-th-medium` converted to `.tflite` (random weights, so ops, shapes, sizes and compute are real; accuracy is not)
-- **Nemotron 3.5** Super VL, Transcribe, ASR streaming and Embed NVFP4; **Parakeet TDT 0.6B v3**; **FastH3 Omni FP8**; **Kumo** Tabular and Relational: analysed automatically from their weight manifests
+- **Nemotron 3.5** Super VL, Transcribe, ASR streaming and Embed NVFP4; **Parakeet TDT 0.6B v3**; **FastH3 Omni FP8**; **Kumo** Tabular and Relational: analyzed automatically from their weight manifests
 - **Qwen3-ASR 1.7B**, **Qwen3.8 27B**, **Llama 3.2 1B**, **GPT-2 small**, **BERT base**, **ViT base**
 - **Precision demos**: Whisper rehearsal models in fp32, weight-only int8, static int8 and dynamic int4
 

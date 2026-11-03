@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "ai-model-explorer"
 dynamic = ["version"]
-description = "See any Hugging Face model's architecture from its safetensors header, without downloading weights."
+description = "Recover a Hugging Face model's architecture from its safetensors headers, without downloading the weights."
 readme = "python/README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -14,11 +14,16 @@ requires-python = ">=3.9"
 dependencies = ["quickjs>=1.19", "matplotlib>=3.5"]
 keywords = ["huggingface", "safetensors", "model architecture", "llm", "transformers", "mixture of experts", "visualization", "edge ai", "quantization"]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
   "Topic :: Scientific/Engineering :: Visualization",
 ]
