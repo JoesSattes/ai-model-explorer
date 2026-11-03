@@ -32,7 +32,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - name: Install
-        run: pip install ../.. pandas pyarrow huggingface_hub hf_xet matplotlib
+        run: pip install ../.. pandas pyarrow huggingface_hub hf_xet matplotlib scipy
       - name: Cache hub-stats dump (one per day)
         id: dump
         run: echo "day=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"

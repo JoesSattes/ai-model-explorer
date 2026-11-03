@@ -55,6 +55,18 @@ recorded with the repo's popularity, so the report shows *what share of the Hub 
 Rate limits (429) are retried with `Retry-After` and back-off. Each repo runs in its own process with a
 hard time limit. The crawl appends as it goes, so it can be stopped and restarted.
 
+## Ecosystem findings and their statistics
+
+`ecosystem.py` (run by `insights.py`) measures the ecosystem from the weights: architecture adoption by release year,
+KV cache per token per billion parameters, how sparse mixtures of experts became, how width and depth scale with size,
+tied embeddings by size, storage precision, the share of repos and of downloads by relation to a parent, whether
+derivatives keep the parent's architecture, how concentrated lineage is, metadata reliability, and the smallest device
+each original language model fits. Shares carry Wilson 95% intervals, medians bootstrap intervals; trends over release
+year use the Cochran-Armitage test and a logistic odds ratio per year, monotone trends Spearman's rho, shape scaling
+log-log slopes, two groups Mann-Whitney. Output: `out/insights/ecosystem.json` and `eco_*.png` / `eco_*.pdf`.
+Language models are decoder or prefix-LM anatomies above 50M parameters with a text-generating Hub pipeline (or none).
+The Hub dates every repository created before March 2022 to that month, so the first year bin reads "up to 2022".
+
 ## Labels and the board
 
 `labels.py` tags each readable repo from its Hub tags: leading provider or not, its relation to its parent (original,

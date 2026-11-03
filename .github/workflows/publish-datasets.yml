@@ -35,7 +35,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
       - name: Install
-        run: pip install ../.. pandas pyarrow huggingface_hub matplotlib
+        run: pip install ../.. pandas pyarrow huggingface_hub matplotlib scipy
       - name: Hugging Face account
         id: who
         run: |

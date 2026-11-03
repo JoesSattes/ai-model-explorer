@@ -164,7 +164,7 @@ html[data-theme=dark] tbody tr:hover td{background:rgba(255,255,255,.04)}
 <body>
 <nav class="top"><div class="wrap">
  <a class="brand" id="home" href="../en/"><img src="../assets/logo.svg" width="24" height="24" alt=""><span>AI Model Explorer</span></a>
- <a class="l" id="back" href="../en/">← <span data-t="nav_back">Explorer</span></a><a class="l" href="#board" data-t="bd_h">Deploy-Ready board</a><a class="l" href="#findings" data-t="nav_find">Findings</a><a class="l" href="#models" data-t="nav_models">Models</a><a class="l" href="#data" data-t="nav_data">Data</a>
+ <a class="l" id="back" href="../en/">← <span data-t="nav_back">Explorer</span></a><a class="l" href="#board" data-t="bd_h">Deploy-Ready board</a><a class="l" href="#findings" data-t="nav_find">Findings</a><a class="l" href="#eco" data-t="nav_eco">Ecosystem</a><a class="l" href="#models" data-t="nav_models">Models</a><a class="l" href="#data" data-t="nav_data">Data</a>
  <span class="sp"></span>
  <button class="theme" id="themeBtn" type="button" aria-label="Theme"><svg class="sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
  <div class="lang" id="lang" role="group" aria-label="Language"><button data-l="th">TH</button><button data-l="en">EN</button></div>
@@ -199,6 +199,12 @@ html[data-theme=dark] tbody tr:hover td{background:rgba(255,255,255,.04)}
  <h2 data-t="find_h">Findings</h2>
  <p class="sub" data-t="find_sub">Popular repos: the most downloaded, the most downloaded original releases, and recent releases from leading providers. Test fixtures (tiny random-weight repos) are left out.</p>
  <div class="icards" id="find"></div>
+</section>
+
+<section id="eco">
+ <h2 data-t="eco_h">The ecosystem in numbers</h2>
+ <p class="sub" data-t="eco_sub">What thousands of checkpoints show about how models are built, copied, stored and run. Each number carries its 95% interval and, for changes over time, a test for trend; the method is in the paper and the code in the census folder.</p>
+ <div class="icards" id="ecoc"></div>
 </section>
 
 <section class="rv">
@@ -246,7 +252,16 @@ html[data-theme=dark] tbody tr:hover td{background:rgba(255,255,255,.04)}
 <div id="tip"></div>
 <script>
 const T={
- en:{bd_h:"Deploy-Ready board",bd_sub:"Leading providers' releases, the most downloaded language models, models built for Thai, and models submitted by their authors. Each is read from its headers and placed by the memory it needs at 4-bit with an 8k context, with five checks on its metadata. Submit yours and get a badge for the model card.",bd_submit:"Submit a model",bd_how:"Opens a GitHub issue; a bot replies within minutes.",
+ en:{eco_h:"The ecosystem in numbers",eco_sub:"What thousands of checkpoints show about how models are built, copied, stored and run. Each number carries its 95% interval and, for changes over time, a test for trend; the method is in the paper and the code in the census folder.",nav_eco:"Ecosystem",
+  e_copy_t:"Downloads go to copies",e_copy_w:(r,d)=>`Quantized copies are ${r} of Hub repositories but take ${d} of downloads. Most people run someone's re-packaging of a model, not the original files.`,
+  e_same_t:"Fine-tunes keep the anatomy",e_same_w:(q,v)=>`Same width, depth, heads, FFN and vocabulary as the parent; ${q} of quantized copies too. When a fine-tune changes something, it is mostly the vocabulary (${v}).`,
+  e_lin_t:"One family feeds the Hub",e_lin_w:(o,s)=>`${s} of all derivative links point to ${o} models. One provider's design choices propagate to thousands of repositories.`,
+  e_kv_t:"Memory per token keeps falling",e_kv_w:(a,b)=>`KV cache per token per billion parameters: ${a} for models up to 2022, ${b} in 2026. Grouped-query and latent attention did it.`,
+  e_moe_t:"Experts multiply, active share falls",e_moe_w:(e0,e1,y0)=>`Median experts per layer ${e0} → ${e1} since ${y0}. Memory follows the total, speed the active part, and the gap widens every year.`,
+  e_sc_t:"Bigger models get wider, not deeper",e_sc_w:(a,b)=>`Across dense releases, width grows as N^${a} and depth as N^${b}; the two satisfy 2·${a} + ${b} ≈ 1, as d²L scaling predicts.`,
+  e_f32_t:"FP32 is still everywhere",e_f32_w:tb=>`Popular models above 1B parameters stored in FP32: ${tb} TB that BF16 would halve, downloaded on every machine that uses them.`,
+  e_meta_t:"The metadata is wrong often enough to matter",e_meta_w:(m,l,c)=>`The Hub's parameter count is missing for ${m} more; ${l} of popular repos declare no license; config and weights disagree in ${c}.`,
+  e_trend:"trend",e_ci:"95% interval",e_since:"since",bd_h:"Deploy-Ready board",bd_sub:"Leading providers' releases, the most downloaded language models, models built for Thai, and models submitted by their authors. Each is read from its headers and placed by the memory it needs at 4-bit with an 8k context, with five checks on its metadata. Submit yours and get a badge for the model card.",bd_submit:"Submit a model",bd_how:"Opens a GitHub issue; a bot replies within minutes.",
   bd_cols:["Model","Release","Fits on","Checks","Params","Active","KV/token","4-bit + 8k","Downloads"],bd_empty:"Nothing matches.",
   bd_tabs:{all:"All",lab:"Leading providers",popular:"Most downloaded LMs",thai:"Thai & multilingual",submitted:"Submitted"},bd_search:"Search the board",bd_tier:"Fits on:",bd_any:"any",
   bd_more:n=>`Show all ${n}`,bd_less:"Show fewer",bd_note:"Scored from the census run; submitted models are read when the issue is opened.",
@@ -290,7 +305,16 @@ const T={
   f_hub:s=>`<b>The Hub's parameter count is wrong</b> for formats that pack two values per byte: ${s}.`,
   f_nc:(a,b)=>`<b>${a}%</b> of all Hub models and ${b}% of popular ones ship <b>no config.json</b>: the weights are their only specification.`,
   f_gguf:a=>`<b>${a}%</b> of popular repos without readable weights are GGUF-only (llama.cpp).`},
- th:{bd_h:"Deploy-Ready board",bd_sub:"โมเดลจากผู้พัฒนาหลัก language model ที่โหลดมากสุด โมเดลภาษาไทย และโมเดลที่เจ้าของส่งเข้ามา อ่านจาก header แล้วจัดระดับตามหน่วยความจำที่ต้องใช้ที่ 4-bit และ context 8k พร้อมเช็ก metadata 5 ข้อ ส่งโมเดลของคุณแล้วรับ badge ไปติดใน model card",bd_submit:"ส่งโมเดล",bd_how:"เปิด GitHub issue แล้ว bot จะตอบกลับภายในไม่กี่นาที",
+ th:{eco_h:"ระบบนิเวศในตัวเลข",eco_sub:"สิ่งที่ checkpoint นับพันบอกว่าโมเดลถูกสร้าง ถูกก๊อปปี้ ถูกเก็บ และถูกรันอย่างไร ทุกตัวเลขมีช่วงความเชื่อมั่น 95% และถ้าเป็นการเปลี่ยนแปลงตามเวลามีการทดสอบแนวโน้มกำกับ วิธีการอยู่ใน paper ส่วนโค้ดอยู่ในโฟลเดอร์ census",nav_eco:"ระบบนิเวศ",
+  e_copy_t:"ยอดโหลดไปอยู่ที่ตัวก๊อปปี้",e_copy_w:(r,d)=>`repo ที่เป็น quantize ต่อมีแค่ ${r} ของ Hub แต่ได้ยอดโหลด ${d} คนส่วนใหญ่รันโมเดลที่คนอื่นแพ็กใหม่ ไม่ใช่ไฟล์ต้นฉบับ`,
+  e_same_t:"Fine-tune ไม่เปลี่ยนโครงสร้าง",e_same_w:(q,v)=>`width, depth, heads, FFN และ vocabulary เท่ากับตัวแม่ ส่วนตัว quantize ต่อก็ ${q} ถ้า fine-tune เปลี่ยนอะไรสักอย่าง ส่วนใหญ่คือ vocabulary (${v})`,
+  e_lin_t:"ตระกูลเดียวเลี้ยงทั้ง Hub",e_lin_w:(o,s)=>`${s} ของลิงก์ตัวต่อยอดทั้งหมดชี้ไปที่โมเดลของ ${o} การออกแบบของผู้พัฒนารายเดียวกระจายไปยัง repo นับพัน`,
+  e_kv_t:"หน่วยความจำต่อ token ลดลงเรื่อยๆ",e_kv_w:(a,b)=>`KV cache ต่อ token ต่อพันล้าน parameter: ${a} สำหรับโมเดลถึงปี 2022 เหลือ ${b} ในปี 2026 เพราะ grouped-query และ latent attention`,
+  e_moe_t:"Expert มากขึ้น ส่วนที่ใช้จริงน้อยลง",e_moe_w:(e0,e1,y0)=>`จำนวน expert ต่อ layer (มัธยฐาน) ${e0} → ${e1} ตั้งแต่ ${y0} แรมขึ้นกับทั้งหมด ความเร็วขึ้นกับส่วนที่ active ช่องว่างนี้กว้างขึ้นทุกปี`,
+  e_sc_t:"โมเดลใหญ่ขึ้นด้วยการกว้างขึ้น ไม่ใช่ลึกขึ้น",e_sc_w:(a,b)=>`ในโมเดล dense ที่ปล่อยออกมา width โตตาม N^${a} ส่วน depth ตาม N^${b} และ 2·${a} + ${b} ≈ 1 ตรงกับ d²L`,
+  e_f32_t:"FP32 ยังมีอยู่ทุกที่",e_f32_w:tb=>`โมเดลยอดนิยมที่ใหญ่กว่า 1B แต่ยังเก็บแบบ FP32: ${tb} TB ที่ BF16 ลดได้ครึ่งหนึ่ง และทุกเครื่องที่ใช้ต้องโหลดเต็มขนาด`,
+  e_meta_t:"metadata ผิดบ่อยจนมีผลจริง",e_meta_w:(m,l,c)=>`ตัวเลข params บน Hub หายไปอีก ${m} repo ยอดนิยม ${l} ไม่ระบุ license และ config กับ weights ไม่ตรงกัน ${c}`,
+  e_trend:"แนวโน้ม",e_ci:"ช่วง 95%",e_since:"ตั้งแต่",bd_h:"Deploy-Ready board",bd_sub:"โมเดลจากผู้พัฒนาหลัก language model ที่โหลดมากสุด โมเดลภาษาไทย และโมเดลที่เจ้าของส่งเข้ามา อ่านจาก header แล้วจัดระดับตามหน่วยความจำที่ต้องใช้ที่ 4-bit และ context 8k พร้อมเช็ก metadata 5 ข้อ ส่งโมเดลของคุณแล้วรับ badge ไปติดใน model card",bd_submit:"ส่งโมเดล",bd_how:"เปิด GitHub issue แล้ว bot จะตอบกลับภายในไม่กี่นาที",
   bd_cols:["โมเดล","ที่มา","ลงเครื่อง","เช็ก","Params","Active","KV/token","4-bit + 8k","ดาวน์โหลด"],bd_empty:"ไม่มีโมเดลที่ตรงเงื่อนไข",
   bd_tabs:{all:"ทั้งหมด",lab:"ผู้พัฒนาหลัก",popular:"LM ที่โหลดมากสุด",thai:"ภาษาไทยและหลายภาษา",submitted:"ส่งเข้ามา"},bd_search:"ค้นหาใน board",bd_tier:"ลงเครื่อง:",bd_any:"ทั้งหมด",
   bd_more:n=>`แสดงทั้งหมด ${n}`,bd_less:"แสดงน้อยลง",bd_note:"คะแนนมาจากรอบ census ส่วนโมเดลที่ส่งเข้ามาจะอ่านตอนเปิด issue",
@@ -368,9 +392,26 @@ function findings(){const t=T[L],tr=I.trends.filter(r=>r.models>=30),b=tr[tr.len
  const bad=I.hub_count_by_storage.find(r=>r.storage==="nvfp4"),wr=M.filter(m=>m.hub&&m.p/m.hub>1.2&&/nvfp4/.test(m.q));
  cards.push({big:bad?pct(bad.hub_count_differs)+"%":"–",sub:"NVFP4",t:t.i_hub_t,w:t.i_hub_w,sp:"",ex:exChips(top(wr),m=>`${(m.p/m.hub).toFixed(2)}${t.ex_x}`),go:{fq:"nvfp4"}});
  cards.push({big:pct(h.hub_no_config)+"%",sub:"Hub",t:t.i_cfg_t,w:t.i_cfg_w,sp:"",ex:exChips(top(M.filter(m=>!m.cfg&&m.p))),go:{fk:"nocfg"}});
+ eco();
  $("#find").innerHTML=cards.map((c,i)=>`<div class="ic rv"><div class="big">${c.big}<small>${c.sub||""}</small></div><h3>${c.t}</h3>${c.sp}<p class="why"><b>${t.why}:</b> ${c.w}</p>${c.ex}<button class="go" data-i="${i}">${t.see}</button></div>`).join("");
  document.querySelectorAll("#find .go").forEach(b=>b.onclick=()=>{const g=cards[+b.dataset.i].go;["#q","#ffam","#fq","#fy","#fo","#fk","#fl"].forEach(s=>$(s).value="");for(const[k,v]of Object.entries(g))$("#"+k).value=v;page=0;table();$("#models").scrollIntoView({behavior:"smooth"})});
  reveal()}
+function eco(){const t=T[L],E=I.ecosystem,el=$("#ecoc");if(!E){$("#eco").style.display="none";return}
+ const P=x=>x==null?"–":Math.round(x*100)+"%",CI=w=>w?`${t.e_ci} ${Math.round(w.lo*100)}–${Math.round(w.hi*100)}%`:"",PV=p=>p<1e-10?"p < 10⁻¹⁰":p<1e-3?"p < 0.001":"p = "+p.toFixed(3);
+ const D=E.derivatives||{},h=D.hub||{},fi=D.fidelity||{},li=D.lineage||{},kv=E.kv||{},mo=(E.moe||{}).by_year||[],sc=E.scaling||{},st=E.storage||{},md=E.metadata||{},cards=[];
+ const ids=new Set(M.map(m=>m.id)),chips=list=>`<div class="ex">${list.filter(i=>ids.has(i)).slice(0,4).map(i=>`<a href="#lookup" data-m="${i}">${i.split("/")[1]}</a>`).join("")}</div>`;
+ const byDl=f=>M.filter(f).sort((a,b)=>b.dl-a.dl).map(m=>m.id);
+ if(h.quantized)cards.push({big:"×"+h.quantized.lift.toFixed(1),sub:L==="th"?"ยอดโหลดต่อ repo":"downloads per repo",t:t.e_copy_t,w:t.e_copy_w(P(h.quantized.repo_share),P(h.quantized.download_share)),note:L==="th"?"ทั้ง Hub, 3.2 ล้าน repo":"whole Hub, 3.2M repos",ex:chips(byDl(m=>m.origin==="quantized")),go:{fo:"quantized"}});
+ if(fi.finetune)cards.push({big:P(fi.finetune.identical.p),sub:"fine-tunes",t:t.e_same_t,w:t.e_same_w(P(fi.quantized&&fi.quantized.identical.p),P(fi.finetune.vocab_changed.p)),note:`${CI(fi.finetune.identical)} · n = ${fi.finetune.n}`,ex:chips(byDl(m=>m.origin==="finetune"&&onMap(m))),go:{fo:"finetune"}});
+ if(li.top_parent_owners){const o=li.top_parent_owners[0];cards.push({big:P(o[1]),sub:o[0],t:t.e_lin_t,w:t.e_lin_w(o[0],P(o[1])),note:`n = ${li.derivatives.toLocaleString()} · HHI ${li.hhi}`,ex:chips((li.top_parents||[]).map(x=>x[0])),go:{q:o[0].toLowerCase()+"/"}})}
+ if(kv.by_year){const a=kv.by_year[0].kv_per_b,b=kv.by_year[kv.by_year.length-1].kv_per_b;cards.push({big:Math.round(kv.fold_drop)+"×",sub:L==="th"?"ลดลง":"lower",t:t.e_kv_t,w:t.e_kv_w(fmtB(a.med),fmtB(b.med)),note:`Spearman ρ = ${kv.vs_year.rho} · ${PV(kv.vs_year.p)}`,sp:spark(kv.by_year.map(r=>r.kv_per_b.med/1e3),"--s1"),ex:chips(byDl(m=>isLM(m)&&m.y>=2025&&m.kv&&m.p>1e9&&m.kv/m.p<4e-6)),go:{fk:"lat"}})}
+ if(mo.length>1){const a=mo.find(m=>m.n>=20)||mo[0],b=mo[mo.length-1];if(b.active_ratio)cards.push({big:P(b.active_ratio.med),sub:(L==="th"?"active ต่อ token, ":"active per token, ")+b.year,t:t.e_moe_t,w:t.e_moe_w(Math.round(a.experts.med),Math.round(b.experts.med),a.year),note:`${CI(b.active_ratio)} · ${PV(E.moe.active_ratio_vs_year.p)}`,sp:spark(mo.map(m=>m.active_ratio?m.active_ratio.med:0),"--s2"),ex:chips(byDl(m=>isLM(m)&&m.E>=128&&m.act)),go:{fk:"moe"}})}
+ if(sc.d)cards.push({big:`N<sup>${sc.d.slope.toFixed(2)}</sup>`,sub:L==="th"?"width":"width",t:t.e_sc_t,w:t.e_sc_w(sc.d.slope.toFixed(2),sc.layers.slope.toFixed(2)),note:`R² ${sc.d.r2} / ${sc.layers.r2} · n = ${sc.d.n.toLocaleString()}`,ex:"",go:{}});
+ if(st.f32_over_1b)cards.push({big:P(st.f32_over_1b.p),sub:"> 1B, FP32",t:t.e_f32_t,w:t.e_f32_w(st.f32_over_1b_tb),note:`${CI(st.f32_over_1b)} · n = ${st.f32_over_1b.n.toLocaleString()}`,ex:chips(byDl(m=>m.p>1e9&&!m.q&&m.sb&&m.sb>m.p*3.5)),go:{}});
+ if(md.hub_count_wrong)cards.push({big:P(md.hub_count_wrong.p),sub:L==="th"?"params บน Hub ผิด":"Hub count wrong",t:t.e_meta_t,w:t.e_meta_w(P(md.hub_count_missing.p),P(md.license_missing.p),P(md.config_disagrees.p)),note:`${CI(md.hub_count_wrong)} · n = ${md.hub_count_wrong.n.toLocaleString()}`,ex:"",go:{fk:"nocfg"}});
+ el.innerHTML=cards.map((c,i)=>`<div class="ic rv"><div class="big">${c.big}<small>${c.sub||""}</small></div><h3>${c.t}</h3>${c.sp||""}<p>${c.w}</p><p class="note" style="margin-top:0">${c.note||""}</p>${c.ex||""}${Object.keys(c.go).length?`<button class="go" data-i="${i}">${t.see}</button>`:""}</div>`).join("");
+ el.querySelectorAll(".go").forEach(b=>b.onclick=()=>{const g=cards[+b.dataset.i].go;["#q","#ffam","#fq","#fy","#fo","#fk","#fl"].forEach(s=>$(s).value="");for(const[k,v]of Object.entries(g))$("#"+k).value=v;page=0;table();$("#models").scrollIntoView({behavior:"smooth"})});
+ el.querySelectorAll(".ex a").forEach(a=>a.onclick=e=>{e.preventDefault();select(a.dataset.m,{scroll:"#lookup"})})}
 function lookup(id){const t=T[L],el=$("#look");if(!id){el.innerHTML="";return}
  const m=M.find(x=>x.id.toLowerCase()===id.toLowerCase());
  if(!m){el.innerHTML=`<div class="card"><p class="cs">${t.look_none}</p><div class="dl"><a class="pbtn primary" href="${link(id)}">${t.open_full} → ${id}</a><a class="pbtn" target="_blank" rel="noopener" href="${ISSUE(id)}">${t.look_submit}</a></div></div>`;return}

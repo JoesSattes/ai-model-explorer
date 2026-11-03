@@ -70,8 +70,16 @@ type is in the companion corpus ([manifest-anatomy-corpus]({corpus_url})), with 
 
 {findings}
 
-![Architecture by release year](insights/trends.png)
+![Architecture by release year, with 95% intervals](insights/eco_adoption.png)
+![KV cache per token per billion parameters, and how sparse mixtures of experts became](insights/eco_memory.png)
+![Share of repositories and of downloads by relation to a parent model](insights/eco_economy.png)
+![How weights are stored, by year](insights/eco_storage.png)
+![Smallest device class each original language model fits at 4-bit, 8k context](insights/eco_deploy.png)
 ![The Hub's parameter count by storage format](insights/storage.png)
+
+Every number above, with its 95% interval and trend test, is in `insights/ecosystem.json` (written by `ecosystem.py`):
+Wilson intervals for shares, bootstrap intervals for medians, Cochran-Armitage and logistic trends over release year,
+Spearman for monotone trends, log-log slopes for shape scaling, Mann-Whitney for two groups.
 
 ## What it can be used for
 
@@ -112,7 +120,7 @@ def main(repo, out="out"):
     api.create_repo(repo, repo_type="dataset", exist_ok=True)
     api.upload_folder(repo_id=repo, repo_type="dataset", folder_path=out,
                       allow_patterns=["README.md", "census.parquet", "census.jsonl", "census_manifests.jsonl.gz", "roles.json", "sample.parquet", "frame_stats.json",
-                                      "sample_info.json", "report/*", "insights/*"],
+                                      "sample_info.json", "report/*", "insights/*.json", "insights/*.md", "insights/*.png"],
                       commit_message="census run " + datetime.date.today().isoformat())
     print("published https://huggingface.co/datasets/" + repo)
 

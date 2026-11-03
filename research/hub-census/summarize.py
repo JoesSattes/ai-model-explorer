@@ -130,7 +130,7 @@ def main(path, outdir):
 FIELDS = ["d", "layers", "heads", "kv_heads", "head_dim", "ffn", "vocab", "experts"]
 
 
-FIXTURE = r"internal-testing|(?:^|[/_-])tiny[-_]|random|dummy|unit-test|^unslothai/"
+FIXTURE = r"internal-testing|(?:^|[/_-])tiny(?:[-_]|$)|random|dummy|unit-test|^unslothai/"
 
 
 def _score(rows, field, fused):

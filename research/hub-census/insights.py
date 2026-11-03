@@ -9,6 +9,7 @@ is wrong, and which repos ship no specification but their weights. Writes:
 import argparse, json, math, os
 import pandas as pd
 
+import ecosystem
 import labels
 
 BLUE, ORANGE, AQUA, YELLOW, INK, INK2, GRID, SURF = "#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#0b0b0b", "#52514e", "#e6e5e0", "#fcfcfb"
@@ -26,7 +27,7 @@ def load(path):
     return d
 
 
-FIXTURE = r"internal-testing|(?:^|[/_-])tiny[-_]|random|dummy|unit-test|^unslothai/"
+FIXTURE = r"internal-testing|(?:^|[/_-])tiny(?:[-_]|$)|random|dummy|unit-test|^unslothai/"
 
 
 def popular(d):
@@ -39,12 +40,13 @@ def popular(d):
 def trends(ok):
     """Architecture by release year, original releases only (quantized and fine-tuned copies would count a model twice)."""
     orig = ok[(ok.get("origin") == "original") | ok.get("also_frontier", pd.Series(False, index=ok.index)).fillna(False).astype(bool)]
-    lm = orig[orig["family_manifest"].isin(LM)].copy()
+    lm = orig[ecosystem.is_lm(orig)].copy()
     lm["moe"] = lm["hp"].apply(lambda h: bool(hp(h, "experts")))
     lm["hybrid"] = lm["hp"].apply(lambda h: (hp(h, "ssm_layers") or 0) > 0)
     lm["latent"] = lm["hp"].apply(lambda h: bool(hp(h, "kv_latent")))
-    lm["gqa"] = lm.apply(lambda r: bool(hp(r["hp_fused"], "kv_heads") and hp(r["hp_fused"], "heads")
-                                        and r["hp_fused"]["kv_heads"] < r["hp_fused"]["heads"]), axis=1)
+    fh = lm["hp_fused"].apply(lambda f: hp(f, "heads")).fillna(lm["hp"].apply(lambda h: hp(h, "heads")))
+    fk = lm["hp_fused"].apply(lambda f: hp(f, "kv_heads")).fillna(lm["hp"].apply(lambda h: hp(h, "kv_heads")))
+    lm["gqa"] = fh.notna() & fk.notna() & (fk < fh)   # same definition as ecosystem.py
     lm["quantized"] = lm["quant"].apply(lambda q: bool(q))
     rows = []
     for y, g in lm[lm["year"].notna()].groupby("year"):
@@ -195,6 +197,48 @@ def headline(d, pop, ok, folder):
             "crawled": str(d["crawled_at"].max())[:10] if "crawled_at" in d else None}
 
 
+def eco_lines(E):
+    """The ecosystem findings, one line each, for the dataset card and the run summary."""
+    P = lambda x: f"{x*100:.0f}%"
+    L, D = [], E.get("derivatives", {})
+    h = D.get("hub", {})
+    if h.get("quantized"):
+        q = h["quantized"]
+        L.append(f"- **Quantized copies are {P(q['repo_share'])} of Hub repos but take {P(q['download_share'])} of downloads** "
+                 f"(×{q['lift']}); originals {P(h['original']['repo_share'])} of repos, {P(h['original']['download_share'])} of downloads.")
+    fi = D.get("fidelity", {})
+    if fi.get("finetune") and fi.get("quantized"):
+        L.append(f"- **Derivatives keep the architecture**: {P(fi['finetune']['identical']['p'])} of fine-tunes and {P(fi['quantized']['identical']['p'])} of "
+                 f"quantized copies have the parent's width, depth, heads, FFN and vocabulary; {P(fi['finetune']['vocab_changed']['p'])} of fine-tunes change the vocabulary.")
+    li = D.get("lineage", {})
+    if li.get("top_parent_owners"):
+        o = li["top_parent_owners"][0]
+        L.append(f"- **One family feeds the ecosystem**: {P(o[1])} of derivatives in the census descend from {o[0]} models.")
+    kv = E.get("kv", {})
+    if kv.get("fold_drop"):
+        c = kv["cache_gt_weights_32k"]["years"]
+        L.append(f"- **KV cache per token per billion parameters fell {kv['fold_drop']}×** from <=2022 to {kv['by_year'][-1]['year']}; models whose 32k-token "
+                 f"cache outweighs their 4-bit weights: {P(c[0]['p'])} → {P(c[-1]['p'])}.")
+    m = E.get("moe", {}).get("by_year", [])
+    if len(m) >= 2 and m[-1]["active_ratio"] and m[1]["active_ratio"]:
+        L.append(f"- **Experts multiply, active share falls**: median experts {m[1]['experts']['med']:.0f} → {m[-1]['experts']['med']:.0f}, "
+                 f"top-k {m[1]['topk']['med']:.0f} → {m[-1]['topk']['med']:.0f}, active share of parameters {P(m[1]['active_ratio']['med'])} → {P(m[-1]['active_ratio']['med'])} ({m[1]['year']} → {m[-1]['year']}).")
+    sc = E.get("scaling", {})
+    if sc.get("d"):
+        L.append(f"- **How released models scale**: width ∝ N^{sc['d']['slope']}, depth ∝ N^{sc['layers']['slope']} (dense LMs, n={sc['d']['n']:,}): bigger models get wider faster than deeper.")
+    st = E.get("storage", {})
+    if st.get("f32_over_1b"):
+        L.append(f"- **{P(st['f32_over_1b']['p'])} of popular models above 1B parameters still store FP32**: {st['f32_over_1b_tb']} TB that BF16 would halve.")
+    de = E.get("deploy", {}).get("edge_by_year", {}).get("years", [])
+    if de:
+        L.append(f"- **Fits a 16 GB laptop at 4-bit, 8k context**: {P(de[0]['p'])} of original LMs released <=2022, {P(de[-1]['p'])} of {de[-1]['year']} releases.")
+    md = E.get("metadata", {})
+    if md.get("config_disagrees"):
+        L.append(f"- **Config agrees with the weights** in {P(1 - md['config_disagrees']['p'])} of checked repos; the Hub's parameter count is wrong for "
+                 f"{P(md['hub_count_wrong']['p'])} and missing for {P(md['hub_count_missing']['p'])}; {P(md['license_missing']['p'])} of popular repos declare no license.")
+    return L
+
+
 def main(census, outdir):
     d = load(census)
     os.makedirs(outdir, exist_ok=True)
@@ -206,7 +250,9 @@ def main(census, outdir):
     head = headline(d, pop, ok, os.path.dirname(census))
     rp = os.path.join(os.path.dirname(census), "roles.json")
     roles = {k: v for k, v in json.load(open(rp)).items() if k != "rows"} if os.path.exists(rp) else None
-    out = {"headline": head, "roles": roles, "repos": len(d), "popular_repos": len(pop), "status_popular": status, "no_weights_kind_popular": nwk,
+    fs = os.path.join(os.path.dirname(census), "frame_stats.json")
+    E = ecosystem.run(census, outdir, json.load(open(fs)) if os.path.exists(fs) else None)
+    out = {"headline": head, "roles": roles, "ecosystem": E, "repos": len(d), "popular_repos": len(pop), "status_popular": status, "no_weights_kind_popular": nwk,
            "trends": T, "storage_by_year": S, "hub_count_by_storage": H, "no_config_by_library": C[:25]}
     json.dump(json.loads(json.dumps(out, default=float).replace("NaN", "null")), open(os.path.join(outdir, "insights.json"), "w"), indent=1)
     def clean(v):  # JSON has no NaN
@@ -239,6 +285,7 @@ def main(census, outdir):
     gg = nwk.get("gguf_only")
     if gg:
         L.append(f"- **{gg*100:.0f}%** of popular repos without readable weights are GGUF-only (llama.cpp format).")
+    L += eco_lines(E)
     open(os.path.join(outdir, "insights.md"), "w").write("\n".join(L) + "\n")
     print("\n".join(L))
 
