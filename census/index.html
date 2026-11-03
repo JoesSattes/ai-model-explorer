@@ -22,59 +22,116 @@
  "keywords":["Hugging Face","model architecture","mixture of experts","quantization","safetensors","census"]}
 </script>
 <style>
-:root{--ground:#f6f6f3;--surface:#fff;--raised:#efefeb;--line:#e3e3de;--ink:#141414;--soft:#4d4d4a;--dim:#6b6b66;--grid:#ecece8;
- --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--accent:#1b5fd1;
- --sans:"IBM Plex Sans Thai","IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"IBM Plex Mono","SF Mono",Menlo,monospace;color-scheme:light}
-html[data-theme=dark]{--ground:#0b1020;--surface:#121a2e;--raised:#18213a;--line:#222b44;--ink:#f4f5f8;--soft:#b9c0d4;--dim:#8f97b0;--grid:#1d2640;
- --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--accent:#a3abfa;color-scheme:dark}
+:root{
+  --ground:#f6f6f3;--surface:#ffffff;--raised:#efefeb;--active:#e6e6e1;--border:#e3e3de;--rule:#ececE8;--control:#cfcfc8;
+  --ink:#141414;--soft:#4d4d4a;--dim:#6b6b66;
+  --enc:#1b5fd1;--dec:#d4651c;--ssm:#1a8f6a;--conf:#b98900;--neg:#c4242a;--ok:#247b50;
+  --mag:#d4651c;--mag-l:#d4651c;--red:#c4242a;--red-l:#c4242a;--blue:#1b5fd1;--blue-l:#5d86d4;--amber:#9a6200;
+  --line:#e3e3de;--line2:#cfcfc8;--glass:#ffffff;--glass2:#efefeb;
+  --sans:"IBM Plex Sans Thai","IBM Plex Sans","Noto Sans Thai","Leelawadee UI","Thonburi",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono","SF Mono",Menlo,Consolas,monospace;
+  --r:6px;--rc:8px;
+  --on-ink:#fff;--ink-hover:#2c2c2a;--sel:#e9eefb;--dot-done:#9fb8e6;--scrim:rgba(20,20,20,.35);
+  --te-bg:#e3ecfb;--te-fg:#123f8c;--td-bg:#fbe9dd;--td-fg:#7a3409;--ts-bg:#dcf3e6;--ts-fg:#0f4a2c;--tw-bg:#fff3d6;--tw-fg:#6b4300;--tb-bg:#ffedea;--tb-fg:#831c1e;color-scheme:light}
+html[data-theme=dark]{
+  --ground:#0b1020;--surface:#121a2e;--raised:#18213a;--active:#222c48;--border:#222b44;--rule:#1a2238;--control:#2e3854;
+  --ink:#f4f5f8;--soft:#b9c0d4;--dim:#8f97b0;
+  --enc:#8b96fa;--dec:#ff6bb5;--ssm:#4ade80;--conf:#f5c443;--neg:#ff5a67;--ok:#4ade80;
+  --mag:#ff6bb5;--mag-l:#ff7cc4;--red:#ff5a67;--red-l:#ff5a67;--blue:#8b96fa;--blue-l:#a3abfa;--amber:#f5c443;
+  --line:#222b44;--line2:#2e3854;--glass:#121a2e;--glass2:#18213a;
+  --on-ink:#0b1020;--ink-hover:#d9dce6;--sel:#1a2147;--dot-done:#4b55a8;--scrim:rgba(0,0,0,.6);
+  --te-bg:#1a2147;--te-fg:#c3c9ff;--td-bg:#2a1630;--td-fg:#ffb3d9;--ts-bg:#122b20;--ts-fg:#9cf0bd;--tw-bg:#2b2614;--tw-fg:#f5d98a;--tb-bg:#2e1519;--tb-fg:#ffb0b6;color-scheme:dark}
+/* dark: gradient + glass, the original look */
+html[data-theme=dark] body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(900px 600px at 85% -10%,rgba(229,0,125,.20),transparent 60%),radial-gradient(800px 600px at -10% 30%,rgba(91,107,240,.18),transparent 60%),radial-gradient(700px 500px at 50% 110%,rgba(230,0,18,.10),transparent 60%),linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px) 0 0/48px 48px,linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px) 0 0/48px 48px}
+html[data-theme=dark] body>*:not(nav):not(#cfgDlg){position:relative;z-index:1}
+html[data-theme=dark] nav.top{background:rgba(11,16,32,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom-color:rgba(255,255,255,.08)}
+html[data-theme=dark] .lgroup{background:rgba(22,28,48,.92)}html[data-theme=dark] .panel,html[data-theme=dark] .glass{background:rgba(255,255,255,.045);border-color:rgba(255,255,255,.10);border-radius:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+html[data-theme=dark] .btn,html[data-theme=dark] .chip{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16);border-radius:999px}
+html[data-theme=dark] .btn:hover,html[data-theme=dark] .chip:hover{background:rgba(255,255,255,.11)}
+html[data-theme=dark] .btn.primary{background:linear-gradient(90deg,#e60012,#e5007d);border:0;color:#fff;box-shadow:0 8px 28px rgba(229,0,125,.35)}
+html[data-theme=dark] .btn.primary:hover{background:linear-gradient(90deg,#ff1a2b,#ff1a92)}
+html[data-theme=dark] .chip.on,html[data-theme=dark] .lang button.on{background:linear-gradient(90deg,#e60012,#e5007d);border-color:transparent;color:#fff}
+html[data-theme=dark] .lang{border-radius:999px;border-color:rgba(255,255,255,.16)}html[data-theme=dark] .lang button{background:transparent}
+html[data-theme=dark] .theme{border-radius:999px;background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16)}
+html[data-theme=dark] .own input,html[data-theme=dark] .libhead input{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14)}
+html[data-theme=dark] .hero h1{background:linear-gradient(90deg,#ff5a67,#ff7cc4 50%,#a3abfa);-webkit-background-clip:text;background-clip:text;color:transparent}
+html[data-theme=dark] h2.sec{background:linear-gradient(90deg,#f4f5f8 40%,#c3c9ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+html[data-theme=dark] .libtabs button.on{border-bottom-color:#e5007d}
+html[data-theme=dark] .lrow.on{background:linear-gradient(90deg,rgba(229,0,125,.18),rgba(91,107,240,.10))}
+html[data-theme=dark] .lrow:hover{background:rgba(255,255,255,.05)}
+html[data-theme=dark] #bDots i.done{background:rgba(229,0,125,.5)}html[data-theme=dark] #bDots i.on{background:linear-gradient(90deg,#e60012,#e5007d)}
+html[data-theme=dark] ::selection{background:rgba(229,0,125,.4)}
+.theme{display:inline-flex;align-items:center;justify-content:center;width:34px;height:32px;border:1px solid var(--control);border-radius:var(--r);background:var(--surface);color:var(--soft);cursor:pointer}.theme:hover{color:var(--ink)}
+html[data-theme=dark] .theme .sun{display:inline}html[data-theme=dark] .theme .moon{display:none}.theme .sun{display:none}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.55;font-variant-numeric:tabular-nums}
-a{color:inherit}.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
-nav{position:sticky;top:0;z-index:5;background:var(--ground);border-bottom:1px solid var(--line)}
-nav .wrap{display:flex;align-items:center;gap:18px;height:56px}
-nav .brand{display:flex;align-items:center;gap:8px;font-weight:600;text-decoration:none}
-nav .sp{flex:1}nav a.l{color:var(--soft);text-decoration:none;font-size:14px}nav a.l:hover{color:var(--ink)}
-.tg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}.tg button{background:none;border:0;color:var(--soft);padding:5px 11px;font:inherit;font-size:13px;cursor:pointer}.tg button.on{background:var(--ink);color:var(--ground)}
-header{padding:56px 0 28px}h1{font-size:40px;line-height:1.15;letter-spacing:-.01em;max-width:860px}
+
+nav.top{position:sticky;top:0;z-index:20;background:var(--ground);border-bottom:1px solid var(--border)}
+nav.top .wrap{display:flex;align-items:center;gap:22px;height:56px}
+.brand{font-weight:700;display:flex;align-items:center;gap:10px;text-decoration:none;white-space:nowrap;font-size:16px}
+.brand svg,.brand img{flex:none;border-radius:6px}
+nav.top a.l{font-size:14.5px;color:var(--soft);text-decoration:none}nav.top a.l:hover{color:var(--ink)}
+nav.top .sp{flex:1}
+#navModel{font-size:13.5px;color:var(--dim);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lang{display:flex;border:1px solid var(--control);border-radius:var(--r);overflow:hidden}.lang button{font:600 13px var(--sans);background:var(--surface);border:0;color:var(--soft);padding:5px 10px;cursor:pointer}.lang button.on{background:var(--ink);color:var(--on-ink)}
+
+html{scroll-behavior:smooth}
+body{background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.55;overflow-x:hidden;font-variant-numeric:tabular-nums}
+a{color:inherit}
+.wrap{max-width:1320px;margin:0 auto;padding:0 32px}
+.mono{font-family:var(--mono);font-size:.92em}
+
+/* census page, on the explorer's tokens */
+:root{--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--grid:var(--rule)}
+html[data-theme=dark]{--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500}
+header{padding:56px 0 28px}h1{font-size:42px;line-height:1.15;letter-spacing:-.01em;max-width:900px}
+html[data-theme=dark] h1{background:linear-gradient(90deg,#ff5a67,#ff7cc4 50%,#a3abfa);-webkit-background-clip:text;background-clip:text;color:transparent}
 .lead{color:var(--soft);font-size:18px;max-width:820px;margin-top:14px}
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:30px 0 8px}
-.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
-.kpi b{display:block;font-size:30px;font-weight:600;letter-spacing:-.01em}.kpi span{color:var(--soft);font-size:14px}
-section{padding:34px 0}h2{font-size:24px;margin-bottom:6px}.sub{color:var(--soft);max-width:820px;margin-bottom:18px}
-.find{display:grid;gap:10px;max-width:900px}.find li{list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;color:var(--soft)}.find li b{color:var(--ink)}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:900px){.grid2{grid-template-columns:1fr}h1{font-size:30px}.kpis{grid-template-columns:1fr 1fr}}
+.kpi,.card,.find li,.tbl{background:var(--surface);border:1px solid var(--border);border-radius:var(--rc)}
+html[data-theme=dark] .kpi,html[data-theme=dark] .card,html[data-theme=dark] .find li,html[data-theme=dark] .tbl{background:rgba(255,255,255,.045);border-color:rgba(255,255,255,.10);border-radius:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.kpi{padding:16px 18px}.kpi b{display:block;font-size:30px;font-weight:600;letter-spacing:-.01em}.kpi span{color:var(--soft);font-size:14px}
+section{padding:34px 0}h2{font-size:26px;margin-bottom:6px}
+html[data-theme=dark] h2{background:linear-gradient(90deg,#f4f5f8 40%,#c3c9ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--soft);max-width:820px;margin-bottom:18px}
+.find{display:grid;gap:10px;max-width:900px}.find li{list-style:none;padding:12px 16px;color:var(--soft)}.find li b{color:var(--ink)}
+.card{padding:18px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}h1{font-size:30px}.kpis{grid-template-columns:1fr 1fr}nav.top a.l{display:none}}
 .ct{font-weight:600;margin-bottom:2px}.cs{color:var(--soft);font-size:13px;margin-bottom:10px}
 .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--soft);margin:4px 0 8px}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
-svg text{fill:var(--soft);font-family:var(--sans)}svg .gl{stroke:var(--grid)}svg .ax{stroke:var(--line)}
-#tip{position:fixed;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.18);display:none;z-index:9;max-width:320px}
+svg text{fill:var(--soft);font-family:var(--sans)}svg .gl{stroke:var(--grid)}
+#tip{position:fixed;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.25);display:none;z-index:30;max-width:320px}
 .tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
-.tools input,.tools select{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;font-size:14px}
+.tools input,.tools select{background:var(--surface);color:var(--ink);border:1px solid var(--control);border-radius:var(--r);padding:8px 10px;font:inherit;font-size:14px}
+html[data-theme=dark] .tools input,html[data-theme=dark] .tools select{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14);border-radius:999px;padding:8px 14px}
 .tools input{flex:1;min-width:220px}
-table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
-th{color:var(--soft);font-weight:500;cursor:pointer;user-select:none;background:var(--surface)}th.num,td.num{text-align:right}
+.tbl{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
+th{color:var(--soft);font-weight:500;cursor:pointer;user-select:none}th.num,td.num{text-align:right}
 td a{text-decoration:none;color:var(--ink)}td a:hover{text-decoration:underline}
-.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
 .pill{display:inline-block;padding:1px 8px;border-radius:999px;background:var(--raised);color:var(--soft);font-size:12px}
-.warn{color:var(--s2)}.pager{display:flex;gap:10px;align-items:center;margin-top:12px;color:var(--soft);font-size:14px}
-.pager button,.dl a{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
+.warn{color:var(--dec)}.pager{display:flex;gap:10px;align-items:center;margin-top:12px;color:var(--soft);font-size:14px}
+.pbtn{display:inline-flex;align-items:center;gap:6px;background:var(--surface);color:var(--ink);border:1px solid var(--control);border-radius:var(--r);padding:6px 14px;font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
+html[data-theme=dark] .pbtn{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16);border-radius:999px}
+html[data-theme=dark] .pbtn:hover{background:rgba(255,255,255,.11)}
+.pbtn.primary{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+html[data-theme=dark] .pbtn.primary{background:linear-gradient(90deg,#e60012,#e5007d);border:0;color:#fff;box-shadow:0 8px 28px rgba(229,0,125,.35)}
 .dl{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
-footer{color:var(--dim);font-size:13px;padding:40px 0 60px;border-top:1px solid var(--line);margin-top:30px}
+footer{color:var(--dim);font-size:13px;padding:40px 0 60px;border-top:1px solid var(--border);margin-top:30px}
 .note{color:var(--dim);font-size:13px;margin-top:8px}
 </style>
 </head>
 <body>
-<nav><div class="wrap">
- <a class="brand" href="../en/"><img src="../assets/logo.svg" width="22" height="22" alt=""><span>AI Model Explorer</span></a>
+<nav class="top"><div class="wrap">
+ <a class="brand" id="home" href="../en/"><img src="../assets/logo.svg" width="24" height="24" alt=""><span>AI Model Explorer</span></a>
+ <a class="l" id="back" href="../en/">← <span data-t="nav_back">Explorer</span></a><a class="l" href="#findings" data-t="nav_find">Findings</a><a class="l" href="#models" data-t="nav_models">Models</a><a class="l" href="#data" data-t="nav_data">Data</a>
  <span class="sp"></span>
- <a class="l" href="#findings" data-t="nav_find">Findings</a><a class="l" href="#models" data-t="nav_models">Models</a><a class="l" href="#data" data-t="nav_data">Data</a>
- <span class="tg" id="lang"><button data-l="th">TH</button><button data-l="en">EN</button></span>
- <span class="tg" id="theme"><button data-m="light">☀</button><button data-m="dark">☾</button></span>
+ <button class="theme" id="themeBtn" type="button" aria-label="Theme"><svg class="sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+ <div class="lang" id="lang" role="group" aria-label="Language"><button data-l="th">TH</button><button data-l="en">EN</button></div>
 </div></nav>
 <div class="wrap">
 <header>
  <h1 data-t="h1">Hub Weight Census: what AI models say about themselves</h1>
  <p class="lead" data-t="lead">We read only the safetensors headers of thousands of Hugging Face repositories (names, shapes and storage of every tensor, never the weights) and recovered each model's architecture from them. Here is what the models people actually use are made of, how that changed year by year, and where the metadata around them is wrong.</p>
+ <div class="dl" style="margin-top:20px"><a class="pbtn primary" id="cta" href="../en/" data-t="cta">Open the explorer</a><a class="pbtn" href="#models" data-t="cta2">Browse models</a></div>
  <div class="kpis" id="kpis"></div>
  <p id="prelim" class="note" style="display:none;border:1px solid var(--line);border-radius:10px;padding:10px 14px;color:var(--soft)"></p>
 </header>
@@ -104,7 +161,7 @@ footer{color:var(--dim);font-size:13px;padding:40px 0 60px;border-top:1px solid 
   <select id="ffam"></select><select id="fq"></select><select id="fy"></select><select id="fo"></select>
  </div>
  <div class="tbl"><table><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>
- <div class="pager"><button id="prev">‹</button><span id="pinfo"></span><button id="next">›</button></div>
+ <div class="pager"><button class="pbtn" id="prev">‹</button><span id="pinfo"></span><button class="pbtn" id="next">›</button></div>
  <p class="note" data-t="tbl_note">Params: logical parameters (quantized storage unpacked). Hub: ✓ when the Hub's own count agrees within 0.1%, otherwise our count ÷ the Hub's. KV/token: bytes of KV cache per token at 16 bit.</p>
 </section>
 
@@ -112,10 +169,10 @@ footer{color:var(--dim);font-size:13px;padding:40px 0 60px;border-top:1px solid 
  <h2 data-t="data_h">Data and method</h2>
  <p class="sub" data-t="data_sub">Every repo: status, popularity, the architecture recovered from the weights, the values its config.json declares, the Hub's own parameter count and the raw manifest, so the results can be re-scored. Code and the frozen recovery rules are public.</p>
  <div class="dl">
-  <a href="https://github.com/JoesSattes/ai-model-explorer/tree/main/research/hub-census" data-t="dl_code">Census code</a>
-  <a id="dsLink" href="https://huggingface.co/datasets/JoesSattes/hub-weight-census" data-t="dl_ds">Dataset on Hugging Face</a>
-  <a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy" data-t="dl_paper">Paper</a>
-  <a href="https://pypi.org/project/ai-model-explorer/">pip install ai-model-explorer</a>
+  <a class="pbtn" href="https://github.com/JoesSattes/ai-model-explorer/tree/main/research/hub-census" data-t="dl_code">Census code</a>
+  <a class="pbtn primary" id="dsLink" href="https://huggingface.co/datasets/JoesSattes/hub-weight-census" data-t="dl_ds">Dataset on Hugging Face</a>
+  <a class="pbtn" href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy" data-t="dl_paper">Paper</a>
+  <a class="pbtn" href="https://pypi.org/project/ai-model-explorer/">pip install ai-model-explorer</a>
  </div>
 </section>
 <footer>© 2026 Sattaya Singkul · MIT · <span data-t="foot">Read from public metadata only; no weights were downloaded.</span> <span id="crawled"></span></footer>
@@ -123,7 +180,7 @@ footer{color:var(--dim);font-size:13px;padding:40px 0 60px;border-top:1px solid 
 <div id="tip"></div>
 <script>
 const T={
- en:{nav_find:"Findings",nav_models:"Models",nav_data:"Data",h1:"Hub Weight Census: what AI models say about themselves",
+ en:{nav_back:"Explorer",cta:"Open the explorer",cta2:"Browse models",nav_find:"Findings",nav_models:"Models",nav_data:"Data",h1:"Hub Weight Census: what AI models say about themselves",
   lead:"We read only the safetensors headers of thousands of Hugging Face repositories (names, shapes and storage of every tensor, never the weights) and recovered each model's architecture from them. Here is what the models people actually use are made of, how that changed year by year, and where the metadata around them is wrong.",
   k_read:"repos read",k_ok:"popular models analysed",k_nc:"of the whole Hub ship no config.json",k_hdr:"read per repo (median)",k_types:"model types",k_dl:"of all downloads go to the top 10,000",
   find_h:"Findings",find_sub:"Popular repos: the most downloaded, the most downloaded original releases, and recent releases from leading providers. Test fixtures (tiny random-weight repos) are left out.",
@@ -145,7 +202,7 @@ const T={
   f_hub:s=>`<b>The Hub's parameter count is wrong</b> for formats that pack two values per byte: ${s}.`,
   f_nc:(a,b)=>`<b>${a}%</b> of all Hub models and ${b}% of popular ones ship <b>no config.json</b>: the weights are their only specification.`,
   f_gguf:a=>`<b>${a}%</b> of popular repos without readable weights are GGUF-only (llama.cpp).`},
- th:{nav_find:"สิ่งที่พบ",nav_models:"โมเดล",nav_data:"ข้อมูล",h1:"Hub Weight Census: โมเดล AI บอกอะไรเกี่ยวกับตัวเองบ้าง",
+ th:{nav_back:"Explorer",cta:"เปิด explorer",cta2:"ดูรายชื่อโมเดล",nav_find:"สิ่งที่พบ",nav_models:"โมเดล",nav_data:"ข้อมูล",h1:"Hub Weight Census: โมเดล AI บอกอะไรเกี่ยวกับตัวเองบ้าง",
   lead:"เราอ่านแค่ header ของไฟล์ safetensors จาก repo บน Hugging Face หลายพันตัว (ชื่อ shape และรูปแบบการเก็บของทุก tensor โดยไม่โหลด weights เลย) แล้วถอดสถาปัตยกรรมของแต่ละโมเดลออกมา หน้านี้สรุปว่าโมเดลที่คนใช้จริงประกอบด้วยอะไร เปลี่ยนไปอย่างไรในแต่ละปี และข้อมูลประกอบตรงไหนที่ผิด",
   k_read:"repo ที่อ่าน",k_ok:"โมเดลยอดนิยมที่วิเคราะห์ได้",k_nc:"ของโมเดลทั้ง Hub ไม่มี config.json",k_hdr:"ที่อ่านต่อ repo (มัธยฐาน)",k_types:"ชนิดโมเดล",k_dl:"ของยอดดาวน์โหลดทั้งหมดอยู่ที่ 10,000 อันดับแรก",
   find_h:"สิ่งที่พบ",find_sub:"โมเดลยอดนิยม: ยอดดาวน์โหลดสูงสุด, ตัวต้นฉบับที่โหลดมากสุด และตัวที่ผู้พัฒนาหลักปล่อยช่วงหลัง ไม่รวม repo ทดสอบ (tiny random)",
@@ -175,9 +232,10 @@ function showTip(e,h){tip.innerHTML=h;tip.style.display="block";const x=Math.min
 function hideTip(){tip.style.display="none"}
 let I=null,M=null;
 function applyLang(){document.documentElement.lang=L;const t=T[L];document.querySelectorAll("[data-t]").forEach(n=>{const k=n.dataset.t;if(t[k]&&typeof t[k]==="string")n.textContent=t[k]});
- $("#q").placeholder=t.search;document.querySelectorAll("#lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===L));try{localStorage.setItem("mx_lang",L)}catch(e){}
+ $("#q").placeholder=t.search;document.querySelectorAll("#lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===L));
+ const home=L==="th"?"../":"../en/";["#home","#back","#cta"].forEach(id=>$(id).href=home);try{localStorage.setItem("mx_lang",L)}catch(e){}
  if(I)render()}
-function theme(m){document.documentElement.dataset.theme=m;try{localStorage.setItem("mx_theme",m)}catch(e){}document.querySelectorAll("#theme button").forEach(b=>b.classList.toggle("on",b.dataset.m===m));if(I)charts()}
+function theme(m){document.documentElement.dataset.theme=m;try{localStorage.setItem("mx_theme",m)}catch(e){}const tb=$("#themeBtn");tb.title=L==="th"?(m==="dark"?"สลับเป็นธีมสว่าง":"สลับเป็นธีมมืด"):(m==="dark"?"Switch to light theme":"Switch to dark theme");if(I)charts()}
 function kpis(){const h=I.headline,t=T[L];const k=[[(h.repos_read||0).toLocaleString(),t.k_read],[(h.popular_readable||0).toLocaleString(),t.k_ok],[pct(h.hub_no_config)+"%",t.k_nc],[h.median_header_kb+" KB",t.k_hdr],[(h.model_types||0).toLocaleString(),t.k_types]];
  if(h.top10k_download_share)k.push([pct(h.top10k_download_share)+"%",t.k_dl]);$("#kpis").innerHTML=k.map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join("")}
 function findings(){const t=T[L],tr=I.trends.filter(r=>r.models>=30),a=tr[0],b=tr[tr.length-1],h=I.headline,out=[];
@@ -230,7 +288,7 @@ function filters(){const t=T[L],uniq=f=>[...new Set(M.map(f).filter(Boolean))];
  opts($("#fy"),t.all_y,uniq(m=>m.y).sort((a,b)=>b-a));$("#fo").innerHTML=`<option value="">${t.all_o}</option><option value="o">${t.o_orig}</option><option value="c">${t.o_copy}</option>`}
 function render(){const pe=$("#prelim");pe.style.display=I.preliminary?"block":"none";pe.textContent=L==="th"?"ตัวเลขชุดนี้เป็นผลเบื้องต้น ระหว่างรอการรันรอบสุดท้ายที่แก้ข้อผิดพลาดแล้ว":"Preliminary numbers: the final run, with fixes to the recovery rules, is in progress.";kpis();findings();charts();filters();table();const c=I.headline.crawled;$("#crawled").textContent=c?` · ${T[L].crawled} ${c}`:""}
 document.querySelectorAll("#lang button").forEach(b=>b.onclick=()=>{L=b.dataset.l;applyLang()});
-document.querySelectorAll("#theme button").forEach(b=>b.onclick=()=>theme(b.dataset.m));
+$("#themeBtn").onclick=()=>theme(document.documentElement.dataset.theme==="dark"?"light":"dark");
 ["#q","#ffam","#fq","#fy","#fo"].forEach(s=>$(s).addEventListener("input",()=>{page=0;table()}));
 $("#prev").onclick=()=>{page=Math.max(0,page-1);table()};$("#next").onclick=()=>{page++;table()};
 theme(document.documentElement.dataset.theme);
