@@ -4,7 +4,7 @@ Task categories name what the data supports: the census is a table of architectu
 parameters or format from the header); the corpus labels every tensor name with its role (classify each name).
 """
 
-PAPER = "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy"
+PAPER = "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories"
 PAPER_URL = ("https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_"
              "Manifest-Only_Recovery_of_Neural_Network_Anatomy")
 PDF_URL = "https://github.com/JoesSattes/ai-model-explorer/blob/main/paper/manifest-anatomy-singkul-2026.pdf"

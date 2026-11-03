@@ -222,7 +222,7 @@ If you use AI Model Explorer or its recovery method, please cite the paper ([Res
 
 ```bibtex
 @misc{singkul2026reading,
-  title  = {Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy},
+  title  = {Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories},
   author = {Singkul, Sattaya},
   year   = {2026},
   note   = {Preprint},

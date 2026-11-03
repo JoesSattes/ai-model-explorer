@@ -1,7 +1,7 @@
 // infer.js — recover a model's anatomy from its weight manifest alone (tensor names, shapes, dtypes).
 // No weights are downloaded and no model code is run. Works in the browser and in Node.
 // (c) 2026 Sattaya Singkul · MIT
-// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026 (paper/).
+// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories", 2026 (paper/).
 "use strict";
 (function (root) {
 const prod = s => (s || []).reduce((a, b) => a * b, 1);

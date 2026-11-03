@@ -9,7 +9,7 @@
     diff("Qwen/Qwen3-8B", "Qwen/Qwen3-8B-FP8")
     ready("Qwen/Qwen3-8B"); census("Qwen/Qwen3-8B")
 
-Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026.
+Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories", 2026.
 """
 __version__ = "1.0.0"
 

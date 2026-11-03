@@ -25,7 +25,7 @@ safetensors headers (a median of {hdr} per repo, about {frac} of the weight byte
 tensor names, shapes and dtypes with [ai-model-explorer](https://github.com/JoesSattes/ai-model-explorer), then compare
 it with the repo's config.json and with the Hub's own parameter count.
 
-Method: S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy*, 2026
+Method: S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories*, 2026
 ([paper](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy)).
 Explore it on the web: https://joessattes.github.io/ai-model-explorer/census/
 

@@ -40,7 +40,7 @@ The package runs the same JavaScript as the website in an embedded QuickJS engin
 Files are parsed in the browser. There is no server, and opened models are cached in the browser (IndexedDB).
 
 ## How it works (method)
-The method is described in the paper "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy" (Sattaya Singkul, 2026). In order:
+The method is described in the paper "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories" (Sattaya Singkul, 2026). In order:
 1. Normalize quantized storage back to logical tensors (packed 4-bit, scales, zero points, block formats).
 2. Build the module tree from tensor paths and find stacks of identical blocks by their index tokens and shape signatures.
 3. Assign roles from the algebra of shapes inside a block. For example, four projections where three share an input width and one maps back to the residual width are attention; a pair or triple that expands and contracts the residual width is a feed-forward; a stack of identical expert matrices with a router is a mixture of experts. Name hints are used only to break ties.
@@ -89,7 +89,7 @@ Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Co
 - Hub benchmark page: https://joessattes.github.io/ai-model-explorer/bench.html
 
 ## Citation
-Sattaya Singkul. 2026. Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy. Preprint, ResearchGate.
+Sattaya Singkul. 2026. Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories. Preprint, ResearchGate.
 
 ## Hub Weight Census
 - [Hub Weight Census](https://joessattes.github.io/ai-model-explorer/census/): thousands of Hugging Face models read from their safetensors headers only. Architecture trends by release year (mixture of experts, hybrid state-space, grouped-query attention, head size, vocabulary), storage formats, repos that ship no config.json, and storage formats where the Hub's own parameter count differs from the logical count. Searchable table of models. Code: https://github.com/JoesSattes/ai-model-explorer/tree/main/research/hub-census

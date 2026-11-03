@@ -43,7 +43,7 @@ Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Co
 - Hub benchmark: https://joessattes.github.io/ai-model-explorer/bench.html
 - License: MIT, Copyright (c) 2026 Sattaya Singkul
 
-Cite: Sattaya Singkul. 2026. Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy. Preprint, ResearchGate. https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy
+Cite: Sattaya Singkul. 2026. Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories. Preprint, ResearchGate. https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy
 
 ## Hub Weight Census
 - [Hub Weight Census](https://joessattes.github.io/ai-model-explorer/census/): thousands of Hugging Face models read from their safetensors headers only. Architecture trends by release year (mixture of experts, hybrid state-space, grouped-query attention, head size, vocabulary), storage formats, repos that ship no config.json, and storage formats where the Hub's own parameter count differs from the logical count. Searchable table of models. Code: https://github.com/JoesSattes/ai-model-explorer/tree/main/research/hub-census

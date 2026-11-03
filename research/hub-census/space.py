@@ -40,7 +40,7 @@ safetensors headers are read (a few kilobytes to a few megabytes), never the wei
   dataset [{census}](https://huggingface.co/datasets/{census})
 - **Labeled corpus** of 510 architectures with per-tensor ground truth: [{corpus}](https://huggingface.co/datasets/{corpus})
 - **Python**: `pip install ai-model-explorer` · **Code**: https://github.com/JoesSattes/ai-model-explorer
-- **Paper**: S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy*, 2026
+- **Paper**: S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories*, 2026
   ([ResearchGate](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy))
 
 Also at https://joessattes.github.io/ai-model-explorer/ (Thai and English).

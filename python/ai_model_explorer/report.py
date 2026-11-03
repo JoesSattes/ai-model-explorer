@@ -88,7 +88,7 @@ table{{border-collapse:collapse;width:100%;font-size:14px}}th,td{{text-align:lef
 <h2>Memory to run it</h2>{mem}
 <p class="note">Weights plus KV cache for one sequence at 16-bit cache precision. Activations and runtime overhead are not included.</p>
 <footer>Made with <a href="https://github.com/JoesSattes/ai-model-explorer">AI Model Explorer</a> (<code>pip install ai-model-explorer</code>).
-Method: Sattaya Singkul, <i>Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy</i>, 2026.</footer>
+Method: Sattaya Singkul, <i>Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories</i>, 2026.</footer>
 </div></body></html>"""
     with open(path, "w", encoding="utf-8") as f:
         f.write(doc)

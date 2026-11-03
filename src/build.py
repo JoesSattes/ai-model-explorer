@@ -51,7 +51,7 @@ def fill(body, lang):
 def ld_extra(lang):
     qa = [{"@type": "Question", "name": text(f"faq_q{i}", lang), "acceptedAnswer": {"@type": "Answer", "text": text(f"faq_a{i}", lang)}} for i in range(1, 6)]
     faq = {"@type": "FAQPage", "inLanguage": lang, "mainEntity": qa}
-    paper = {"@type": "ScholarlyArticle", "headline": "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy",
+    paper = {"@type": "ScholarlyArticle", "headline": "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories",
              "author": {"@id": "https://joessattes.github.io/Sattaya-AI-Website/#person"}, "datePublished": "2026-11", "inLanguage": "en",
              "url": "https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy", "sameAs": ["https://joessattes.github.io/ai-model-explorer/paper/manifest-anatomy-singkul-2026.pdf", "https://github.com/JoesSattes/ai-model-explorer/tree/main/paper"], "publisher": {"@type": "Organization", "name": "ResearchGate"}, "about": {"@id": BASE + "#app"}}
     return " " + json.dumps(faq, ensure_ascii=False) + ",\n " + json.dumps(paper, ensure_ascii=False)

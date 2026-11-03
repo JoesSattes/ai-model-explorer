@@ -1,6 +1,6 @@
 # How it works
 
-A safetensors file begins with a small JSON header that lists every tensor's name, shape and storage type. For DeepSeek-V3 (684.5 billion parameters) that header is about 12 MB, while the weights are 689 GB. AI Model Explorer reads only that list and works out the architecture from it. The full method and its evaluation are in the paper: [Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy).
+A safetensors file begins with a small JSON header that lists every tensor's name, shape and storage type. For DeepSeek-V3 (684.5 billion parameters) that header is about 12 MB, while the weights are 689 GB. AI Model Explorer reads only that list and works out the architecture from it. The full method and its evaluation are in the paper: [Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy).
 
 ## 1. Read only the manifest
 

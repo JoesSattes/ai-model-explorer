@@ -1,5 +1,5 @@
 // evaluate infer.js against the meta-device corpus. usage: node eval.js corpus.jsonl [--nolex] [--obf] [--v1] [--quant fmt] [--only a,b] [--dump]
-// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026 (paper/).
+// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories", 2026 (paper/).
 const fs = require("fs"), path = require("path"), vm = require("vm");
 const {infer, fuseConfig} = require(path.join(__dirname, "../src/infer.js"));
 const args = process.argv.slice(2), file = args[0], has = f => args.includes(f), val = f => args.includes(f) ? args[args.indexOf(f) + 1] : null;

@@ -3,7 +3,7 @@
 // over by index-masked tensor name (model.layers.#.self_attn.q_proj.weight -> attn). Repos where fewer than half the
 // tensors find a label are not scored. Baselines: v1 name rules with MoE, and the llama.cpp tensor table.
 // usage: node roles.js ../data/corpus-510.jsonl.gz out/census_manifests.jsonl.gz out/census.jsonl > out/roles.json
-// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026.
+// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories", 2026.
 "use strict";
 const fs = require("fs"), zlib = require("zlib"), path = require("path"), readline = require("readline");
 const {infer} = require(path.join(__dirname, "../../src/infer.js"));

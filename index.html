@@ -49,7 +49,7 @@
  {"@type":"Person","@id":"https://joessattes.github.io/Sattaya-AI-Website/#person","name":"Sattaya Singkul","alternateName":"Jo","url":"https://joessattes.github.io/Sattaya-AI-Website/","jobTitle":"Independent Researcher","workLocation":{"@type":"Place","name":"Bangkok, Thailand"},"knowsAbout":["Speech AI","Edge AI","On-device inference","Model quantization"],"sameAs":["https://joessattes.github.io/Sattaya-AI-Website/","https://github.com/JoesSattes"]},
  {"@type":"SoftwareSourceCode","name":"AI Model Explorer source","codeRepository":"https://github.com/JoesSattes/ai-model-explorer","sameAs":["https://pypi.org/project/ai-model-explorer/"],"runtimePlatform":["Web browser","Python 3.9+ (pip install ai-model-explorer)"],"programmingLanguage":"JavaScript","license":"https://opensource.org/licenses/MIT","author":{"@id":"https://joessattes.github.io/Sattaya-AI-Website/#person"}},
  {"@type": "FAQPage", "inLanguage": "th", "mainEntity": [{"@type": "Question", "name": "ต้องโหลดโมเดลก่อนไหม", "acceptedAnswer": {"@type": "Answer", "text": "ไม่ต้อง สำหรับ repo บน Hugging Face เว็บขอแค่ไบต์ส่วน header ของแต่ละไฟล์ ปกติรวมไม่ถึง 200 KB แม้โมเดลจะใหญ่หลายร้อย GB ก็ตาม"}}, {"@type": "Question", "name": "ไฟล์ของฉันถูกส่งขึ้นเซิร์ฟเวอร์ไหม", "acceptedAnswer": {"@type": "Answer", "text": "ไม่ ไฟล์ที่ลากมาวางถูกอ่านในเบราว์เซอร์ของคุณ ไม่ถูกอัปโหลดไปที่ใด และโมเดลที่เปิดไว้จะถูกเก็บในเบราว์เซอร์ เข้าครั้งหน้าไม่ต้องโหลดใหม่"}}, {"@type": "Question", "name": "ต่างจาก Netron, Model Explorer ของ Google, HF Viewer หรือ hf-mem อย่างไร", "acceptedAnswer": {"@type": "Answer", "text": "Netron กับ Model Explorer วาดกราฟ operator จากไฟล์ที่คุณมีอยู่แล้ว · HF Viewer วาดโครงสร้างจาก config และโค้ด PyTorch ของโมเดล · hf-mem ประมาณ memory จาก header แต่ไม่ได้บอกว่าแต่ละ tensor ทำหน้าที่อะไร · เว็บนี้แกะโครงสร้างจาก header อย่างเดียว: ส่วนประกอบ ชนิดของแต่ละ layer และบทบาทของทุก tensor โดยไม่ต้องใช้ config หรือโค้ด จึงใช้กับโมเดลตระกูลใหม่ได้ ตรวจได้ว่า config ตรงกับ weight หรือไม่ และยังแม่น 95% แม้ไม่มีชื่อ tensor"}}, {"@type": "Question", "name": "ใช้ฟรีไหม เอาโค้ดไปใช้ได้หรือเปล่า", "acceptedAnswer": {"@type": "Answer", "text": "ฟรี โค้ดเป็น MIT License อยู่บน GitHub ถ้านำไปใช้ในงานวิจัย ช่วยอ้างอิง paper ด้วย"}}, {"@type": "Question", "name": "ใครทำ", "acceptedAnswer": {"@type": "Answer", "text": "Sattaya Singkul ทำสำหรับ workshop “Squeeze Until It Breaks” ที่งาน AI Expo Thailand 2026"}}]},
- {"@type": "ScholarlyArticle", "headline": "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", "author": {"@id": "https://joessattes.github.io/Sattaya-AI-Website/#person"}, "datePublished": "2026-11", "inLanguage": "en", "url": "https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy", "sameAs": ["https://joessattes.github.io/ai-model-explorer/paper/manifest-anatomy-singkul-2026.pdf", "https://github.com/JoesSattes/ai-model-explorer/tree/main/paper"], "publisher": {"@type": "Organization", "name": "ResearchGate"}, "about": {"@id": "https://joessattes.github.io/ai-model-explorer/#app"}}
+ {"@type": "ScholarlyArticle", "headline": "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories", "author": {"@id": "https://joessattes.github.io/Sattaya-AI-Website/#person"}, "datePublished": "2026-11", "inLanguage": "en", "url": "https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy", "sameAs": ["https://joessattes.github.io/ai-model-explorer/paper/manifest-anatomy-singkul-2026.pdf", "https://github.com/JoesSattes/ai-model-explorer/tree/main/paper"], "publisher": {"@type": "Organization", "name": "ResearchGate"}, "about": {"@id": "https://joessattes.github.io/ai-model-explorer/#app"}}
 ]}
 </script>
 <style>
@@ -365,9 +365,9 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
   <p style="margin-top:8px" data-i="footer">ทำสำหรับ “Squeeze Until It Breaks” · AI Expo Thailand 2026 · Sattaya Singkul · template Whisper วิเคราะห์จากกราฟ .tflite ของสถาปัตยกรรมจริงด้วย weight สุ่ม: ขนาด dtype op และความเร็วเป็นของจริง ความแม่นยำไม่ใช่</p>
   <div class="fl"><a href="https://joessattes.github.io/Sattaya-AI-Website/">Portfolio — Sattaya Singkul</a><a href="https://github.com/JoesSattes/ai-model-explorer">GitHub</a><a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy">Paper</a><a href="https://pypi.org/project/ai-model-explorer/">PyPI</a><a href="llms.txt">llms.txt</a></div>
   <details class="cite" id="cite"><summary data-i="cite_t">อ้างอิงงานนี้</summary>
-    <p class="citeref">Sattaya Singkul. 2026. <i>Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy</i>. Preprint, <a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy">ResearchGate</a>.</p>
+    <p class="citeref">Sattaya Singkul. 2026. <i>Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories</i>. Preprint, <a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy">ResearchGate</a>.</p>
     <pre id="citeBib">@misc{singkul2026reading,
-  title  = {Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy},
+  title  = {Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories},
   author = {Singkul, Sattaya},
   year   = {2026},
   note   = {Preprint},
@@ -831,7 +831,7 @@ if (typeof module !== "undefined") module.exports = {graphFromTflite, graphFromT
 <script>// infer.js — recover a model's anatomy from its weight manifest alone (tensor names, shapes, dtypes).
 // No weights are downloaded and no model code is run. Works in the browser and in Node.
 // (c) 2026 Sattaya Singkul · MIT
-// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026 (paper/).
+// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories", 2026 (paper/).
 "use strict";
 (function (root) {
 const prod = s => (s || []).reduce((a, b) => a * b, 1);
@@ -1540,7 +1540,7 @@ if (typeof module !== "undefined") module.exports = api; else root.ArchInfer = a
 </script>
 <script>// loaders.js — read only what describes a model: safetensors headers and PyTorch checkpoint indexes, via HTTP Range.
 // Weights are never downloaded. (c) 2026 Sattaya Singkul · MIT
-// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026 (paper/).
+// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories", 2026 (paper/).
 "use strict";
 (function (root) {
 const rangeGet = async (url, a, b) => { const r = await fetch(url, {headers: {Range: `bytes=${a}-${b}`}}); if (r.status === 401 || r.status === 403) throw new Error("gated repository: accept its license on Hugging Face first"); if (!r.ok && r.status !== 206) throw new Error(`HTTP ${r.status}`); return new Uint8Array(await r.arrayBuffer()); };

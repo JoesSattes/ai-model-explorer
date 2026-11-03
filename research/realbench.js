@@ -2,7 +2,7 @@
 // usage: node realbench.js export.jsonl corpus.jsonl [--out res.json] [--table table.tsv]
 // Reference values: parameter totals from the Hub API (safetensors metadata), hyperparameters from config.json,
 // and, for model types also in the corpus, per-tensor roles transferred by index-masked name from the class-name ground truth.
-// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026 (paper/).
+// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories", 2026 (paper/).
 "use strict";
 const fs = require("fs"), zlib = require("zlib");
 const {infer, fuseConfig} = require("../src/infer.js");

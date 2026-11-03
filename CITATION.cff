@@ -17,7 +17,7 @@ keywords: [AI model explorer, model visualization, TFLite, LiteRT, edge AI, quan
 preferred-citation:
   type: article
   status: preprint
-  title: "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy"
+  title: "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories"
   authors:
     - family-names: Singkul
       given-names: Sattaya

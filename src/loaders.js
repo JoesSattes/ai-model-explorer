@@ -1,6 +1,6 @@
 // loaders.js — read only what describes a model: safetensors headers and PyTorch checkpoint indexes, via HTTP Range.
 // Weights are never downloaded. (c) 2026 Sattaya Singkul · MIT
-// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy", 2026 (paper/).
+// Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories", 2026 (paper/).
 "use strict";
 (function (root) {
 const rangeGet = async (url, a, b) => { const r = await fetch(url, {headers: {Range: `bytes=${a}-${b}`}}); if (r.status === 401 || r.status === 403) throw new Error("gated repository: accept its license on Hugging Face first"); if (!r.ok && r.status !== 206) throw new Error(`HTTP ${r.status}`); return new Uint8Array(await r.arrayBuffer()); };

@@ -24,8 +24,8 @@ built on PyTorch's meta device (shapes only, no weights), deduplicated: **{n} ar
 that a manifest reader never sees: the role of every tensor from the Python class that owns it, the block lists with
 their block types, hyperparameters, and the configuration.
 
-It is the benchmark of S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network
-Anatomy*, 2026 ([paper](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy),
+It is the benchmark of S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census
+of 12,974 Hugging Face Repositories*, 2026 ([paper](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy),
 [code](https://github.com/JoesSattes/ai-model-explorer), [web app](https://joessattes.github.io/ai-model-explorer/en/)).
 Its companion, [hub-weight-census](https://huggingface.co/datasets/{owner}/hub-weight-census), applies the same
 recovery to 12,974 Hub repositories and carries these labels over to them by model type.
