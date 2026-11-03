@@ -6,10 +6,12 @@ sample_info.json, report/ and insights/ from out/.
 """
 import datetime, json, os, sys
 
+from card_meta import yaml, CITATION, CITE_LINE
+
 CARD = """---
 license: mit
 pretty_name: Hub Weight Census
-tags: [model-anatomy, safetensors, huggingface-hub, census]
+{meta}
 size_categories: [{size}]
 configs:
 - config_name: default
@@ -26,6 +28,8 @@ it with the repo's config.json and with the Hub's own parameter count.
 Method: S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy*, 2026
 ([paper](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy)).
 Explore it on the web: https://joessattes.github.io/ai-model-explorer/census/
+
+{cite_line}
 
 ## Sample ({date})
 
@@ -101,7 +105,8 @@ Spearman for monotone trends, log-log slopes for shape scaling, Mann-Whitney for
 ## Summary tables
 
 {summary}
-"""
+
+{citation}"""
 
 
 def main(repo, out="out"):
@@ -118,7 +123,7 @@ def main(repo, out="out"):
     n = info.get("sample", 0)
     size = "1K<n<10K" if n < 10_000 else "10K<n<100K" if n < 100_000 else "100K<n<1M"
     owner = repo.split("/")[0]
-    card = CARD.format(corpus_url=f"https://huggingface.co/datasets/{owner}/manifest-anatomy-corpus", size=size, hdr=hdr, frac=frac, date=datetime.date.today().isoformat(), findings=findings,
+    card = CARD.format(meta=yaml("census"), cite_line=CITE_LINE, citation=CITATION, corpus_url=f"https://huggingface.co/datasets/{owner}/manifest-anatomy-corpus", size=size, hdr=hdr, frac=frac, date=datetime.date.today().isoformat(), findings=findings,
                        sample="\n".join(f"- {k}: {v}" for k, v in info.items()), since=info.get("frontier_since") or "-",
                        summary=summ.split("\n", 2)[-1])
     open(os.path.join(out, "README.md"), "w").write(card)

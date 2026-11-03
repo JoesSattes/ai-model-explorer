@@ -1,6 +1,7 @@
-name: HF Space and collection
+name: HF cards, Space and collection
 
-# The last two steps of "Publish datasets", without the census re-score: republishes the explorer
+# The quick part of "Publish datasets", without the census re-score: updates the dataset cards' metadata
+# and citation, republishes the explorer
 # as a static Space and groups the datasets and the Space into the collection "AI Model Explorer"
 # on your Hugging Face profile. Needs HF_WRITE_TOKEN.
 on:
@@ -26,6 +27,10 @@ jobs:
       - run: pip install huggingface_hub
       - name: Hugging Face account
         run: echo "OWNER=$(python -c 'from huggingface_hub import HfApi; print(HfApi().whoami()["name"])')" >> "$GITHUB_ENV"
+      - name: Dataset cards (metadata and citation)
+        run: |
+          python card_update.py census "$OWNER/${{ inputs.census_name }}"
+          python card_update.py corpus "$OWNER/${{ inputs.corpus_name }}"
       - name: Explorer as a Space
         if: ${{ inputs.space_name != '' }}
         run: python space.py "$OWNER/${{ inputs.space_name }}" "$OWNER/${{ inputs.census_name }}" "$OWNER/${{ inputs.corpus_name }}"

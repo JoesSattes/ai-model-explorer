@@ -4,10 +4,12 @@ usage: python publish_corpus.py <owner/name> [../data/corpus-510.jsonl.gz]   (ne
 """
 import datetime, gzip, json, os, sys
 
+from card_meta import yaml, CITATION, CITE_LINE
+
 CARD = """---
 license: apache-2.0
 pretty_name: Manifest Anatomy Corpus
-tags: [model-anatomy, safetensors, architecture, benchmark, ground-truth]
+{meta}
 size_categories: [n<1K]
 configs:
 - config_name: default
@@ -27,6 +29,8 @@ Anatomy*, 2026 ([paper](https://www.researchgate.net/publication/417293353_Readi
 [code](https://github.com/JoesSattes/ai-model-explorer), [web app](https://joessattes.github.io/ai-model-explorer/en/)).
 Its companion, [hub-weight-census](https://huggingface.co/datasets/{owner}/hub-weight-census), applies the same
 recovery to 12,974 Hub repositories and carries these labels over to them by model type.
+
+{cite_line}
 
 ## Files
 
@@ -54,7 +58,8 @@ in the paper (96.8% macro role accuracy, 95.0% with every name replaced by a ran
 Default configurations give small, untrained models whose shapes can differ from released checkpoints; class names are an independent but
 imperfect source of labels (see the paper's discussion). Model types that need remote code are not included.
 Built {date}. Configurations and shapes derive from `transformers` (Apache-2.0).
-"""
+
+{citation}"""
 
 
 def main(repo, path):
@@ -71,7 +76,7 @@ def main(repo, path):
             p = r.get("params") or 0
             pmin, pmax = min(pmin, p), max(pmax, p)
     fmt = lambda x: f"{x/1e12:.2f} T" if x >= 1e12 else f"{x/1e9:.1f} B" if x >= 1e9 else f"{x/1e6:.1f} M" if x >= 1e6 else f"{x/1e3:.1f} K"
-    card = CARD.format(n=n, t=t, pmin=fmt(pmin), pmax=fmt(pmax), owner=repo.split("/")[0], date=datetime.date.today().isoformat())
+    card = CARD.format(meta=yaml("corpus"), cite_line=CITE_LINE, citation=CITATION, n=n, t=t, pmin=fmt(pmin), pmax=fmt(pmax), owner=repo.split("/")[0], date=datetime.date.today().isoformat())
     api = HfApi(token=os.environ.get("HF_TOKEN"))
     api.create_repo(repo, repo_type="dataset", exist_ok=True)
     api.upload_file(path_or_fileobj=card.encode(), path_in_repo="README.md", repo_id=repo, repo_type="dataset")
