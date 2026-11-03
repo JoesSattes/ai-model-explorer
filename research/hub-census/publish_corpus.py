@@ -9,6 +9,9 @@ license: apache-2.0
 pretty_name: Manifest Anatomy Corpus
 tags: [model-anatomy, safetensors, architecture, benchmark, ground-truth]
 size_categories: [n<1K]
+configs:
+- config_name: default
+  data_files: corpus.parquet
 ---
 
 # Manifest Anatomy Corpus
@@ -25,7 +28,13 @@ Anatomy*, 2026 ([paper](https://www.researchgate.net/publication/417293353_Readi
 Its companion, [hub-weight-census](https://huggingface.co/datasets/{owner}/hub-weight-census), applies the same
 recovery to thousands of published checkpoints and carries these labels over to them by model type.
 
-## Fields (one JSON object per line)
+## Files
+
+- `corpus.parquet`: one flat row per architecture (shown in the viewer above): model class, parameters, tensor counts by
+  role, block lists, block types and configuration hyperparameters.
+- `corpus.jsonl.gz`: the full records, fields below.
+
+## Fields (corpus.jsonl.gz, one JSON object per line)
 
 - `type`: transformers model type; `name`; `cls`: the model class instantiated
 - `tensors`: `{{name: {{dtype, shape}}}}`, exactly what a safetensors header lists
@@ -66,6 +75,10 @@ def main(repo, path):
     api = HfApi(token=os.environ.get("HF_TOKEN"))
     api.create_repo(repo, repo_type="dataset", exist_ok=True)
     api.upload_file(path_or_fileobj=card.encode(), path_in_repo="README.md", repo_id=repo, repo_type="dataset")
+    import subprocess, tempfile
+    pq = os.path.join(tempfile.mkdtemp(), "corpus.parquet")
+    subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "flat.py"), "corpus", path, pq], check=True)
+    api.upload_file(path_or_fileobj=pq, path_in_repo="corpus.parquet", repo_id=repo, repo_type="dataset")
     api.upload_file(path_or_fileobj=path, path_in_repo="corpus.jsonl.gz", repo_id=repo, repo_type="dataset",
                     commit_message="corpus " + datetime.date.today().isoformat())
     print("published https://huggingface.co/datasets/" + repo)

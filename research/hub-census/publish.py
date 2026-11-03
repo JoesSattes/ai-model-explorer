@@ -10,6 +10,9 @@ license: mit
 pretty_name: Hub Weight Census
 tags: [model-anatomy, safetensors, huggingface-hub, census]
 size_categories: [{size}]
+configs:
+- config_name: default
+  data_files: census.parquet
 ---
 
 # Hub Weight Census
@@ -31,6 +34,12 @@ Strata: `top` (most downloaded, read in full), `original` releases (no `base_mod
 `frontier` (originals from leading providers created since {since}), and a random sample of the rest of the Hub stratified
 by creation year x download tier x safetensors tag, with `weight` = stratum size / sampled. Weighted estimates describe
 the whole Hub; the top/original/frontier strata describe the models people actually use.
+
+## Files
+
+- `census.parquet`: one flat row per repo (shown in the viewer above): status, popularity, family, parameters, the Hub's
+  count, storage format, width, layers, heads, KV heads, experts, vocabulary, KV bytes per token, and the values config.json declares.
+- `census.jsonl`: the full records, fields below.
 
 ## Fields (census.jsonl)
 
@@ -83,6 +92,9 @@ type is in the companion corpus ([manifest-anatomy-corpus]({corpus_url})), with 
 
 def main(repo, out="out"):
     from huggingface_hub import HfApi
+    import subprocess
+    subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "flat.py"), "census",
+                    os.path.join(out, "census.jsonl"), os.path.join(out, "census.parquet")], check=True)
     info = json.load(open(os.path.join(out, "sample_info.json")))
     summ = open(os.path.join(out, "report", "summary.md")).read()
     hdr = next((l.split("**")[1] for l in summ.splitlines() if l.startswith("- header bytes")), "?")
@@ -99,7 +111,7 @@ def main(repo, out="out"):
     api = HfApi(token=os.environ.get("HF_TOKEN"))
     api.create_repo(repo, repo_type="dataset", exist_ok=True)
     api.upload_folder(repo_id=repo, repo_type="dataset", folder_path=out,
-                      allow_patterns=["README.md", "census.jsonl", "census_manifests.jsonl.gz", "roles.json", "sample.parquet", "frame_stats.json",
+                      allow_patterns=["README.md", "census.parquet", "census.jsonl", "census_manifests.jsonl.gz", "roles.json", "sample.parquet", "frame_stats.json",
                                       "sample_info.json", "report/*", "insights/*"],
                       commit_message="census run " + datetime.date.today().isoformat())
     print("published https://huggingface.co/datasets/" + repo)

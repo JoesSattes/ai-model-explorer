@@ -3,7 +3,8 @@ name: Publish datasets
 # Takes a finished "Hub census" run, re-scores it with the current rules, and publishes
 #   <you>/hub-weight-census        the census, with raw manifests, findings and charts
 #   <you>/manifest-anatomy-corpus  the labelled corpus of 510 architectures
-# into a collection "AI Model Explorer" on your Hugging Face profile, then refreshes the census page of the website.
+#   <you>/ai-model-explorer        the explorer as a static Space
+# into a collection "AI Model Explorer" on your Hugging Face profile, and refreshes the census page of the website.
 # Needs a repository secret HF_WRITE_TOKEN (a Hugging Face token with write access). The owner is read from the token.
 on:
   workflow_dispatch:
@@ -11,6 +12,7 @@ on:
       census_run_id: { description: "Run ID of the Hub census run (the number in its URL)", required: true }
       census_name:   { description: "Census dataset name", default: "hub-weight-census" }
       corpus_name:   { description: "Corpus dataset name", default: "manifest-anatomy-corpus" }
+      space_name:    { description: "Hugging Face Space for the explorer (blank = skip)", default: "ai-model-explorer" }
       update_site:   { description: "Refresh the website's census page with this run", type: boolean, default: true }
 
 permissions:
@@ -61,12 +63,6 @@ jobs:
         env:
           NAME: ${{ steps.who.outputs.owner }}/${{ inputs.corpus_name }}
         run: python publish_corpus.py "$NAME"
-      - name: Collection on the profile
-        env:
-          OWNER: ${{ steps.who.outputs.owner }}
-          A: ${{ steps.who.outputs.owner }}/${{ inputs.census_name }}
-          B: ${{ steps.who.outputs.owner }}/${{ inputs.corpus_name }}
-        run: python collection.py "$OWNER" "$A" "$B"
       - name: Refresh the census page
         if: ${{ inputs.update_site }}
         env:
@@ -78,3 +74,17 @@ jobs:
           git config user.email "41898341+github-actions[bot]@users.noreply.github.com"
           git add census/data
           git diff --cached --quiet || { git commit -m "census page: data from run ${{ inputs.census_run_id }}"; git push; }
+      - name: Explorer as a Space
+        if: ${{ inputs.space_name != '' }}
+        env:
+          SPACE: ${{ steps.who.outputs.owner }}/${{ inputs.space_name }}
+          A: ${{ steps.who.outputs.owner }}/${{ inputs.census_name }}
+          B: ${{ steps.who.outputs.owner }}/${{ inputs.corpus_name }}
+        run: python space.py "$SPACE" "$A" "$B"
+      - name: Collection on the profile
+        env:
+          OWNER: ${{ steps.who.outputs.owner }}
+          SPACE: ${{ inputs.space_name != '' && format('space:{0}/{1}', steps.who.outputs.owner, inputs.space_name) || '' }}
+          A: dataset:${{ steps.who.outputs.owner }}/${{ inputs.census_name }}
+          B: dataset:${{ steps.who.outputs.owner }}/${{ inputs.corpus_name }}
+        run: python collection.py "$OWNER" $SPACE "$A" "$B"

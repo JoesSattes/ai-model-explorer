@@ -30,7 +30,9 @@ have never seen.
 **Actions → Publish datasets → Run workflow** with the run ID of a finished census run. It re-scores the run with the
 current rules, scores per-tensor roles against the corpus (`roles.js`), publishes `<you>/hub-weight-census` and
 `<you>/manifest-anatomy-corpus` (the labelled 510-architecture corpus, `research/data/corpus-510.jsonl.gz`), groups both
-in a collection "AI Model Explorer" on your Hugging Face profile, and refreshes the website's census page. It needs a
+with the explorer as a static Space (`<you>/ai-model-explorer`) in a collection "AI Model Explorer" on your Hugging
+Face profile, and refreshes the website's census page. Both datasets carry a flat parquet table, so the Hub's dataset
+viewer can browse, search and filter them. It needs a
 repository secret `HF_WRITE_TOKEN` with write access; the owner is read from the token.
 
 ### By hand
