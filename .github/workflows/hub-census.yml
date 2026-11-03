@@ -10,7 +10,7 @@ on:
       frontier: { description: "Recent originals from frontier providers (Qwen, DeepSeek, Google, Meta, Mistral, NVIDIA, ...)", default: "400" }
       since:    { description: "Frontier window start, YYYY-MM-DD", default: "2025-11-01" }
       rest:     { description: "Random repos from the rest of the Hub (stratified)", default: "500" }
-      publish:  { description: "Publish to this HF dataset (owner/name), blank = no. Needs secret HF_WRITE_TOKEN", default: "" }
+      publish:  { description: "Publish to this HF dataset (e.g. JoesSattes/hub-weight-census), blank = no. Needs secret HF_WRITE_TOKEN", default: "" }
       seed:     { description: "Random seed", default: "2026" }
       workers:  { description: "Repos read in parallel", default: "4" }
       timeout:  { description: "Seconds allowed per repo", default: "180" }
