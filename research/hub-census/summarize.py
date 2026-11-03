@@ -130,11 +130,14 @@ def main(path, outdir):
 FIELDS = ["d", "layers", "heads", "kv_heads", "head_dim", "ffn", "vocab", "experts"]
 
 
+FIXTURE = r"internal-testing|(?:^|[/_-])tiny[-_]|random|dummy|unit-test|^unslothai/"
+
+
 def _score(rows, field, fused):
     hit = n = 0
     for _, r in rows.iterrows():
         ref = (r["config_hp"] or {}).get(field)
-        if ref is None or (field == "ffn" and (r["config_hp"] or {}).get("experts")):
+        if ref is None or ref <= 0 or (field == "ffn" and (r["config_hp"] or {}).get("experts")):  # 0 = placeholder config
             continue
         ours = (r["hp"] or {}).get(field)
         if fused and isinstance(r.get("hp_fused"), dict) and r["hp_fused"].get(field) is not None:
@@ -147,13 +150,15 @@ def _score(rows, field, fused):
 def field_accuracy(d):
     """Per-field agreement with config.json on the main models, from the weights alone and after config fusion."""
     ok = d[(d["status"] == "ok") & d["has_config"].fillna(False)]
+    ok = ok[~ok["id"].str.contains(FIXTURE, case=False, regex=True)]  # CI fixtures (tiny random weights) are not models
     created = pd.to_datetime(ok.get("created_at"), errors="coerce", utc=True) if "created_at" in ok else None
     sets = [("Original releases (top)", ok[(ok["stratum"] == "top") & (ok["origin"] == "original")]),
             ("Frontier providers, recent", ok[ok.get("also_frontier", pd.Series(False, index=ok.index)).fillna(False).astype(bool)])]
     if created is not None:
         sets.append(("Created in 2026", ok[created >= pd.Timestamp("2026-01-01", tz="UTC")]))
     L = ["", "## Weights vs config.json, field by field (repos with a config)", "",
-         "Each cell: weights alone / with config fused (heads, kv_heads, head_dim need the config to split width into heads × size).", "",
+         "Each cell: weights alone / with config fused (heads, kv_heads, head_dim need the config to split width into heads × size). "
+         "CI fixtures (tiny random test repos) and placeholder values (0) are excluded.", "",
          "| field | " + " | ".join(f"{k} (n={len(g)})" for k, g in sets) + " |", "|---|" + "---|" * len(sets)]
     for f in FIELDS:
         cells = []

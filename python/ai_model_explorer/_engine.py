@@ -46,6 +46,17 @@ def _js(name: str) -> str:
     return resources.files("ai_model_explorer").joinpath("js", name).read_text(encoding="utf-8")
 
 
+def _finite(o):
+    """Replace inf / nan (legal in Python json, not in JSON) with None."""
+    if isinstance(o, float) and (o != o or o in (float("inf"), float("-inf"))):
+        return None
+    if isinstance(o, dict):
+        return {k: _finite(v) for k, v in o.items()}
+    if isinstance(o, list):
+        return [_finite(v) for v in o]
+    return o
+
+
 class Engine:
     def __init__(self, fetch: Optional[Callable[[str, str], tuple]] = None):
         self.ctx = quickjs.Context()
@@ -70,7 +81,7 @@ class Engine:
         return self._inbox.pop(key)
 
     def _put(self, key, obj) -> str:
-        self._inbox[key] = json.dumps(obj)
+        self._inbox[key] = json.dumps(_finite(obj))
         return f'JSON.parse(__pyget("{key}"))'
 
     def _await(self, expr: str):

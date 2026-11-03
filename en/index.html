@@ -1431,6 +1431,7 @@ function hpOf(C, T, out, comps) {
   const emb = Object.entries(out.tensors).filter(([n, t]) => t.comp === C.id && t.kind === "embed" && T[n].shape.length === 2 && T[n].shape[1] === C.d).map(([n]) => T[n].shape[0]).sort((a, b) => b - a)[0];
   if (emb) hp.vocab = emb;
   else if (!out.timestep) { const e2 = Object.entries(out.tensors).filter(([n, t]) => t.kind === "embed" && T[n].shape.length === 2 && T[n].shape[0] >= 100).map(([n]) => T[n].shape[0]).sort((a, b) => b - a)[0]; if (e2) hp.vocab = e2; }
+  if (!hp.vocab && C.modality === "audio") { const h = Object.entries(out.tensors).filter(([n, t]) => t.kind === "head" && T[n].shape.length === 2 && T[n].shape[1] === C.d).map(([n]) => T[n].shape[0]).sort((a, b) => b - a)[0]; if (h) { hp.vocab = h; hp.vocab_from = "CTC output"; } }
   hp.tie = emb ? !Object.entries(out.tensors).some(([n, t]) => t.kind === "head" && t.role === "logits" && T[n].shape[0] === emb) : null;
   const attnLayers = regs.filter(r => r.kind === "attn").reduce((a, r) => a + r.count, 0), ssmLayers = regs.filter(r => r.kind === "ssm").reduce((a, r) => a + r.count, 0);
   hp.attn_layers = attnLayers; hp.ssm_layers = ssmLayers;
@@ -1467,7 +1468,7 @@ function familyOf(o, lex = true) {
   if (enc.length && b.hasHead) return "prefix-lm";
   if (b.hasHead) return "decoder";
   if (k.head && b.d && k.head >= 4096 * b.d && !/image|audio|video/.test(b.modality || "")) return enc.length ? "prefix-lm" : "decoder"; // a vocabulary-sized output projection the head detector did not attach
-  if (b.modality === "text") return tiedText(o, b, lex);
+  if (b.modality === "text" || b.hasEmbed) { const t = tiedText(o, b, lex); return t === "decoder" && enc.length ? "prefix-lm" : t; }
   return "encoder";
 }
 // A text backbone with no output head is either an encoder (BERT family) or a decoder whose head is tied to the embedding.
@@ -1674,19 +1675,25 @@ async function hfManifest(repo, files, prog = () => {}, opt = {}) {
   const jobs = [], seen = new Set();
   for (const ix of files.filter(f => /\.safetensors\.index\.json$/.test(f.n) && !skip(f.n) && !/\.(fp16|bf16|fp32)\.safetensors\.index\.json$/.test(f.n) || /\.(fp16|bf16)\.safetensors\.index\.json$/.test(f.n) && !files.some(g => g.n === f.n.replace(/\.(fp16|bf16)\.safetensors/, ".safetensors")))) {
     prog("index", ix.n); const j = await getJSON(base + ix.n), dir = folder(ix.n);
-    for (const sh of [...new Set(Object.values(j.weight_map || {}))]) { const n = dir ? dir + "/" + sh : sh; seen.add(n); jobs.push({n, prefix: dir, kind: "st", unit: ix.n}); } }
+    const have = new Set(files.map(f => f.n));
+    for (const sh of [...new Set(Object.values(j.weight_map || {}))]) { const n = dir ? dir + "/" + sh : sh; if (!have.has(n)) continue; seen.add(n); jobs.push({n, prefix: dir, kind: "st", unit: ix.n}); } }
   let loose = files.filter(f => /\.safetensors$/.test(f.n) && !seen.has(f.n) && !skip(f.n));
   // a folder with both x.safetensors and x.fp16.safetensors describes the same weights twice: keep one
   loose = loose.filter(f => !(/\.(fp16|bf16|fp32)\.safetensors$/.test(f.n) && loose.some(g => g !== f && g.n === f.n.replace(/\.(fp16|bf16|fp32)\.safetensors$/, ".safetensors"))));
   { const byDir = {}; loose.forEach(f => (byDir[folder(f.n)] = byDir[folder(f.n)] || []).push(f)); // never read more than 32 loose files per folder
     loose = Object.values(byDir).flatMap(g => g.length > 32 ? g.sort((a, b) => b.size - a.size).slice(0, 4) : g); }
+  { const shardOf = f => /-\d{3,5}-of-\d{3,5}\.safetensors$/.test(f.n); // a repo of many unrelated files (a collection): read the 48 largest, keep shard sets whole
+    if (loose.length > 48) { const sh = loose.filter(shardOf), rest = loose.filter(f => !shardOf(f)).sort((a, b) => b.size - a.size); loose = [...sh, ...rest.slice(0, Math.max(0, 48 - sh.length))]; } }
   const rootLoose = loose.filter(f => !folder(f.n));
-  loose.forEach(f => jobs.push({n: f.n, prefix: folder(f.n) || (rootLoose.length > 1 ? f.n.replace(/\.safetensors$/, "").replace(/[^\w]+/g, "_") : ""), kind: "st"}));
+  loose.forEach(f => jobs.push({n: f.n, prefix: folder(f.n) || (rootLoose.length > 1 && !/-\d{3,5}-of-\d{3,5}\.safetensors$/.test(f.n) ? f.n.replace(/\.safetensors$/, "").replace(/[^\w]+/g, "_") : ""), kind: "st"}));
   if (!jobs.length) {
     const pts = files.filter(f => /\.(pt|pth|bin|ckpt)$/.test(f.n) && !skip(f.n) && !/optimizer|scheduler|training/.test(f.n));
     const groups = {}; pts.forEach(f => (groups[folder(f.n)] = groups[folder(f.n)] || []).push(f));
     let dirs = Object.keys(groups); if (opt.prefer && groups[opt.prefer]) dirs = [opt.prefer]; else if (dirs.length > 1) dirs = dirs.sort((a, b) => groups[b].reduce((x, f) => x + f.size, 0) - groups[a].reduce((x, f) => x + f.size, 0)).slice(0, 4);
-    dirs.forEach(d => { const g = groups[d].sort((a, b) => (/classif|model|pytorch_model/.test(b.n) - /classif|model|pytorch_model/.test(a.n)) || b.size - a.size); jobs.push({n: g[0].n, prefix: dirs.length > 1 ? d.replace(/\//g, ".") : "", kind: "pt"}); });
+    dirs.forEach(d => { const g = groups[d].sort((a, b) => (/classif|model|pytorch_model/.test(b.n) - /classif|model|pytorch_model/.test(a.n)) || b.size - a.size), pre = dirs.length > 1 ? d.replace(/\//g, ".") : "";
+      const sh = g.filter(f => /-\d{3,5}-of-\d{3,5}\.(bin|pt)$/.test(f.n)), base = sh.length ? sh[0].n.replace(/-\d{3,5}-of-\d{3,5}\.(bin|pt)$/, "") : null;
+      if (sh.length) sh.filter(f => f.n.startsWith(base)).forEach(f => jobs.push({n: f.n, prefix: pre, kind: "pt", unit: base})); // a sharded checkpoint: every shard holds different layers
+      else jobs.push({n: g[0].n, prefix: pre, kind: "pt"}); });
   }
   if (!jobs.length) return null;
   const tensors = {}, res = new Array(jobs.length); let read = 0, done = 0, next = 0;

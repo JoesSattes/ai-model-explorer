@@ -33,13 +33,15 @@ FRONTIER = ["Qwen", "deepseek-ai", "google", "meta-llama", "mistralai", "microso
             "PrimeIntellect", "NousResearch", "Zyphra", "jinaai", "BAAI", "Alibaba-NLP", "intfloat", "nomic-ai"]
 
 
-def frontier(f: pd.DataFrame, n: int, since: str, providers=None) -> pd.DataFrame:
+def frontier(f: pd.DataFrame, n: int, since: str, providers=None, per_provider: int = 40) -> pd.DataFrame:
     """The n most-downloaded original releases from the frontier providers created on or after `since`."""
     prov = set(providers or FRONTIER)
     g = f[f["author"].isin(prov) & (f["created_at"] >= pd.Timestamp(since, tz="UTC"))]
     if "origin" in g:
         g = g[g["origin"] == "original"]
-    g = g.sort_values("downloads", ascending=False).head(n).copy()
+    g = g.sort_values("downloads", ascending=False)
+    g = g.groupby("author", group_keys=False).head(per_provider).head(n).copy()  # one provider's checkpoint series must not fill the stratum
+    g = g.sort_values("downloads", ascending=False)
     g["stratum"], g["weight"] = "frontier", 1.0
     return g
 

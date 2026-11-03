@@ -596,6 +596,7 @@ function hpOf(C, T, out, comps) {
   const emb = Object.entries(out.tensors).filter(([n, t]) => t.comp === C.id && t.kind === "embed" && T[n].shape.length === 2 && T[n].shape[1] === C.d).map(([n]) => T[n].shape[0]).sort((a, b) => b - a)[0];
   if (emb) hp.vocab = emb;
   else if (!out.timestep) { const e2 = Object.entries(out.tensors).filter(([n, t]) => t.kind === "embed" && T[n].shape.length === 2 && T[n].shape[0] >= 100).map(([n]) => T[n].shape[0]).sort((a, b) => b - a)[0]; if (e2) hp.vocab = e2; }
+  if (!hp.vocab && C.modality === "audio") { const h = Object.entries(out.tensors).filter(([n, t]) => t.kind === "head" && T[n].shape.length === 2 && T[n].shape[1] === C.d).map(([n]) => T[n].shape[0]).sort((a, b) => b - a)[0]; if (h) { hp.vocab = h; hp.vocab_from = "CTC output"; } }
   hp.tie = emb ? !Object.entries(out.tensors).some(([n, t]) => t.kind === "head" && t.role === "logits" && T[n].shape[0] === emb) : null;
   const attnLayers = regs.filter(r => r.kind === "attn").reduce((a, r) => a + r.count, 0), ssmLayers = regs.filter(r => r.kind === "ssm").reduce((a, r) => a + r.count, 0);
   hp.attn_layers = attnLayers; hp.ssm_layers = ssmLayers;
@@ -632,7 +633,7 @@ function familyOf(o, lex = true) {
   if (enc.length && b.hasHead) return "prefix-lm";
   if (b.hasHead) return "decoder";
   if (k.head && b.d && k.head >= 4096 * b.d && !/image|audio|video/.test(b.modality || "")) return enc.length ? "prefix-lm" : "decoder"; // a vocabulary-sized output projection the head detector did not attach
-  if (b.modality === "text") return tiedText(o, b, lex);
+  if (b.modality === "text" || b.hasEmbed) { const t = tiedText(o, b, lex); return t === "decoder" && enc.length ? "prefix-lm" : t; }
   return "encoder";
 }
 // A text backbone with no output head is either an encoder (BERT family) or a decoder whose head is tied to the embedding.
