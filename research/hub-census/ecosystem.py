@@ -41,7 +41,10 @@ def is_lm(df):
     fc = df["family_config"] if "family_config" in df else pd.Series(None, index=df.index)
     mt = (df["config_model_type"] if "config_model_type" in df else pd.Series("", index=df.index)).fillna("").astype(str)
     by_config = (pt == "") & fc.isin(LMF) & ~mt.str.contains(NOT_GEN, case=False, regex=True)
-    return df["family_manifest"].isin(LMF) & (df["params"] > 5e7) & (pt.isin(GEN) | by_config)
+    # family: from the weights, or from the configuration when the two disagree (tied-embedding decoders the weights
+    # alone place among encoders, about 4% of generative LMs, would otherwise drop out and bias the small-model results)
+    fam = df["family_manifest"].isin(LMF) | (fc.isin(LMF) & ~mt.str.contains(NOT_GEN, case=False, regex=True))
+    return fam & (df["params"] > 5e7) & (pt.isin(GEN) | by_config)
 
 
 RNG = np.random.default_rng(2026)
