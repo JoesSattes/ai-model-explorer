@@ -264,7 +264,7 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
 <body>
 <nav class="top"><div class="wrap">
   <a class="brand" href="#top"><img src="../assets/logo.svg" width="24" height="24" alt="" aria-hidden="true"><span data-i="brand">AI Model Explorer</span></a>
-  <a class="l" href="#arch" data-i="nav_arch">Anatomy</a><a class="l" href="#big" data-i="nav_big">Big picture</a><a class="l" href="#map" data-i="nav_map">Layer map</a><a class="l" href="#concepts" data-i="nav_concepts">Concepts</a><a class="l" href="#report" data-i="nav_report">Report</a>
+  <a class="l" href="#arch" data-i="nav_arch">Anatomy</a><a class="l" href="#big" data-i="nav_big">Big picture</a><a class="l" href="#map" data-i="nav_map">Layer map</a><a class="l" href="#concepts" data-i="nav_concepts">Concepts</a><a class="l" href="#report" data-i="nav_report">Report</a><a class="l" href="../census/" data-i="nav_census">Hub Census</a>
   <span class="sp"></span><span id="navModel"></span>
   <button class="theme" id="themeBtn" type="button" aria-label="Theme"><svg class="sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
   <div class="lang" role="group" aria-label="Language"><button data-lang="th">TH</button><button data-lang="en">EN</button></div>
@@ -416,7 +416,7 @@ window.I18N = {
   i_diff: ["Diffusion: timestep (sinusoid {f}) → MLP → {w} มิติ คุม adaLN ทุก block · เวลารวม = จำนวนขั้น × denoiser", "Diffusion: the timestep (sinusoid {f}) → MLP → {w} dims steers adaLN in every block. Total time = steps × denoiser."],
   // nav / hero
   brand: ["Model Explorer", "Model Explorer"],
-  nav_big: ["ภาพรวม", "Big picture"], nav_map: ["Layer map", "Layer map"], nav_concepts: ["แนวคิด", "Concepts"], nav_report: ["รายงาน", "Report"],
+  nav_big: ["ภาพรวม", "Big picture"], nav_map: ["Layer map", "Layer map"], nav_concepts: ["แนวคิด", "Concepts"], nav_report: ["รายงาน", "Report"], nav_census: ["Hub Census", "Hub Census"],
   hero_eyebrow: ["Squeeze Until It Breaks · AI Expo Thailand 2026", "Squeeze Until It Breaks · AI Expo Thailand 2026"],
   hero_h1: ["ดูข้างในโมเดล<br><span class=\"g\">ทีละส่วน</span> ก่อนลงมือบีบ", "See inside a model,<br><span class=\"g\">part by part</span>, before you squeeze it."],
   hero_sub: ["เลือก template ที่วิเคราะห์ไว้แล้ว หรือใส่โมเดลของคุณเอง: ไฟล์ .tflite, repo บน Hugging Face หรือ config.json เว็บจะแยกโมเดลออกเป็นส่วนๆ ให้อัตโนมัติ ไม่ว่าจะเป็น architecture แบบไหน", "Pick an analyzed template or bring your own model — a .tflite file, a Hugging Face repo or a config.json. The page splits any architecture into its parts automatically."],

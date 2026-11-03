@@ -149,6 +149,27 @@ def chart_hub(rows, path):
     fig.tight_layout(); fig.savefig(path, dpi=170); plt.close(fig)
 
 
+def headline(d, pop, ok, folder):
+    """The few numbers a reader sees first."""
+    fs = os.path.join(folder, "frame_stats.json")
+    frame = json.load(open(fs)) if os.path.exists(fs) else {}
+    rnd = d[~d["stratum"].isin(["top", "frontier"]) & (d["status"] == "ok")]
+    w = rnd["weight"].astype(float)
+    hub_nc = float((w * (~rnd["has_config"].fillna(False).astype(bool))).sum() / w.sum()) if len(rnd) else None
+    ratio = (ok["header_bytes"] / ok["weight_bytes"].where(ok["weight_bytes"] > 0)).dropna()
+    created = ok["created"]
+    return {"hub_models": frame.get("repos"), "top10k_download_share": frame.get("share_of_downloads_top_10000"),
+            "repos_read": len(d), "popular_read": len(pop), "popular_readable": int(len(ok)),
+            "popular_no_config": round(float((~ok["has_config"].fillna(False).astype(bool)).mean()), 4),
+            "hub_no_config": round(hub_nc, 4) if hub_nc is not None else None,
+            "median_header_kb": round(float(ok["header_bytes"].median()) / 1024, 1),
+            "median_fraction_read": float(ratio.median()) if len(ratio) else None,
+            "median_seconds": round(float(ok["t_total_s"].median()), 2) if "t_total_s" in ok else None,
+            "model_types": int(ok["config_model_type"].nunique()), "providers": int(ok["id"].str.split("/").str[0].nunique()),
+            "released_2026": int((created >= pd.Timestamp("2026-01-01", tz="UTC")).sum()),
+            "crawled": str(d["crawled_at"].max())[:10] if "crawled_at" in d else None}
+
+
 def main(census, outdir):
     d = load(census)
     os.makedirs(outdir, exist_ok=True)
@@ -157,10 +178,14 @@ def main(census, outdir):
     T, S, H, C = trends(ok), storage(ok), hub_count(ok), no_config(d[d["status"] == "ok"])
     status = pop["status"].value_counts(normalize=True).round(4).to_dict()
     nwk = pop[pop["status"] == "no_weights"]["no_weights_kind"].value_counts(normalize=True).round(4).to_dict() if "no_weights_kind" in pop else {}
-    out = {"repos": len(d), "popular_repos": len(pop), "status_popular": status, "no_weights_kind_popular": nwk,
+    head = headline(d, pop, ok, os.path.dirname(census))
+    out = {"headline": head, "repos": len(d), "popular_repos": len(pop), "status_popular": status, "no_weights_kind_popular": nwk,
            "trends": T, "storage_by_year": S, "hub_count_by_storage": H, "no_config_by_library": C[:25]}
-    json.dump(out, open(os.path.join(outdir, "insights.json"), "w"), indent=1, default=float)
-    json.dump(model_rows(ok), open(os.path.join(outdir, "models.json"), "w"), separators=(",", ":"), default=float)
+    json.dump(json.loads(json.dumps(out, default=float).replace("NaN", "null")), open(os.path.join(outdir, "insights.json"), "w"), indent=1)
+    def clean(v):  # JSON has no NaN
+        return None if isinstance(v, float) and v != v else v
+    rows = [{k: clean(v) for k, v in r.items()} for r in model_rows(ok)]
+    json.dump(rows, open(os.path.join(outdir, "models.json"), "w"), separators=(",", ":"), default=float, allow_nan=False)
     chart_trends(T, os.path.join(outdir, "trends.png"))
     chart_hub(H, os.path.join(outdir, "storage.png"))
     t = {r["year"]: r for r in T}

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("mx_theme")==="light"?"light":"dark"}catch(e){document.documentElement.dataset.theme="dark"}</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hub Weight Census: what 13,000 AI models say about themselves | AI Model Explorer</title>
+<meta name="description" content="A census of Hugging Face models read from their safetensors headers only: architecture trends by year (mixture of experts, hybrid state-space, grouped-query attention), storage formats, repos with no config, and where the Hub's own parameter count is wrong. Searchable table of thousands of models.">
+<meta name="author" content="Sattaya Singkul">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://joessattes.github.io/ai-model-explorer/census/">
+<link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta property="og:type" content="website"><meta property="og:title" content="Hub Weight Census"><meta property="og:url" content="https://joessattes.github.io/ai-model-explorer/census/">
+<meta property="og:description" content="What 13,000 Hugging Face models say about themselves, read from their headers only."><meta property="og:image" content="https://joessattes.github.io/ai-model-explorer/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Dataset","name":"Hub Weight Census","url":"https://joessattes.github.io/ai-model-explorer/census/",
+ "description":"Architecture, storage and metadata quality of Hugging Face model repositories, recovered from safetensors headers without downloading weights.",
+ "creator":{"@type":"Person","name":"Sattaya Singkul","url":"https://joessattes.github.io/Sattaya-AI-Website/"},"license":"https://opensource.org/licenses/MIT",
+ "isBasedOn":"https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy",
+ "keywords":["Hugging Face","model architecture","mixture of experts","quantization","safetensors","census"]}
+</script>
+<style>
+:root{--ground:#f6f6f3;--surface:#fff;--raised:#efefeb;--line:#e3e3de;--ink:#141414;--soft:#4d4d4a;--dim:#6b6b66;--grid:#ecece8;
+ --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--accent:#1b5fd1;
+ --sans:"IBM Plex Sans Thai","IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"IBM Plex Mono","SF Mono",Menlo,monospace;color-scheme:light}
+html[data-theme=dark]{--ground:#0b1020;--surface:#121a2e;--raised:#18213a;--line:#222b44;--ink:#f4f5f8;--soft:#b9c0d4;--dim:#8f97b0;--grid:#1d2640;
+ --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--accent:#a3abfa;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.55;font-variant-numeric:tabular-nums}
+a{color:inherit}.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+nav{position:sticky;top:0;z-index:5;background:var(--ground);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;gap:18px;height:56px}
+nav .brand{display:flex;align-items:center;gap:8px;font-weight:600;text-decoration:none}
+nav .sp{flex:1}nav a.l{color:var(--soft);text-decoration:none;font-size:14px}nav a.l:hover{color:var(--ink)}
+.tg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}.tg button{background:none;border:0;color:var(--soft);padding:5px 11px;font:inherit;font-size:13px;cursor:pointer}.tg button.on{background:var(--ink);color:var(--ground)}
+header{padding:56px 0 28px}h1{font-size:40px;line-height:1.15;letter-spacing:-.01em;max-width:860px}
+.lead{color:var(--soft);font-size:18px;max-width:820px;margin-top:14px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:30px 0 8px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.kpi b{display:block;font-size:30px;font-weight:600;letter-spacing:-.01em}.kpi span{color:var(--soft);font-size:14px}
+section{padding:34px 0}h2{font-size:24px;margin-bottom:6px}.sub{color:var(--soft);max-width:820px;margin-bottom:18px}
+.find{display:grid;gap:10px;max-width:900px}.find li{list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;color:var(--soft)}.find li b{color:var(--ink)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:900px){.grid2{grid-template-columns:1fr}h1{font-size:30px}.kpis{grid-template-columns:1fr 1fr}}
+.ct{font-weight:600;margin-bottom:2px}.cs{color:var(--soft);font-size:13px;margin-bottom:10px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--soft);margin:4px 0 8px}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+svg text{fill:var(--soft);font-family:var(--sans)}svg .gl{stroke:var(--grid)}svg .ax{stroke:var(--line)}
+#tip{position:fixed;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.18);display:none;z-index:9;max-width:320px}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.tools input,.tools select{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;font-size:14px}
+.tools input{flex:1;min-width:220px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--soft);font-weight:500;cursor:pointer;user-select:none;background:var(--surface)}th.num,td.num{text-align:right}
+td a{text-decoration:none;color:var(--ink)}td a:hover{text-decoration:underline}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;background:var(--raised);color:var(--soft);font-size:12px}
+.warn{color:var(--s2)}.pager{display:flex;gap:10px;align-items:center;margin-top:12px;color:var(--soft);font-size:14px}
+.pager button,.dl a{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
+.dl{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+footer{color:var(--dim);font-size:13px;padding:40px 0 60px;border-top:1px solid var(--line);margin-top:30px}
+.note{color:var(--dim);font-size:13px;margin-top:8px}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+ <a class="brand" href="../en/"><img src="../assets/logo.svg" width="22" height="22" alt=""><span>AI Model Explorer</span></a>
+ <span class="sp"></span>
+ <a class="l" href="#findings" data-t="nav_find">Findings</a><a class="l" href="#models" data-t="nav_models">Models</a><a class="l" href="#data" data-t="nav_data">Data</a>
+ <span class="tg" id="lang"><button data-l="th">TH</button><button data-l="en">EN</button></span>
+ <span class="tg" id="theme"><button data-m="light">☀</button><button data-m="dark">☾</button></span>
+</div></nav>
+<div class="wrap">
+<header>
+ <h1 data-t="h1">Hub Weight Census: what AI models say about themselves</h1>
+ <p class="lead" data-t="lead">We read only the safetensors headers of thousands of Hugging Face repositories (names, shapes and storage of every tensor, never the weights) and recovered each model's architecture from them. Here is what the models people actually use are made of, how that changed year by year, and where the metadata around them is wrong.</p>
+ <div class="kpis" id="kpis"></div>
+</header>
+
+<section id="findings">
+ <h2 data-t="find_h">Findings</h2>
+ <p class="sub" data-t="find_sub">Popular repos: the most downloaded, the most downloaded original releases, and recent releases from leading providers. Test fixtures (tiny random-weight repos) are left out.</p>
+ <ul class="find" id="find"></ul>
+</section>
+
+<section>
+ <div class="grid2">
+  <div class="card"><div class="ct" data-t="c1">Architecture by release year</div><div class="cs" data-t="c1s">% of popular original language models released that year</div><div class="legend" id="lg1"></div><svg id="ch1" viewBox="0 0 560 300" width="100%"></svg></div>
+  <div class="card"><div class="ct" data-t="c2">The Hub's parameter count, by storage format</div><div class="cs" data-t="c2s">% of repos where the count shown on the Hub differs from the logical count read from the headers. For NVFP4 the Hub counts packed bytes; other gaps can be on either side</div><svg id="ch2" viewBox="0 0 560 300" width="100%"></svg></div>
+ </div>
+ <div class="grid2" style="margin-top:16px">
+  <div class="card"><div class="ct" data-t="c3">Typical shape, by release year</div><div class="cs" data-t="c3s">Median head size and vocabulary of popular original language models</div><div class="grid2" style="gap:8px"><div><div class="cs" data-t="hd">head size</div><svg id="ch3a" viewBox="0 0 280 220" width="100%"></svg></div><div><div class="cs" data-t="vocab">vocabulary (thousands)</div><svg id="ch3b" viewBox="0 0 280 220" width="100%"></svg></div></div></div>
+  <div class="card"><div class="ct" data-t="c4">When there is nothing to read</div><div class="cs" data-t="c4s">Popular repos without safetensors or PyTorch weights, by what they ship instead</div><svg id="ch4" viewBox="0 0 560 260" width="100%"></svg></div>
+ </div>
+</section>
+
+<section id="models">
+ <h2 data-t="tbl_h">Models</h2>
+ <p class="sub" data-t="tbl_sub">The most downloaded readable models in the census. Click a name to open its full anatomy.</p>
+ <div class="tools">
+  <input id="q" type="search" data-tp="search" placeholder="Search models, e.g. qwen, whisper, deepseek">
+  <select id="ffam"></select><select id="fq"></select><select id="fy"></select><select id="fo"></select>
+ </div>
+ <div class="tbl"><table><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>
+ <div class="pager"><button id="prev">‹</button><span id="pinfo"></span><button id="next">›</button></div>
+ <p class="note" data-t="tbl_note">Params: logical parameters (quantized storage unpacked). Hub: ✓ when the Hub's own count agrees within 0.1%, otherwise our count ÷ the Hub's. KV/token: bytes of KV cache per token at 16 bit.</p>
+</section>
+
+<section id="data">
+ <h2 data-t="data_h">Data and method</h2>
+ <p class="sub" data-t="data_sub">Every repo: status, popularity, the architecture recovered from the weights, the values its config.json declares, the Hub's own parameter count and the raw manifest, so the results can be re-scored. Code and the frozen recovery rules are public.</p>
+ <div class="dl">
+  <a href="https://github.com/JoesSattes/ai-model-explorer/tree/main/research/hub-census" data-t="dl_code">Census code</a>
+  <a id="dsLink" href="https://huggingface.co/datasets" data-t="dl_ds">Dataset on Hugging Face</a>
+  <a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy" data-t="dl_paper">Paper</a>
+  <a href="https://pypi.org/project/ai-model-explorer/">pip install ai-model-explorer</a>
+ </div>
+</section>
+<footer>© 2026 Sattaya Singkul · MIT · <span data-t="foot">Read from public metadata only; no weights were downloaded.</span> <span id="crawled"></span></footer>
+</div>
+<div id="tip"></div>
+<script>
+const T={
+ en:{nav_find:"Findings",nav_models:"Models",nav_data:"Data",h1:"Hub Weight Census: what AI models say about themselves",
+  lead:"We read only the safetensors headers of thousands of Hugging Face repositories (names, shapes and storage of every tensor, never the weights) and recovered each model's architecture from them. Here is what the models people actually use are made of, how that changed year by year, and where the metadata around them is wrong.",
+  k_read:"repos read",k_ok:"popular models analysed",k_nc:"of the whole Hub ship no config.json",k_hdr:"read per repo (median)",k_types:"model types",k_dl:"of all downloads go to the top 10,000",
+  find_h:"Findings",find_sub:"Popular repos: the most downloaded, the most downloaded original releases, and recent releases from leading providers. Test fixtures (tiny random-weight repos) are left out.",
+  c1:"Architecture by release year",c1s:"% of popular original language models released that year",c2:"The Hub's parameter count, by storage format",c2s:"% of repos where the count shown on the Hub differs from the logical count read from the headers. For NVFP4 the Hub counts packed bytes; other gaps can be on either side",
+  c3:"Typical shape, by release year",c3s:"Median head size and vocabulary of popular original language models",c4:"When there is nothing to read",c4s:"Popular repos without safetensors or PyTorch weights, by what they ship instead",
+  tbl_h:"Models",tbl_sub:"The most downloaded readable models in the census. Click a name to open its full anatomy.",search:"Search models, e.g. qwen, whisper, deepseek",
+  tbl_note:"Params: logical parameters (quantized storage unpacked). Hub: ✓ when the Hub's own count agrees within 0.1%, otherwise our count ÷ the Hub's. KV/token: bytes of KV cache per token at 16 bit.",
+  data_h:"Data and method",data_sub:"Every repo: status, popularity, the architecture recovered from the weights, the values its config.json declares, the Hub's own parameter count and the raw manifest, so the results can be re-scored. Code and the frozen recovery rules are public.",
+  dl_code:"Census code",dl_ds:"Dataset on Hugging Face",dl_paper:"Paper",foot:"Read from public metadata only; no weights were downloaded.",crawled:"Crawled",
+  all_fam:"All families",all_q:"Any storage",all_y:"Any year",all_o:"Originals and copies",o_orig:"Original releases",o_copy:"Derivatives",unq:"unquantized",
+  cols:["Model","Year","Family","Params","Storage","Width","Layers","Heads / KV","Experts","Vocab","KV/token","Config","Hub","Downloads"],
+  moe:"mixture of experts",hybrid:"hybrid (state-space / linear attention)",gqa:"grouped-query attention",quantized:"published quantized",hd:"head size",vocab:"vocabulary (thousands)",
+  gguf_only:"GGUF only (llama.cpp)",onnx_only:"ONNX only",no_weight_files:"no weight files",keras_or_other:"Keras / other",adapter:"adapter only",mlpackage_only:"Core ML only",
+  f_moe:(a,b,y0,y1)=>`<b>Mixture of experts</b> went from ${a}% of popular original language models released in ${y0} to <b>${b}%</b> in ${y1}.`,
+  f_hyb:(a,b)=>`<b>Hybrid stacks</b> that mix state-space or linear-attention layers with attention: ${a}% → <b>${b}%</b>.`,
+  f_gqa:(a,b)=>`<b>Grouped-query attention</b> (fewer KV heads than query heads): ${a}% → <b>${b}%</b>.`,
+  f_shape:(h0,h1,v0,v1)=>`Median <b>head size</b> ${h0} → ${h1}; median <b>vocabulary</b> ${v0} → ${v1} tokens.`,
+  f_q:(a,b)=>`Original releases <b>published already quantized</b> (FP8, NVFP4, MXFP4 …): ${a}% → <b>${b}%</b>.`,
+  f_hub:s=>`<b>The Hub's parameter count is wrong</b> for formats that pack two values per byte: ${s}.`,
+  f_nc:(a,b)=>`<b>${a}%</b> of all Hub models and ${b}% of popular ones ship <b>no config.json</b>: the weights are their only specification.`,
+  f_gguf:a=>`<b>${a}%</b> of popular repos without readable weights are GGUF-only (llama.cpp).`},
+ th:{nav_find:"สิ่งที่พบ",nav_models:"โมเดล",nav_data:"ข้อมูล",h1:"Hub Weight Census: โมเดล AI บอกอะไรเกี่ยวกับตัวเองบ้าง",
+  lead:"เราอ่านแค่ header ของไฟล์ safetensors จาก repo บน Hugging Face หลายพันตัว (ชื่อ shape และรูปแบบการเก็บของทุก tensor โดยไม่โหลด weights เลย) แล้วถอดสถาปัตยกรรมของแต่ละโมเดลออกมา หน้านี้สรุปว่าโมเดลที่คนใช้จริงประกอบด้วยอะไร เปลี่ยนไปอย่างไรในแต่ละปี และข้อมูลประกอบตรงไหนที่ผิด",
+  k_read:"repo ที่อ่าน",k_ok:"โมเดลยอดนิยมที่วิเคราะห์ได้",k_nc:"ของโมเดลทั้ง Hub ไม่มี config.json",k_hdr:"ที่อ่านต่อ repo (มัธยฐาน)",k_types:"ชนิดโมเดล",k_dl:"ของยอดดาวน์โหลดทั้งหมดอยู่ที่ 10,000 อันดับแรก",
+  find_h:"สิ่งที่พบ",find_sub:"โมเดลยอดนิยม: ยอดดาวน์โหลดสูงสุด, ตัวต้นฉบับที่โหลดมากสุด และตัวที่ผู้พัฒนาหลักปล่อยช่วงหลัง ไม่รวม repo ทดสอบ (tiny random)",
+  c1:"สถาปัตยกรรมตามปีที่ปล่อย",c1s:"% ของ language model ต้นฉบับยอดนิยมที่ปล่อยในปีนั้น",c2:"จำนวน parameter ที่ Hub แสดง แยกตามรูปแบบการเก็บ",c2s:"% ของ repo ที่ตัวเลขบน Hub ไม่ตรงกับจำนวนที่อ่านจาก header กรณี NVFP4 Hub นับ byte ที่อัดไว้ ส่วนรูปแบบอื่นอาจคลาดได้ทั้งสองฝั่ง",
+  c3:"รูปร่างทั่วไปตามปี",c3s:"ค่ามัธยฐานของขนาด head และ vocabulary",c4:"เมื่อไม่มีอะไรให้อ่าน",c4s:"repo ยอดนิยมที่ไม่มี weights แบบ safetensors หรือ PyTorch แยกตามสิ่งที่ปล่อยแทน",
+  tbl_h:"โมเดล",tbl_sub:"โมเดลที่อ่านได้และมียอดดาวน์โหลดสูงสุดใน census กดชื่อเพื่อเปิดดูโครงสร้างเต็ม",search:"ค้นหาโมเดล เช่น qwen, whisper, deepseek",
+  tbl_note:"Params: จำนวน parameter จริง (แกะ quantization แล้ว) · Hub: ✓ เมื่อตัวเลขของ Hub ตรงภายใน 0.1% ไม่งั้นแสดงอัตราส่วนของเรา ÷ Hub · KV/token: ขนาด KV cache ต่อ token ที่ 16 บิต",
+  data_h:"ข้อมูลและวิธีการ",data_sub:"ทุก repo มีสถานะ ความนิยม สถาปัตยกรรมที่ถอดจาก weights ค่าที่ config.json ประกาศ ตัวเลขของ Hub และ manifest ดิบไว้ให้คำนวณซ้ำได้ โค้ดและกฎที่ล็อกไว้เปิดสาธารณะ",
+  dl_code:"โค้ด census",dl_ds:"Dataset บน Hugging Face",dl_paper:"Paper",foot:"อ่านจาก metadata สาธารณะเท่านั้น ไม่มีการโหลด weights",crawled:"เก็บข้อมูลเมื่อ",
+  all_fam:"ทุกตระกูล",all_q:"ทุกรูปแบบการเก็บ",all_y:"ทุกปี",all_o:"ต้นฉบับและตัวต่อยอด",o_orig:"ต้นฉบับ",o_copy:"ตัวต่อยอด",unq:"ไม่ quantize",
+  cols:["โมเดล","ปี","ตระกูล","Params","การเก็บ","Width","Layers","Heads / KV","Experts","Vocab","KV/token","Config","Hub","ดาวน์โหลด"],
+  moe:"mixture of experts",hybrid:"hybrid (state-space / linear attention)",gqa:"grouped-query attention",quantized:"ปล่อยแบบ quantize มาเลย",hd:"ขนาด head",vocab:"vocabulary (พัน)",
+  gguf_only:"มีแต่ GGUF (llama.cpp)",onnx_only:"มีแต่ ONNX",no_weight_files:"ไม่มีไฟล์ weights",keras_or_other:"Keras / อื่นๆ",adapter:"มีแต่ adapter",mlpackage_only:"มีแต่ Core ML",
+  f_moe:(a,b,y0,y1)=>`<b>Mixture of experts</b> เพิ่มจาก ${a}% ของ language model ต้นฉบับยอดนิยมที่ปล่อยปี ${y0} เป็น <b>${b}%</b> ในปี ${y1}`,
+  f_hyb:(a,b)=>`<b>Hybrid stack</b> ที่ผสม state-space หรือ linear attention กับ attention: ${a}% → <b>${b}%</b>`,
+  f_gqa:(a,b)=>`<b>Grouped-query attention</b> (KV head น้อยกว่า query head): ${a}% → <b>${b}%</b>`,
+  f_shape:(h0,h1,v0,v1)=>`มัธยฐาน<b>ขนาด head</b> ${h0} → ${h1}, <b>vocabulary</b> ${v0} → ${v1} token`,
+  f_q:(a,b)=>`ตัวต้นฉบับที่<b>ปล่อยแบบ quantize มาเลย</b> (FP8, NVFP4, MXFP4 …): ${a}% → <b>${b}%</b>`,
+  f_hub:s=>`<b>ตัวเลข parameter บน Hub ผิด</b> ในรูปแบบที่อัด 2 ค่าต่อ byte: ${s}`,
+  f_nc:(a,b)=>`<b>${a}%</b> ของโมเดลทั้ง Hub และ ${b}% ของตัวยอดนิยม <b>ไม่มี config.json</b> มีแค่ weights เป็นสเปก`,
+  f_gguf:a=>`<b>${a}%</b> ของ repo ยอดนิยมที่ไม่มี weights ให้อ่าน เป็น GGUF ล้วน (llama.cpp)`}};
+let L=(new URLSearchParams(location.search).get("lang"))||(()=>{try{return localStorage.getItem("mx_lang")}catch(e){}})()||((navigator.language||"").slice(0,2)==="th"?"th":"en");
+if(!T[L])L="en";
+const $=s=>document.querySelector(s),tip=$("#tip"),pct=x=>x==null?"–":Math.round(x*100),fmtN=n=>n==null?"–":n>=1e12?(n/1e12).toFixed(2)+"T":n>=1e9?(n/1e9).toFixed(n>=1e11?0:1)+"B":n>=1e6?(n/1e6).toFixed(n>=1e8?0:1)+"M":n>=1e3?(n/1e3).toFixed(0)+"K":String(n);
+const fmtB=b=>b==null?"–":b>=1e6?(b/1e6).toFixed(1)+" MB":b>=1e3?(b/1e3).toFixed(0)+" KB":b+" B";
+function showTip(e,h){tip.innerHTML=h;tip.style.display="block";const x=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8);tip.style.left=x+"px";tip.style.top=(e.clientY+14)+"px"}
+function hideTip(){tip.style.display="none"}
+let I=null,M=null;
+function applyLang(){document.documentElement.lang=L;const t=T[L];document.querySelectorAll("[data-t]").forEach(n=>{const k=n.dataset.t;if(t[k]&&typeof t[k]==="string")n.textContent=t[k]});
+ $("#q").placeholder=t.search;document.querySelectorAll("#lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===L));try{localStorage.setItem("mx_lang",L)}catch(e){}
+ if(I)render()}
+function theme(m){document.documentElement.dataset.theme=m;try{localStorage.setItem("mx_theme",m)}catch(e){}document.querySelectorAll("#theme button").forEach(b=>b.classList.toggle("on",b.dataset.m===m));if(I)charts()}
+function kpis(){const h=I.headline,t=T[L];const k=[[(h.repos_read||0).toLocaleString(),t.k_read],[(h.popular_readable||0).toLocaleString(),t.k_ok],[pct(h.hub_no_config)+"%",t.k_nc],[h.median_header_kb+" KB",t.k_hdr],[(h.model_types||0).toLocaleString(),t.k_types]];
+ if(h.top10k_download_share)k.push([pct(h.top10k_download_share)+"%",t.k_dl]);$("#kpis").innerHTML=k.map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join("")}
+function findings(){const t=T[L],tr=I.trends.filter(r=>r.models>=30),a=tr[0],b=tr[tr.length-1],h=I.headline,out=[];
+ if(a&&b){out.push(t.f_moe(pct(a.moe),pct(b.moe),a.year,b.year),t.f_hyb(pct(a.hybrid),pct(b.hybrid)),t.f_gqa(pct(a.gqa),pct(b.gqa)),t.f_shape(a.median_head_dim,b.median_head_dim,Math.round(a.median_vocab).toLocaleString(),Math.round(b.median_vocab).toLocaleString()),t.f_q(pct(a.quantized),pct(b.quantized)))}
+ if(h.hub_no_config!=null)out.push(t.f_nc(pct(h.hub_no_config),pct(h.popular_no_config)));
+ const bad=I.hub_count_by_storage.filter(r=>r.storage!=="unquantized"&&r.hub_count_differs>=.5&&r.median_true_over_hub>=1.2);
+ if(bad.length)out.push(t.f_hub(bad.map(r=>`${r.storage} ${pct(r.hub_count_differs)}% / ${r.repos} repos (×${r.median_true_over_hub})`).join("; ")));
+ const g=(I.no_weights_kind_popular||{}).gguf_only;if(g)out.push(t.f_gguf(pct(g)));
+ $("#find").innerHTML=out.map(x=>`<li>${x}</li>`).join("")}
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function lineChart(svg,rows,series,{yfmt=v=>v+"%",ymax=null,H=300,W=560}={}){const P={l:44,r:52,t:12,b:30};const xs=rows.map(r=>r.year),x0=Math.min(...xs),x1=Math.max(...xs);
+ const vals=series.flatMap(s=>rows.map(r=>s.v(r))).filter(v=>v!=null),top=ymax||Math.max(...vals)*1.12;
+ const X=x=>P.l+(x-x0)/((x1-x0)||1)*(W-P.l-P.r),Y=v=>H-P.b-(v/top)*(H-P.t-P.b);let s="";
+ for(let i=0;i<=4;i++){const v=top*i/4,y=Y(v);s+=`<line class="gl" x1="${P.l}" x2="${W-P.r}" y1="${y}" y2="${y}"/><text x="${P.l-6}" y="${y+4}" text-anchor="end" font-size="11">${yfmt(Math.round(v))}</text>`}
+ xs.forEach(x=>s+=`<text x="${X(x)}" y="${H-10}" text-anchor="middle" font-size="11">${x}</text>`);
+ const ends=series.map(se=>({se,v:se.v(rows[rows.length-1])})).sort((a,b)=>a.v-b.v);let last=-1e9;const ypos={};ends.forEach(e=>{let y=Y(e.v);if(last>-1e9&&last-y<13)y=last-13;ypos[e.se.k]=y;last=y});
+ series.forEach(se=>{const pts=rows.map(r=>[X(r.year),Y(se.v(r)),r]);s+=`<polyline fill="none" stroke="${css(se.c)}" stroke-width="2" points="${pts.map(p=>p[0]+","+p[1]).join(" ")}"/>`;
+  pts.forEach(([x,y,r])=>s+=`<circle cx="${x}" cy="${y}" r="5" fill="${css(se.c)}" stroke="${css("--surface")}" stroke-width="2" data-h="${encodeURIComponent(`<b>${r.year}</b> · ${se.name}: ${yfmt(Math.round(se.v(r)))}<br><span style='color:var(--dim)'>n = ${r.models}</span>`)}"/><circle cx="${x}" cy="${y}" r="13" fill="transparent" data-h="${encodeURIComponent(`<b>${r.year}</b> · ${se.name}: ${yfmt(Math.round(se.v(r)))}<br><span style='color:var(--dim)'>n = ${r.models}</span>`)}"/>`);
+  s+=`<text x="${W-P.r+8}" y="${ypos[se.k]+4}" font-size="11">${yfmt(Math.round(se.v(rows[rows.length-1])))}</text>`});
+ svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.innerHTML=s;hover(svg)}
+function barChart(svg,items,{H=300,fmt=v=>v+"%",max=100}={}){const W=560,P={l:170,r:70,t:6,b:6},bh=Math.min(28,(H-P.t-P.b)/items.length-8);let s="";
+ items.forEach((it,i)=>{const y=P.t+i*((H-P.t-P.b)/items.length),w=(it.v/max)*(W-P.l-P.r);
+  s+=`<text x="${P.l-8}" y="${y+bh/2+4}" text-anchor="end" font-size="12">${it.label}</text><rect x="${P.l}" y="${y}" width="${Math.max(w,2)}" height="${bh}" rx="4" fill="${css("--s1")}" data-h="${encodeURIComponent(it.tip)}"/><rect x="${P.l}" y="${y-3}" width="${W-P.l-P.r}" height="${bh+6}" fill="transparent" data-h="${encodeURIComponent(it.tip)}"/><text x="${P.l+w+6}" y="${y+bh/2+4}" font-size="12">${fmt(it.v)}</text>`});
+ svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.innerHTML=s;hover(svg)}
+function hover(svg){svg.querySelectorAll("[data-h]").forEach(n=>{n.addEventListener("mousemove",e=>showTip(e,decodeURIComponent(n.dataset.h)));n.addEventListener("mouseleave",hideTip)})}
+function legend(el,series){el.innerHTML=series.map(s=>`<span><i style="background:var(${s.c})"></i>${s.name}</span>`).join("")}
+function charts(){const t=T[L],tr=I.trends.filter(r=>r.models>=30);
+ const s1=[{k:"moe",c:"--s1",name:t.moe,v:r=>r.moe*100},{k:"hybrid",c:"--s2",name:t.hybrid,v:r=>r.hybrid*100},{k:"gqa",c:"--s3",name:t.gqa,v:r=>r.gqa*100},{k:"q",c:"--s4",name:t.quantized,v:r=>r.quantized*100}];
+ legend($("#lg1"),s1);lineChart($("#ch1"),tr,s1,{ymax:100});
+ const hb=I.hub_count_by_storage.filter(r=>r.storage!=="unquantized").slice(0,8).sort((a,b)=>b.hub_count_differs-a.hub_count_differs);
+ barChart($("#ch2"),hb.map(r=>({label:r.storage,v:Math.round(r.hub_count_differs*100),tip:`<b>${r.storage}</b><br>${r.repos} repos · ${L==="th"?"ของเรา ÷ Hub (มัธยฐาน)":"ours ÷ Hub (median)"} ×${r.median_true_over_hub}`})));
+ lineChart($("#ch3a"),tr,[{k:"hd",c:"--s1",name:t.hd,v:r=>r.median_head_dim}],{yfmt:v=>String(v),H:220,W:280});
+ lineChart($("#ch3b"),tr,[{k:"v",c:"--s1",name:t.vocab,v:r=>r.median_vocab/1000}],{yfmt:v=>String(v),H:220,W:280});
+ const nw=Object.entries(I.no_weights_kind_popular||{}).sort((a,b)=>b[1]-a[1]);barChart($("#ch4"),nw.map(([k,v])=>({label:t[k]||k,v:Math.round(v*100),tip:`<b>${t[k]||k}</b>: ${pct(v)}%`})),{H:260})}
+// ---- table
+const COLS=[["id",0],["y",1],["fam",0],["p",1],["q",0],["d",1],["L",1],["H",1],["E",1],["V",1],["kv",1],["cfg",0],["hub",1],["dl",1]];
+let sortK="dl",sortD=-1,page=0;const PS=50;
+function opts(sel,label,vals){sel.innerHTML=`<option value="">${label}</option>`+vals.map(v=>`<option>${v}</option>`).join("")}
+function table(){const t=T[L],q=$("#q").value.trim().toLowerCase(),ff=$("#ffam").value,fq=$("#fq").value,fy=$("#fy").value,fo=$("#fo").value;
+ let r=M.filter(m=>(!q||m.id.toLowerCase().includes(q))&&(!ff||m.fam===ff)&&(!fq||(m.q||t.unq)===fq||(m.q||"").split("+").includes(fq))&&(!fy||String(m.y)===fy)&&(!fo||(fo==="o"?m.origin==="original":m.origin!=="original")));
+ r.sort((a,b)=>{const x=sortK==="hub"?(a.hub?a.p/a.hub:null):a[sortK],y=sortK==="hub"?(b.hub?b.p/b.hub:null):b[sortK];if(x==null)return 1;if(y==null)return -1;return (x>y?1:x<y?-1:0)*sortD});
+ const n=r.length,pages=Math.max(1,Math.ceil(n/PS));page=Math.min(page,pages-1);const app=L==="th"?"../":"../en/";
+ $("#thead").innerHTML=t.cols.map((c,i)=>`<th class="${COLS[i][1]?"num":""}" data-k="${COLS[i][0]}">${c}${sortK===COLS[i][0]?(sortD>0?" ▲":" ▼"):""}</th>`).join("");
+ $("#tbody").innerHTML=r.slice(page*PS,page*PS+PS).map(m=>{const ratio=m.hub?m.p/m.hub:null,ok=ratio!=null&&Math.abs(ratio-1)<=.001;
+  return `<tr><td><a href="${app}#hf=${encodeURIComponent(m.id)}">${m.id}</a></td><td class="num">${m.y||"–"}</td><td><span class="pill">${m.fam||"?"}</span></td><td class="num">${fmtN(m.p)}</td><td>${m.q||t.unq}</td><td class="num">${m.d??"–"}</td><td class="num">${m.L??"–"}</td><td class="num">${m.H??"–"} / ${m.KV??"–"}</td><td class="num">${m.E??"–"}</td><td class="num">${m.V?m.V.toLocaleString():"–"}</td><td class="num">${fmtB(m.kv)}</td><td>${m.cfg?"✓":"–"}</td><td class="num ${ratio!=null&&!ok?"warn":""}">${ratio==null?"–":ok?"✓":"×"+ratio.toFixed(2)}</td><td class="num">${fmtN(m.dl)}</td></tr>`}).join("");
+ $("#pinfo").textContent=`${(page*PS+1).toLocaleString()}–${Math.min(n,page*PS+PS).toLocaleString()} / ${n.toLocaleString()}`;
+ document.querySelectorAll("#thead th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;sortD=sortK===k?-sortD:(k==="id"?1:-1);sortK=k;table()})}
+function filters(){const t=T[L],uniq=f=>[...new Set(M.map(f).filter(Boolean))];
+ opts($("#ffam"),t.all_fam,uniq(m=>m.fam).sort());opts($("#fq"),t.all_q,[t.unq,...uniq(m=>m.q).flatMap(q=>q.split("+")).filter((v,i,a)=>a.indexOf(v)===i).sort()]);
+ opts($("#fy"),t.all_y,uniq(m=>m.y).sort((a,b)=>b-a));$("#fo").innerHTML=`<option value="">${t.all_o}</option><option value="o">${t.o_orig}</option><option value="c">${t.o_copy}</option>`}
+function render(){kpis();findings();charts();filters();table();const c=I.headline.crawled;$("#crawled").textContent=c?` · ${T[L].crawled} ${c}`:""}
+document.querySelectorAll("#lang button").forEach(b=>b.onclick=()=>{L=b.dataset.l;applyLang()});
+document.querySelectorAll("#theme button").forEach(b=>b.onclick=()=>theme(b.dataset.m));
+["#q","#ffam","#fq","#fy","#fo"].forEach(s=>$(s).addEventListener("input",()=>{page=0;table()}));
+$("#prev").onclick=()=>{page=Math.max(0,page-1);table()};$("#next").onclick=()=>{page++;table()};
+theme(document.documentElement.dataset.theme);
+Promise.all([fetch("data/insights.json").then(r=>r.json()),fetch("data/models.json").then(r=>r.json())]).then(([a,b])=>{I=a;M=b;if(I.dataset_url)$("#dsLink").href=I.dataset_url;applyLang()});
+applyLang();
+</script>
+</body>
+</html>

@@ -1,0 +1,330 @@
+{
+ "headline": {
+  "hub_models": 3206528,
+  "top10k_download_share": 0.9528,
+  "repos_read": 13219,
+  "popular_read": 10222,
+  "popular_readable": 6853,
+  "popular_no_config": 0.1491,
+  "hub_no_config": 0.2688,
+  "median_header_kb": 82.1,
+  "median_fraction_read": 2.1716972971559698e-05,
+  "median_seconds": 0.92,
+  "model_types": 684,
+  "providers": 1735,
+  "released_2026": 2147,
+  "crawled": "2026-11-03"
+ },
+ "repos": 13219,
+ "popular_repos": 10222,
+ "status_popular": {
+  "ok": 0.6704,
+  "no_weights": 0.2694,
+  "legacy_pickle": 0.027,
+  "gated": 0.0191,
+  "error": 0.0093,
+  "timeout": 0.0046,
+  "not_found": 0.0002
+ },
+ "no_weights_kind_popular": {
+  "gguf_only": 0.8539,
+  "onnx_only": 0.0663,
+  "no_weight_files": 0.059,
+  "keras_or_other": 0.0146,
+  "adapter": 0.0062
+ },
+ "trends": [
+  {
+   "year": 2022,
+   "models": 120,
+   "moe": 0.0,
+   "hybrid": 0.058,
+   "latent_attention": 0.0,
+   "gqa": 0.0,
+   "quantized": 0.0,
+   "median_params": 166965137.0,
+   "median_d": 768.0,
+   "median_layers": 12.0,
+   "median_head_dim": 64.0,
+   "median_vocab": 49408.0,
+   "median_kv_bytes_per_token": 36864.0
+  },
+  {
+   "year": 2023,
+   "models": 167,
+   "moe": 0.012,
+   "hybrid": 0.042,
+   "latent_attention": 0.0,
+   "gqa": 0.24,
+   "quantized": 0.012,
+   "median_params": 1418270720.0,
+   "median_d": 2048.0,
+   "median_layers": 24.0,
+   "median_head_dim": 64.0,
+   "median_vocab": 49408.0,
+   "median_kv_bytes_per_token": 122880.0
+  },
+  {
+   "year": 2024,
+   "models": 429,
+   "moe": 0.093,
+   "hybrid": 0.014,
+   "latent_attention": 0.012,
+   "gqa": 0.65,
+   "quantized": 0.056,
+   "median_params": 8030261248.0,
+   "median_d": 4096.0,
+   "median_layers": 32.0,
+   "median_head_dim": 128.0,
+   "median_vocab": 92544.0,
+   "median_kv_bytes_per_token": 131072.0
+  },
+  {
+   "year": 2025,
+   "models": 447,
+   "moe": 0.183,
+   "hybrid": 0.034,
+   "latent_attention": 0.027,
+   "gqa": 0.537,
+   "quantized": 0.094,
+   "median_params": 2128056576.0,
+   "median_d": 2048.0,
+   "median_layers": 28.0,
+   "median_head_dim": 128.0,
+   "median_vocab": 151552.0,
+   "median_kv_bytes_per_token": 98304.0
+  },
+  {
+   "year": 2026,
+   "models": 668,
+   "moe": 0.334,
+   "hybrid": 0.205,
+   "latent_attention": 0.084,
+   "gqa": 0.72,
+   "quantized": 0.21,
+   "median_params": 8397556472.0,
+   "median_d": 2560.0,
+   "median_layers": 32.0,
+   "median_head_dim": 128.0,
+   "median_vocab": 151936.0,
+   "median_kv_bytes_per_token": 65536.0
+  }
+ ],
+ "storage_by_year": [
+  {
+   "year": 2022,
+   "unquantized": 1.0
+  },
+  {
+   "year": 2023,
+   "unquantized": 0.996,
+   "awq": 0.003,
+   "bnb4": 0.001
+  },
+  {
+   "year": 2024,
+   "unquantized": 0.913,
+   "awq": 0.022,
+   "fp8": 0.022,
+   "bnb4": 0.02,
+   "mlx": 0.016,
+   "gptq": 0.004,
+   "int8": 0.002,
+   "compressed-tensors": 0.001
+  },
+  {
+   "year": 2025,
+   "unquantized": 0.843,
+   "fp8": 0.047,
+   "mlx": 0.041,
+   "bnb4": 0.02,
+   "nvfp4": 0.013,
+   "compressed-tensors": 0.012,
+   "awq": 0.011,
+   "int8": 0.004,
+   "mxfp4": 0.004,
+   "gptq": 0.003,
+   "fp8+nvfp4": 0.001,
+   "fp8+int8+nvfp4": 0.001
+  },
+  {
+   "year": 2026,
+   "unquantized": 0.693,
+   "mlx": 0.08,
+   "fp8": 0.065,
+   "nvfp4": 0.035,
+   "compressed-tensors": 0.029,
+   "fp8+nvfp4": 0.026,
+   "int8": 0.026,
+   "gptq": 0.011,
+   "fp8+int8": 0.008,
+   "awq": 0.008,
+   "bnb4": 0.007,
+   "int8+nvfp4": 0.005,
+   "fp8+int8+nvfp4": 0.002,
+   "fp8+mlx+nvfp4": 0.001,
+   "compressed-tensors+fp8+int8+nvfp4": 0.001,
+   "fp8+gptq": 0.0,
+   "bnb4+fp8": 0.0,
+   "compressed-tensors+int8": 0.0,
+   "bnb4+fp8+nvfp4": 0.0,
+   "mxfp4": 0.0
+  }
+ ],
+ "hub_count_by_storage": [
+  {
+   "storage": "unquantized",
+   "repos": 4370,
+   "hub_count_differs": 0.075,
+   "median_true_over_hub": 1.351
+  },
+  {
+   "storage": "mlx",
+   "repos": 245,
+   "hub_count_differs": 0.192,
+   "median_true_over_hub": 1.089
+  },
+  {
+   "storage": "fp8",
+   "repos": 196,
+   "hub_count_differs": 0.122,
+   "median_true_over_hub": 0.833
+  },
+  {
+   "storage": "compressed-tensors",
+   "repos": 81,
+   "hub_count_differs": 0.531,
+   "median_true_over_hub": 1.033
+  },
+  {
+   "storage": "bnb4",
+   "repos": 79,
+   "hub_count_differs": 0.772,
+   "median_true_over_hub": 0.974
+  },
+  {
+   "storage": "nvfp4",
+   "repos": 79,
+   "hub_count_differs": 0.899,
+   "median_true_over_hub": 1.767
+  },
+  {
+   "storage": "awq",
+   "repos": 67,
+   "hub_count_differs": 0.075,
+   "median_true_over_hub": 4.275
+  },
+  {
+   "storage": "fp8+nvfp4",
+   "repos": 45,
+   "hub_count_differs": 1.0,
+   "median_true_over_hub": 1.529
+  },
+  {
+   "storage": "gptq",
+   "repos": 34,
+   "hub_count_differs": 0.353,
+   "median_true_over_hub": 4.828
+  },
+  {
+   "storage": "int8",
+   "repos": 21,
+   "hub_count_differs": 0.286,
+   "median_true_over_hub": 0.944
+  },
+  {
+   "storage": "fp8+int8",
+   "repos": 12,
+   "hub_count_differs": 0.667,
+   "median_true_over_hub": 0.52
+  },
+  {
+   "storage": "mxfp4",
+   "repos": 8,
+   "hub_count_differs": 0.375,
+   "median_true_over_hub": 0.972
+  }
+ ],
+ "no_config_by_library": [
+  {
+   "library": "gliner",
+   "repos": 97,
+   "no_config": 1.0
+  },
+  {
+   "library": "diffusion-single-file",
+   "repos": 156,
+   "no_config": 0.994
+  },
+  {
+   "library": "gguf",
+   "repos": 34,
+   "no_config": 0.941
+  },
+  {
+   "library": "minimax-h3",
+   "repos": 56,
+   "no_config": 0.875
+  },
+  {
+   "library": "diffusers",
+   "repos": 536,
+   "no_config": 0.868
+  },
+  {
+   "library": "open_clip",
+   "repos": 69,
+   "no_config": 0.667
+  },
+  {
+   "library": "stable-baselines3",
+   "repos": 25,
+   "no_config": 0.44
+  },
+  {
+   "library": "pytorch",
+   "repos": 30,
+   "no_config": 0.267
+  },
+  {
+   "library": "(none)",
+   "repos": 1367,
+   "no_config": 0.215
+  },
+  {
+   "library": "mlx",
+   "repos": 165,
+   "no_config": 0.006
+  },
+  {
+   "library": "transformers",
+   "repos": 4667,
+   "no_config": 0.003
+  },
+  {
+   "library": "Model Optimizer",
+   "repos": 41,
+   "no_config": 0.0
+  },
+  {
+   "library": "lerobot",
+   "repos": 41,
+   "no_config": 0.0
+  },
+  {
+   "library": "sentence-transformers",
+   "repos": 362,
+   "no_config": 0.0
+  },
+  {
+   "library": "timm",
+   "repos": 262,
+   "no_config": 0.0
+  },
+  {
+   "library": "vllm",
+   "repos": 61,
+   "no_config": 0.0
+  }
+ ]
+}
