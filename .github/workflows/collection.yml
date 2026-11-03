@@ -1,0 +1,30 @@
+name: HF collection
+
+# Only the last step of "Publish datasets": groups the datasets and the Space into the
+# collection "AI Model Explorer" on your Hugging Face profile. Needs HF_WRITE_TOKEN.
+on:
+  workflow_dispatch:
+    inputs:
+      census_name: { description: "Census dataset name", default: "hub-weight-census" }
+      corpus_name: { description: "Corpus dataset name", default: "manifest-anatomy-corpus" }
+      space_name:  { description: "Space name (blank = none)", default: "ai-model-explorer" }
+
+jobs:
+  collection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HF_TOKEN: ${{ secrets.HF_WRITE_TOKEN }}
+    defaults:
+      run:
+        working-directory: research/hub-census
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install huggingface_hub
+      - name: Collection on the profile
+        run: |
+          OWNER=$(python -c 'from huggingface_hub import HfApi; print(HfApi().whoami()["name"])')
+          SPACE=""; [ -n "${{ inputs.space_name }}" ] && SPACE="space:$OWNER/${{ inputs.space_name }}"
+          python collection.py "$OWNER" $SPACE "dataset:$OWNER/${{ inputs.census_name }}" "dataset:$OWNER/${{ inputs.corpus_name }}"
