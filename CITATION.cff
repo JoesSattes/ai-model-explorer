@@ -13,7 +13,7 @@ url: "https://joessattes.github.io/ai-model-explorer/"
 license: MIT
 version: 1.0.0
 date-released: 2026-11-03
-keywords: [AI model explorer, model visualization, TFLite, LiteRT, edge AI, quantization, transformer, Hugging Face]
+keywords: [model architecture, safetensors, Hugging Face Hub, model census, mixture-of-experts, quantization, KV cache, edge AI]
 preferred-citation:
   type: article
   status: preprint
@@ -23,5 +23,6 @@ preferred-citation:
       given-names: Sattaya
       affiliation: "Independent Researcher, Bangkok, Thailand"
   year: 2026
-  url: "https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy"
-  repository: "https://github.com/JoesSattes/ai-model-explorer/tree/main/paper"
+  url: "https://www.researchgate.net/publication/417293353"
+  repository: "https://github.com/JoesSattes/ai-model-explorer/blob/main/paper/manifest-anatomy-singkul-2026.pdf"
+  notes: "arXiv identifier to be added when announced."

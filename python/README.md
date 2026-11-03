@@ -10,7 +10,7 @@
   <a href="https://joessattes.github.io/ai-model-explorer/en/">Web app</a> ·
   <a href="https://github.com/JoesSattes/ai-model-explorer">GitHub</a> ·
   <a href="https://github.com/JoesSattes/ai-model-explorer/blob/main/docs/usage.md">Docs</a> ·
-  <a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy">Paper</a>
+  <a href="https://www.researchgate.net/publication/417293353">Paper</a>
 </p>
 
 `ai-model-explorer` reads the safetensors header of a model (tensor names, shapes and types, a median of 80 KB across
@@ -110,6 +110,6 @@ is installed, large manifests are analyzed with it (DeepSeek-V3: about 5 s inste
 
 ## Citation
 Sattaya Singkul. 2026. *Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories.*
-Preprint, [ResearchGate](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy).
+Preprint, [ResearchGate](https://www.researchgate.net/publication/417293353).
 
 MIT License © 2026 Sattaya Singkul

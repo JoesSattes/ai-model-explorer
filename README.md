@@ -10,7 +10,7 @@
   <a href="https://pypi.org/project/ai-model-explorer/"><img src="https://img.shields.io/pypi/v/ai-model-explorer?color=8b96fa" alt="PyPI"></a>
   <a href="https://pypi.org/project/ai-model-explorer/"><img src="https://img.shields.io/pypi/pyversions/ai-model-explorer?color=8b96fa" alt="Python"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-ff6bb5" alt="MIT license"></a>
-  <a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy"><img src="https://img.shields.io/badge/paper-ResearchGate-ff6bb5" alt="Paper"></a>
+  <a href="https://www.researchgate.net/publication/417293353"><img src="https://img.shields.io/badge/paper-ResearchGate-ff6bb5" alt="Paper"></a>
 </p>
 
 <p align="center">
@@ -20,7 +20,7 @@
   <a href="#hub-weight-census">Hub census</a> ·
   <a href="docs/usage.md">Docs</a> ·
   <a href="docs/how-it-works.md">How it works</a> ·
-  <a href="https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy">Paper</a>
+  <a href="https://www.researchgate.net/publication/417293353">Paper</a>
 </p>
 
 ![AI Model Explorer: Whisper split into its parts with real sizes](og.png)
@@ -163,7 +163,7 @@ Inputs: a Hugging Face repo id or URL, `.safetensors` files, `.tflite` (LiteRT) 
 | 191 popular Hugging Face checkpoints (DeepSeek-V3, Kimi K2, Qwen3, Llama 3.3, gpt-oss, Gemma 3, Whisper, SAM, SDXL, Wan, …) | totals agree with the Hub's own count for 149 of the 158 transformers-style checkpoints that show a count (allowing for the 0-d scalars the Hub skips); of the 9 differences, 5 are packed 4-bit releases (3 NVFP4, 2 bitsandbytes) where the Hub counts packed storage, 2 are side files the Hub does not count (a speech codec, Phi-4-multimodal LoRA folders), 1 is FP8 DeepSeek-V3.1, whose Hub count includes block scales, and 1 is a robotics policy off by 72 elements (unexplained); median 79 KB read per repo |
 | Hub Weight Census: 5,016 readable popular repos with a Hub count | the Hub's count differs from the weights for 12.2% (611); breakdown by storage format on the [census page](https://joessattes.github.io/ai-model-explorer/census/) |
 
-Method and full results: [docs/how-it-works.md](docs/how-it-works.md) and the [paper](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy).
+Method and full results: [docs/how-it-works.md](docs/how-it-works.md) and the [paper](https://www.researchgate.net/publication/417293353).
 Run the Hub benchmark yourself at [bench.html](https://joessattes.github.io/ai-model-explorer/bench.html).
 
 ## Compared with other tools
@@ -218,7 +218,7 @@ with an MoE label) or `--gguf` (llama.cpp's tensor-name table, built by `python 
 Hub benchmark: `node research/realbench.js research/data/hub-bench-191.jsonl.gz corpus.jsonl`.
 
 ## Citation
-If you use AI Model Explorer or its recovery method, please cite the paper ([ResearchGate](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy), [PDF](paper/manifest-anatomy-singkul-2026.pdf)):
+If you use AI Model Explorer or its recovery method, please cite the paper ([ResearchGate](https://www.researchgate.net/publication/417293353), [PDF](paper/manifest-anatomy-singkul-2026.pdf)):
 
 ```bibtex
 @misc{singkul2026reading,
@@ -227,7 +227,7 @@ If you use AI Model Explorer or its recovery method, please cite the paper ([Res
   year   = {2026},
   note   = {Preprint},
   howpublished = {ResearchGate},
-  url    = {https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy}
+  url    = {https://www.researchgate.net/publication/417293353}
 }
 ```
 

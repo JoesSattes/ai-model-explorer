@@ -5,8 +5,7 @@ parameters or format from the header); the corpus labels every tensor name with 
 """
 
 PAPER = "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories"
-PAPER_URL = ("https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_"
-             "Manifest-Only_Recovery_of_Neural_Network_Anatomy")
+PAPER_URL = "https://www.researchgate.net/publication/417293353"
 PDF_URL = "https://github.com/JoesSattes/ai-model-explorer/blob/main/paper/manifest-anatomy-singkul-2026.pdf"
 
 COMMON = {
@@ -33,7 +32,7 @@ CITATION = f"""## Citation
 If you use this dataset, please cite:
 
 ```bibtex
-@misc{{singkul2026manifest,
+@misc{{singkul2026reading,
   title  = {{{PAPER}}},
   author = {{Singkul, Sattaya}},
   year   = {{2026}},
