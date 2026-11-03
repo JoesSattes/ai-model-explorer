@@ -9,7 +9,7 @@ CARD = """---
 license: mit
 pretty_name: Hub Weight Census
 tags: [model-anatomy, safetensors, huggingface-hub, census]
-size_categories: [1K<n<10K]
+size_categories: [{size}]
 ---
 
 # Hub Weight Census
@@ -19,7 +19,9 @@ safetensors headers (a median of {hdr} per repo, about {frac} of the weight byte
 tensor names, shapes and dtypes with [ai-model-explorer](https://github.com/JoesSattes/ai-model-explorer), then compare
 it with the repo's config.json and with the Hub's own parameter count.
 
-Method: S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy*, 2026.
+Method: S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Recovery of Neural Network Anatomy*, 2026
+([paper](https://www.researchgate.net/publication/417293353_Reading_the_Architecture_off_the_Weights_Manifest-Only_Recovery_of_Neural_Network_Anatomy)).
+Explore it on the web: https://joessattes.github.io/ai-model-explorer/census/
 
 ## Sample ({date})
 
@@ -51,7 +53,25 @@ for readable repos: `family_manifest` (weights only), `family_config`, `params`,
 - **Personal data.** None. Repository ids and authors are public account names.
 - **License.** MIT for this dataset; the models described keep their own licenses.
 
-## Summary
+## Findings
+
+{findings}
+
+![Architecture by release year](insights/trends.png)
+![The Hub's parameter count by storage format](insights/storage.png)
+
+## What it can be used for
+
+- **Architecture trends** with evidence from the weights themselves: mixture of experts, hybrid state-space stacks,
+  grouped-query and latent attention, head size, vocabulary, by release year and provider.
+- **Metadata quality**: repos whose declared config disagrees with the weights, and formats where the Hub's own
+  parameter count is not the model's parameter count.
+- **Deployment planning at scale**: stored precision, KV-cache bytes per token and parameter counts for thousands of
+  checkpoints without downloading one.
+- **Benchmarking** architecture-recovery and model-search tools against `config_hp` and `family_config`.
+- **A snapshot to compare against**: re-run the census later (the code and the frozen rules are public) to see what changed.
+
+## Summary tables
 
 {summary}
 """
@@ -63,14 +83,19 @@ def main(repo, out="out"):
     summ = open(os.path.join(out, "report", "summary.md")).read()
     hdr = next((l.split("**")[1] for l in summ.splitlines() if l.startswith("- header bytes")), "?")
     frac = next((l.split("**")[1] for l in summ.splitlines() if l.startswith("- fraction")), "?")
-    card = CARD.format(hdr=hdr, frac=frac, date=datetime.date.today().isoformat(),
+    ins = os.path.join(out, "insights", "insights.md")
+    findings = open(ins).read().split("\n", 2)[-1] if os.path.exists(ins) else "(run insights.py)"
+    n = info.get("sample", 0)
+    size = "1K<n<10K" if n < 10_000 else "10K<n<100K" if n < 100_000 else "100K<n<1M"
+    card = CARD.format(size=size, hdr=hdr, frac=frac, date=datetime.date.today().isoformat(), findings=findings,
                        sample="\n".join(f"- {k}: {v}" for k, v in info.items()), since=info.get("frontier_since") or "-",
                        summary=summ.split("\n", 2)[-1])
     open(os.path.join(out, "README.md"), "w").write(card)
     api = HfApi(token=os.environ.get("HF_TOKEN"))
     api.create_repo(repo, repo_type="dataset", exist_ok=True)
     api.upload_folder(repo_id=repo, repo_type="dataset", folder_path=out,
-                      allow_patterns=["README.md", "census.jsonl", "sample.parquet", "frame_stats.json", "sample_info.json", "report/*"],
+                      allow_patterns=["README.md", "census.jsonl", "census_manifests.jsonl.gz", "sample.parquet", "frame_stats.json",
+                                      "sample_info.json", "report/*", "insights/*"],
                       commit_message="census run " + datetime.date.today().isoformat())
     print("published https://huggingface.co/datasets/" + repo)
 

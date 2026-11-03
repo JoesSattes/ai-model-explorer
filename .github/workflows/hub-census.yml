@@ -54,7 +54,8 @@ jobs:
         if: always()
         run: |
           python summarize.py
-          cat out/report/summary.md >> "$GITHUB_STEP_SUMMARY"
+          python insights.py
+          cat out/insights/insights.md out/report/summary.md >> "$GITHUB_STEP_SUMMARY"
       - name: Publish dataset
         if: ${{ inputs.publish != '' }}
         env:
@@ -72,4 +73,5 @@ jobs:
             research/hub-census/out/census.jsonl
             research/hub-census/out/census_manifests.jsonl.gz
             research/hub-census/out/report/
+            research/hub-census/out/insights/
           retention-days: 90
