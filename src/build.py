@@ -22,10 +22,10 @@ I18N = json.loads(subprocess.run(["node", "-e", "global.window={};require('./i18
 
 PAGES = {
     "th": dict(out="../index.html", root="", canon=BASE, alt="en/", ogloc="th_TH", ogalt="en_US",
-               title="AI Model Explorer — ดูโครงสร้างโมเดล AI จาก Hugging Face โดยไม่ต้องโหลด weight",
+               title="AI Model Explorer | ดูโครงสร้างโมเดลบน Hugging Face ไม่ต้องโหลด",
                desc="วางชื่อ repo บน Hugging Face แล้วเห็นโครงสร้างโมเดลแยกเป็นส่วน: layer, attention, MoE, SSM, จำนวน parameter และ precision อ่านแค่ header ของ safetensors ไม่โหลด weight ใช้ฟรี ภาษาไทยและอังกฤษ"),
     "en": dict(out="../en/index.html", root="../", canon=BASE + "en/", alt="../", ogloc="en_US", ogalt="th_TH",
-               title="AI Model Explorer — See Any Hugging Face Model's Architecture, No Download",
+               title="AI Model Explorer | See Inside Any Hugging Face Model",
                desc="Paste a Hugging Face repo and see its architecture split into parts: layers, attention, MoE, SSM, parameter counts and precision (FP8, NVFP4, GPTQ). Reads only the safetensors header, never the weights. Free, open source."),
 }
 
