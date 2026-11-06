@@ -92,7 +92,17 @@ m.macs()                           # rough multiply-adds: encoder per input, dec
 m.size(4, {"model.decoder": 8})    # file size with the encoder at 4-bit and the decoder at 8-bit
 ```
 
-`explore()` returns a `Model`; `inspect()` returns the raw dict it wraps. Every field and method is described in the
+`.tflite` (LiteRT) files open the same way, so you can check what a quantization recipe actually stored:
+
+```python
+t = explore("export/")             # a folder with encoder.tflite and decoder.tflite, or one .tflite file
+t.precision()                      # parameters per stored type, e.g. {'INT4': ..., 'INT8': ..., 'FLOAT32': ...}
+t.layers()                         # each layer: params, bytes on disk, stored type(s)
+t.macs()                           # multiply-adds counted from the graph: encoder per input, decoder per call
+t.plot("export.png")               # bytes per layer, coloured by stored type
+```
+
+`explore()` returns a `Model` (`TfliteModel` for .tflite); `inspect()` returns the raw dict it wraps. Every field and method is described in the
 [usage guide](https://github.com/JoesSattes/ai-model-explorer/blob/main/docs/usage.md).
 
 ## Why it is useful

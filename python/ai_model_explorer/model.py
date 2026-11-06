@@ -344,6 +344,10 @@ def explore(model, token: Optional[str] = None, config: Optional[dict] = None, i
             cache: bool = True) -> Model:
     """Inspect a Hugging Face repo or local .safetensors and return a Model you can analyse, plot and report.
     Headers are cached per repo commit (~/.cache/ai-model-explorer), so a second look is instant."""
+    from .tflite import TfliteModel, tflite_files
+    tf = tflite_files(model)
+    if tf:
+        return TfliteModel(tf)
     from .api import inspect
     return Model(inspect(model, token=token, config=config, include_tensors=include_tensors, cache=cache))
 
