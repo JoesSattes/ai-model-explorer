@@ -54,7 +54,8 @@ def plot_model(model, path: Optional[str] = None, theme: str = "light", width: f
 
     # title
     q = model.data.get("quantization") or {}
-    sub = f"{model.family} · {fmt_n(model.params)} parameters · {fmt_b(model.stored_bytes)}" + (f" · {', '.join(q)}" if q else "")
+    pn = f"{fmt_n(model.params)} parameters" + (f" ({fmt_n(model.distinct_params)} distinct)" if model.duplicate_head_params else "")
+    sub = f"{model.family} · {pn} · {fmt_b(model.stored_bytes)}" + (f" · {', '.join(q)}" if q else "")
     act = model.active_params
     if model.hp.get("experts") and act:
         sub += f" · {fmt_n(act)} active per token"
@@ -62,7 +63,10 @@ def plot_model(model, path: Optional[str] = None, theme: str = "light", width: f
     ax.text(0.35, H - 0.45, title, fontsize=17, fontweight="bold", color=T["ink"], va="center")
     ax.text(0.35, H - 0.88, sub, fontsize=10.5, color=T["soft"], va="center")
     hp = model.hp
-    bits = [f"{hp['layers']} layers" if hp.get("layers") else None, f"width {hp['d']}" if hp.get("d") else None,
+    encs = [c for c in model.components if c.get("role") == "encoder" and c.get("layers")]
+    lay = (f"{encs[0]['layers']} encoder + {hp['layers']} decoder layers" if model.family == "encoder-decoder" and encs and hp.get("layers")
+           else f"{hp['layers']} layers" if hp.get("layers") else None)
+    bits = [lay, f"width {hp['d']}" if hp.get("d") else None,
             f"{hp['heads']} heads / {hp['kv_heads']} KV" if hp.get("heads") and hp.get("kv_heads") else None,
             f"{hp['experts']} experts, {hp['experts_per_token']} per token" if hp.get("experts") and hp.get("experts_per_token") else None,
             f"vocab {hp['vocab']:,}" if hp.get("vocab") else None]
@@ -85,7 +89,8 @@ def plot_model(model, path: Optional[str] = None, theme: str = "light", width: f
         fit = lambda t, cw: t if len(t) <= int((bw - 0.3) / cw) else "…" + t[-max(int((bw - 0.3) / cw) - 1, 4):]
         name = fit(name, 0.092)
         ax.text(x + 0.18, y0 + box_h - 0.32, name, fontsize=10, fontweight="bold", color=T["ink"], va="center")
-        meta = f"{c.get('role')} · {fmt_n(c.get('params'))} params" + (f" · d={c['d']}" if c.get("d") and bw > 3 else "")
+        role = "decoder" if model.family == "encoder-decoder" and c.get("role") == "backbone" else c.get("role")
+        meta = f"{role} · {fmt_n(c.get('params'))} params" + (f" · d={c['d']}" if c.get("d") and bw > 3 else "")
         meta = meta if len(meta) <= int((bw - 0.3) / 0.072) else meta[:int((bw - 0.3) / 0.072)]
         ax.text(x + 0.18, y0 + box_h - 0.62, meta, fontsize=8.5, color=T["soft"], va="center")
         for j, st in enumerate((c.get("stacks") or [])[:stacks_max]):

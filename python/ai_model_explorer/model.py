@@ -78,7 +78,14 @@ class Model:
 
     def summary(self) -> str:
         from .api import summary
-        return summary(self.data)
+        out = summary(self.data)
+        if self.duplicate_head_params:
+            out = out.replace(f"{fmt_n(self.params)} parameters", f"{fmt_n(self.params)} parameters stored "
+                              f"({fmt_n(self.distinct_params)} distinct; the tied head is stored twice)", 1)
+        repo = (self.data.get("source") or {}).get("repo")
+        if repo:
+            out += f"\n  open in the explorer: https://joessattes.github.io/ai-model-explorer/en/?ref=pip#hf={repo}"
+        return out
 
     # ------------------------------------------------------------------ analysis
     def breakdown(self, by: str = "kind") -> List[dict]:
@@ -125,6 +132,104 @@ class Model:
             return None
         return int(2 * layers * kv * hd * bits / 8)
 
+    # ------------------------------------------------------------------ encoder-decoder helpers
+    def _cfg(self, *keys, default=None):
+        c = self.config or {}
+        for k in keys:
+            if c.get(k):
+                return c[k]
+        return default
+
+    @property
+    def duplicate_head_params(self) -> int:
+        """Parameters of an output head that config.json ties to the embedding but the file stores again (Whisper's
+        proj_out). A converter that shares the table (LiteRT, ONNX) keeps one copy."""
+        hp, cfg = self.hp, self.config or {}
+        head = next((r for r in self.breakdown("kind") if r["key"] == "head"), None)
+        if not head or hp.get("tie") or not cfg or cfg.get("tie_word_embeddings", True) is False:
+            return 0
+        return head["params"] if hp.get("vocab") and hp.get("d") and head["params"] == hp["vocab"] * hp["d"] else 0
+
+    @property
+    def distinct_params(self) -> int:
+        """Parameters counted once: the stored total minus a duplicated tied head."""
+        return self.params - self.duplicate_head_params
+
+    def _encdec(self):
+        enc = next((c for c in self.components if c.get("role") == "encoder"), None)
+        dec = next((c for c in self.components if c.get("role") == "backbone"), None)
+        return (enc, dec) if self.family == "encoder-decoder" and enc and dec else (None, None)
+
+    def encoder_input_length(self) -> Optional[int]:
+        """Positions the encoder sees per input (Whisper: 1500 frames for 30 s of audio)."""
+        enc, _ = self._encdec()
+        if not enc:
+            return None
+        n = self._cfg("max_source_positions")
+        if n:
+            return int(n)
+        e, d = (enc.get("kinds") or {}).get("embed"), enc.get("d")
+        return int(e // d) if e and d else None
+
+    def split(self, converter_layout: bool = True) -> Optional[dict]:
+        """Share of the distinct parameters in the encoder and the decoder. With converter_layout, the cross-attention
+        K/V projections count with the encoder, because exporters (LiteRT) run them once per input on the encoder side."""
+        enc, dec = self._encdec()
+        if not enc:
+            return None
+        tot = self.distinct_params or 1
+        e = enc.get("params") or 0
+        kv = 0
+        if converter_layout:
+            d, L = dec.get("d") or 0, dec.get("layers") or 0
+            kv = L * (2 * d * d + d)   # K and V weights of the cross-attention, V bias (Whisper's K has none)
+        e2 = e + kv
+        return {"encoder": e2 / tot, "decoder": 1 - e2 / tot, "encoder_params": e2, "decoder_params": tot - e2,
+                "cross_kv_params_moved": kv}
+
+    def cross_kv_bytes(self, bits: int = 16) -> Optional[int]:
+        """Cross-attention K/V the decoder reads, computed once per input: decoder layers x 2 x encoder length x width."""
+        enc, dec = self._encdec()
+        S = self.encoder_input_length()
+        if not (enc and S):
+            return None
+        return int((dec.get("layers") or 0) * 2 * S * (dec.get("d") or 0) * bits / 8)
+
+    def macs(self, context: int = 1) -> Optional[dict]:
+        """Rough multiply-accumulates from the shapes: encoder per input and decoder per generated token.
+        encoder: L_e (4 S d^2 + 2 S^2 d + 2 S d F) + conv params x S, plus the decoder's cross K/V (L_d 2 S d^2) once per input;
+        decoder: L_d (4 d^2 + 2 n d + 2 d^2 + 2 S d + 2 d F) + V d, with n = context so far.
+        Attention scores are included; activations, softmax and norms are not, so a profiler will read somewhat differently."""
+        enc, dec = self._encdec()
+        S = self.encoder_input_length()
+        if not (enc and S):
+            return None
+        de, Le = enc.get("d"), enc.get("layers") or 0
+        dd, Ld = dec.get("d"), dec.get("layers") or 0
+        Fe = self._cfg("encoder_ffn_dim", default=4 * de)
+        Fd = self._cfg("decoder_ffn_dim", default=4 * dd)
+        V = self.hp.get("vocab") or 0
+        conv = (enc.get("kinds") or {}).get("conv", 0) * S
+        e = Le * (4 * S * de * de + 2 * S * S * de + 2 * S * de * Fe) + conv + Ld * 2 * S * dd * de
+        t = Ld * (4 * dd * dd + 2 * context * dd + 2 * dd * dd + 2 * S * dd + 2 * dd * Fd) + V * dd
+        return {"encoder_per_input": int(e), "decoder_per_token": int(t), "encoder_length": S, "context": context}
+
+    def size(self, bits: float = 8, overrides: Optional[dict] = None) -> int:
+        """File size at a mixed precision, in bytes. `bits` applies to every weight matrix; `overrides` maps a
+        component id ("model.decoder") or a part type ("embed", "head", "conv", "cross", "attn", "ffn") to its own bits
+        (a part type wins over a component). Norm vectors stay 32-bit and a duplicated tied head is counted once.
+        Per-channel scales and file overhead are not included."""
+        ov = overrides or {}
+        tot = 0.0
+        for c in self.components:
+            cb = ov.get(c.get("id"), bits)
+            for k, n in (c.get("kinds") or {}).items():
+                if k == "head":
+                    n -= self.duplicate_head_params
+                b = 32 if k == "norm" else ov.get(k, cb)
+                tot += n * b / 8
+        return int(tot)
+
     def memory(self, context: int = 8192, batch: int = 1, weight_bits: Optional[float] = None, kv_bits: int = 16) -> dict:
         """Rough memory to run the model: weights at a chosen precision (default: as stored) plus the KV cache for
         `batch` sequences of `context` tokens. Activations and runtime overhead are not included."""
@@ -140,7 +245,8 @@ class Model:
         q = self.data.get("quantization") or {}
         store = f"stored as {', '.join(q)}" if q else "stored unquantized"
         out.append(f"{fmt_n(self.params)} parameters, {fmt_b(self.stored_bytes)} of weights {store}. "
-                   f"At 16-bit that would be {fmt_b(self.params * 2)}, at 8-bit {fmt_b(self.params)}, at 4-bit {fmt_b(self.params / 2)}.")
+                   f"At 16-bit that would be {fmt_b(self.distinct_params * 2)}, at 8-bit {fmt_b(self.distinct_params)}, at 4-bit {fmt_b(self.distinct_params / 2)}"
+                   + (" (head counted once)." if self.duplicate_head_params else "."))
         if self.mtp_params:
             out.append(f"Includes a multi-token-prediction layer of {fmt_n(self.mtp_params)} parameters, used for speculative "
                        f"decoding; the main model is {fmt_n(self.params - self.mtp_params)}.")
@@ -177,15 +283,35 @@ class Model:
             gqa = ""
             if hp.get("heads") and hp.get("kv_heads") and hp["heads"] > hp["kv_heads"] and not lat:
                 gqa = f" Grouped-query attention ({hp['heads']} query heads share {hp['kv_heads']} KV heads) makes the cache {hp['heads'] // hp['kv_heads']}× smaller than full multi-head attention."
-            out.append(f"KV cache{lat}: {fmt_b(kvt)} per token at 16-bit, so {fmt_b(kvt * 32768)} for one 32k-token sequence "
-                       f"and {fmt_b(kvt * 131072)} at 128k.{gqa}")
+            tmax = self._cfg("max_target_positions") if self.family == "encoder-decoder" else None
+            if tmax:
+                out.append(f"Decoder self-attention KV cache: {fmt_b(kvt)} per token at 16-bit, {fmt_b(kvt * tmax)} at the "
+                           f"{tmax}-token limit.{gqa}")
+            else:
+                out.append(f"KV cache{lat}: {fmt_b(kvt)} per token at 16-bit, so {fmt_b(kvt * 32768)} for one 32k-token sequence "
+                           f"and {fmt_b(kvt * 131072)} at 128k.{gqa}")
         if hp.get("ssm_layers"):
             out.append(f"Hybrid stack: {hp['ssm_layers']} state-space / linear-attention layers keep a fixed-size state, and only "
                        f"{hp.get('attn_layers', 0)} attention layers grow a KV cache with context length.")
         comps = [c for c in self.components if c.get("role") not in ("backbone",)]
         if comps:
             parts = "; ".join(f"{c.get('role')} {c.get('id')} ({fmt_n(c.get('params'))})" for c in comps[:4])
-            out.append(f"Besides the backbone: {parts}.")
+            if self.family == "encoder-decoder" and len(comps) == 1:
+                out.append(f"Encoder {comps[0].get('id')} ({fmt_n(comps[0].get('params'))}) feeds the decoder through cross-attention.")
+            else:
+                out.append(f"Besides the {'decoder' if self.family == 'encoder-decoder' else 'backbone'}: {parts}.")
+        sp, ckv, mc = self.split(), self.cross_kv_bytes(), self.macs()
+        if sp:
+            raw = self.split(converter_layout=False)
+            out.append(f"Encoder {sp['encoder']:.0%} / decoder {sp['decoder']:.0%} of the distinct weights when the cross-attention "
+                       f"K/V projections run with the encoder, as an exported model does ({raw['encoder']:.0%} / {raw['decoder']:.0%} by module).")
+        if ckv:
+            out.append(f"Cross-attention K/V: computed once per input ({self.encoder_input_length()} encoder positions), "
+                       f"{fmt_b(ckv)} at 16-bit, then read by every decoder step.")
+        if mc:
+            out.append(f"Compute: about {mc['encoder_per_input'] / 1e9:.0f} G multiply-adds for the encoder per input and "
+                       f"{mc['decoder_per_token'] / 1e6:.0f} M per decoder token. The decoder holds "
+                       f"{(sp or {}).get('decoder', 0):.0%} of the weights but runs once per token; time the two before choosing what to squeeze.")
         chk = self.data.get("config_check") or {}
         bad = [k for k, v in chk.items() if isinstance(v, dict) and v.get("checked") and v.get("consistent") is False]
         if bad:
@@ -196,6 +322,9 @@ class Model:
             out.append("No config.json: head counts are estimates from shapes.")
         for e in self.data.get("evidence") or []:
             out.append("Note: " + e)
+        repo = (self.data.get("source") or {}).get("repo")
+        if repo:
+            out.append(f"Open it in the explorer: https://joessattes.github.io/ai-model-explorer/en/?ref=pip#hf={repo}")
         return out
 
     # ------------------------------------------------------------------ output

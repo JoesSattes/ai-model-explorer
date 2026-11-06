@@ -81,6 +81,17 @@ diff("Qwen/Qwen3-8B", "Qwen/Qwen3-8B-FP8")         # [{'field': 'quantization', 
 rows = scan(open("repos.txt").read().split())      # one dict per repo
 ```
 
+Encoder-decoder models (Whisper and other speech or translation models) have a few extra helpers:
+
+```python
+m = explore("biodatlab/distill-whisper-th-medium")
+m.distinct_params                  # head counted once when config.json ties it but the file stores a copy
+m.split()                          # encoder / decoder share; cross-attention K/V counted with the encoder, as exports do
+m.cross_kv_bytes()                 # cross-attention K/V computed once per input (16-bit)
+m.macs()                           # rough multiply-adds: encoder per input, decoder per token
+m.size(4, {"model.decoder": 8})    # file size with the encoder at 4-bit and the decoder at 8-bit
+```
+
 `explore()` returns a `Model`; `inspect()` returns the raw dict it wraps. Every field and method is described in the
 [usage guide](https://github.com/JoesSattes/ai-model-explorer/blob/main/docs/usage.md).
 
