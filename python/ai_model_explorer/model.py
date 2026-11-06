@@ -165,6 +165,12 @@ class Model:
                 vocab = emb["share"] + (head["share"] if head else 0)
                 out.append(f"Embeddings take {emb['share']:.0%} of the model ({fmt_n(emb['params'])}) and the output head is a "
                            f"separate matrix, so the vocabulary costs {vocab:.0%} in total, a large fixed cost on small devices.")
+                cfg = self.config or {}
+                if head and cfg and cfg.get("tie_word_embeddings", True) and hp.get("vocab") and hp.get("d") \
+                        and head["params"] == hp["vocab"] * hp["d"]:
+                    out.append(f"config.json ties the output head to the embedding, yet this file stores the head as its own copy: "
+                               f"{fmt_n(head['params'])} are stored twice, so the model has {fmt_n(self.params - head['params'])} "
+                               f"distinct parameters. A converter that shares the table (LiteRT, ONNX) counts the smaller number.")
         kvt = self.kv_cache_bytes_per_token()
         if kvt:
             lat = " (compressed latent attention)" if (self.config or {}).get("kv_lora_rank") else ""

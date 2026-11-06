@@ -74,3 +74,32 @@ def test_census_offline(llama):
     r = tools.census(m, rows=rows)
     assert r["popular_models"] == 2                    # the dual encoder is not a language model
     assert r["nearest"][0]["id"] == "a/x" and r["page"] is None
+
+
+def test_whisper_head_stored_beside_decoder(tmp_path):
+    """Whisper with proj_out stored at the root: the decoder stays the backbone (vocab, layers and KV cache from the decoder)."""
+    d, f, v, el, dl, pos = 512, 2048, 2000, 6, 2, 1500
+    t = {"model.encoder.conv1.weight": [d, 80, 3], "model.encoder.conv2.weight": [d, d, 3],
+         "model.encoder.embed_positions.weight": [pos, d], "model.encoder.layer_norm.weight": [d],
+         "model.decoder.embed_tokens.weight": [v, d], "model.decoder.embed_positions.weight": [448, d],
+         "model.decoder.layer_norm.weight": [d], "proj_out.weight": [v, d]}
+    def attn(p):
+        t.update({p + ".q_proj.weight": [d, d], p + ".k_proj.weight": [d, d], p + ".v_proj.weight": [d, d], p + ".out_proj.weight": [d, d]})
+    for side, n in (("encoder", el), ("decoder", dl)):
+        for i in range(n):
+            p = f"model.{side}.layers.{i}"
+            attn(p + ".self_attn")
+            if side == "decoder":
+                attn(p + ".encoder_attn")
+                t[p + ".encoder_attn_layer_norm.weight"] = [d]
+            t.update({p + ".self_attn_layer_norm.weight": [d], p + ".final_layer_norm.weight": [d],
+                      p + ".fc1.weight": [f, d], p + ".fc2.weight": [d, f]})
+    _write(tmp_path / "model.safetensors", t)
+    (tmp_path / "config.json").write_text(json.dumps({"model_type": "whisper", "architectures": ["WhisperForConditionalGeneration"],
+        "d_model": d, "encoder_layers": el, "decoder_layers": dl, "encoder_attention_heads": 8, "decoder_attention_heads": 8,
+        "encoder_ffn_dim": f, "decoder_ffn_dim": f, "vocab_size": v, "max_source_positions": pos, "num_mel_bins": 80}))
+    m = ame.explore(str(tmp_path))
+    assert m.family == "encoder-decoder"
+    assert m.hp["vocab"] == v and m.hp["layers"] == dl
+    assert m.kv_cache_bytes_per_token() == 2 * dl * d * 2
+    assert any("stored twice" in s for s in m.insights())

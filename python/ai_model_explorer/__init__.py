@@ -11,7 +11,7 @@
 
 Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories", 2026.
 """
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 from .api import inspect, summary  # noqa: E402
 from .model import Model, compare, compare_table, explore  # noqa: E402
