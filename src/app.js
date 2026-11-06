@@ -552,7 +552,7 @@ function renderConcepts() {
   $("#c2p").textContent = t("c_attn_p", {h: m.heads || (L && L.regions.self && L.regions.self.q ? "?" : "?")});
   $("#c3p").textContent = t("c_ffn_p", {d: s.d.toLocaleString(), f: (m.ffn || 4 * s.d).toLocaleString(), share});
   $("#c4p").textContent = M.A.comps.decoder ? t("c_kv_p") : t("c_kv_p_enc");
-  $("#c5p").textContent = m.tie ? t("c_tie_p_yes", {v: m.vocab ? m.vocab.toLocaleString() : "V", d: s.d}) : t("c_tie_p_no");
+  $("#c5p").textContent = m.tie ? t("c_tie_p_yes", {v: m.vocab ? m.vocab.toLocaleString() : "V", d: s.d}) : M.cfg && M.cfg.tie_word_embeddings !== false && m.vocab ? t("c_tie_p_dup", {v: m.vocab.toLocaleString(), d: s.d}) : t("c_tie_p_no");
   $("#c6p").textContent = t("c_seam_p");
   $("#cFfnD").textContent = s.d; $("#cFfnF").textContent = m.ffn || 4 * s.d;
 }

@@ -481,6 +481,7 @@ window.I18N = {
   c_kv_p_enc: ["โมเดลนี้เป็น encoder-only: รันทั้ง input ครั้งเดียว ไม่มี KV cache · ต่างจาก decoder ที่ต้องวนทีละ token", "This model is encoder-only: one pass over the whole input, no KV cache — unlike a decoder that loops token by token."],
   c_tie_t: ["Tied embedding", "Tied embedding"], c_tie_p_yes: ["ตารางเดียวใช้สองทาง: ขาเข้าหยิบแถวเดียว ขาออกคูณทั้งตาราง ({v} × {d}) · ต้องตัดสินใจ precision ทั้งก้อน", "One table used twice: the input picks one row, the output multiplies the whole table ({v} × {d}). Its precision is one decision."],
   c_tie_p_no: ["โมเดลนี้ไม่ได้ tie: ตารางขาเข้ากับขาออกแยกกัน (เก็บสองก้อน)", "This model does not tie: input and output tables are separate (stored twice)."],
+  c_tie_p_dup: ["config.json บอกว่า tie แต่ไฟล์นี้เก็บตารางขาออกแยกไว้อีกชุด ({v} × {d}) · ตอนแปลงไป LiteRT/ONNX จะเหลือชุดเดียว จำนวน weight จริงจึงน้อยกว่าที่นับจากไฟล์", "config.json ties the head, yet this file stores the output table again ({v} × {d}). A LiteRT/ONNX export keeps one copy, so the real weight count is lower than the file's."],
   c_seam_t: ["Seams", "Seams"], c_seam_p: ["จุดแปลง float ↔ int ทุกครั้งที่ op หนึ่งรับ int ไม่ได้ จุดแปลงเยอะ = งานเพิ่ม = ไฟล์เล็กลงแต่ไม่เร็วขึ้น", "A float ↔ int conversion wherever an op can't take ints. Many seams = extra work = a smaller file that isn't faster."],
   q_eyebrow: ["ลองเอง · quantization playground", "Try it · quantization playground"], q_h: ["ปัด 64 weights ให้เหลือน้อยระดับ", "Round 64 weights to fewer levels"],
   q_bits: ["bits", "bits"], q_out_add: ["+ เพิ่ม outlier", "+ add an outlier"], q_out_rm: ["− เอา outlier ออก", "− remove the outlier"], q_scale1: ["scale: หนึ่งค่าต่อ tensor", "scale: one per tensor"], q_scale32: ["scale: หนึ่งค่าต่อ 32 weights", "scale: one per 32 weights"], q_new: ["สุ่มใหม่", "new weights"],
@@ -2620,7 +2621,7 @@ function renderConcepts() {
   $("#c2p").textContent = t("c_attn_p", {h: m.heads || (L && L.regions.self && L.regions.self.q ? "?" : "?")});
   $("#c3p").textContent = t("c_ffn_p", {d: s.d.toLocaleString(), f: (m.ffn || 4 * s.d).toLocaleString(), share});
   $("#c4p").textContent = M.A.comps.decoder ? t("c_kv_p") : t("c_kv_p_enc");
-  $("#c5p").textContent = m.tie ? t("c_tie_p_yes", {v: m.vocab ? m.vocab.toLocaleString() : "V", d: s.d}) : t("c_tie_p_no");
+  $("#c5p").textContent = m.tie ? t("c_tie_p_yes", {v: m.vocab ? m.vocab.toLocaleString() : "V", d: s.d}) : M.cfg && M.cfg.tie_word_embeddings !== false && m.vocab ? t("c_tie_p_dup", {v: m.vocab.toLocaleString(), d: s.d}) : t("c_tie_p_no");
   $("#c6p").textContent = t("c_seam_p");
   $("#cFfnD").textContent = s.d; $("#cFfnF").textContent = m.ffn || 4 * s.d;
 }
