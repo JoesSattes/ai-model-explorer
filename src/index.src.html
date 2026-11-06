@@ -258,6 +258,11 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
   .cgrid{grid-template-columns:1fr}.iogrid{grid-template-columns:1fr 1fr;gap:10px}.iov{max-width:100%}.xdh{flex-direction:column}.opbar .k{width:120px}.opbar .v{max-width:calc(100% - 170px)}
   #xsvg{min-width:980px}#mapSvg{min-width:900px}footer .fname{font-size:30px}
 }
+#cutBox h3{margin:0 0 4px;font-size:18px}#cutBox .cutl{display:grid;grid-template-columns:1fr 150px;gap:6px 18px;margin-top:14px}
+#cutBox .cutl>div{padding:12px 0;border-top:1px solid var(--line,#e2e2dc)}#cutBox .cutl b{font-size:15px}#cutBox .cutl p{margin:4px 0 0;font-size:13.5px;line-height:1.5}
+#cutBox .cutn{text-align:right;font-variant-numeric:tabular-nums}#cutBox .cutn big{display:block;font-size:20px;font-weight:700}#cutBox .cbar{height:6px;border-radius:3px;background:var(--line,#e2e2dc);margin-top:6px;overflow:hidden}
+#cutBox .cbar i{display:block;height:100%;background:#e8114a}#cutBox .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}#cutBox .chips button,#cutBox .chips label{font:inherit;font-size:13px;padding:5px 11px;border-radius:999px;border:1px solid var(--line,#ccc);background:transparent;color:inherit;cursor:pointer}
+#cutBox{padding:22px 26px}#cutBox .chips button.on{background:#e8114a;color:#fff;border-color:#e8114a}#cutBox .cutsum{margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(232,17,74,.07);font-size:14px}
 </style>
 </head>
 <body>
@@ -277,7 +282,7 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
       <label class="xk" for="hf" data-i="pick_own">Hugging Face repo</label>
       <div class="own"><input id="hf" data-iph="hf_ph" placeholder="Hugging Face repo" autocomplete="off"><button class="btn primary" id="hfGo" data-i="load">Load</button></div>
       <div class="own">
-        <label class="btn sm" for="file"><span data-i="upload">Upload</span></label><input type="file" id="file" accept=".tflite,.safetensors" multiple hidden>
+        <label class="btn sm" for="file"><span data-i="upload">Upload</span></label><input type="file" id="file" accept=".tflite,.safetensors,.json" multiple hidden>
         <button class="btn sm" id="cfgOpen"><span data-i="paste_cfg">Paste config.json</span></button>
       </div>
       <div id="ownNote" role="status" aria-live="polite"></div>
@@ -293,6 +298,7 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
   <h2 class="sec" data-i="arch_h2"></h2><p class="lead" data-i="arch_lead"></p>
   <div class="panel" id="cur"></div>
   <div class="panel" id="archBox"></div>
+  <div class="panel" id="cutBox"></div>
 </div></section>
 
 <section id="big"><div class="wrap">
@@ -387,6 +393,7 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
 <script>/*ANALYZER*/</script>
 <script>/*GRAPH*/</script>
 <script>/*INFER*/</script>
+<script>/*PLAN*/</script>
 <script>/*LOADERS*/</script>
 <script>/*MODEL*/</script>
 <script>/*DATA*/</script>

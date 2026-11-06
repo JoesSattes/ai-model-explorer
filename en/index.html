@@ -259,6 +259,11 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
   .cgrid{grid-template-columns:1fr}.iogrid{grid-template-columns:1fr 1fr;gap:10px}.iov{max-width:100%}.xdh{flex-direction:column}.opbar .k{width:120px}.opbar .v{max-width:calc(100% - 170px)}
   #xsvg{min-width:980px}#mapSvg{min-width:900px}footer .fname{font-size:30px}
 }
+#cutBox h3{margin:0 0 4px;font-size:18px}#cutBox .cutl{display:grid;grid-template-columns:1fr 150px;gap:6px 18px;margin-top:14px}
+#cutBox .cutl>div{padding:12px 0;border-top:1px solid var(--line,#e2e2dc)}#cutBox .cutl b{font-size:15px}#cutBox .cutl p{margin:4px 0 0;font-size:13.5px;line-height:1.5}
+#cutBox .cutn{text-align:right;font-variant-numeric:tabular-nums}#cutBox .cutn big{display:block;font-size:20px;font-weight:700}#cutBox .cbar{height:6px;border-radius:3px;background:var(--line,#e2e2dc);margin-top:6px;overflow:hidden}
+#cutBox .cbar i{display:block;height:100%;background:#e8114a}#cutBox .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}#cutBox .chips button,#cutBox .chips label{font:inherit;font-size:13px;padding:5px 11px;border-radius:999px;border:1px solid var(--line,#ccc);background:transparent;color:inherit;cursor:pointer}
+#cutBox{padding:22px 26px}#cutBox .chips button.on{background:#e8114a;color:#fff;border-color:#e8114a}#cutBox .cutsum{margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(232,17,74,.07);font-size:14px}
 </style>
 </head>
 <body>
@@ -278,7 +283,7 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
       <label class="xk" for="hf" data-i="pick_own">Hugging Face repo</label>
       <div class="own"><input id="hf" data-iph="hf_ph" placeholder="Hugging Face repo, e.g. nvidia/parakeet-tdt-0.6b-v3" autocomplete="off"><button class="btn primary" id="hfGo" data-i="load">Load</button></div>
       <div class="own">
-        <label class="btn sm" for="file"><span data-i="upload">Upload .tflite / .safetensors</span></label><input type="file" id="file" accept=".tflite,.safetensors" multiple hidden>
+        <label class="btn sm" for="file"><span data-i="upload">Upload .tflite / .safetensors</span></label><input type="file" id="file" accept=".tflite,.safetensors,.json" multiple hidden>
         <button class="btn sm" id="cfgOpen"><span data-i="paste_cfg">Paste config.json</span></button>
       </div>
       <div id="ownNote" role="status" aria-live="polite"></div>
@@ -294,6 +299,7 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
   <h2 class="sec" data-i="arch_h2">Anatomy</h2><p class="lead" data-i="arch_lead">Each box is one part of the model, in the order data flows through it. The strip shows the type of every layer. Click a box to see what is inside and where each value comes from.</p>
   <div class="panel" id="cur"></div>
   <div class="panel" id="archBox"></div>
+  <div class="panel" id="cutBox"></div>
 </div></section>
 
 <section id="big"><div class="wrap">
@@ -549,6 +555,28 @@ window.I18N = {
   lib_search: ["ค้นหาโมเดล", "Search models"], lib_count: ["{n} โมเดล", "{n} models"], lib_none: ["ไม่พบโมเดลที่ตรงกับคำค้น", "No model matches."],
   cat_all: ["ทั้งหมด", "All"], cat_speech: ["เสียง", "Speech"], cat_language: ["ภาษา", "Language"], cat_vision: ["ภาพ + ภาษา", "Vision-language"], cat_embed: ["embedding และตาราง", "Embedding & tables"], cat_gen: ["สร้างภาพและวิดีโอ", "Image & video generation"], cat_prec: ["เทียบ precision", "Precision comparison"], cat_own: ["ที่คุณเปิด", "Yours"],
   src_rec: ["สร้างจาก source", "rebuilt from source"], src_header: ["header จริง", "real header"],
+  cut_h: ["ลดขนาดตรงไหนได้บ้าง", "Where to cut"],
+  cut_lead: ["วัดจากรูปทรงของ weight และ config.json: แต่ละข้อบอกว่าตัดได้กี่ weight เพราะอะไร และต้องทำอะไรต่อ", "Measured from the weights' shapes and config.json: what each step removes, why, and what to do next."],
+  cut_langs: ["ภาษาที่ใช้งานจริง:", "Languages you use:"], cut_count: ["นับ token จาก tokenizer.json", "Count tokens in tokenizer.json"], cut_file: ["หรือเลือกไฟล์ tokenizer.json", "or pick a tokenizer.json"],
+  cut_text: ["ใช้แค่ข้อความ (ไม่ใช้ภาพ/เสียง)", "Text only (no images or audio)"], cut_loading: ["กำลังอ่าน tokenizer.json…", "Reading tokenizer.json…"], cut_notok: ["หา tokenizer.json ไม่เจอ ลองเลือกไฟล์เอง", "No tokenizer.json found; pick the file yourself"],
+  cut_vocab_t: ["ตัดคำศัพท์ให้เหลือเฉพาะภาษาที่ใช้", "Trim the vocabulary to the languages you use"],
+  cut_vocab_d: ["{v} token × {r} ค่าต่อ token ({parts}) ตัด token ออกหนึ่งตัว = weight หายไป {r} ตัว", "{v} tokens × {r} values per token ({parts}). Each token you drop removes {r} weights."],
+  cut_vocab_k: ["tokenizer มี {n} ชิ้น ภาษาที่เลือกใช้ {k} ชิ้น → ตัดได้ {s} weight ({p})", "The tokenizer has {n} pieces; your languages need {k} → removes {s} weights ({p})."],
+  cut_vocab_h: ["นับชิ้นใน tokenizer ตามระบบตัวเขียน เก็บภาษาที่ใช้ + special/byte/ตัวเลข/เครื่องหมาย แล้ว remap id และตัดทุกตารางข้างบน คำหายากจะ fallback เป็น byte ต้องทดสอบคุณภาพซ้ำ", "Count pieces by script, keep yours plus specials, bytes, digits and punctuation, remap the ids and slice every table above. Rare words fall back to bytes: retest quality."],
+  cut_ple_t: ["Per-layer embedding (PLE): ไม่ต้องอยู่ในหน่วยความจำเร็ว", "Per-layer embeddings: keep them out of fast memory"],
+  cut_ple_d: ["{n} มี {s} weight ({p} ของโมเดล) แต่แต่ละ token อ่านแค่หนึ่งแถว {w} ค่า", "{n} holds {s} weights ({p} of the model), but each token reads one row of {w} values."],
+  cut_ple_h: ["mmap หรือ offload ไป flash/CPU แล้วดึงทีละแถว, quantize เป็น 4-bit ได้สบาย (เป็นแค่การ lookup) และตัดไปพร้อมกับคำศัพท์", "Memory-map or offload it to flash/CPU and fetch rows per token, quantize it to 4-bit (a lookup tolerates it), and trim it with the vocabulary."],
+  cut_tower_t: ["ถ้าส่งแค่ข้อความ ตัด{k}ออกได้", "Drop the {k} tower if you only send text"],
+  cut_tower_d: ["{n}: {s} weight", "{n}: {s} weights."], cut_tower_h: ["export เฉพาะ language model (โหลด tower เฉพาะตอนที่ต้องใช้) เส้นทางข้อความไม่ได้อ่าน weight พวกนี้เลย", "Export only the language model (load the tower only when a request needs it); the text path never reads these weights."],
+  cut_kvs_t: ["K/V projection ของชั้นที่แชร์ KV ซึ่งไม่ได้ใช้", "K/V projections that shared-KV layers do not use"],
+  cut_kvs_d: ["{n} ชั้นใช้ KV cache ของชั้นก่อนหน้า (num_kv_shared_layers) แต่ไฟล์ยังเก็บ k/v ของชั้นพวกนี้ไว้", "{n} layers reuse an earlier layer's KV cache (num_kv_shared_layers), yet the file still stores their k/v projections."],
+  cut_kvs_h: ["เช็กว่า runtime ข้ามส่วนนี้จริง แล้วไม่ต้อง export", "Check your runtime skips them, then leave them out of the export."],
+  cut_ffn_t: ["quantize ส่วน feed-forward ก่อน", "Quantize the feed-forward blocks first"],
+  cut_ffn_d: ["backbone มี weight ของ FFN {s} ({p}) · 8-bit ลดครึ่งจาก 16-bit, 4-bit เหลือหนึ่งในสี่", "{s} feed-forward weights in the backbone ({p}); 8-bit halves them versus 16-bit, 4-bit quarters them."],
+  cut_ffn_h: ["weight-only int8/int4 พร้อม scale ต่อ channel หรือต่อกลุ่ม เก็บ norm, router และ embedding lookup ไว้ที่ precision สูงจนกว่าจะวัด", "Weight-only int8/int4 with per-channel or group scales; keep norms, router and embedding lookups higher until measured."],
+  cut_kv: ["KV cache: {c} จาก {l} ชั้นมี cache ของตัวเอง ({sh} ชั้นแชร์), {sl} ชั้นเลื่อนดูแค่ {w} token → {pt} ต่อ token + สูงสุด {cap} ไม่ใช่ {nv} ต่อ token อย่างที่คิดจากทุกชั้น", "KV cache: {c} of {l} layers keep their own ({sh} share), {sl} slide over {w} tokens → {pt} per token plus at most {cap}, not {nv} per token for every layer."],
+  cut_sum: ["ถ้าตัดตามข้างบน (ไม่รวม quantize): {a} → {b} weight · {c} ที่ 16-bit · {d} ที่ 4-bit", "Cutting the structure above (before quantization): {a} → {b} weights · {c} at 16-bit · {d} at 4-bit"],
+  cut_none: ["โมเดลนี้ไม่มีส่วนที่ตัดได้ชัดๆ จากโครงสร้าง ลองดูการ quantize", "No obvious structural cut for this model; look at quantization."],
   arch_h2: ["โครงสร้างของโมเดล", "Anatomy"],
   arch_lead: ["แต่ละกล่องคือหนึ่งส่วนของโมเดล เรียงตามทางที่ข้อมูลไหล แถบสีคือชนิดของแต่ละ layer คลิกกล่องเพื่อดูว่าข้างในมีอะไร และค่าแต่ละค่ามาจากไหน", "Each box is one part of the model, in the order data flows through it. The strip shows the type of every layer. Click a box to see what is inside and where each value comes from."],
   hp_check: ["config ตรงกับ weight", "config vs weights"],
@@ -1542,6 +1570,140 @@ function quantHint(cfg) { // bits / group size declared in config.json (MLX "qua
 const api = {infer, normalize, buildTree, classify, fuseConfig, familyFromConfig, quantHint};
 if (typeof module !== "undefined") module.exports = api; else root.ArchInfer = api;
 })(typeof window !== "undefined" ? window : globalThis);
+</script>
+<script>// Where to cut: concrete size levers read from the anatomy, the weights' shapes and config.json.
+// Shared by the website (app.js) and the Python package (run in QuickJS), so both give the same numbers.
+// plan(I, shapes, cfg, opt) -> {total, vocab, kv, levers[]}; vocabScripts(pieces, specials) -> token counts per script.
+const Plan = (() => {
+  const prod = s => s.reduce((a, b) => a * b, 1);
+  const tcfg = c => (c && (c.text_config || c.language_config || c.llm_config || c.thinker_config && c.thinker_config.text_config)) || c || {};
+  const layerNo = n => { const m = n.match(/(?:layers?|blocks?|h|block)\.(\d+)\./); return m ? +m[1] : null; };
+
+  // ---------------------------------------------------------------- KV cache, layer by layer
+  function kvProfile(I, shapes, cfg, bits = 16) {
+    const c = tcfg(cfg), back = (I.comps || []).find(x => x.role === "backbone"); if (!back) return null;
+    const by = {};
+    for (const [n, t] of Object.entries(I.tensors || {})) {
+      if (t.comp !== back.id || t.kind !== "attn" || !(t.role === "k" || t.role === "v") || !/weight$/.test(n)) continue;
+      const L = layerNo(n), s = shapes[n]; if (L == null || !s || s.length !== 2) continue;
+      (by[L] = by[L] || {})[t.role] = s[0];
+    }
+    const Ls = Object.keys(by).map(Number).sort((a, b) => a - b); if (!Ls.length) return null;
+    const nL = c.num_hidden_layers || Ls.length, shared = c.num_kv_shared_layers || 0, types = c.layer_types || [];
+    const win = c.sliding_window || c.attention_window_size || null, B = bits / 8;
+    const rows = Ls.map(L => {
+      const w = (by[L].k || 0) + (by[L].v || by[L].k || 0), sliding = /sliding|local|chunk/.test(types[L] || "") && win;
+      return {layer: L, kv_width: w, cached: L < nL - shared, sliding: !!sliding, window: sliding ? win : null};
+    });
+    const cached = rows.filter(r => r.cached), grow = cached.filter(r => !r.sliding), slide = cached.filter(r => r.sliding);
+    const perTok = grow.reduce((a, r) => a + r.kv_width * B, 0), slidePerTok = slide.reduce((a, r) => a + r.kv_width * B, 0);
+    const naive = rows.reduce((a, r) => a + r.kv_width * B, 0);
+    return {layers: rows.length, cached: cached.length, shared: rows.length - cached.length, full: grow.length, sliding: slide.length, window: win,
+            per_token: perTok, sliding_per_token: slidePerTok, sliding_cap: slidePerTok * (win || 0), naive_per_token: naive,
+            unused_kv_params: rows.filter(r => !r.cached).reduce((a, r) => a + r.kv_width * (back.d || 0), 0)};
+  }
+
+  // ---------------------------------------------------------------- the plan
+  function plan(I, shapes, cfg, opt = {}) {
+    const c = tcfg(cfg), comps = I.comps || [], back = comps.find(x => x.role === "backbone");
+    const total = opt.total || comps.reduce((a, x) => a + (x.params || 0), 0) || 1, hp = I.hp || {};
+    const V = hp.vocab || c.vocab_size, d = back && back.d;
+    const T = Object.entries(I.tensors || {}).filter(([n]) => shapes[n]);
+    const tables = T.filter(([n, t]) => (t.kind === "embed" || t.kind === "head") && shapes[n].length === 2 && shapes[n][0] === V)
+      .map(([n, t]) => ({name: n, kind: t.kind, width: shapes[n][1], params: prod(shapes[n]),
+                         what: t.kind === "head" ? "output head" : shapes[n][1] === d ? "token embedding" : "per-layer embedding (PLE)"}));
+    const rowCost = tables.reduce((a, x) => a + x.width, 0), vocabParams = tables.reduce((a, x) => a + x.params, 0);
+    const levers = [], pct = x => x / total;
+    // 1. vocabulary: every row costs the width of every table indexed by token id
+    if (V && vocabParams && (V >= 32000 || vocabParams / total >= 0.05)) {
+      const keep = opt.keep_tokens || null;
+      const cut = keep ? Math.max(V - keep, 0) * rowCost : null;
+      levers.push({id: "vocab", title: "Trim the vocabulary to the languages you use", params: vocabParams, share: pct(vocabParams),
+        saves: cut, saves_share: cut != null ? pct(cut) : null, row_cost: rowCost, vocab: V, keep_tokens: keep,
+        detail: `${V.toLocaleString("en-US")} tokens × ${rowCost.toLocaleString("en-US")} values per token (` + tables.map(x => `${x.what} ${x.width}`).join(" + ") +
+                `). Every token you drop removes ${rowCost.toLocaleString("en-US")} weights.` + (keep ? "" : " Count the tokens your languages need to see the saving."),
+        how: "Count tokenizer pieces by script, keep your scripts plus specials, bytes, digits and punctuation, remap the ids and slice every table above. Retest: rare words fall back to bytes."});
+    }
+    // 2. per-layer embeddings: a lookup, not compute
+    const ple = tables.filter(x => x.what.startsWith("per-layer"));
+    if (ple.length) {
+      const p = ple.reduce((a, x) => a + x.params, 0);
+      levers.push({id: "ple", title: "Per-layer embeddings: keep them out of fast memory", params: p, share: pct(p), saves: null,
+        detail: `${ple.map(x => x.name).join(", ")} holds ${(p / 1e9).toFixed(2)}B weights (${(100 * pct(p)).toFixed(0)}% of the model), but each token reads only one row of ${ple[0].width} values.`,
+        how: "Memory-map or offload the table to flash/CPU and fetch rows per token, quantize it to 4-bit (a lookup tolerates it well), and trim it together with the vocabulary."});
+    }
+    // 3. modality towers you may not need
+    const edges = I.edges || [], fedBy = id => edges.filter(e => e.to === id).map(e => e.from);
+    const isAdapterOf = (a, enc) => a.role === "adapter" && (a.id.startsWith(enc.id + ".") || fedBy(a.id).includes(enc.id));
+    // an encoder read through cross-attention (Whisper, T5) is the model's input path, not an optional tower
+    const crossFed = new Set(edges.filter(e => /cross/.test(e.via || e.label || e.kind || "")).map(e => e.from));
+    for (const x of comps.filter(x => (x.role === "encoder" || x.role === "adapter") && x.modality !== "text" && !crossFed.has(x.id) && I.family !== "encoder-decoder")) {
+      if (x.role === "adapter" && comps.some(y => y.role === "encoder" && isAdapterOf(x, y))) continue;
+      const kids = comps.filter(y => y !== x && (y.id.startsWith(x.id + ".") || isAdapterOf(y, x))), p = (x.params || 0) + kids.reduce((a, y) => a + (y.params || 0), 0);
+      const kind = /vision|visual|image|siglip|vit/i.test(x.id) ? "vision" : /audio|speech|whisper|conformer/i.test(x.id) ? "audio" : x.modality;
+      levers.push({id: "tower:" + x.id, title: `Drop the ${kind} tower if you only send text`, params: p, share: pct(p), saves: p, saves_share: pct(p),
+        detail: `${x.id}${kids.length ? " with " + kids.map(y => y.id).join(", ") : ""}: ${(p / 1e6).toFixed(1)}M weights.`,
+        how: `Export only the language model (and the ${kind} tower when a request needs it); the text path never reads these weights.`});
+    }
+    // 4. KV cache, layer by layer
+    const kv = kvProfile(I, shapes, cfg);
+    if (kv && kv.unused_kv_params) levers.push({id: "kv_shared", title: "K/V projections that shared-KV layers do not use", params: kv.unused_kv_params,
+      share: pct(kv.unused_kv_params), saves: kv.unused_kv_params, saves_share: pct(kv.unused_kv_params),
+      detail: `${kv.shared} layers reuse the KV cache of earlier layers (num_kv_shared_layers), yet the file still stores their k/v projections.`,
+      how: "Check that your runtime skips them, then leave them out of the export."});
+    // 5. where the compute weights sit
+    const ffn = opt.ffn_params != null ? opt.ffn_params : T.filter(([n, t]) => t.comp === (back && back.id) && t.kind === "ffn").reduce((a, [n]) => a + prod(shapes[n]), 0);
+    if (ffn) levers.push({id: "ffn", title: "Quantize the feed-forward blocks first", params: ffn, share: pct(ffn), saves: ffn / 2, saves_share: pct(ffn / 2),
+      detail: `${(ffn / 1e9).toFixed(2)}B feed-forward weights in the backbone; 8-bit halves them versus 16-bit, 4-bit quarters them.`,
+      how: "Weight-only int8/int4 on the FFN with per-channel or group scales; keep norms, router and the embedding row lookups at higher precision until measured."});
+    levers.sort((a, b) => (b.saves || b.params) - (a.saves || a.params));
+    return {total, vocab: V ? {size: V, row_cost: rowCost, params: vocabParams, tables} : null, kv, levers};
+  }
+
+  // ---------------------------------------------------------------- tokenizer pieces by script
+  const SCRIPTS = [["Thai", /\p{Script=Thai}/u], ["Han", /\p{Script=Han}/u], ["Hiragana", /\p{Script=Hiragana}/u], ["Katakana", /\p{Script=Katakana}/u],
+    ["Hangul", /\p{Script=Hangul}/u], ["Latin", /\p{Script=Latin}/u], ["Cyrillic", /\p{Script=Cyrillic}/u], ["Arabic", /\p{Script=Arabic}/u],
+    ["Devanagari", /\p{Script=Devanagari}/u], ["Greek", /\p{Script=Greek}/u], ["Hebrew", /\p{Script=Hebrew}/u], ["Khmer", /\p{Script=Khmer}/u],
+    ["Lao", /\p{Script=Lao}/u], ["Myanmar", /\p{Script=Myanmar}/u], ["Bengali", /\p{Script=Bengali}/u], ["Tamil", /\p{Script=Tamil}/u]];
+  const LX = ["Latin-ASCII", "Latin-ext"];   // English needs only unaccented Latin letters; other Latin-script languages need both
+  const LANG = {en: ["Latin-ASCII"], th: ["Thai"], zh: ["Han"], cn: ["Han"], ja: ["Han", "Hiragana", "Katakana"], ko: ["Hangul"], vi: LX, id: LX, ms: LX,
+    fr: LX, de: LX, es: LX, pt: LX, it: LX, nl: LX, tl: LX, ru: ["Cyrillic"], ar: ["Arabic"], hi: ["Devanagari"], km: ["Khmer"], lo: ["Lao"], my: ["Myanmar"]};
+  const B2U = (() => { const bs = []; for (let i = 33; i <= 126; i++) bs.push(i); for (let i = 161; i <= 172; i++) bs.push(i); for (let i = 174; i <= 255; i++) bs.push(i);
+    const cs = bs.slice(); let n = 0; for (let b = 0; b < 256; b++) if (!bs.includes(b)) { bs.push(b); cs.push(256 + n++); }
+    const m = {}; bs.forEach((b, i) => { m[String.fromCharCode(cs[i])] = b; }); return m; })();
+  function decodeByteLevel(s) {
+    const bytes = []; for (const ch of s) { const b = B2U[ch]; if (b == null) return s; bytes.push(b); }
+    let out = "", i = 0;   // UTF-8 decode; an incomplete sequence becomes U+FFFD (a fragment of a longer character)
+    while (i < bytes.length) { const b = bytes[i]; const n = b < 0x80 ? 1 : b >= 0xf0 ? 4 : b >= 0xe0 ? 3 : b >= 0xc0 ? 2 : 0;
+      if (!n || i + n > bytes.length) { out += "�"; i++; continue; }
+      let cp = n === 1 ? b : b & (0xff >> (n + 1)); for (let k = 1; k < n; k++) cp = (cp << 6) | (bytes[i + k] & 0x3f);
+      out += String.fromCodePoint(cp); i += n; }
+    return out;
+  }
+  function scriptOf(piece) {
+    if (/^<.*>$/.test(piece) || /^\[.*\]$/.test(piece)) return /^<0x[0-9A-Fa-f]{2}>$/.test(piece) ? "bytes" : "special";
+    const s = piece.replace(/[▁\s]/g, ""); if (!s) return "common";
+    if (s.includes("�")) return "fragment";
+    const found = new Set();
+    for (const ch of s) {
+      if (/[\p{N}\p{P}\p{S}\p{Z}\p{M}]/u.test(ch)) continue;
+      const sc = (SCRIPTS.find(([, re]) => re.test(ch)) || ["other"])[0];
+      found.add(sc === "Latin" ? (/[A-Za-z]/.test(ch) ? "Latin-ASCII" : "Latin-ext") : sc);
+    }
+    return found.size ? [...found].sort().join("+") : "common";
+  }
+  function vocabScripts(pieces, opt = {}) {
+    const byteLevel = !!opt.byte_level, counts = {}, per = new Array(pieces.length);
+    pieces.forEach((p, i) => { const s = scriptOf(byteLevel && !/^<.*>$/.test(p) ? decodeByteLevel(p) : p); per[i] = s; counts[s] = (counts[s] || 0) + 1; });
+    const keep = langs => {
+      const ok = new Set(["special", "bytes", "common", "fragment"]); (langs || []).forEach(l => (LANG[l.toLowerCase()] || [l]).forEach(s => ok.add(s)));
+      return per.reduce((a, s) => a + (s.split("+").every(x => ok.has(x)) ? 1 : 0), 0);
+    };
+    return {total: pieces.length, counts, keep, keep_for: langs => keep(langs)};
+  }
+  return {plan, kvProfile, vocabScripts, scriptOf, LANG};
+})();
+if (typeof module !== "undefined") module.exports = Plan;
 </script>
 <script>// loaders.js — read only what describes a model: safetensors headers and PyTorch checkpoint indexes, via HTTP Range.
 // Weights are never downloaded. (c) 2026 Sattaya Singkul · MIT
@@ -2612,6 +2774,56 @@ function renderMap() {
   $("#mapNote").textContent = S.mapLens === "read" ? t("map_read_note") : S.mapLens === "size" ? t("map_light") : "";
 }
 
+// ================================================================== where to cut (src/plan.js, shared with the Python package)
+function cutParse(j) { const v = (j.model || {}).vocab; let list = [];
+  if (v && !Array.isArray(v)) { for (const [k, i] of Object.entries(v)) list[i] = k; } else list = (v || []).map(x => Array.isArray(x) ? x[0] : x);
+  (j.added_tokens || []).forEach(a => { list[a.id] = a.special ? "<" + a.content.replace(/^<|>$/g, "") + ">" : a.content; });
+  for (let i = 0; i < list.length; i++) if (list[i] == null) list[i] = "<unused>";
+  return {list, bl: /ByteLevel/.test(JSON.stringify([j.decoder, j.pre_tokenizer]))}; }
+function renderCut() {
+  const box = $("#cutBox"); if (!box) return; const M = S.M, I = M.IR;
+  if (!I || !M.T) { box.style.display = "none"; return; } box.style.display = "";
+  const shapes = {}; for (const [n, x] of Object.entries(M.T)) shapes[n] = x.shape;
+  const total = (I.totals && I.totals.params) || I.comps.reduce((a, c) => a + c.params, 0);
+  const st = M.cut || (M.cut = {langs: ["th", "en"], text: false, keep: null, counts: null, n: null, msg: ""});
+  if (S.pendingTok && !st.pieces) { const j = S.pendingTok; S.pendingTok = null; setTimeout(() => { try { st.pieces = cutParse(j); const r = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}); st.n = r.total; st.keep = r.keep(st.langs); renderCut(); } catch (e) {} }, 0); }
+  let P; try { P = Plan.plan(I, shapes, M.cfg || {}, {total, keep_tokens: st.keep}); } catch (e) { box.style.display = "none"; return; }
+  const pc = x => (100 * x / total).toFixed(x / total < 0.01 ? 1 : 0) + "%", n0 = x => x.toLocaleString("en-US");
+  const kind = id => /vision|visual|image|siglip|vit/i.test(id) ? L2("ส่วนภาพ (vision tower)", "vision") : /audio|speech|whisper|conformer/i.test(id) ? L2("ส่วนเสียง (audio tower)", "audio") : L2("ส่วนอินพุต", "input");
+  let cut = 0;
+  const items = P.levers.map(l => {
+    let title, det, how, saves = l.saves;
+    if (l.id === "vocab") { title = t("cut_vocab_t"); det = t("cut_vocab_d", {v: n0(l.vocab), r: n0(l.row_cost), parts: P.vocab.tables.map(x => `${x.what} ${n0(x.width)}`).join(" + ")});
+      if (st.keep != null) det += " " + t("cut_vocab_k", {n: n0(st.n), k: n0(st.keep), s: fP(saves), p: pc(saves)}); how = t("cut_vocab_h"); }
+    else if (l.id === "ple") { const tb = P.vocab.tables.filter(x => x.what.startsWith("per-layer")); title = t("cut_ple_t"); det = t("cut_ple_d", {n: tb.map(x => x.name).join(", "), s: fP(l.params), p: pc(l.params), w: n0(tb[0].width)}); how = t("cut_ple_h"); }
+    else if (l.id.startsWith("tower:")) { const id = l.id.slice(6); title = t("cut_tower_t", {k: kind(id)}); det = t("cut_tower_d", {n: l.detail.split(":")[0].replace(" with ", " + "), s: fP(l.params)}); how = t("cut_tower_h"); if (!st.text) saves = null; }
+    else if (l.id === "kv_shared") { title = t("cut_kvs_t"); det = t("cut_kvs_d", {n: P.kv.shared}); how = t("cut_kvs_h"); }
+    else if (l.id === "ffn") { title = t("cut_ffn_t"); det = t("cut_ffn_d", {s: fP(l.params), p: pc(l.params)}); how = t("cut_ffn_h"); }
+    else { title = l.title; det = l.detail; how = l.how; }
+    if (saves && l.id !== "ffn" && l.id !== "ple") cut += saves;
+    const big = saves && l.id !== "ffn" ? "−" + fP(saves) : fP(l.params);
+    return {html: `<div><b>${esc(title)}</b><p>${esc(det)}</p><p class="dim">${esc(how)}</p></div><div class="cutn"><big>${esc(big)}</big><span class="dim">${esc(pc(saves && l.id !== "ffn" ? saves : l.params))}</span><div class="cbar"><i style="width:${Math.min(100, 100 * (saves && l.id !== "ffn" ? saves : l.params) / total).toFixed(1)}%"></i></div></div>`, s: saves && l.id !== "ffn" ? saves : 0};
+  }).sort((a, b) => b.s - a.s);
+  const K = P.kv, kvLine = K && (K.shared || K.sliding) ? `<p style="margin-top:12px">${esc(t("cut_kv", {c: K.cached, l: K.layers, sh: K.shared, sl: K.sliding, w: K.window, pt: fB(K.per_token), cap: fB(K.sliding_cap), nv: fB(K.naive_per_token)}))}</p>` : "";
+  const repo = /^[\w.-]+\/[\w.-]+$/.test(M.label || "") ? M.label : null, LS = ["th", "en", "zh", "ja", "ko", "vi", "id", "ms", "km", "lo", "my", "hi", "ar", "ru"];
+  const hasVocab = P.levers.some(l => l.id === "vocab"), hasTower = P.levers.some(l => l.id.startsWith("tower:"));
+  box.innerHTML = `<h3>${esc(t("cut_h"))}</h3><p class="dim">${esc(t("cut_lead"))}</p>
+    ${hasVocab ? `<div class="chips"><span>${esc(t("cut_langs"))}</span>${LS.map(l => `<button data-cl="${l}" class="${st.langs.includes(l) ? "on" : ""}">${l.toUpperCase()}</button>`).join("")}
+      ${repo ? `<button id="cutGo">${esc(t("cut_count"))}</button>` : ""}<label>${esc(t("cut_file"))}<input type="file" id="cutFile" accept=".json" hidden></label><span class="dim" id="cutMsg">${esc(st.msg)}</span></div>` : ""}
+    ${hasTower ? `<div class="chips"><label><input type="checkbox" id="cutText" ${st.text ? "checked" : ""}> ${esc(t("cut_text"))}</label></div>` : ""}
+    ${items.length ? `<div class="cutl">${items.map(x => x.html).join("")}</div>` : `<p>${esc(t("cut_none"))}</p>`}
+    ${cut ? `<div class="cutsum">${esc(t("cut_sum", {a: fP(total), b: fP(total - cut), c: fB((total - cut) * 2), d: fB((total - cut) / 2)}))}</div>` : ""}${kvLine}`;
+  const count = pieces => { const r = Plan.vocabScripts(pieces.list, {byte_level: pieces.bl}); st.n = r.total; st.counts = r.counts; st.keep = r.keep(st.langs); st.msg = ""; st.pieces = pieces; renderCut(); };
+  const parse = cutParse;
+  $$("#cutBox [data-cl]").forEach(b => b.onclick = () => { const l = b.dataset.cl; st.langs = st.langs.includes(l) ? st.langs.filter(x => x !== l) : st.langs.concat(l);
+    if (st.pieces) { st.keep = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}).keep(st.langs); } renderCut(); });
+  const go = $("#cutGo"); if (go) go.onclick = async () => { st.msg = t("cut_loading"); $("#cutMsg").textContent = st.msg;
+    try { const r = await fetch(`https://huggingface.co/${repo}/resolve/main/tokenizer.json`); if (!r.ok) throw 0; count(parse(await r.json())); }
+    catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
+  const f = $("#cutFile"); if (f) f.onchange = async () => { if (!f.files[0]) return; try { count(parse(JSON.parse(await f.files[0].text()))); } catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
+  const tx = $("#cutText"); if (tx) tx.onchange = () => { st.text = tx.checked; renderCut(); };
+}
+
 // ================================================================== concepts (numbers from the selected model)
 function renderConcepts() {
   const M = S.M, m = M.meta, s = shapes(M), mod = m.modality, L = (M.A.comps.encoder || M.A.comps.decoder).layers[0];
@@ -2735,8 +2947,14 @@ async function loadFiles(files) {
   const sts = [...files].filter(f => /\.safetensors$/i.test(f.name));
   if (sts.length) { try { const tensors = {}; let read = 0;
       for (const [k, f] of sts.entries()) { busy(t("st_header", {i: k + 1, n: sts.length}), f.name); const h = new DataView(await f.slice(0, 8).arrayBuffer()), n = Number(h.getBigUint64(0, true));
-        const j = JSON.parse(new TextDecoder().decode(await f.slice(8, 8 + n).arrayBuffer())); delete j.__metadata__; read += 8 + n; const pre = sts.length > 1 ? f.name.replace(/\.safetensors$/i, "").replace(/[^\w]+/g, "_") + "." : ""; for (const [k2, v] of Object.entries(j)) tensors[pre + k2] = v; }
-      addOwn({tensors, cfg: null, meta: null, kind: "tensors", label: sts.map(f => f.name).join(" + "), noteKey: "n_hf_auto", noteVars: {n: Object.keys(tensors).length, r: fB(read), w: fB(sts.reduce((a, f) => a + f.size, 0)), f: sts.length}}, sts.length > 1 ? "Uploaded (" + sts.length + ")" : sts[0].name);
+        const j = JSON.parse(new TextDecoder().decode(await f.slice(8, 8 + n).arrayBuffer())); delete j.__metadata__; read += 8 + n; const shard = /-\d+-of-\d+\.safetensors$/i.test(f.name), clash = Object.keys(j).some(k2 => k2 in tensors);
+          const pre = sts.length > 1 && !shard && clash ? f.name.replace(/\.safetensors$/i, "").replace(/[^\w]+/g, "_") + "." : ""; for (const [k2, v] of Object.entries(j)) tensors[pre + k2] = v; }
+      // config.json and tokenizer.json picked together with the weights: hyperparameters from the config, vocabulary counts from the tokenizer
+      const js = n => [...files].find(f => f.name.toLowerCase() === n); let cfg = null, tok = null;
+      try { if (js("config.json")) cfg = JSON.parse(await js("config.json").text()); } catch (e) {}
+      try { if (js("tokenizer.json")) tok = JSON.parse(await js("tokenizer.json").text()); } catch (e) {}
+      S.pendingTok = tok;
+      addOwn({tensors, cfg, meta: null, kind: "tensors", label: sts.map(f => f.name).join(" + "), noteKey: "n_hf_auto", noteVars: {n: Object.keys(tensors).length, r: fB(read), w: fB(sts.reduce((a, f) => a + f.size, 0)), f: sts.length}}, sts.length > 1 ? "Uploaded (" + sts.length + ")" : sts[0].name);
     } catch (e) { ownNote(`<b style="color:${K.neg}">${t("e_read")}</b> ${esc(e.message)}`); } return; }
   const tfl = [...files].filter(f => /\.tflite$/i.test(f.name)); if (!tfl.length) return; ownNote(t("loading"));
   try { const gs = []; for (const f of tfl) { const comp = /enc/i.test(f.name) ? "encoder" : /dec/i.test(f.name) ? "decoder" : (tfl.length === 1 ? "model" : "encoder"); gs.push(graphFromTflite(parseTflite(await f.arrayBuffer()), comp, f.name)); }
@@ -2770,7 +2988,7 @@ function busy(stage, detail) { ownNote(`<span class="spin" aria-hidden="true"></
 function addOwn(r, short) { const id = "own-" + (r.label || "m").replace(/[^\w-]+/g, "-").slice(0, 40); const def = register({id, label: r.label, short: short || r.label.split("/").pop(), group: "own", ...r, note: () => t(r.noteKey, r.noteVars)}); def.M = null; persist(def); ownNote(t("saved_note")); setModel(id); }
 
 // ================================================================== everything
-function renderAll() { applyI18n(); renderPicker(); renderHero(); renderArch(); renderBig(); buildPlay(); renderIO(); renderDetail(); renderMap(); renderConcepts(); renderReport(); if (window.qRelabel) qRelabel(); $("#tokV").textContent = S.tokens; $("#tokV2").textContent = S.tokens; }
+function renderAll() { applyI18n(); renderPicker(); renderHero(); renderArch(); renderCut(); renderBig(); buildPlay(); renderIO(); renderDetail(); renderMap(); renderConcepts(); renderReport(); if (window.qRelabel) qRelabel(); $("#tokV").textContent = S.tokens; $("#tokV2").textContent = S.tokens; }
 function wire() {
   { const tb = $("#themeBtn"); if (tb) { const lab = () => { const d = K.ink === PAL.dark.ink; tb.title = LANG === "th" ? (d ? "สลับเป็นธีมสว่าง" : "สลับเป็นธีมมืด") : (d ? "Switch to light theme" : "Switch to dark theme"); tb.setAttribute("aria-label", tb.title); };
     lab(); tb.onclick = () => { const nt = K.ink === PAL.dark.ink ? "light" : "dark"; setTheme(nt); try { localStorage.setItem("mx_theme", nt); } catch (e) {} renderAll(); lab(); }; } }

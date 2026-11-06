@@ -92,6 +92,20 @@ m.macs()                           # rough multiply-adds: encoder per input, dec
 m.size(4, {"model.decoder": 8})    # file size with the encoder at 4-bit and the decoder at 8-bit
 ```
 
+To make a model smaller, ask for a plan: each step comes with the weights it removes, what was measured and what to do.
+
+```python
+m = explore("google/gemma-4-E2B-it")
+print(m.plan_text(["th", "en", "zh"], text_only=True))   # reads tokenizer.json to count the pieces your languages need
+m.plan(["th", "en"])                                     # the same as a list of dicts
+m.vocab_scripts()                                        # tokenizer pieces per writing system
+```
+
+For Gemma 4 E2B the plan finds that every vocabulary row costs 10,496 weights (1,536 in the token embedding plus 8,960
+in the per-layer embeddings), so trimming the vocabulary to the languages you serve is the largest cut, followed by the
+audio and vision towers for text-only use; it also reports that 20 of the 35 layers share an earlier layer's KV cache.
+The website shows the same plan under "Where to cut" (pick config.json and tokenizer.json together with the weights).
+
 `.tflite` (LiteRT) files open the same way, so you can check what a quantization recipe actually stored:
 
 ```python

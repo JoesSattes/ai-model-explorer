@@ -81,6 +81,7 @@ class Engine:
         self.ctx.eval(_PRELUDE)
         self.ctx.eval(_js("loaders.js"))
         self.ctx.eval(_js("infer.js"))
+        self.ctx.eval(_js("plan.js"))
 
     # ---- host callbacks
     def _pyfetch(self, url, rng):
@@ -150,6 +151,13 @@ class Engine:
 
     def family(self, anatomy: dict, config: dict) -> str:
         return self._await(f'ArchInfer.familyFromConfig({self._put("fa", anatomy)}, {self._put("fc", config)})')
+
+    def plan(self, anatomy: dict, shapes: dict, config: Optional[dict], opt: dict) -> dict:
+        return self._await(f'Plan.plan({self._put("pa", anatomy)}, {self._put("ps", shapes)}, {self._put("pc", config or {})}, {self._put("po", opt)})')
+
+    def vocab_scripts(self, pieces: list, byte_level: bool, langs: Optional[list]) -> dict:
+        return self._await(f'(function (r, L) {{ return {{total: r.total, counts: r.counts, keep: L ? r.keep(L) : null}}; }})'
+                           f'(Plan.vocabScripts({self._put("vp", pieces)}, {{byte_level: {"true" if byte_level else "false"}}}), {self._put("vl", langs)})')
 
     def fuse(self, anatomy: dict, config: dict):
         slim = {"comps": anatomy.get("comps"), "hp": anatomy.get("hp"), "family": anatomy.get("family")}  # the per-tensor map is not needed

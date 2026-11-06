@@ -103,3 +103,21 @@ def test_whisper_head_stored_beside_decoder(tmp_path):
     assert m.hp["vocab"] == v and m.hp["layers"] == dl
     assert m.kv_cache_bytes_per_token() == 2 * dl * d * 2
     assert any("stored twice" in s for s in m.insights())
+
+
+def test_plan_vocabulary_and_scripts(tmp_path, llama):
+    """The plan prices the vocabulary per token row, and tokenizer pieces are counted by script."""
+    import shutil
+    d = tmp_path / "m"
+    shutil.copytree(llama, d)
+    pieces = ["<pad>", "<0x41>", "▁the", "▁and", "ing", "▁สวัสดี", "ครับ", "你好", "▁Привет", "▁café", "123", "!"]
+    pieces += [f"▁w{i}" for i in range(V - len(pieces))]
+    (d / "tokenizer.json").write_text(json.dumps({"model": {"type": "Unigram", "vocab": [[p, 0.0] for p in pieces]}}))
+    m = ame.explore(str(d), cache=False)
+    lev = {x["id"]: x for x in m.data["plan"]["levers"]}
+    assert lev["vocab"]["row_cost"] == 2 * D          # untied: embedding row + head row
+    vs = m.vocab_scripts(["th", "en"])
+    assert vs["counts"]["Thai"] == 2 and vs["counts"]["Han"] == 1 and vs["counts"]["Cyrillic"] == 1
+    assert vs["keep"] == V - 3                         # drops 你好, Привет and café (accented Latin is not English)
+    cut = {x["id"]: x for x in m.plan(["th", "en"])}["vocab"]
+    assert cut["saves"] == 3 * 2 * D

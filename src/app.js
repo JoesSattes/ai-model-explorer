@@ -543,6 +543,56 @@ function renderMap() {
   $("#mapNote").textContent = S.mapLens === "read" ? t("map_read_note") : S.mapLens === "size" ? t("map_light") : "";
 }
 
+// ================================================================== where to cut (src/plan.js, shared with the Python package)
+function cutParse(j) { const v = (j.model || {}).vocab; let list = [];
+  if (v && !Array.isArray(v)) { for (const [k, i] of Object.entries(v)) list[i] = k; } else list = (v || []).map(x => Array.isArray(x) ? x[0] : x);
+  (j.added_tokens || []).forEach(a => { list[a.id] = a.special ? "<" + a.content.replace(/^<|>$/g, "") + ">" : a.content; });
+  for (let i = 0; i < list.length; i++) if (list[i] == null) list[i] = "<unused>";
+  return {list, bl: /ByteLevel/.test(JSON.stringify([j.decoder, j.pre_tokenizer]))}; }
+function renderCut() {
+  const box = $("#cutBox"); if (!box) return; const M = S.M, I = M.IR;
+  if (!I || !M.T) { box.style.display = "none"; return; } box.style.display = "";
+  const shapes = {}; for (const [n, x] of Object.entries(M.T)) shapes[n] = x.shape;
+  const total = (I.totals && I.totals.params) || I.comps.reduce((a, c) => a + c.params, 0);
+  const st = M.cut || (M.cut = {langs: ["th", "en"], text: false, keep: null, counts: null, n: null, msg: ""});
+  if (S.pendingTok && !st.pieces) { const j = S.pendingTok; S.pendingTok = null; setTimeout(() => { try { st.pieces = cutParse(j); const r = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}); st.n = r.total; st.keep = r.keep(st.langs); renderCut(); } catch (e) {} }, 0); }
+  let P; try { P = Plan.plan(I, shapes, M.cfg || {}, {total, keep_tokens: st.keep}); } catch (e) { box.style.display = "none"; return; }
+  const pc = x => (100 * x / total).toFixed(x / total < 0.01 ? 1 : 0) + "%", n0 = x => x.toLocaleString("en-US");
+  const kind = id => /vision|visual|image|siglip|vit/i.test(id) ? L2("ส่วนภาพ (vision tower)", "vision") : /audio|speech|whisper|conformer/i.test(id) ? L2("ส่วนเสียง (audio tower)", "audio") : L2("ส่วนอินพุต", "input");
+  let cut = 0;
+  const items = P.levers.map(l => {
+    let title, det, how, saves = l.saves;
+    if (l.id === "vocab") { title = t("cut_vocab_t"); det = t("cut_vocab_d", {v: n0(l.vocab), r: n0(l.row_cost), parts: P.vocab.tables.map(x => `${x.what} ${n0(x.width)}`).join(" + ")});
+      if (st.keep != null) det += " " + t("cut_vocab_k", {n: n0(st.n), k: n0(st.keep), s: fP(saves), p: pc(saves)}); how = t("cut_vocab_h"); }
+    else if (l.id === "ple") { const tb = P.vocab.tables.filter(x => x.what.startsWith("per-layer")); title = t("cut_ple_t"); det = t("cut_ple_d", {n: tb.map(x => x.name).join(", "), s: fP(l.params), p: pc(l.params), w: n0(tb[0].width)}); how = t("cut_ple_h"); }
+    else if (l.id.startsWith("tower:")) { const id = l.id.slice(6); title = t("cut_tower_t", {k: kind(id)}); det = t("cut_tower_d", {n: l.detail.split(":")[0].replace(" with ", " + "), s: fP(l.params)}); how = t("cut_tower_h"); if (!st.text) saves = null; }
+    else if (l.id === "kv_shared") { title = t("cut_kvs_t"); det = t("cut_kvs_d", {n: P.kv.shared}); how = t("cut_kvs_h"); }
+    else if (l.id === "ffn") { title = t("cut_ffn_t"); det = t("cut_ffn_d", {s: fP(l.params), p: pc(l.params)}); how = t("cut_ffn_h"); }
+    else { title = l.title; det = l.detail; how = l.how; }
+    if (saves && l.id !== "ffn" && l.id !== "ple") cut += saves;
+    const big = saves && l.id !== "ffn" ? "−" + fP(saves) : fP(l.params);
+    return {html: `<div><b>${esc(title)}</b><p>${esc(det)}</p><p class="dim">${esc(how)}</p></div><div class="cutn"><big>${esc(big)}</big><span class="dim">${esc(pc(saves && l.id !== "ffn" ? saves : l.params))}</span><div class="cbar"><i style="width:${Math.min(100, 100 * (saves && l.id !== "ffn" ? saves : l.params) / total).toFixed(1)}%"></i></div></div>`, s: saves && l.id !== "ffn" ? saves : 0};
+  }).sort((a, b) => b.s - a.s);
+  const K = P.kv, kvLine = K && (K.shared || K.sliding) ? `<p style="margin-top:12px">${esc(t("cut_kv", {c: K.cached, l: K.layers, sh: K.shared, sl: K.sliding, w: K.window, pt: fB(K.per_token), cap: fB(K.sliding_cap), nv: fB(K.naive_per_token)}))}</p>` : "";
+  const repo = /^[\w.-]+\/[\w.-]+$/.test(M.label || "") ? M.label : null, LS = ["th", "en", "zh", "ja", "ko", "vi", "id", "ms", "km", "lo", "my", "hi", "ar", "ru"];
+  const hasVocab = P.levers.some(l => l.id === "vocab"), hasTower = P.levers.some(l => l.id.startsWith("tower:"));
+  box.innerHTML = `<h3>${esc(t("cut_h"))}</h3><p class="dim">${esc(t("cut_lead"))}</p>
+    ${hasVocab ? `<div class="chips"><span>${esc(t("cut_langs"))}</span>${LS.map(l => `<button data-cl="${l}" class="${st.langs.includes(l) ? "on" : ""}">${l.toUpperCase()}</button>`).join("")}
+      ${repo ? `<button id="cutGo">${esc(t("cut_count"))}</button>` : ""}<label>${esc(t("cut_file"))}<input type="file" id="cutFile" accept=".json" hidden></label><span class="dim" id="cutMsg">${esc(st.msg)}</span></div>` : ""}
+    ${hasTower ? `<div class="chips"><label><input type="checkbox" id="cutText" ${st.text ? "checked" : ""}> ${esc(t("cut_text"))}</label></div>` : ""}
+    ${items.length ? `<div class="cutl">${items.map(x => x.html).join("")}</div>` : `<p>${esc(t("cut_none"))}</p>`}
+    ${cut ? `<div class="cutsum">${esc(t("cut_sum", {a: fP(total), b: fP(total - cut), c: fB((total - cut) * 2), d: fB((total - cut) / 2)}))}</div>` : ""}${kvLine}`;
+  const count = pieces => { const r = Plan.vocabScripts(pieces.list, {byte_level: pieces.bl}); st.n = r.total; st.counts = r.counts; st.keep = r.keep(st.langs); st.msg = ""; st.pieces = pieces; renderCut(); };
+  const parse = cutParse;
+  $$("#cutBox [data-cl]").forEach(b => b.onclick = () => { const l = b.dataset.cl; st.langs = st.langs.includes(l) ? st.langs.filter(x => x !== l) : st.langs.concat(l);
+    if (st.pieces) { st.keep = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}).keep(st.langs); } renderCut(); });
+  const go = $("#cutGo"); if (go) go.onclick = async () => { st.msg = t("cut_loading"); $("#cutMsg").textContent = st.msg;
+    try { const r = await fetch(`https://huggingface.co/${repo}/resolve/main/tokenizer.json`); if (!r.ok) throw 0; count(parse(await r.json())); }
+    catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
+  const f = $("#cutFile"); if (f) f.onchange = async () => { if (!f.files[0]) return; try { count(parse(JSON.parse(await f.files[0].text()))); } catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
+  const tx = $("#cutText"); if (tx) tx.onchange = () => { st.text = tx.checked; renderCut(); };
+}
+
 // ================================================================== concepts (numbers from the selected model)
 function renderConcepts() {
   const M = S.M, m = M.meta, s = shapes(M), mod = m.modality, L = (M.A.comps.encoder || M.A.comps.decoder).layers[0];
@@ -666,8 +716,14 @@ async function loadFiles(files) {
   const sts = [...files].filter(f => /\.safetensors$/i.test(f.name));
   if (sts.length) { try { const tensors = {}; let read = 0;
       for (const [k, f] of sts.entries()) { busy(t("st_header", {i: k + 1, n: sts.length}), f.name); const h = new DataView(await f.slice(0, 8).arrayBuffer()), n = Number(h.getBigUint64(0, true));
-        const j = JSON.parse(new TextDecoder().decode(await f.slice(8, 8 + n).arrayBuffer())); delete j.__metadata__; read += 8 + n; const pre = sts.length > 1 ? f.name.replace(/\.safetensors$/i, "").replace(/[^\w]+/g, "_") + "." : ""; for (const [k2, v] of Object.entries(j)) tensors[pre + k2] = v; }
-      addOwn({tensors, cfg: null, meta: null, kind: "tensors", label: sts.map(f => f.name).join(" + "), noteKey: "n_hf_auto", noteVars: {n: Object.keys(tensors).length, r: fB(read), w: fB(sts.reduce((a, f) => a + f.size, 0)), f: sts.length}}, sts.length > 1 ? "Uploaded (" + sts.length + ")" : sts[0].name);
+        const j = JSON.parse(new TextDecoder().decode(await f.slice(8, 8 + n).arrayBuffer())); delete j.__metadata__; read += 8 + n; const shard = /-\d+-of-\d+\.safetensors$/i.test(f.name), clash = Object.keys(j).some(k2 => k2 in tensors);
+          const pre = sts.length > 1 && !shard && clash ? f.name.replace(/\.safetensors$/i, "").replace(/[^\w]+/g, "_") + "." : ""; for (const [k2, v] of Object.entries(j)) tensors[pre + k2] = v; }
+      // config.json and tokenizer.json picked together with the weights: hyperparameters from the config, vocabulary counts from the tokenizer
+      const js = n => [...files].find(f => f.name.toLowerCase() === n); let cfg = null, tok = null;
+      try { if (js("config.json")) cfg = JSON.parse(await js("config.json").text()); } catch (e) {}
+      try { if (js("tokenizer.json")) tok = JSON.parse(await js("tokenizer.json").text()); } catch (e) {}
+      S.pendingTok = tok;
+      addOwn({tensors, cfg, meta: null, kind: "tensors", label: sts.map(f => f.name).join(" + "), noteKey: "n_hf_auto", noteVars: {n: Object.keys(tensors).length, r: fB(read), w: fB(sts.reduce((a, f) => a + f.size, 0)), f: sts.length}}, sts.length > 1 ? "Uploaded (" + sts.length + ")" : sts[0].name);
     } catch (e) { ownNote(`<b style="color:${K.neg}">${t("e_read")}</b> ${esc(e.message)}`); } return; }
   const tfl = [...files].filter(f => /\.tflite$/i.test(f.name)); if (!tfl.length) return; ownNote(t("loading"));
   try { const gs = []; for (const f of tfl) { const comp = /enc/i.test(f.name) ? "encoder" : /dec/i.test(f.name) ? "decoder" : (tfl.length === 1 ? "model" : "encoder"); gs.push(graphFromTflite(parseTflite(await f.arrayBuffer()), comp, f.name)); }
@@ -701,7 +757,7 @@ function busy(stage, detail) { ownNote(`<span class="spin" aria-hidden="true"></
 function addOwn(r, short) { const id = "own-" + (r.label || "m").replace(/[^\w-]+/g, "-").slice(0, 40); const def = register({id, label: r.label, short: short || r.label.split("/").pop(), group: "own", ...r, note: () => t(r.noteKey, r.noteVars)}); def.M = null; persist(def); ownNote(t("saved_note")); setModel(id); }
 
 // ================================================================== everything
-function renderAll() { applyI18n(); renderPicker(); renderHero(); renderArch(); renderBig(); buildPlay(); renderIO(); renderDetail(); renderMap(); renderConcepts(); renderReport(); if (window.qRelabel) qRelabel(); $("#tokV").textContent = S.tokens; $("#tokV2").textContent = S.tokens; }
+function renderAll() { applyI18n(); renderPicker(); renderHero(); renderArch(); renderCut(); renderBig(); buildPlay(); renderIO(); renderDetail(); renderMap(); renderConcepts(); renderReport(); if (window.qRelabel) qRelabel(); $("#tokV").textContent = S.tokens; $("#tokV2").textContent = S.tokens; }
 function wire() {
   { const tb = $("#themeBtn"); if (tb) { const lab = () => { const d = K.ink === PAL.dark.ink; tb.title = LANG === "th" ? (d ? "สลับเป็นธีมสว่าง" : "สลับเป็นธีมมืด") : (d ? "Switch to light theme" : "Switch to dark theme"); tb.setAttribute("aria-label", tb.title); };
     lab(); tb.onclick = () => { const nt = K.ink === PAL.dark.ink ? "light" : "dark"; setTheme(nt); try { localStorage.setItem("mx_theme", nt); } catch (e) {} renderAll(); lab(); }; } }

@@ -122,6 +122,9 @@ class Model:
         """Bytes of KV cache one token adds, summed over all attention layers. Taken from the weights: the width of the
         key/value projections (exact for grouped-query attention), the compressed vector for latent attention (MLA);
         state-space layers and multi-token-prediction layers keep no per-token cache here."""
+        kvp = (self.data.get("plan") or {}).get("kv")
+        if kvp and (kvp.get("shared") or kvp.get("sliding")):
+            return int(kvp["per_token"] * bits / 16)   # only layers with their own, unbounded cache grow per token
         base = (self.data.get("hyperparameters") or {}).get("kv_bytes_per_token_bf16")
         if base:
             return int(base * bits / 16)
@@ -236,6 +239,9 @@ class Model:
         w = self.stored_bytes if weight_bits is None else self.params * weight_bits / 8
         kvt = self.kv_cache_bytes_per_token(kv_bits)
         kv = kvt * context * batch if kvt is not None else None
+        kvp = (self.data.get("plan") or {}).get("kv")
+        if kv is not None and kvp and kvp.get("sliding") and kvp.get("window"):
+            kv += int(kvp["sliding_per_token"] * kv_bits / 16) * min(context, kvp["window"]) * batch
         return {"weights_bytes": int(w), "kv_cache_bytes": kv, "total_bytes": int(w + (kv or 0)), "context": context,
                 "batch": batch, "weight_bits": weight_bits if weight_bits is not None else "as stored", "kv_bits": kv_bits}
 
@@ -263,6 +269,12 @@ class Model:
             out.append(f"Where the parameters sit: {top}.")
         emb = next((r for r in bd if r["key"] == "embed"), None)
         head = next((r for r in bd if r["key"] == "head"), None)
+        plan = self.data.get("plan") or {}
+        ple = [t for t in (plan.get("vocab") or {}).get("tables", []) if t["what"].startswith("per-layer")]
+        if ple:
+            pp = sum(t["params"] for t in ple)
+            out.append(f"Per-layer embeddings (PLE) hold {fmt_n(pp)} ({pp / max(self.params, 1):.0%} of the model): a lookup of one "
+                       f"{ple[0]['width']}-value row per token, so they can sit on flash or be memory-mapped, and they shrink with the vocabulary.")
         if emb and emb["share"] >= 0.05:
             if hp.get("tie"):
                 out.append(f"Embeddings take {emb['share']:.0%} of the model ({fmt_n(emb['params'])}), and the output head "
@@ -288,7 +300,10 @@ class Model:
                 out.append(f"Decoder self-attention KV cache: {fmt_b(kvt)} per token at 16-bit, {fmt_b(kvt * tmax)} at the "
                            f"{tmax}-token limit.{gqa}")
             else:
-                out.append(f"KV cache{lat}: {fmt_b(kvt)} per token at 16-bit, so {fmt_b(kvt * 32768)} for one 32k-token sequence "
+                kvp = plan.get("kv") or {}
+                extra = (f" ({kvp['cached']} of {kvp['layers']} layers keep their own cache, {kvp['shared']} share one; "
+                         f"{kvp['sliding']} sliding-window layers add at most {fmt_b(kvp['sliding_cap'])})") if kvp.get("shared") or kvp.get("sliding") else ""
+                out.append(f"KV cache{lat}: {fmt_b(kvt)} per token at 16-bit{extra}, so {fmt_b(kvt * 32768)} for one 32k-token sequence "
                            f"and {fmt_b(kvt * 131072)} at 128k.{gqa}")
         if hp.get("ssm_layers"):
             out.append(f"Hybrid stack: {hp['ssm_layers']} state-space / linear-attention layers keep a fixed-size state, and only "
@@ -322,10 +337,124 @@ class Model:
             out.append("No config.json: head counts are estimates from shapes.")
         for e in self.data.get("evidence") or []:
             out.append("Note: " + e)
+        lev = [x for x in plan.get("levers") or [] if x.get("share", 0) >= 0.02]
+        if lev:
+            out.append("Where to cut (see plan_text()): " + "; ".join(f"{x['title'].lower()} ({x['share']:.0%})" for x in lev[:3]) + ".")
         repo = (self.data.get("source") or {}).get("repo")
         if repo:
             out.append(f"Open it in the explorer: https://joessattes.github.io/ai-model-explorer/en/?ref=pip#hf={repo}")
         return out
+
+    # ------------------------------------------------------------------ where to cut
+    def _tokenizer(self, tokenizer=None, token: Optional[str] = None):
+        """Pieces of the tokenizer in id order and whether they are byte-level (GPT-2 style) strings."""
+        import os
+        j = None
+        if isinstance(tokenizer, dict):
+            j = tokenizer
+        else:
+            path = tokenizer
+            src = self.data.get("source") or {}
+            if path is None and src.get("path"):
+                base = src["path"] if os.path.isdir(src["path"]) else os.path.dirname(src["path"])
+                cand = os.path.join(base, "tokenizer.json")
+                path = cand if os.path.exists(cand) else None
+            if path is not None:
+                with open(path, encoding="utf-8") as f:
+                    j = json.load(f)
+            elif src.get("repo"):
+                from ._hub import Hub
+                st, body = Hub(token).get(f"https://huggingface.co/{src['repo']}/resolve/main/tokenizer.json")
+                if st != 200:
+                    raise RuntimeError(f"tokenizer.json not available for {src['repo']} (HTTP {st}); pass tokenizer=<path>")
+                j = json.loads(body)
+        if j is None:
+            raise RuntimeError("no tokenizer.json found; pass tokenizer=<path to tokenizer.json>")
+        v = (j.get("model") or {}).get("vocab")
+        if isinstance(v, dict):
+            pieces = [None] * (max(v.values()) + 1)
+            for k, i in v.items():
+                pieces[i] = k
+        else:
+            pieces = [x[0] if isinstance(x, list) else x for x in (v or [])]
+        for a in j.get("added_tokens") or []:
+            i = a.get("id")
+            while len(pieces) <= i:
+                pieces.append(None)
+            pieces[i] = "<" + a["content"].strip("<>") + ">" if a.get("special") else a["content"]
+        pieces = [p if p is not None else "<unused>" for p in pieces]
+        txt = json.dumps({k: j.get(k) for k in ("decoder", "pre_tokenizer")})
+        return pieces, "ByteLevel" in txt
+
+    def vocab_scripts(self, languages: Optional[List[str]] = None, tokenizer=None, token: Optional[str] = None) -> dict:
+        """Tokenizer pieces per writing system (Latin, Thai, Han, ...), and how many a set of languages needs.
+        Specials, byte-fallback pieces, digits, punctuation and whitespace are always kept."""
+        from ._engine import Engine
+        pieces, bl = self._tokenizer(tokenizer, token)
+        r = Engine().vocab_scripts(pieces, bl, languages)
+        r["counts"] = dict(sorted(r["counts"].items(), key=lambda kv: -kv[1]))
+        r["byte_level"] = bl
+        return r
+
+    def plan(self, languages: Optional[List[str]] = None, text_only: bool = False, tokenizer=None,
+             token: Optional[str] = None, keep_tokens: Optional[int] = None) -> List[dict]:
+        """Ranked ways to make the model smaller, with the weights each one removes.
+        languages:  e.g. ["th", "en", "zh"]; counts the tokenizer pieces those languages need (reads tokenizer.json)
+                    and prices the vocabulary cut. keep_tokens sets the number directly instead.
+        text_only:  count the vision / audio towers as removable.
+        Each item: id, title, params (weights involved), saves (weights removed, or the halving for quantization),
+        share, detail (what was measured) and how (what to do)."""
+        p = self.data.get("plan") or {}
+        lev = [dict(x) for x in p.get("levers") or []]
+        voc = p.get("vocab") or {}
+        if languages and keep_tokens is None:
+            vs = self.vocab_scripts(languages, tokenizer, token)
+            keep_tokens = vs["keep"]
+            self._last_scripts = vs
+        tot = self.params or 1
+        for x in lev:
+            if x["id"] == "vocab" and keep_tokens is not None and voc:
+                x["keep_tokens"] = keep_tokens
+                x["saves"] = max(voc["size"] - keep_tokens, 0) * voc["row_cost"]
+                x["saves_share"] = x["saves"] / tot
+                x["detail"] += (f" Keeping {keep_tokens:,} tokens" + (f" for {'/'.join(languages)}" if languages else "")
+                                + f" removes {fmt_n(x['saves'])} weights ({x['saves_share']:.0%} of the model).")
+            if x["id"] == "ple" and keep_tokens is not None and voc:
+                w = sum(t["width"] for t in voc.get("tables", []) if t["what"].startswith("per-layer"))
+                x["detail"] += f" After the vocabulary cut it is {fmt_n(keep_tokens * w)}."
+            if x["id"].startswith("tower:") and not text_only:
+                x["saves"], x["saves_share"] = None, None
+                x["title"] += " (pass text_only=True to count it)"
+        lev.sort(key=lambda x: -(x.get("saves") or 0))
+        return lev
+
+    def plan_text(self, languages: Optional[List[str]] = None, text_only: bool = False, **kw) -> str:
+        """plan() as a readable report: each lever, what it removes, and the size before and after."""
+        lev = self.plan(languages, text_only, **kw)
+        lines = [f"{self.name}: {fmt_n(self.params)} weights, {fmt_b(self.params * 2)} at 16-bit"]
+        vs = getattr(self, "_last_scripts", None)
+        if languages and vs:
+            top = ", ".join(f"{k} {v:,}" for k, v in list(vs["counts"].items())[:8])
+            lines.append(f"tokenizer: {vs['total']:,} pieces ({top}); {'/'.join(languages)} need {vs['keep']:,}")
+        cut = 0
+        for i, x in enumerate(lev, 1):
+            sv = x.get("saves")
+            tag = f"-{fmt_n(sv)} ({x['saves_share']:.0%})" if sv and not x["id"] in ("ffn",) else ""
+            lines.append(f"{i}. {x['title']}  [{fmt_n(x['params'])}, {x['share']:.0%} of the model] {tag}".rstrip())
+            lines.append(f"   {x['detail']}")
+            lines.append(f"   how: {x['how']}")
+            if sv and x["id"] not in ("ffn", "ple"):
+                cut += sv
+        if cut:
+            left = self.params - cut
+            lines.append(f"cutting the structure above: {fmt_n(self.params)} -> {fmt_n(left)} weights "
+                         f"({fmt_b(left * 2)} at 16-bit, {fmt_b(left)} at 8-bit, {fmt_b(left / 2)} at 4-bit)")
+        kv = (self.data.get("plan") or {}).get("kv")
+        if kv and kv.get("shared") or kv and kv.get("sliding"):
+            lines.append(f"KV cache: {kv['cached']} of {kv['layers']} layers keep one ({kv['shared']} share an earlier layer's), "
+                         f"{kv['sliding']} of them slide over {kv['window']} tokens: {fmt_b(kv['per_token'])} per token plus at most "
+                         f"{fmt_b(kv['sliding_cap'])}, not {fmt_b(kv['naive_per_token'])} per token for every layer.")
+        return "\n".join(lines)
 
     # ------------------------------------------------------------------ output
     def plot(self, path: Optional[str] = None, theme: str = "light", **kw):
