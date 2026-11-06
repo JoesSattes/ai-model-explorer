@@ -572,7 +572,7 @@ window.I18N = {
   cut_kvs_d: ["{n} ชั้นใช้ KV cache ของชั้นก่อนหน้า (num_kv_shared_layers) แต่ไฟล์ยังเก็บ k/v ของชั้นพวกนี้ไว้ ซึ่งจะถูกใช้เฉพาะตอนรันแบบไม่มี KV cache", "{n} layers reuse an earlier layer's KV cache (num_kv_shared_layers), yet the file still stores their k/v projections; they are read only when running without a KV cache."],
   cut_kvs_h: ["เช็กว่า runtime รันแบบมี cache เสมอและข้ามส่วนนี้จริง แล้วค่อยตัดออกตอน export", "Check your runtime always runs with a cache and skips them, then leave them out of the export."],
   cut_ffn_t: ["quantize ส่วน feed-forward ก่อน", "Quantize the feed-forward blocks first"],
-  cut_ffn_d: ["backbone มี weight ของ FFN {s} ({p}) · 8-bit ลดครึ่งจาก 16-bit, 4-bit เหลือหนึ่งในสี่", "{s} feed-forward weights in the backbone ({p}); 8-bit halves them versus 16-bit, 4-bit quarters them."],
+  cut_ffn_d: ["weight ของ FFN {s} ({p}) แยกตามส่วน: {parts} · 8-bit ลดครึ่งจาก 16-bit, 4-bit เหลือหนึ่งในสี่", "{s} feed-forward weights ({p}): {parts}. 8-bit halves them versus 16-bit, 4-bit quarters them."],
   cut_ffn_h: ["weight-only int8/int4 พร้อม scale ต่อ channel หรือต่อกลุ่ม เก็บ norm, router และ embedding lookup ไว้ที่ precision สูงจนกว่าจะวัด", "Weight-only int8/int4 with per-channel or group scales; keep norms, router and embedding lookups higher until measured."],
   cut_moe_t: ["Expert: ตัวที่ไม่ได้ใช้ไม่ต้องอยู่ในหน่วยความจำเร็ว", "Experts: keep the inactive ones off the fast memory"],
   cut_moe_h: ["offload expert ไป CPU/flash แล้ว cache ตัวที่ใช้บ่อย, quantize expert แรงกว่า attention หรือตัด expert ที่ข้อมูลจริงไม่เคย route ไปถึง (วัด routing จากข้อมูลตัวเองก่อน)", "Offload experts to CPU/flash and cache the hot ones, quantize experts harder than attention, or prune experts your traffic never reaches (measure routing on your data first)."],
@@ -1677,7 +1677,7 @@ const Plan = (() => {
     const dual = /clip|siglip|clap|align|owl|blip/.test(ident) && !/llava|vl|gemma|qwen/.test(ident);
     const needs = k => k === "audio" ? /asr|transcri|speech|whisper|voxtral|stt/.test(ident) : /ocr/.test(ident);
     const isProj = x => x.role === "adapter" || /projector|multi_modal|mm_proj|connector|embed_vision|embed_audio/i.test(x.id);
-    const encs = towers.filter(x => !isProj(x));
+    const encs = towers.filter(x => !isProj(x)), removable = new Set();
     // with a single encoder tower every projector belongs to it; otherwise go by the projector's name
     const mk = x => isProj(x) && encs.length === 1 ? modKind(encs[0].id) : modKind(x.id);
     for (const x of towers) {
@@ -1690,6 +1690,7 @@ const Plan = (() => {
         (first && isProj(y) && towers.includes(y) && mk(y) === mk(x)))), p = (x.params || 0) + kids.reduce((a, y) => a + (y.params || 0), 0);
       if (p > (back.params || 0)) continue;   // a "tower" larger than the language model is the main model (CLIP, detection, ...)
       const kind = mk(x);
+      [x, ...kids].forEach(y => removable.add(y.id));
       levers.push({id: "tower:" + x.id, title: `Drop the ${kind} tower if you only send text`, params: p, share: pct(p), saves: p, saves_share: pct(p),
         detail: `${x.id}${kids.length ? " with " + kids.map(y => y.id).join(", ") : ""}: ${(p / 1e6).toFixed(1)}M weights.`,
         how: `Export only the language model (and the ${kind} tower when a request needs it); the text path never reads these weights.`});
@@ -1701,9 +1702,17 @@ const Plan = (() => {
       detail: `${kv.shared} layers reuse the KV cache of earlier layers (num_kv_shared_layers), yet the file still stores their k/v projections; they are read only when running without a KV cache.`,
       how: "Check that your runtime always runs with a cache and skips them, then leave them out of the export."});
     // 5. where the compute weights sit
-    const ffn = opt.ffn_params != null ? opt.ffn_params : T.filter(([n, t]) => t.comp === (back && back.id) && (t.kind === "ffn" || t.kind === "moe")).reduce((a, [n]) => a + prod(shapes[n]), 0);
+    // every component the model keeps (backbone, encoders, adapters), not only the backbone: Whisper's 24 encoder
+    // layers hold most of its feed-forward weights. Towers offered for removal above are left out.
+    let byComp = opt.ffn_by_comp;
+    if (!byComp) { byComp = {}; for (const [n, t] of T) if (t.comp && (t.kind === "ffn" || t.kind === "moe")) byComp[t.comp] = (byComp[t.comp] || 0) + prod(shapes[n]); }
+    const keptFfn = Object.entries(byComp).filter(([id]) => !removable.has(id) && comps.some(x => x.id === id)).sort((a, b) => b[1] - a[1]);
+    const ffn = keptFfn.reduce((a, [, v]) => a + v, 0);
+    const fmtB = v => v >= 1e9 ? (v / 1e9).toFixed(2) + "B" : (v / 1e6).toFixed(1) + "M";
+    const ffnParts = keptFfn.map(([id, v]) => `${id} ${fmtB(v)}`).join(", ");
     if (ffn && ffn / total >= 0.05) levers.push({id: "ffn", title: hp.experts ? "Quantize the feed-forward and expert blocks first" : "Quantize the feed-forward blocks first", params: ffn, share: pct(ffn), saves: ffn / 2, saves_share: pct(ffn / 2),
-      detail: `${(ffn / 1e9).toFixed(2)}B feed-forward weights in the backbone; 8-bit halves them versus 16-bit, 4-bit quarters them.`,
+      parts: keptFfn.map(([id, v]) => ({id, params: v})),
+      detail: `${fmtB(ffn)} feed-forward weights (${ffnParts}); 8-bit halves them versus 16-bit, 4-bit quarters them.`,
       how: "Weight-only int8/int4 on the FFN with per-channel or group scales; keep norms, router and the embedding row lookups at higher precision until measured."});
     // 6. mixture of experts: all experts sit in memory, a token reads only top-k of them
     const E = hp.experts, k = hp.experts_per_token || c.num_experts_per_tok || c.moe_topk || c.top_k_experts;
@@ -2854,7 +2863,7 @@ function renderCut() {
     else if (l.id.startsWith("tower:")) { const id = l.id.slice(6); title = t("cut_tower_t", {k: kind(id)}); det = t("cut_tower_d", {n: l.detail.split(":")[0].replace(" with ", " + "), s: fP(l.params)}); how = t("cut_tower_h"); if (!st.text) saves = null; }
     else if (l.id === "kv_shared") { title = t("cut_kvs_t"); det = t("cut_kvs_d", {n: P.kv.shared}); how = t("cut_kvs_h"); }
     else if (l.id === "moe") { title = t("cut_moe_t"); det = l.detail; how = t("cut_moe_h"); }
-    else if (l.id === "ffn") { title = t("cut_ffn_t"); det = t("cut_ffn_d", {s: fP(l.params), p: pc(l.params)}); how = t("cut_ffn_h"); }
+    else if (l.id === "ffn") { title = t("cut_ffn_t"); det = t("cut_ffn_d", {s: fP(l.params), p: pc(l.params), parts: (l.parts || []).map(x => `${x.id} ${fP(x.params)}`).join(", ")}); how = t("cut_ffn_h"); }
     else { title = l.title; det = l.detail; how = l.how; }
     if (saves && l.id !== "ffn" && l.id !== "ple") cut += saves;
     const big = saves && l.id !== "ffn" ? "−" + fP(saves) : fP(l.params);

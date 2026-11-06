@@ -99,7 +99,7 @@ const Plan = (() => {
     const dual = /clip|siglip|clap|align|owl|blip/.test(ident) && !/llava|vl|gemma|qwen/.test(ident);
     const needs = k => k === "audio" ? /asr|transcri|speech|whisper|voxtral|stt/.test(ident) : /ocr/.test(ident);
     const isProj = x => x.role === "adapter" || /projector|multi_modal|mm_proj|connector|embed_vision|embed_audio/i.test(x.id);
-    const encs = towers.filter(x => !isProj(x));
+    const encs = towers.filter(x => !isProj(x)), removable = new Set();
     // with a single encoder tower every projector belongs to it; otherwise go by the projector's name
     const mk = x => isProj(x) && encs.length === 1 ? modKind(encs[0].id) : modKind(x.id);
     for (const x of towers) {
@@ -112,6 +112,7 @@ const Plan = (() => {
         (first && isProj(y) && towers.includes(y) && mk(y) === mk(x)))), p = (x.params || 0) + kids.reduce((a, y) => a + (y.params || 0), 0);
       if (p > (back.params || 0)) continue;   // a "tower" larger than the language model is the main model (CLIP, detection, ...)
       const kind = mk(x);
+      [x, ...kids].forEach(y => removable.add(y.id));
       levers.push({id: "tower:" + x.id, title: `Drop the ${kind} tower if you only send text`, params: p, share: pct(p), saves: p, saves_share: pct(p),
         detail: `${x.id}${kids.length ? " with " + kids.map(y => y.id).join(", ") : ""}: ${(p / 1e6).toFixed(1)}M weights.`,
         how: `Export only the language model (and the ${kind} tower when a request needs it); the text path never reads these weights.`});
@@ -123,9 +124,17 @@ const Plan = (() => {
       detail: `${kv.shared} layers reuse the KV cache of earlier layers (num_kv_shared_layers), yet the file still stores their k/v projections; they are read only when running without a KV cache.`,
       how: "Check that your runtime always runs with a cache and skips them, then leave them out of the export."});
     // 5. where the compute weights sit
-    const ffn = opt.ffn_params != null ? opt.ffn_params : T.filter(([n, t]) => t.comp === (back && back.id) && (t.kind === "ffn" || t.kind === "moe")).reduce((a, [n]) => a + prod(shapes[n]), 0);
+    // every component the model keeps (backbone, encoders, adapters), not only the backbone: Whisper's 24 encoder
+    // layers hold most of its feed-forward weights. Towers offered for removal above are left out.
+    let byComp = opt.ffn_by_comp;
+    if (!byComp) { byComp = {}; for (const [n, t] of T) if (t.comp && (t.kind === "ffn" || t.kind === "moe")) byComp[t.comp] = (byComp[t.comp] || 0) + prod(shapes[n]); }
+    const keptFfn = Object.entries(byComp).filter(([id]) => !removable.has(id) && comps.some(x => x.id === id)).sort((a, b) => b[1] - a[1]);
+    const ffn = keptFfn.reduce((a, [, v]) => a + v, 0);
+    const fmtB = v => v >= 1e9 ? (v / 1e9).toFixed(2) + "B" : (v / 1e6).toFixed(1) + "M";
+    const ffnParts = keptFfn.map(([id, v]) => `${id} ${fmtB(v)}`).join(", ");
     if (ffn && ffn / total >= 0.05) levers.push({id: "ffn", title: hp.experts ? "Quantize the feed-forward and expert blocks first" : "Quantize the feed-forward blocks first", params: ffn, share: pct(ffn), saves: ffn / 2, saves_share: pct(ffn / 2),
-      detail: `${(ffn / 1e9).toFixed(2)}B feed-forward weights in the backbone; 8-bit halves them versus 16-bit, 4-bit quarters them.`,
+      parts: keptFfn.map(([id, v]) => ({id, params: v})),
+      detail: `${fmtB(ffn)} feed-forward weights (${ffnParts}); 8-bit halves them versus 16-bit, 4-bit quarters them.`,
       how: "Weight-only int8/int4 on the FFN with per-channel or group scales; keep norms, router and the embedding row lookups at higher precision until measured."});
     // 6. mixture of experts: all experts sit in memory, a token reads only top-k of them
     const E = hp.experts, k = hp.experts_per_token || c.num_experts_per_tok || c.moe_topk || c.top_k_experts;

@@ -425,7 +425,7 @@ class Model:
             if x["id"].startswith("tower:") and not text_only:
                 x["saves"], x["saves_share"] = None, None
                 x["title"] += " (pass text_only=True to count it)"
-        lev.sort(key=lambda x: -(x.get("saves") or 0))
+        lev.sort(key=lambda x: -(x.get("saves") or x.get("params") or 0))   # same order as the website
         return lev
 
     def plan_text(self, languages: Optional[List[str]] = None, text_only: bool = False, **kw) -> str:

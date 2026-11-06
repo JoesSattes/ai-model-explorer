@@ -568,7 +568,7 @@ function renderCut() {
     else if (l.id.startsWith("tower:")) { const id = l.id.slice(6); title = t("cut_tower_t", {k: kind(id)}); det = t("cut_tower_d", {n: l.detail.split(":")[0].replace(" with ", " + "), s: fP(l.params)}); how = t("cut_tower_h"); if (!st.text) saves = null; }
     else if (l.id === "kv_shared") { title = t("cut_kvs_t"); det = t("cut_kvs_d", {n: P.kv.shared}); how = t("cut_kvs_h"); }
     else if (l.id === "moe") { title = t("cut_moe_t"); det = l.detail; how = t("cut_moe_h"); }
-    else if (l.id === "ffn") { title = t("cut_ffn_t"); det = t("cut_ffn_d", {s: fP(l.params), p: pc(l.params)}); how = t("cut_ffn_h"); }
+    else if (l.id === "ffn") { title = t("cut_ffn_t"); det = t("cut_ffn_d", {s: fP(l.params), p: pc(l.params), parts: (l.parts || []).map(x => `${x.id} ${fP(x.params)}`).join(", ")}); how = t("cut_ffn_h"); }
     else { title = l.title; det = l.detail; how = l.how; }
     if (saves && l.id !== "ffn" && l.id !== "ple") cut += saves;
     const big = saves && l.id !== "ffn" ? "−" + fP(saves) : fP(l.params);

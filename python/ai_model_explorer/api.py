@@ -148,11 +148,14 @@ def inspect(model: Union[str, os.PathLike], token: Optional[str] = None, config:
     roles = anatomy.get("tensors") or {}
     keep = {n: t for n, t in roles.items() if t.get("kind") in ("embed", "head") or (t.get("kind") == "attn" and t.get("role") in ("k", "v"))}
     back = next((c["id"] for c in anatomy.get("comps") or [] if c.get("role") == "backbone"), None)
-    ffn = sum(_prod(logical.get(n, [[], 0])[0]) for n, t in roles.items() if t.get("kind") in ("ffn", "moe") and t.get("comp") == back)
+    ffn_by = {}
+    for n, t in roles.items():
+        if t.get("kind") in ("ffn", "moe") and t.get("comp"):
+            ffn_by[t["comp"]] = ffn_by.get(t["comp"], 0) + _prod(logical.get(n, [[], 0])[0])
     try:
         out["plan"] = eng.plan({"comps": anatomy.get("comps"), "hp": anatomy.get("hp"), "edges": anatomy.get("edges"), "family": anatomy.get("family"), "tensors": keep},
                                {n: logical.get(n, [[], 0])[0] for n in keep}, cfg,
-                               {"total": (anatomy.get("totals") or {}).get("params"), "ffn_params": ffn, "name": source.get("repo") or source.get("path") or "",
+                               {"total": (anatomy.get("totals") or {}).get("params"), "ffn_by_comp": ffn_by, "name": source.get("repo") or source.get("path") or "",
                                 "moe_params": sum(_prod(logical.get(n, [[], 0])[0]) for n, t in roles.items() if t.get("kind") == "moe" and t.get("comp") == back)})
     except Exception as e:  # the plan is advice; never fail the inspection because of it
         out["plan"] = {"error": str(e), "levers": []}
@@ -244,11 +247,16 @@ def summary(a: dict) -> str:
     keys = [("d", "width"), ("layers", "layers"), ("heads", "heads"), ("kv_heads", "kv heads"), ("head_dim", "head dim"),
             ("ffn", "ffn"), ("experts", "experts"), ("experts_per_token", "active experts"), ("vocab", "vocab")]
     hps = " · ".join(f"{lab} {hp[k]}" for k, lab in keys if hp.get(k))
+    enc = [c for c in a.get("components") or [] if c.get("role") == "encoder" and c.get("layers")]
+    if a.get("family") == "encoder-decoder" and enc and hp.get("layers"):
+        hps = hps.replace(f"layers {hp['layers']}", f"layers {enc[0]['layers']} encoder + {hp['layers']} decoder", 1)
     if hps:
         lines.append("  " + hps)
     lines.append("  components:")
     for c in a.get("components") or []:
         role = c.get("role") or ""
+        if role == "backbone" and a.get("family") == "encoder-decoder":
+            role = "decoder"
         head = f"    {c.get('id')}" + (f" ({role})" if role else "") + (f" · d={c['d']}" if c.get("d") else "")
         lines.append(head)
         for st in c.get("stacks") or []:
