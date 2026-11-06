@@ -337,12 +337,15 @@ function infer(manifest, opts = {}) {
     else if (/conv|patch|subsampl|feature_extractor/i.test(n) && t.kind === "other") t.kind = "conv";
   }
   // leftovers outside every home: attach by width (a [V, d] head next to a 'model' wrapper belongs to the d-wide component)
+  const embedTables = {};   // [rows, width] of the 2-D embedding tables each component holds, collected once
+  for (const [m, u] of Object.entries(out.tensors)) if (u.comp && u.kind === "embed" && T[m].shape.length === 2 && T[m].shape[0] >= 1000)
+    (embedTables[u.comp] = embedTables[u.comp] || []).push(T[m].shape);
   for (const [n, t] of Object.entries(out.tensors)) if (!t.comp) {
     const s = T[n].shape, w = s.length === 2 ? s[1] : s.length === 1 ? s[0] : null;
     const cand = comps.filter(c => c.d === w).sort((a, b) => b.stacks.reduce((x, y) => x + y.n, 0) - a.stacks.reduce((x, y) => x + y.n, 0));
     // a [V, d] output head goes to the component that holds the [V, d] token table (Whisper's proj_out sits next to
     // model.decoder, not next to the deeper model.encoder); otherwise the component with the most layers
-    const ownsTable = c => s.length === 2 && s[0] >= 1000 && Object.entries(out.tensors).some(([m, u]) => u.comp === c.id && u.kind === "embed" && T[m].shape.length === 2 && T[m].shape[0] === s[0] && T[m].shape[1] === s[1]);
+    const ownsTable = c => s.length === 2 && s[0] >= 1000 && (embedTables[c.id] || []).some(e => e[0] === s[0] && e[1] === s[1]);
     const c = cand.find(ownsTable) || cand[0];
     if (c && !out.joint) t.comp = c.id;
   }

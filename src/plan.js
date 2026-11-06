@@ -3,12 +3,14 @@
 // plan(I, shapes, cfg, opt) -> {total, vocab, kv, levers[]}; vocabScripts(pieces, specials) -> token counts per script.
 const Plan = (() => {
   const prod = s => s.reduce((a, b) => a * b, 1);
+  const n0 = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");   // QuickJS has no locale formatting
   const tcfg = c => (c && (c.text_config || c.language_config || c.llm_config || c.thinker_config && c.thinker_config.text_config)) || c || {};
   const layerNo = n => { const m = n.match(/(?:layers?|blocks?|h|block)\.(\d+)\./); return m ? +m[1] : null; };
 
   // ---------------------------------------------------------------- KV cache, layer by layer
   function kvProfile(I, shapes, cfg, bits = 16) {
     const c = tcfg(cfg), back = (I.comps || []).find(x => x.role === "backbone"); if (!back) return null;
+    if ((I.hp && I.hp.kv_latent) || c.kv_lora_rank) return null;   // latent attention (MLA) caches a compressed vector, not k/v widths
     const by = {};
     for (const [n, t] of Object.entries(I.tensors || {})) {
       if (t.comp !== back.id || t.kind !== "attn" || !(t.role === "k" || t.role === "v") || !/weight$/.test(n)) continue;
@@ -16,12 +18,16 @@ const Plan = (() => {
       (by[L] = by[L] || {})[t.role] = s[0];
     }
     const Ls = Object.keys(by).map(Number).sort((a, b) => a - b); if (!Ls.length) return null;
-    const nL = c.num_hidden_layers || Ls.length, shared = c.num_kv_shared_layers || 0, types = c.layer_types || [];
+    const types = c.layer_types || [];
+    // layers past num_hidden_layers are extra (multi-token prediction); only num_kv_shared_layers marks shared caches
+    const nL = c.num_hidden_layers || Ls[Ls.length - 1] + 1, shared = c.num_kv_shared_layers || 0;
     const win = c.sliding_window || c.attention_window_size || null, B = bits / 8;
-    const rows = Ls.map(L => {
+    // linear-attention / state-space layers keep a fixed-size state, not a cache that grows with the context
+    const rows = Ls.filter(L => L < nL && !/linear|mamba|ssm|recurrent|conv/.test(types[L] || "")).map(L => {
       const w = (by[L].k || 0) + (by[L].v || by[L].k || 0), sliding = /sliding|local|chunk/.test(types[L] || "") && win;
       return {layer: L, kv_width: w, cached: L < nL - shared, sliding: !!sliding, window: sliding ? win : null};
     });
+    if (!rows.length) return null;
     const cached = rows.filter(r => r.cached), grow = cached.filter(r => !r.sliding), slide = cached.filter(r => r.sliding);
     const perTok = grow.reduce((a, r) => a + r.kv_width * B, 0), slidePerTok = slide.reduce((a, r) => a + r.kv_width * B, 0);
     const naive = rows.reduce((a, r) => a + r.kv_width * B, 0);
@@ -36,20 +42,31 @@ const Plan = (() => {
     const total = opt.total || comps.reduce((a, x) => a + (x.params || 0), 0) || 1, hp = I.hp || {};
     const V = hp.vocab || c.vocab_size, d = back && back.d;
     const T = Object.entries(I.tensors || {}).filter(([n]) => shapes[n]);
-    const tables = T.filter(([n, t]) => (t.kind === "embed" || t.kind === "head") && shapes[n].length === 2 && shapes[n][0] === V)
-      .map(([n, t]) => ({name: n, kind: t.kind, width: shapes[n][1], params: prod(shapes[n]),
-                         what: t.kind === "head" ? "output head" : shapes[n][1] === d ? "token embedding" : "per-layer embedding (PLE)"}));
+    // tables indexed by token id: the token embedding (width d, or a factorized narrower one), the output head, and
+    // per-layer embeddings (Gemma 3n / 4: width = layers x hidden_size_per_layer_input). Only for a text backbone.
+    const perL = c.hidden_size_per_layer_input || null, nLay = c.num_hidden_layers || (back && back.layers) || 0;
+    const isPLE = (n, w) => /per_layer/.test(n) || (perL && nLay && w === perL * nLay);
+    const textLM = back && back.modality === "text" && I.family !== "diffusion";
+    const tables = !textLM ? [] : T.filter(([n, t]) => t.comp === back.id && (t.kind === "embed" || t.kind === "head") && shapes[n].length === 2 && shapes[n][0] === V && !/position|pos_emb|wpe|token_type/i.test(n))
+      .map(([n, t]) => { let w = shapes[n][1]; const ple = t.kind === "embed" && isPLE(n, w);
+        // wider than d and not per-layer: packed quantized storage the normalizer could not unpack; count d values per row
+        if (!ple && d && w > d) w = d;
+        const what = t.kind === "head" ? "output head" : ple ? "per-layer embedding (PLE)" : w === d ? "token embedding" :
+          w >= 32 && /embed|wte|word|tok|shared/i.test(n) ? "token embedding (factorized)" : null;
+        return what && {name: n, kind: t.kind, width: w, params: V * w, what}; }).filter(Boolean);
+    if (!tables.some(x => x.kind === "embed" && !x.what.startsWith("per-layer"))) tables.length = 0;   // a classifier head alone is not a vocabulary
     const rowCost = tables.reduce((a, x) => a + x.width, 0), vocabParams = tables.reduce((a, x) => a + x.params, 0);
     const levers = [], pct = x => x / total;
     // 1. vocabulary: every row costs the width of every table indexed by token id
-    if (V && vocabParams && (V >= 32000 || vocabParams / total >= 0.05)) {
+    const pipe0 = comps.some(y => /(^|\.)(vae|unet|loras?|diffusion_models?)(\.|$)/i.test(y.id));
+    if (V && V >= 1000 && vocabParams && !pipe0 && (V >= 32000 || vocabParams / total >= 0.05)) {
       const keep = opt.keep_tokens || null;
       const cut = keep ? Math.max(V - keep, 0) * rowCost : null;
       levers.push({id: "vocab", title: "Trim the vocabulary to the languages you use", params: vocabParams, share: pct(vocabParams),
         saves: cut, saves_share: cut != null ? pct(cut) : null, row_cost: rowCost, vocab: V, keep_tokens: keep,
-        detail: `${V.toLocaleString("en-US")} tokens × ${rowCost.toLocaleString("en-US")} values per token (` + tables.map(x => `${x.what} ${x.width}`).join(" + ") +
-                `). Every token you drop removes ${rowCost.toLocaleString("en-US")} weights.` + (keep ? "" : " Count the tokens your languages need to see the saving."),
-        how: "Count tokenizer pieces by script, keep your scripts plus specials, bytes, digits and punctuation, remap the ids and slice every table above. Retest: rare words fall back to bytes."});
+        detail: `${n0(V)} tokens × ${n0(rowCost)} values per token (` + tables.map(x => `${x.what} ${x.width}`).join(" + ") +
+                `). Every token you drop removes ${n0(rowCost)} weights.` + (keep ? "" : " Count the tokens your languages need to see the saving."),
+        how: "Count tokenizer pieces by script, keep your scripts plus specials, bytes, digits and punctuation, remap the ids and slice every table above. Words you drop fall back to smaller pieces or bytes (if the tokenizer has byte fallback): retest quality."});
     }
     // 2. per-layer embeddings: a lookup, not compute
     const ple = tables.filter(x => x.what.startsWith("per-layer"));
@@ -57,17 +74,44 @@ const Plan = (() => {
       const p = ple.reduce((a, x) => a + x.params, 0);
       levers.push({id: "ple", title: "Per-layer embeddings: keep them out of fast memory", params: p, share: pct(p), saves: null,
         detail: `${ple.map(x => x.name).join(", ")} holds ${(p / 1e9).toFixed(2)}B weights (${(100 * pct(p)).toFixed(0)}% of the model), but each token reads only one row of ${ple[0].width} values.`,
-        how: "Memory-map or offload the table to flash/CPU and fetch rows per token, quantize it to 4-bit (a lookup tolerates it well), and trim it together with the vocabulary."});
+        how: "Memory-map or offload the table to flash/CPU and fetch rows per token, try a lower precision for it (it is only looked up, never multiplied; measure quality), and trim it together with the vocabulary."});
     }
     // 3. modality towers you may not need
     const edges = I.edges || [], fedBy = id => edges.filter(e => e.to === id).map(e => e.from);
     const isAdapterOf = (a, enc) => a.role === "adapter" && (a.id.startsWith(enc.id + ".") || fedBy(a.id).includes(enc.id));
     // an encoder read through cross-attention (Whisper, T5) is the model's input path, not an optional tower
     const crossFed = new Set(edges.filter(e => /cross/.test(e.via || e.label || e.kind || "")).map(e => e.from));
-    for (const x of comps.filter(x => (x.role === "encoder" || x.role === "adapter") && x.modality !== "text" && !crossFed.has(x.id) && I.family !== "encoder-decoder")) {
+    // an optional input tower: a vision or audio encoder that feeds the language model. Recognised by name, since
+    // width-based edges are not reliable enough here; generation pipelines (VAE, LoRA, denoiser), speech-output stacks
+    // (codec, vocoder, talker, acoustic decoder) and MTP heads are never offered.
+    const pipeline = comps.some(y => /vae|unet|lora|diffusion|(^|\.)(transformer|text_encoders?)(\.|$)/i.test(y.id));
+    // a language model that writes text: a [V, d] output head, or config.json saying the head is tied. hp.tie alone
+    // is not enough: a dual encoder's text tower (CLIP, SigLIP, CLAP) also has a token table and no head.
+    const generative = back && (tables.some(x => x.kind === "head") || c.tie_word_embeddings === true || (cfg || {}).tie_word_embeddings === true);
+    const INPUT = /vision|visual|image|vit\b|siglip|clip|(^|\.)sam|audio_tower|audio_encoder|audio_model|speech_encoder|whisper|embed_vision|embed_audio|mm_proj|multi_modal|projector/i;
+    const OUTPUT = /decoder|vocoder|codec|talker|acoustic|residual|feat_|token2wav|code_predictor|tokenizer|dit|mtp|draft|nextn|bigvgan|vae/i;
+    const modKind = id => /audio|speech|whisper|wav|clap/i.test(id) ? "audio" : "vision";
+    const towers = comps.filter(x => textLM && generative && tables.length && !pipeline && (x.role === "encoder" || x.role === "adapter") && x.modality !== "text" &&
+                                 !crossFed.has(x.id) && I.family !== "encoder-decoder" && INPUT.test(x.id) && !OUTPUT.test(x.id));
+    // the model's own purpose: a dual encoder (CLIP, SigLIP, CLAP) has no optional tower; an ASR model needs its audio
+    // tower and an OCR model its vision tower, whatever the request
+    const ident = JSON.stringify([(cfg || {}).model_type, (cfg || {}).architectures, opt.name || ""]).toLowerCase();
+    const dual = /clip|siglip|clap|align|owl|blip/.test(ident) && !/llava|vl|gemma|qwen/.test(ident);
+    const needs = k => k === "audio" ? /asr|transcri|speech|whisper|voxtral|stt/.test(ident) : /ocr/.test(ident);
+    const isProj = x => x.role === "adapter" || /projector|multi_modal|mm_proj|connector|embed_vision|embed_audio/i.test(x.id);
+    const encs = towers.filter(x => !isProj(x));
+    // with a single encoder tower every projector belongs to it; otherwise go by the projector's name
+    const mk = x => isProj(x) && encs.length === 1 ? modKind(encs[0].id) : modKind(x.id);
+    for (const x of towers) {
+      // a projector belongs to the tower of its modality (gemma-3: vision_tower + multi_modal_projector)
+      if (dual || needs(mk(x))) continue;
+      if (isProj(x) && encs.some(y => mk(y) === mk(x))) continue;
       if (x.role === "adapter" && comps.some(y => y.role === "encoder" && isAdapterOf(x, y))) continue;
-      const kids = comps.filter(y => y !== x && (y.id.startsWith(x.id + ".") || isAdapterOf(y, x))), p = (x.params || 0) + kids.reduce((a, y) => a + (y.params || 0), 0);
-      const kind = /vision|visual|image|siglip|vit/i.test(x.id) ? "vision" : /audio|speech|whisper|conformer/i.test(x.id) ? "audio" : x.modality;
+      const first = encs.find(y => mk(y) === mk(x)) === x;
+      const kids = comps.filter(y => y !== x && (y.id.startsWith(x.id + ".") || isAdapterOf(y, x) ||
+        (first && isProj(y) && towers.includes(y) && mk(y) === mk(x)))), p = (x.params || 0) + kids.reduce((a, y) => a + (y.params || 0), 0);
+      if (p > (back.params || 0)) continue;   // a "tower" larger than the language model is the main model (CLIP, detection, ...)
+      const kind = mk(x);
       levers.push({id: "tower:" + x.id, title: `Drop the ${kind} tower if you only send text`, params: p, share: pct(p), saves: p, saves_share: pct(p),
         detail: `${x.id}${kids.length ? " with " + kids.map(y => y.id).join(", ") : ""}: ${(p / 1e6).toFixed(1)}M weights.`,
         how: `Export only the language model (and the ${kind} tower when a request needs it); the text path never reads these weights.`});
@@ -76,13 +120,19 @@ const Plan = (() => {
     const kv = kvProfile(I, shapes, cfg);
     if (kv && kv.unused_kv_params) levers.push({id: "kv_shared", title: "K/V projections that shared-KV layers do not use", params: kv.unused_kv_params,
       share: pct(kv.unused_kv_params), saves: kv.unused_kv_params, saves_share: pct(kv.unused_kv_params),
-      detail: `${kv.shared} layers reuse the KV cache of earlier layers (num_kv_shared_layers), yet the file still stores their k/v projections.`,
-      how: "Check that your runtime skips them, then leave them out of the export."});
+      detail: `${kv.shared} layers reuse the KV cache of earlier layers (num_kv_shared_layers), yet the file still stores their k/v projections; they are read only when running without a KV cache.`,
+      how: "Check that your runtime always runs with a cache and skips them, then leave them out of the export."});
     // 5. where the compute weights sit
-    const ffn = opt.ffn_params != null ? opt.ffn_params : T.filter(([n, t]) => t.comp === (back && back.id) && t.kind === "ffn").reduce((a, [n]) => a + prod(shapes[n]), 0);
-    if (ffn) levers.push({id: "ffn", title: "Quantize the feed-forward blocks first", params: ffn, share: pct(ffn), saves: ffn / 2, saves_share: pct(ffn / 2),
+    const ffn = opt.ffn_params != null ? opt.ffn_params : T.filter(([n, t]) => t.comp === (back && back.id) && (t.kind === "ffn" || t.kind === "moe")).reduce((a, [n]) => a + prod(shapes[n]), 0);
+    if (ffn && ffn / total >= 0.05) levers.push({id: "ffn", title: hp.experts ? "Quantize the feed-forward and expert blocks first" : "Quantize the feed-forward blocks first", params: ffn, share: pct(ffn), saves: ffn / 2, saves_share: pct(ffn / 2),
       detail: `${(ffn / 1e9).toFixed(2)}B feed-forward weights in the backbone; 8-bit halves them versus 16-bit, 4-bit quarters them.`,
       how: "Weight-only int8/int4 on the FFN with per-channel or group scales; keep norms, router and the embedding row lookups at higher precision until measured."});
+    // 6. mixture of experts: all experts sit in memory, a token reads only top-k of them
+    const E = hp.experts, k = hp.experts_per_token || c.num_experts_per_tok || c.moe_topk || c.top_k_experts;
+    const moe = opt.moe_params != null ? opt.moe_params : T.filter(([n, t]) => t.comp === (back && back.id) && t.kind === "moe").reduce((a, [n]) => a + prod(shapes[n]), 0);
+    if (E && moe && moe / total >= 0.2) levers.push({id: "moe", title: "Experts: keep the inactive ones off the fast memory", params: moe, share: pct(moe), saves: null,
+      detail: `${E} experts per layer hold ${(moe / 1e9).toFixed(2)}B weights (${(100 * pct(moe)).toFixed(0)}%)` + (k ? `; each token uses ${k}, about ${(100 * k / E).toFixed(1)}% of them.` : "."),
+      how: "Offload experts to CPU/flash and cache the hot ones, quantize experts harder than attention, or prune experts your traffic never routes to (measure routing on your own data first)."});
     levers.sort((a, b) => (b.saves || b.params) - (a.saves || a.params));
     return {total, vocab: V ? {size: V, row_cost: rowCost, params: vocabParams, tables} : null, kv, levers};
   }

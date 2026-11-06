@@ -1,4 +1,4 @@
-"""Build the site: index.html (Thai) and en/index.html (English) from index.src.html and the src/*.js modules.
+"""Build the site: index.html (English), th/index.html (Thai) and en/index.html (a redirect kept for old links) from index.src.html and the src/*.js modules.
 
 Each page gets its own language, title, description, canonical URL and hreflang links, and every element marked
 with data-i / data-ih / data-iph is filled with its text at build time, so the HTML that search engines fetch
@@ -21,12 +21,12 @@ I18N = json.loads(subprocess.run(["node", "-e", "global.window={};require('./i18
                                  capture_output=True, text=True, check=True).stdout)
 
 PAGES = {
-    "th": dict(out="../index.html", root="", canon=BASE, alt="en/", ogloc="th_TH", ogalt="en_US",
-               title="AI Model Explorer | ดูโครงสร้างโมเดลบน Hugging Face ไม่ต้องโหลด",
-               desc="วางชื่อ repo บน Hugging Face แล้วเห็นโครงสร้างโมเดลแยกเป็นส่วน: layer, attention, MoE, SSM, จำนวน parameter และ precision อ่านแค่ header ของ safetensors ไม่โหลด weight ใช้ฟรี ภาษาไทยและอังกฤษ"),
-    "en": dict(out="../en/index.html", root="../", canon=BASE + "en/", alt="../", ogloc="en_US", ogalt="th_TH",
+    "en": dict(out="../index.html", root="", canon=BASE, alt="th/", ogloc="en_US", ogalt="th_TH",
                title="AI Model Explorer | See Inside Any Hugging Face Model",
                desc="Paste a Hugging Face repo and see its architecture split into parts: layers, attention, MoE, SSM, parameter counts and precision (FP8, NVFP4, GPTQ). Reads only the safetensors header, never the weights. Free, open source."),
+    "th": dict(out="../th/index.html", root="../", canon=BASE + "th/", alt="../", ogloc="th_TH", ogalt="en_US",
+               title="AI Model Explorer | ดูโครงสร้างโมเดลบน Hugging Face ไม่ต้องโหลด",
+               desc="วางชื่อ repo บน Hugging Face แล้วเห็นโครงสร้างโมเดลแยกเป็นส่วน: layer, attention, MoE, SSM, จำนวน parameter และ precision อ่านแค่ header ของ safetensors ไม่โหลด weight ใช้ฟรี ภาษาไทยและอังกฤษ"),
 }
 
 def text(key, lang):
@@ -67,3 +67,12 @@ for lang, p in PAGES.items():
     os.makedirs(os.path.dirname(os.path.abspath(p["out"])), exist_ok=True)
     open(p["out"], "w", encoding="utf-8").write(page)
     print(lang, p["out"], len(page))
+
+# /en/ was the English page until November 2026: keep old links (and #hf=... shares) working
+open("../en/index.html", "w", encoding="utf-8").write(
+    '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>AI Model Explorer</title>'
+    f'<link rel="canonical" href="{BASE}"><meta name="robots" content="noindex">'
+    '<meta http-equiv="refresh" content="0; url=../">'
+    '<script>location.replace("../" + location.search + location.hash)</script></head>'
+    f'<body><a href="../">AI Model Explorer</a></body></html>')
+print("redirect ../en/index.html")

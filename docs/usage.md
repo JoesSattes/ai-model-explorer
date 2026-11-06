@@ -11,7 +11,7 @@ AI Model Explorer has three interfaces: the website, the command line, and Pytho
 
 ## Website
 
-Open https://joessattes.github.io/ai-model-explorer/en/ (Thai: https://joessattes.github.io/ai-model-explorer/).
+Open https://joessattes.github.io/ai-model-explorer/ (Thai: https://joessattes.github.io/ai-model-explorer/th/).
 
 1. Type a Hugging Face repo id such as `Qwen/Qwen3-8B` and press **Load**, or drop a `.safetensors`, `.tflite` or `config.json` file on the page.
 2. **Anatomy** shows the components in data order (for example vision encoder → projector → language model). Each layer stack is a strip colored by block type, and every value carries its source: measured from the weights, read from config, or estimated.
@@ -19,7 +19,7 @@ Open https://joessattes.github.io/ai-model-explorer/en/ (Thai: https://joessatte
 4. **Layer map** draws every layer to scale. Lenses switch the view between weights, compute, TFLite ops, precision and fragility.
 5. **Report** lists the findings and gives a Markdown table you can copy.
 
-Share a model with a link: `https://joessattes.github.io/ai-model-explorer/en/#hf=deepseek-ai/DeepSeek-V3` opens the page and loads that repo.
+Share a model with a link: `https://joessattes.github.io/ai-model-explorer/#hf=deepseek-ai/DeepSeek-V3` opens the page and loads that repo.
 Models you open are kept in your browser, so the next visit does not load them again.
 
 ## Command line

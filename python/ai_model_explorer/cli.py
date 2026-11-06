@@ -2,6 +2,7 @@
 
   ai-model-explorer inspect  MODEL [--json] [--tensors]      anatomy summary (or everything as JSON)
   ai-model-explorer insights MODEL                           findings in plain language
+  ai-model-explorer plan     MODEL [--lang th,en,zh]         where to cut, with the weights each step removes
   ai-model-explorer plot     MODEL -o anatomy.png            diagram as PNG, SVG or PDF
   ai-model-explorer report   MODEL -o report.html            self-contained HTML report
   ai-model-explorer memory   MODEL --context 32768           weights + KV cache estimate
@@ -37,7 +38,7 @@ def _serve(repo, port: int, lang: str, no_browser: bool) -> None:
         handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(root))
         handler.log_message = lambda *a, **k: None
         with socketserver.TCPServer(("127.0.0.1", port), handler) as httpd:
-            url = f"http://127.0.0.1:{httpd.server_address[1]}/" + ("en/" if lang == "en" else "")
+            url = f"http://127.0.0.1:{httpd.server_address[1]}/" + ("th/" if lang == "th" else "")
             if repo:
                 url += "#hf=" + urllib.parse.quote(repo, safe="/")
             print(f"AI Model Explorer {__version__} running at {url}  (Ctrl+C to stop)")
@@ -76,6 +77,13 @@ def main(argv=None) -> int:
 
     g = sub.add_parser("insights", help="findings in plain language")
     _model_args(g)
+
+    pn = sub.add_parser("plan", help="where to cut: each step to make the model smaller, with the weights it removes")
+    _model_args(pn)
+    pn.add_argument("--lang", help="languages you serve, e.g. th,en,zh (counts tokenizer pieces to price the vocabulary cut)")
+    pn.add_argument("--text-only", action="store_true", help="count vision / audio towers as removable")
+    pn.add_argument("--tokenizer", help="path to tokenizer.json (default: the model's own)")
+    pn.add_argument("--json", action="store_true", help="print the plan as JSON")
 
     pl = sub.add_parser("plot", help="draw the anatomy to an image")
     _model_args(pl)
@@ -205,6 +213,12 @@ def main(argv=None) -> int:
             print(mdl.name)
             for line in mdl.insights():
                 print(f"  - {line}")
+        elif a.cmd == "plan":
+            langs = [x.strip() for x in a.lang.split(",")] if a.lang else None
+            if a.json:
+                print(json.dumps(mdl.plan(langs, a.text_only, tokenizer=a.tokenizer, token=a.token), indent=1, ensure_ascii=False))
+            else:
+                print(mdl.plan_text(langs, a.text_only, tokenizer=a.tokenizer, token=a.token))
         elif a.cmd == "plot":
             mdl.plot(a.output, theme=a.theme, dpi=a.dpi)
             print(f"wrote {a.output}")

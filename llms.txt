@@ -33,7 +33,7 @@ Sattaya Singkul (Jo) — Independent Researcher, Bangkok, Thailand; speech and e
 Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Contest", AI Expo Thailand 2026.
 
 ## Links
-- App: https://joessattes.github.io/ai-model-explorer/ (Thai) · https://joessattes.github.io/ai-model-explorer/en/ (English)
+- App: https://joessattes.github.io/ai-model-explorer/ (English) · https://joessattes.github.io/ai-model-explorer/th/ (Thai)
 - Python package: https://pypi.org/project/ai-model-explorer/ (`pip install ai-model-explorer`; CLI `ai-model-explorer inspect|insights|memory|compare|plot|report|open`; API `from ai_model_explorer import explore, compare`: active parameters, parameter breakdown, KV-cache and memory estimates, diagrams, HTML reports)
 - Usage guide (web, CLI, Python, JSON fields): https://github.com/JoesSattes/ai-model-explorer/blob/main/docs/usage.md
 - How it works: https://github.com/JoesSattes/ai-model-explorer/blob/main/docs/how-it-works.md

@@ -1,6 +1,6 @@
 # AI Model Explorer — full description
 
-> Free, open-source (MIT) web tool by Sattaya Singkul that shows the architecture of any AI model on Hugging Face without downloading its weights. It reads only the safetensors header (tensor names, shapes and dtypes, usually a few tens of kilobytes) and works out the model's parts, layers, parameter counts and precision. Thai: https://joessattes.github.io/ai-model-explorer/ · English: https://joessattes.github.io/ai-model-explorer/en/
+> Free, open-source (MIT) web tool by Sattaya Singkul that shows the architecture of any AI model on Hugging Face without downloading its weights. It reads only the safetensors header (tensor names, shapes and dtypes, usually a few tens of kilobytes) and works out the model's parts, layers, parameter counts and precision. Thai: https://joessattes.github.io/ai-model-explorer/ · English: https://joessattes.github.io/ai-model-explorer/
 
 ## What it does
 Paste a Hugging Face repo id (for example `deepseek-ai/DeepSeek-V3`, `Qwen/Qwen3-30B-A3B`, `openai/whisper-large-v3`), or drop a `.safetensors`, `.tflite` or `config.json` file. The page:
@@ -78,8 +78,8 @@ Sattaya Singkul (Jo), Independent Researcher, Bangkok, Thailand; speech and edge
 Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Contest", AI Expo Thailand 2026.
 
 ## Links
-- App (Thai): https://joessattes.github.io/ai-model-explorer/
-- App (English): https://joessattes.github.io/ai-model-explorer/en/
+- App (Thai): https://joessattes.github.io/ai-model-explorer/th/
+- App (English): https://joessattes.github.io/ai-model-explorer/
 - Paper: https://www.researchgate.net/publication/417293353
 - Paper PDF: https://joessattes.github.io/ai-model-explorer/paper/manifest-anatomy-singkul-2026.pdf
 - Python package: https://pypi.org/project/ai-model-explorer/

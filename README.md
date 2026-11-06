@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <a href="https://joessattes.github.io/ai-model-explorer/en/"><b>Open the web app</b></a> ·
+  <a href="https://joessattes.github.io/ai-model-explorer/"><b>Open the web app</b></a> ·
   <a href="https://joessattes.github.io/ai-model-explorer/">ภาษาไทย</a> ·
   <a href="#what-is-new-here">What is new</a> ·
   <a href="#hub-weight-census">Hub census</a> ·
@@ -41,8 +41,8 @@ command-line tool and a Python library.
 - **Local files stay local.** Files you open are parsed in your browser or on your machine and are never uploaded; Hub repos are read directly from Hugging Face.
 
 ## Quick start
-**Web.** Open https://joessattes.github.io/ai-model-explorer/en/, type a repo id such as `Qwen/Qwen3-8B` and press Load.
-Links like [`…/en/#hf=deepseek-ai/DeepSeek-V3`](https://joessattes.github.io/ai-model-explorer/en/#hf=deepseek-ai/DeepSeek-V3) open a model directly.
+**Web.** Open https://joessattes.github.io/ai-model-explorer/, type a repo id such as `Qwen/Qwen3-8B` and press Load.
+Links like [`…/en/#hf=deepseek-ai/DeepSeek-V3`](https://joessattes.github.io/ai-model-explorer/#hf=deepseek-ai/DeepSeek-V3) open a model directly.
 
 **Command line.**
 ```bash

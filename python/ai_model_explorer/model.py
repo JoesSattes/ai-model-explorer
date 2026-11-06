@@ -84,7 +84,7 @@ class Model:
                               f"({fmt_n(self.distinct_params)} distinct; the tied head is stored twice)", 1)
         repo = (self.data.get("source") or {}).get("repo")
         if repo:
-            out += f"\n  open in the explorer: https://joessattes.github.io/ai-model-explorer/en/?ref=pip#hf={repo}"
+            out += f"\n  open in the explorer: https://joessattes.github.io/ai-model-explorer/?ref=pip#hf={repo}"
         return out
 
     # ------------------------------------------------------------------ analysis
@@ -342,7 +342,7 @@ class Model:
             out.append("Where to cut (see plan_text()): " + "; ".join(f"{x['title'].lower()} ({x['share']:.0%})" for x in lev[:3]) + ".")
         repo = (self.data.get("source") or {}).get("repo")
         if repo:
-            out.append(f"Open it in the explorer: https://joessattes.github.io/ai-model-explorer/en/?ref=pip#hf={repo}")
+            out.append(f"Open it in the explorer: https://joessattes.github.io/ai-model-explorer/?ref=pip#hf={repo}")
         return out
 
     # ------------------------------------------------------------------ where to cut

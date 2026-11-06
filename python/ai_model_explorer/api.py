@@ -148,11 +148,12 @@ def inspect(model: Union[str, os.PathLike], token: Optional[str] = None, config:
     roles = anatomy.get("tensors") or {}
     keep = {n: t for n, t in roles.items() if t.get("kind") in ("embed", "head") or (t.get("kind") == "attn" and t.get("role") in ("k", "v"))}
     back = next((c["id"] for c in anatomy.get("comps") or [] if c.get("role") == "backbone"), None)
-    ffn = sum(_prod(logical.get(n, [[], 0])[0]) for n, t in roles.items() if t.get("kind") == "ffn" and t.get("comp") == back)
+    ffn = sum(_prod(logical.get(n, [[], 0])[0]) for n, t in roles.items() if t.get("kind") in ("ffn", "moe") and t.get("comp") == back)
     try:
         out["plan"] = eng.plan({"comps": anatomy.get("comps"), "hp": anatomy.get("hp"), "edges": anatomy.get("edges"), "family": anatomy.get("family"), "tensors": keep},
                                {n: logical.get(n, [[], 0])[0] for n in keep}, cfg,
-                               {"total": (anatomy.get("totals") or {}).get("params"), "ffn_params": ffn})
+                               {"total": (anatomy.get("totals") or {}).get("params"), "ffn_params": ffn, "name": source.get("repo") or source.get("path") or "",
+                                "moe_params": sum(_prod(logical.get(n, [[], 0])[0]) for n, t in roles.items() if t.get("kind") == "moe" and t.get("comp") == back)})
     except Exception as e:  # the plan is advice; never fail the inspection because of it
         out["plan"] = {"error": str(e), "levers": []}
     if include_tensors:

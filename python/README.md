@@ -7,7 +7,7 @@
 <p align="center"><b>See inside a Hugging Face model, part by part, from its safetensors headers alone.</b></p>
 
 <p align="center">
-  <a href="https://joessattes.github.io/ai-model-explorer/en/">Web app</a> ·
+  <a href="https://joessattes.github.io/ai-model-explorer/">Web app</a> ·
   <a href="https://github.com/JoesSattes/ai-model-explorer">GitHub</a> ·
   <a href="https://github.com/JoesSattes/ai-model-explorer/blob/main/docs/usage.md">Docs</a> ·
   <a href="https://www.researchgate.net/publication/417293353">Paper</a>
@@ -100,6 +100,8 @@ print(m.plan_text(["th", "en", "zh"], text_only=True))   # reads tokenizer.json 
 m.plan(["th", "en"])                                     # the same as a list of dicts
 m.vocab_scripts()                                        # tokenizer pieces per writing system
 ```
+
+From the command line: `ai-model-explorer plan google/gemma-4-E2B-it --lang th,en,zh --text-only`.
 
 For Gemma 4 E2B the plan finds that every vocabulary row costs 10,496 weights (1,536 in the token embedding plus 8,960
 in the per-layer embeddings), so trimming the vocabulary to the languages you serve is the largest cut, followed by the

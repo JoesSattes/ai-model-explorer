@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
 <script>try{document.documentElement.dataset.theme=localStorage.getItem("mx_theme")==="light"?"light":"dark"}catch(e){document.documentElement.dataset.theme="dark"}</script>
 <meta charset="utf-8">
-<script>window.PAGE_LANG="th";window.PAGE_ALT="en/";</script>
+<script>window.PAGE_LANG="en";window.PAGE_ALT="th/";</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Model Explorer | ดูโครงสร้างโมเดลบน Hugging Face ไม่ต้องโหลด</title>
-<meta name="description" content="วางชื่อ repo บน Hugging Face แล้วเห็นโครงสร้างโมเดลแยกเป็นส่วน: layer, attention, MoE, SSM, จำนวน parameter และ precision อ่านแค่ header ของ safetensors ไม่โหลด weight ใช้ฟรี ภาษาไทยและอังกฤษ">
+<title>AI Model Explorer | See Inside Any Hugging Face Model</title>
+<meta name="description" content="Paste a Hugging Face repo and see its architecture split into parts: layers, attention, MoE, SSM, parameter counts and precision (FP8, NVFP4, GPTQ). Reads only the safetensors header, never the weights. Free, open source.">
 <meta name="keywords" content="AI model explorer, model visualization, transformer explainer, TFLite analyzer, LiteRT, edge AI, on-device AI, quantization, int8, int4, Whisper, Qwen3-ASR, Qwen3.8, Qwen, Llama, GPT-2, BERT, ViT, Hugging Face, safetensors, model architecture, Sattaya Singkul, ภาษาไทย, AI Expo Thailand">
 <meta name="author" content="Sattaya Singkul">
 <meta name="creator" content="Sattaya Singkul">
@@ -16,9 +16,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="canonical" href="https://joessattes.github.io/ai-model-explorer/">
-<link rel="alternate" hreflang="th" href="https://joessattes.github.io/ai-model-explorer/">
-<link rel="alternate" hreflang="en" href="https://joessattes.github.io/ai-model-explorer/en/">
-<link rel="alternate" hreflang="x-default" href="https://joessattes.github.io/ai-model-explorer/en/">
+<link rel="alternate" hreflang="th" href="https://joessattes.github.io/ai-model-explorer/th/">
+<link rel="alternate" hreflang="en" href="https://joessattes.github.io/ai-model-explorer/">
+<link rel="alternate" hreflang="x-default" href="https://joessattes.github.io/ai-model-explorer/">
 <link rel="author" href="https://joessattes.github.io/Sattaya-AI-Website/">
 <link rel="license" href="https://joessattes.github.io/ai-model-explorer/LICENSE">
 <link rel="alternate" type="text/plain" title="LLM summary" href="https://joessattes.github.io/ai-model-explorer/llms.txt">
@@ -28,16 +28,16 @@
 <link rel="apple-touch-icon" href="assets/logo-180.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="AI Model Explorer">
-<meta property="og:title" content="AI Model Explorer | ดูโครงสร้างโมเดลบน Hugging Face ไม่ต้องโหลด">
-<meta property="og:description" content="วางชื่อ repo บน Hugging Face แล้วเห็นโครงสร้างโมเดลแยกเป็นส่วน: layer, attention, MoE, SSM, จำนวน parameter และ precision อ่านแค่ header ของ safetensors ไม่โหลด weight ใช้ฟรี ภาษาไทยและอังกฤษ">
+<meta property="og:title" content="AI Model Explorer | See Inside Any Hugging Face Model">
+<meta property="og:description" content="Paste a Hugging Face repo and see its architecture split into parts: layers, attention, MoE, SSM, parameter counts and precision (FP8, NVFP4, GPTQ). Reads only the safetensors header, never the weights. Free, open source.">
 <meta property="og:url" content="https://joessattes.github.io/ai-model-explorer/">
 <meta property="og:image" content="https://joessattes.github.io/ai-model-explorer/og.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="AI Model Explorer: Whisper split into audio, spectrogram, encoder, decoder and logits with real numbers">
-<meta property="og:locale" content="th_TH"><meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale" content="en_US"><meta property="og:locale:alternate" content="th_TH">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="AI Model Explorer | ดูโครงสร้างโมเดลบน Hugging Face ไม่ต้องโหลด">
-<meta name="twitter:description" content="วางชื่อ repo บน Hugging Face แล้วเห็นโครงสร้างโมเดลแยกเป็นส่วน: layer, attention, MoE, SSM, จำนวน parameter และ precision อ่านแค่ header ของ safetensors ไม่โหลด weight ใช้ฟรี ภาษาไทยและอังกฤษ">
+<meta name="twitter:title" content="AI Model Explorer | See Inside Any Hugging Face Model">
+<meta name="twitter:description" content="Paste a Hugging Face repo and see its architecture split into parts: layers, attention, MoE, SSM, parameter counts and precision (FP8, NVFP4, GPTQ). Reads only the safetensors header, never the weights. Free, open source.">
 <meta name="twitter:image" content="https://joessattes.github.io/ai-model-explorer/og.png">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[
@@ -48,7 +48,7 @@
   "keywords":"AI model explorer, model architecture, Hugging Face, safetensors, mixture of experts, KV cache, quantization, edge AI, model visualization","screenshot":"https://joessattes.github.io/ai-model-explorer/og.png","image":"https://joessattes.github.io/ai-model-explorer/assets/logo-512.png"},
  {"@type":"Person","@id":"https://joessattes.github.io/Sattaya-AI-Website/#person","name":"Sattaya Singkul","alternateName":"Jo","url":"https://joessattes.github.io/Sattaya-AI-Website/","jobTitle":"Independent Researcher","workLocation":{"@type":"Place","name":"Bangkok, Thailand"},"knowsAbout":["Speech AI","Edge AI","On-device inference","Model quantization"],"sameAs":["https://joessattes.github.io/Sattaya-AI-Website/","https://github.com/JoesSattes"]},
  {"@type":"SoftwareSourceCode","name":"AI Model Explorer source","codeRepository":"https://github.com/JoesSattes/ai-model-explorer","sameAs":["https://pypi.org/project/ai-model-explorer/"],"runtimePlatform":["Web browser","Python 3.9+ (pip install ai-model-explorer)"],"programmingLanguage":"JavaScript","license":"https://opensource.org/licenses/MIT","author":{"@id":"https://joessattes.github.io/Sattaya-AI-Website/#person"}},
- {"@type": "FAQPage", "inLanguage": "th", "mainEntity": [{"@type": "Question", "name": "ต้องโหลดโมเดลก่อนไหม", "acceptedAnswer": {"@type": "Answer", "text": "ไม่ต้อง สำหรับ repo บน Hugging Face เว็บขอแค่ไบต์ส่วน header ของแต่ละไฟล์ ปกติรวมไม่ถึง 200 KB แม้โมเดลจะใหญ่หลายร้อย GB ก็ตาม"}}, {"@type": "Question", "name": "ไฟล์ของฉันถูกส่งขึ้นเซิร์ฟเวอร์ไหม", "acceptedAnswer": {"@type": "Answer", "text": "ไม่ ไฟล์ที่ลากมาวางถูกอ่านในเบราว์เซอร์ของคุณ ไม่ถูกอัปโหลดไปที่ใด และโมเดลที่เปิดไว้จะถูกเก็บในเบราว์เซอร์ เข้าครั้งหน้าไม่ต้องโหลดใหม่"}}, {"@type": "Question", "name": "ต่างจาก Netron, Model Explorer ของ Google, HF Viewer หรือ hf-mem อย่างไร", "acceptedAnswer": {"@type": "Answer", "text": "Netron กับ Model Explorer วาดกราฟ operator จากไฟล์ที่คุณมีอยู่แล้ว · HF Viewer วาดโครงสร้างจาก config และโค้ด PyTorch ของโมเดล · hf-mem ประมาณ memory จาก header แต่ไม่ได้บอกว่าแต่ละ tensor ทำหน้าที่อะไร · เว็บนี้แกะโครงสร้างจาก header อย่างเดียว: ส่วนประกอบ ชนิดของแต่ละ layer และบทบาทของทุก tensor โดยไม่ต้องใช้ config หรือโค้ด จึงใช้กับโมเดลตระกูลใหม่ได้ ตรวจได้ว่า config ตรงกับ weight หรือไม่ และยังแม่น 95% แม้ไม่มีชื่อ tensor"}}, {"@type": "Question", "name": "ใช้ฟรีไหม เอาโค้ดไปใช้ได้หรือเปล่า", "acceptedAnswer": {"@type": "Answer", "text": "ฟรี โค้ดเป็น MIT License อยู่บน GitHub ถ้านำไปใช้ในงานวิจัย ช่วยอ้างอิง paper ด้วย"}}, {"@type": "Question", "name": "ใครทำ", "acceptedAnswer": {"@type": "Answer", "text": "Sattaya Singkul ทำสำหรับ workshop “Squeeze Until It Breaks” ที่งาน AI Expo Thailand 2026"}}]},
+ {"@type": "FAQPage", "inLanguage": "en", "mainEntity": [{"@type": "Question", "name": "Do I need to download the model?", "acceptedAnswer": {"@type": "Answer", "text": "No. For a Hugging Face repo the page requests only the header bytes of each file, usually under 200 KB in total, even for checkpoints of hundreds of gigabytes."}}, {"@type": "Question", "name": "Does my file leave my computer?", "acceptedAnswer": {"@type": "Answer", "text": "No. Files you drop are parsed in your browser and never uploaded. Models you open are kept in your browser, so the next visit does not need to load them again."}}, {"@type": "Question", "name": "How is it different from Netron, Google's Model Explorer, HF Viewer or hf-mem?", "acceptedAnswer": {"@type": "Answer", "text": "Netron and Model Explorer draw the operator graph of a file you already have. HF Viewer draws the architecture from the model's config and PyTorch code. hf-mem estimates memory from the header but does not say what each tensor does. This page recovers the structure from the header alone (components, the type of every layer, the role of every tensor) without config or code, so it works for new families, checks the config against the weights, and stays 95% accurate even with every tensor name hidden."}}, {"@type": "Question", "name": "Is it free, and can I reuse the code?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The code is MIT licensed on GitHub. If you use it in research, please cite the paper."}}, {"@type": "Question", "name": "Who made it?", "acceptedAnswer": {"@type": "Answer", "text": "Sattaya Singkul, for the workshop “Squeeze Until It Breaks” at AI Expo Thailand 2026."}}]},
  {"@type": "ScholarlyArticle", "headline": "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories", "author": {"@id": "https://joessattes.github.io/Sattaya-AI-Website/#person"}, "datePublished": "2026-11", "inLanguage": "en", "url": "https://www.researchgate.net/publication/417293353", "sameAs": ["https://joessattes.github.io/ai-model-explorer/paper/manifest-anatomy-singkul-2026.pdf", "https://github.com/JoesSattes/ai-model-explorer/tree/main/paper"], "publisher": {"@type": "Organization", "name": "ResearchGate"}, "about": {"@id": "https://joessattes.github.io/ai-model-explorer/#app"}}
 ]}
 </script>
@@ -263,13 +263,13 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
 #cutBox .cutl>div{padding:12px 0;border-top:1px solid var(--line,#e2e2dc)}#cutBox .cutl b{font-size:15px}#cutBox .cutl p{margin:4px 0 0;font-size:13.5px;line-height:1.5}
 #cutBox .cutn{text-align:right;font-variant-numeric:tabular-nums}#cutBox .cutn big{display:block;font-size:20px;font-weight:700}#cutBox .cbar{height:6px;border-radius:3px;background:var(--line,#e2e2dc);margin-top:6px;overflow:hidden}
 #cutBox .cbar i{display:block;height:100%;background:#e8114a}#cutBox .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}#cutBox .chips button,#cutBox .chips label{font:inherit;font-size:13px;padding:5px 11px;border-radius:999px;border:1px solid var(--line,#ccc);background:transparent;color:inherit;cursor:pointer}
-#cutBox{padding:22px 26px}#cutBox .chips button.on{background:#e8114a;color:#fff;border-color:#e8114a}#cutBox .cutsum{margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(232,17,74,.07);font-size:14px}
+#cutBox{padding:22px 26px;margin-top:18px}#cutBox .chips button.on{background:#e8114a;color:#fff;border-color:#e8114a}#cutBox .cutsum{margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(232,17,74,.07);font-size:14px}
 </style>
 </head>
 <body>
 <nav class="top"><div class="wrap">
   <a class="brand" href="#top"><img src="assets/logo.svg" width="24" height="24" alt="" aria-hidden="true"><span data-i="brand">AI Model Explorer</span></a>
-  <a class="l" href="#arch" data-i="nav_arch">โครงสร้าง</a><a class="l" href="#big" data-i="nav_big">ภาพรวม</a><a class="l" href="#map" data-i="nav_map">Layer map</a><a class="l" href="#concepts" data-i="nav_concepts">แนวคิด</a><a class="l" href="#report" data-i="nav_report">รายงาน</a><a class="l" href="census/" data-i="nav_census">Hub Census</a>
+  <a class="l" href="#arch" data-i="nav_arch">Anatomy</a><a class="l" href="#big" data-i="nav_big">Big picture</a><a class="l" href="#map" data-i="nav_map">Layer map</a><a class="l" href="#concepts" data-i="nav_concepts">Concepts</a><a class="l" href="#report" data-i="nav_report">Report</a><a class="l" href="census/" data-i="nav_census">Hub Census</a>
   <span class="sp"></span><span id="navModel"></span>
   <button class="theme" id="themeBtn" type="button" aria-label="Theme"><svg class="sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
   <div class="lang" role="group" aria-label="Language"><button data-lang="th">TH</button><button data-lang="en">EN</button></div>
@@ -279,16 +279,16 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
   <div class="hgrid">
     <div>
       <h1 data-ih="hero_h1">AI Model Explorer</h1>
-      <p class="sub" data-i="hero_sub">เปิดดูโครงสร้างของโมเดลใดก็ได้บน Hugging Face: มีกี่ส่วน แต่ละส่วนทำอะไร ใหญ่แค่ไหน โดยไม่ต้องดาวน์โหลด weight</p>
-      <label class="xk" for="hf" data-i="pick_own">repo บน Hugging Face</label>
-      <div class="own"><input id="hf" data-iph="hf_ph" placeholder="repo บน Hugging Face เช่น nvidia/parakeet-tdt-0.6b-v3" autocomplete="off"><button class="btn primary" id="hfGo" data-i="load">โหลด</button></div>
+      <p class="sub" data-i="hero_sub">Open any Hugging Face model and see its parts, what each one does and how big it is, without downloading the weights.</p>
+      <label class="xk" for="hf" data-i="pick_own">Hugging Face repo</label>
+      <div class="own"><input id="hf" data-iph="hf_ph" placeholder="Hugging Face repo, e.g. nvidia/parakeet-tdt-0.6b-v3" autocomplete="off"><button class="btn primary" id="hfGo" data-i="load">Load</button></div>
       <div class="own">
-        <label class="btn sm" for="file"><span data-i="upload">อัปโหลด .tflite / .safetensors</span></label><input type="file" id="file" accept=".tflite,.safetensors,.json" multiple hidden>
-        <button class="btn sm" id="cfgOpen"><span data-i="paste_cfg">วาง config.json</span></button>
+        <label class="btn sm" for="file"><span data-i="upload">Upload .tflite / .safetensors</span></label><input type="file" id="file" accept=".tflite,.safetensors,.json" multiple hidden>
+        <button class="btn sm" id="cfgOpen"><span data-i="paste_cfg">Paste config.json</span></button>
       </div>
       <div id="ownNote" role="status" aria-live="polite"></div>
-      <p class="howread" data-ih="how_read"><b>อ่านอะไรบ้าง</b> header ของ safetensors (ชื่อ, shape, dtype ของทุก tensor) กับ config.json รวมกันปกติไม่ถึง 200 KB ส่วนไฟล์ .pt อ่านแค่สารบัญ ทุกอย่างประมวลผลในเบราว์เซอร์</p>
-      <div class="pipchip"><span data-i="pip_lead">มีใน Python ด้วย</span><button type="button" id="pipCopy" title="Copy"><code>pip install ai-model-explorer</code><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><a href="https://pypi.org/project/ai-model-explorer/" data-i="pip_more">PyPI</a></div>
+      <p class="howread" data-ih="how_read"><b>What it reads:</b> the safetensors header (every tensor's name, shape and dtype) and config.json, usually under 200 KB together; for .pt files only the index. Everything runs in your browser.</p>
+      <div class="pipchip"><span data-i="pip_lead">Also for Python</span><button type="button" id="pipCopy" title="Copy"><code>pip install ai-model-explorer</code><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><a href="https://pypi.org/project/ai-model-explorer/" data-i="pip_more">PyPI</a></div>
     </div>
     <div class="panel lib" id="picker" aria-label="Model library"></div>
   </div>
@@ -296,7 +296,7 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
 
 <main>
 <section id="arch"><div class="wrap">
-  <h2 class="sec" data-i="arch_h2">โครงสร้างของโมเดล</h2><p class="lead" data-i="arch_lead">แต่ละกล่องคือหนึ่งส่วนของโมเดล เรียงตามทางที่ข้อมูลไหล แถบสีคือชนิดของแต่ละ layer คลิกกล่องเพื่อดูว่าข้างในมีอะไร และค่าแต่ละค่ามาจากไหน</p>
+  <h2 class="sec" data-i="arch_h2">Anatomy</h2><p class="lead" data-i="arch_lead">Each box is one part of the model, in the order data flows through it. The strip shows the type of every layer. Click a box to see what is inside and where each value comes from.</p>
   <div class="panel" id="cur"></div>
   <div class="panel" id="archBox"></div>
   <div class="panel" id="cutBox"></div>
@@ -304,27 +304,27 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
 
 <section id="big"><div class="wrap">
   <h2 class="sec" id="bigH2"></h2>
-  <p class="lead" data-i="big_lead">กด ▶ Play เพื่อเดินทีละส่วน: แต่ละส่วนรับอะไรเข้า ส่งอะไรออก และทำไปทำไม · คลิกส่วนไหนก็ได้เพื่อเปิดดูข้างใน · เปลี่ยน lens เพื่อดูว่า weight, compute, จำนวน op หรือ precision อยู่ตรงไหน</p>
+  <p class="lead" data-i="big_lead">Press ▶ Play to walk the parts: what goes in, what comes out, and why. Click any part to open it. Switch the lens to see where the weights, compute, ops or precision live.</p>
   <div class="xbar"><span class="xk" data-i="lens">lens</span>
     <button class="chip" data-xl="weights" data-i="lens_weights">Weights</button><button class="chip" data-xl="compute" data-i="lens_compute">Compute</button><button class="chip" data-xl="ops" data-i="lens_ops">TFLite ops</button><button class="chip" data-xl="precision" data-i="lens_precision">Precision</button><button class="chip" data-xl="fragility" data-i="lens_fragility">Fragility</button>
     <span class="xsay" id="lensSay"></span></div>
   <div class="panel ov"><div class="hscroll"><svg id="xsvg" viewBox="0 0 1600 520" role="img" aria-label="Model parts overview"></svg></div><div class="xstrip hscroll" id="xstrip"></div></div>
-  <div class="playbar"><button class="btn primary" id="bPlay" data-i="play">▶ Play</button><button class="btn sm" id="bPrev" data-i="prev">‹ ก่อนหน้า</button><button class="btn sm" id="bNext" data-i="next">ถัดไป ›</button><div id="bDots"></div>
-    <label class="slider"><span data-i="tokens_per">token ต่อประโยค</span> <input type="range" id="tok" min="5" max="150" value="40"> <b id="tokV">40</b></label></div>
+  <div class="playbar"><button class="btn primary" id="bPlay" data-i="play">▶ Play</button><button class="btn sm" id="bPrev" data-i="prev">‹ Prev</button><button class="btn sm" id="bNext" data-i="next">Next ›</button><div id="bDots"></div>
+    <label class="slider"><span data-i="tokens_per">tokens per sentence</span> <input type="range" id="tok" min="5" max="150" value="40"> <b id="tokV">40</b></label></div>
   <div class="panel" id="xio"></div>
   <div class="panel xdet" id="xdetail"></div>
 </div></section>
 
 <section id="map"><div class="wrap">
-  <h2 class="sec" data-i="map_h2">ทุก layer วาดตามขนาดจริง คลิกเพื่อเปิด</h2><p class="lead" data-i="map_lead">ความกว้างของบล็อก = ค่าจริงของ lens ที่เลือก · แถวบน = encoder (ถ้ามี) · แถวล่าง = decoder (ถ้ามี)</p>
+  <h2 class="sec" data-i="map_h2">Every layer, drawn to scale. Click one to open it.</h2><p class="lead" data-i="map_lead">Block width = the real value of the chosen lens. Encoder row on top (if any), decoder row below (if any).</p>
   <div class="xbar"><button class="chip" data-ml="size" data-i="map_size">Size</button><button class="chip" data-ml="read" data-i="map_read">Bytes read</button><button class="chip" data-ml="prec" data-i="map_prec">Precision</button><button class="chip" data-ml="frag" data-i="map_frag">Fragility</button>
-    <span style="flex:1"></span><label class="slider"><span data-i="tokens_per">token ต่อประโยค</span> <input type="range" id="tok2" min="5" max="150" value="40"> <b id="tokV2">40</b></label></div>
+    <span style="flex:1"></span><label class="slider"><span data-i="tokens_per">tokens per sentence</span> <input type="range" id="tok2" min="5" max="150" value="40"> <b id="tokV2">40</b></label></div>
   <div class="panel" style="margin-top:12px;padding:18px 20px 14px"><div class="hscroll"><svg id="mapSvg" viewBox="0 0 1280 300"></svg></div></div>
   <p id="mapNote"></p>
 </div></section>
 
 <section id="concepts"><div class="wrap">
-  <h2 class="sec" data-i="c_h2">คำศัพท์ที่ต้องรู้ เป็นภาพเคลื่อนไหว</h2><p class="lead" data-i="c_lead">ตัวเลขในการ์ดมาจากโมเดลที่เลือกอยู่ อันสุดท้ายลองเล่นเองได้</p>
+  <h2 class="sec" data-i="c_h2">Key terms, animated</h2><p class="lead" data-i="c_lead">The numbers in each card come from the selected model. The last one is yours to play with.</p>
   <span id="cFfnD" hidden>1024</span><span id="cFfnF" hidden>4096</span>
   <div class="cgrid">
     <div class="panel ccard"><canvas id="cSpec" width="600" height="300"></canvas><h4 id="c1t"></h4><p id="c1p"></p></div>
@@ -335,42 +335,42 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
     <div class="panel ccard"><svg id="cSeam" viewBox="0 0 600 300"></svg><h4 data-i="c_seam_t">Seams</h4><p id="c6p"></p></div>
     <div class="panel qplay">
       <div><canvas id="qCv" width="1200" height="560"></canvas></div>
-      <div><h4 style="font-size:21px;font-weight:600;margin:0 0 10px" data-i="q_h">ปัด 64 weights ให้เหลือน้อยระดับ</h4>
+      <div><h4 style="font-size:21px;font-weight:600;margin:0 0 10px" data-i="q_h">Round 64 weights to fewer levels</h4>
         <label class="slider" style="margin:10px 0"><span data-i="q_bits">bits</span> <input type="range" id="qBits" min="2" max="8" value="4"> <b id="qBitsV">4</b></label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0"><button class="chip" id="qOut"></button><button class="chip" id="qBlock"></button><button class="chip" id="qNew" data-i="q_new">สุ่มใหม่</button></div>
-        <div class="qstat"><div class="fact"><b id="qLev">15</b><span data-i="q_levels">ระดับ</span></div><div class="fact"><b id="qErr">–</b><span data-i="q_err">error สัมพัทธ์</span></div><div class="fact"><b id="qZero">–</b><span data-i="q_zero">weights ที่ถูกปัดเป็น 0</span></div><div class="fact"><b id="qSize">–</b><span data-i="q_bytes">byte ต่อ weight</span></div></div>
-        <p style="color:var(--soft);font-size:14.5px;margin-top:12px" data-i="q_help">จุดฟ้า = ค่าเดิม · เส้นชมพู = ค่าหลังปัด · เปิด outlier แล้วดูค่าเล็กๆ ถูกปัดเป็น 0 · เปลี่ยนเป็น scale ทุก 32 ค่าแล้วดู error ลดลง</p></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0"><button class="chip" id="qOut"></button><button class="chip" id="qBlock"></button><button class="chip" id="qNew" data-i="q_new">new weights</button></div>
+        <div class="qstat"><div class="fact"><b id="qLev">15</b><span data-i="q_levels">levels</span></div><div class="fact"><b id="qErr">–</b><span data-i="q_err">relative error</span></div><div class="fact"><b id="qZero">–</b><span data-i="q_zero">weights rounded to 0</span></div><div class="fact"><b id="qSize">–</b><span data-i="q_bytes">bytes per weight</span></div></div>
+        <p style="color:var(--soft);font-size:14.5px;margin-top:12px" data-i="q_help">Blue dots = original · pink line = after rounding · add the outlier and watch small weights collapse to 0 · switch to one scale per 32 and watch the error drop.</p></div>
     </div>
   </div>
 </div></section>
 
 <section id="report"><div class="wrap">
-  <h2 class="sec" data-i="r_h2">ทุกอย่างไปอยู่ตรงไหน</h2><p class="lead" data-i="r_lead">สรุปตัวเลขของโมเดลที่เลือก คัดลอกเป็น Markdown ไปใส่สไลด์หรือรายงานได้</p>
-  <div class="rgrid"><div><div class="ahead" data-i="r_insights">ข้อสังเกต</div><div id="rIns"></div></div><div><div class="ahead" data-i="r_ops">ชนิด op</div><div id="rOps"></div></div></div>
-  <div class="xbar" style="margin-top:20px"><span style="flex:1"></span><button class="btn sm" id="copyMd" data-i="copy_md">คัดลอกตาราง (Markdown)</button></div>
+  <h2 class="sec" data-i="r_h2">Where it all goes</h2><p class="lead" data-i="r_lead">The selected model in numbers. Copy as Markdown for slides or reports.</p>
+  <div class="rgrid"><div><div class="ahead" data-i="r_insights">What this means</div><div id="rIns"></div></div><div><div class="ahead" data-i="r_ops">Op types</div><div id="rOps"></div></div></div>
+  <div class="xbar" style="margin-top:20px"><span style="flex:1"></span><button class="btn sm" id="copyMd" data-i="copy_md">Copy table (Markdown)</button></div>
   <div class="panel" style="padding:14px 16px;margin-top:10px" id="rTable"></div>
 </div></section>
 <section id="about"><div class="wrap about">
-  <h2 data-i="about_h">เว็บนี้ทำอะไร</h2>
-  <p data-i="about_p1">วางชื่อ repo บน Hugging Face หรือลากไฟล์ .safetensors, .tflite หรือ config.json มาวาง เว็บจะอ่านแค่ header ของไฟล์ safetensors ซึ่งมีชื่อ ขนาด และชนิดข้อมูลของทุก tensor รวมกันไม่กี่สิบ KB จึงไม่ต้องโหลด weight เลย จากรายการนี้เว็บหา layer ที่ซ้ำกัน แยกว่าแต่ละส่วนคือ attention, feed-forward, mixture of experts, SSM หรือ linear attention, convolution, embedding, norm หรือ output head และนับจำนวน parameter ได้ตรง รวมถึงโมเดลที่เก็บแบบ FP8, NVFP4, GPTQ, AWQ, MXFP4, MLX และ bitsandbytes</p>
-  <p data-i="about_p2">ใช้ได้หลายตระกูล: LLM แบบ decoder-only เช่น Llama, Qwen, DeepSeek, Gemma, gpt-oss · โมเดลเสียงเช่น Whisper, Parakeet · โมเดลภาพ+ภาษา · diffusion transformer · embedding model ทุกค่าบนหน้ามีป้ายบอกว่าวัดจาก weight, อ่านจาก config.json หรือประมาณ</p>
-  <p data-ih="about_p3"><b>แม่นแค่ไหน</b> ทดสอบกับ 510 สถาปัตยกรรมใน transformers: แยกส่วนของ tensor ถูก 96.8% ขณะที่กฎซึ่งอ่านแค่ชื่อ tensor ได้ 82.3% และแม้เปลี่ยนชื่อทุก tensor เป็นคำสุ่มก็ยังถูก 95.0% กับ checkpoint ยอดนิยมบน Hugging Face 191 ตัว จำนวน parameter รวมตรงกับตัวเลขของ Hub 149 จาก 158 ตัวที่เป็นแบบ transformers และ Hub แสดงตัวเลขไว้ วิธีและผลทั้งหมดอยู่ใน <a href="https://www.researchgate.net/publication/417293353">paper</a></p>
-  <p data-ih="about_pip"><b>ใช้ใน terminal หรือ Python</b> <code>pip install ai-model-explorer</code> แล้วรัน <code>ai-model-explorer inspect Qwen/Qwen3-8B</code> ได้ผลเดียวกับเว็บ ยังมีคำสั่งวาดรูป diagram (<code>plot</code>), ดึง insight (<code>insights</code>), ประมาณ memory (<code>memory</code>), เทียบหลายโมเดล (<code>compare</code>) และออกรายงาน HTML (<code>report</code>) ดูที่ <a href="https://pypi.org/project/ai-model-explorer/">PyPI</a></p>
-  <h2 data-i="faq_h">คำถามที่พบบ่อย</h2>
-  <h3 data-i="faq_q1">ต้องโหลดโมเดลก่อนไหม</h3><p data-i="faq_a1">ไม่ต้อง สำหรับ repo บน Hugging Face เว็บขอแค่ไบต์ส่วน header ของแต่ละไฟล์ ปกติรวมไม่ถึง 200 KB แม้โมเดลจะใหญ่หลายร้อย GB ก็ตาม</p>
-  <h3 data-i="faq_q2">ไฟล์ของฉันถูกส่งขึ้นเซิร์ฟเวอร์ไหม</h3><p data-i="faq_a2">ไม่ ไฟล์ที่ลากมาวางถูกอ่านในเบราว์เซอร์ของคุณ ไม่ถูกอัปโหลดไปที่ใด และโมเดลที่เปิดไว้จะถูกเก็บในเบราว์เซอร์ เข้าครั้งหน้าไม่ต้องโหลดใหม่</p>
-  <h3 data-i="faq_q3">ต่างจาก Netron, Model Explorer ของ Google, HF Viewer หรือ hf-mem อย่างไร</h3><p data-i="faq_a3">Netron กับ Model Explorer วาดกราฟ operator จากไฟล์ที่คุณมีอยู่แล้ว · HF Viewer วาดโครงสร้างจาก config และโค้ด PyTorch ของโมเดล · hf-mem ประมาณ memory จาก header แต่ไม่ได้บอกว่าแต่ละ tensor ทำหน้าที่อะไร · เว็บนี้แกะโครงสร้างจาก header อย่างเดียว: ส่วนประกอบ ชนิดของแต่ละ layer และบทบาทของทุก tensor โดยไม่ต้องใช้ config หรือโค้ด จึงใช้กับโมเดลตระกูลใหม่ได้ ตรวจได้ว่า config ตรงกับ weight หรือไม่ และยังแม่น 95% แม้ไม่มีชื่อ tensor</p>
-  <h3 data-i="faq_q4">ใช้ฟรีไหม เอาโค้ดไปใช้ได้หรือเปล่า</h3><p data-i="faq_a4">ฟรี โค้ดเป็น MIT License อยู่บน GitHub ถ้านำไปใช้ในงานวิจัย ช่วยอ้างอิง paper ด้วย</p>
-  <h3 data-i="faq_q5">ใครทำ</h3><p data-i="faq_a5">Sattaya Singkul ทำสำหรับ workshop “Squeeze Until It Breaks” ที่งาน AI Expo Thailand 2026</p>
+  <h2 data-i="about_h">What this tool does</h2>
+  <p data-i="about_p1">Paste a Hugging Face repo id, or drop a .safetensors, .tflite or config.json file. The page reads only the safetensors header: a few tens of kilobytes that list every tensor's name, shape and type. The weights are never downloaded. From that list it finds the repeated layers, labels each part as attention, feed-forward, mixture of experts, SSM or linear attention, convolution, embedding, norm or output head, and counts parameters exactly, including checkpoints stored as FP8, NVFP4, GPTQ, AWQ, MXFP4, MLX or bitsandbytes.</p>
+  <p data-i="about_p2">It works across model families: decoder-only LLMs such as Llama, Qwen, DeepSeek, Gemma and gpt-oss, speech models such as Whisper and Parakeet, vision-language models, diffusion transformers and embedding models. Every value on the page says whether it was measured from the weights, read from config.json, or estimated.</p>
+  <p data-ih="about_p3"><b>How accurate is it?</b> On 510 architectures from the transformers library, 96.8% of tensors get the right role, against 82.3% for the best rule set that reads names only, and 95.0% when every name is replaced by a random token. On 191 popular Hugging Face checkpoints, parameter totals match the Hub's own count for 149 of the 158 transformers-style checkpoints that show one. The method and full results are in the <a href="https://www.researchgate.net/publication/417293353">paper</a>.</p>
+  <p data-ih="about_pip"><b>From the terminal or Python:</b> <code>pip install ai-model-explorer</code>, then <code>ai-model-explorer inspect Qwen/Qwen3-8B</code> gives the same result as the site. It also draws the diagram (<code>plot</code>), lists insights (<code>insights</code>), estimates memory (<code>memory</code>), compares models (<code>compare</code>) and writes an HTML report (<code>report</code>). See <a href="https://pypi.org/project/ai-model-explorer/">PyPI</a>.</p>
+  <h2 data-i="faq_h">FAQ</h2>
+  <h3 data-i="faq_q1">Do I need to download the model?</h3><p data-i="faq_a1">No. For a Hugging Face repo the page requests only the header bytes of each file, usually under 200 KB in total, even for checkpoints of hundreds of gigabytes.</p>
+  <h3 data-i="faq_q2">Does my file leave my computer?</h3><p data-i="faq_a2">No. Files you drop are parsed in your browser and never uploaded. Models you open are kept in your browser, so the next visit does not need to load them again.</p>
+  <h3 data-i="faq_q3">How is it different from Netron, Google's Model Explorer, HF Viewer or hf-mem?</h3><p data-i="faq_a3">Netron and Model Explorer draw the operator graph of a file you already have. HF Viewer draws the architecture from the model's config and PyTorch code. hf-mem estimates memory from the header but does not say what each tensor does. This page recovers the structure from the header alone (components, the type of every layer, the role of every tensor) without config or code, so it works for new families, checks the config against the weights, and stays 95% accurate even with every tensor name hidden.</p>
+  <h3 data-i="faq_q4">Is it free, and can I reuse the code?</h3><p data-i="faq_a4">Yes. The code is MIT licensed on GitHub. If you use it in research, please cite the paper.</p>
+  <h3 data-i="faq_q5">Who made it?</h3><p data-i="faq_a5">Sattaya Singkul, for the workshop “Squeeze Until It Breaks” at AI Expo Thailand 2026.</p>
 </div></section>
 </main>
 
 <footer><div class="wrap">
   <div class="fname">AI Model Explorer</div>
   <div class="credit">© 2026 <a href="https://joessattes.github.io/Sattaya-AI-Website/" rel="author">Sattaya Singkul</a> · <a href="https://github.com/JoesSattes/ai-model-explorer/blob/main/LICENSE" rel="license">MIT License</a></div>
-  <p style="margin-top:8px" data-i="footer">ทำสำหรับ “Squeeze Until It Breaks” · AI Expo Thailand 2026 · Sattaya Singkul · template Whisper วิเคราะห์จากกราฟ .tflite ของสถาปัตยกรรมจริงด้วย weight สุ่ม: ขนาด dtype op และความเร็วเป็นของจริง ความแม่นยำไม่ใช่</p>
+  <p style="margin-top:8px" data-i="footer">Built for “Squeeze Until It Breaks” · AI Expo Thailand 2026 · Sattaya Singkul · The Whisper template comes from the real architecture's .tflite graph with random weights: sizes, dtypes, ops and speeds are real, accuracy is not.</p>
   <div class="fl"><a href="https://joessattes.github.io/Sattaya-AI-Website/">Portfolio — Sattaya Singkul</a><a href="https://github.com/JoesSattes/ai-model-explorer">GitHub</a><a href="https://www.researchgate.net/publication/417293353">Paper</a><a href="https://pypi.org/project/ai-model-explorer/">PyPI</a><a href="llms.txt">llms.txt</a></div>
-  <details class="cite" id="cite"><summary data-i="cite_t">อ้างอิงงานนี้</summary>
+  <details class="cite" id="cite"><summary data-i="cite_t">Cite this work</summary>
     <p class="citeref">Sattaya Singkul. 2026. <i>Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories</i>. Preprint, <a href="https://www.researchgate.net/publication/417293353">ResearchGate</a>.</p>
     <pre id="citeBib">@misc{singkul2026reading,
   title  = {Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories},
@@ -380,12 +380,12 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
   howpublished = {ResearchGate},
   url    = {https://www.researchgate.net/publication/417293353}
 }</pre>
-    <button class="btn sm" id="copyBib" data-i="cite_copy">คัดลอก BibTeX</button>
+    <button class="btn sm" id="copyBib" data-i="cite_copy">Copy BibTeX</button>
   </details>
 </div></footer>
 
-<div id="cfgDlg"><div class="box"><div style="display:flex;justify-content:space-between;align-items:center"><h3 data-i="cfg_title">วาง config.json</h3><button class="btn sm" id="cfgClose">✕</button></div>
-  <p style="color:var(--soft);font-size:14px;margin-top:6px" data-i="cfg_help">เปิดหน้า repo บน Hugging Face → Files → config.json → คัดลอกทั้งหมดมาวาง</p><textarea id="cfgTxt" spellcheck="false" placeholder='{"model_type": "qwen2", "hidden_size": 896, ...}'></textarea><div id="cfgErr"></div><button class="btn primary" id="cfgGo" data-i="cfg_go">สร้างโมเดล</button></div></div>
+<div id="cfgDlg"><div class="box"><div style="display:flex;justify-content:space-between;align-items:center"><h3 data-i="cfg_title">Paste config.json</h3><button class="btn sm" id="cfgClose">✕</button></div>
+  <p style="color:var(--soft);font-size:14px;margin-top:6px" data-i="cfg_help">Open the repo on Hugging Face → Files → config.json → copy everything and paste it here.</p><textarea id="cfgTxt" spellcheck="false" placeholder='{"model_type": "qwen2", "hidden_size": 896, ...}'></textarea><div id="cfgErr"></div><button class="btn primary" id="cfgGo" data-i="cfg_go">Build</button></div></div>
 
 <noscript><div class="wrap" style="padding:40px 0"><h2>AI Model Explorer</h2><p>An interactive tool by Sattaya Singkul that splits any AI model — Whisper, Llama, GPT-2, BERT, ViT and more — into its parts and shows real weights, compute, TFLite ops and precision. JavaScript is required.</p></div></noscript>
 
@@ -562,18 +562,20 @@ window.I18N = {
   cut_vocab_t: ["ตัดคำศัพท์ให้เหลือเฉพาะภาษาที่ใช้", "Trim the vocabulary to the languages you use"],
   cut_vocab_d: ["{v} token × {r} ค่าต่อ token ({parts}) ตัด token ออกหนึ่งตัว = weight หายไป {r} ตัว", "{v} tokens × {r} values per token ({parts}). Each token you drop removes {r} weights."],
   cut_vocab_k: ["tokenizer มี {n} ชิ้น ภาษาที่เลือกใช้ {k} ชิ้น → ตัดได้ {s} weight ({p})", "The tokenizer has {n} pieces; your languages need {k} → removes {s} weights ({p})."],
-  cut_vocab_h: ["นับชิ้นใน tokenizer ตามระบบตัวเขียน เก็บภาษาที่ใช้ + special/byte/ตัวเลข/เครื่องหมาย แล้ว remap id และตัดทุกตารางข้างบน คำหายากจะ fallback เป็น byte ต้องทดสอบคุณภาพซ้ำ", "Count pieces by script, keep yours plus specials, bytes, digits and punctuation, remap the ids and slice every table above. Rare words fall back to bytes: retest quality."],
+  cut_vocab_h: ["นับชิ้นใน tokenizer ตามระบบตัวเขียน เก็บภาษาที่ใช้ + special/byte/ตัวเลข/เครื่องหมาย แล้ว remap id และตัดทุกตารางข้างบน คำที่ตัดออกจะถูกแตกเป็นชิ้นเล็กลงหรือเป็น byte (ถ้า tokenizer มี byte fallback) ต้องทดสอบคุณภาพซ้ำ", "Count pieces by script, keep yours plus specials, bytes, digits and punctuation, remap the ids and slice every table above. Dropped words fall back to smaller pieces or bytes (if the tokenizer has byte fallback): retest quality."],
   cut_ple_t: ["Per-layer embedding (PLE): ไม่ต้องอยู่ในหน่วยความจำเร็ว", "Per-layer embeddings: keep them out of fast memory"],
   cut_ple_d: ["{n} มี {s} weight ({p} ของโมเดล) แต่แต่ละ token อ่านแค่หนึ่งแถว {w} ค่า", "{n} holds {s} weights ({p} of the model), but each token reads one row of {w} values."],
-  cut_ple_h: ["mmap หรือ offload ไป flash/CPU แล้วดึงทีละแถว, quantize เป็น 4-bit ได้สบาย (เป็นแค่การ lookup) และตัดไปพร้อมกับคำศัพท์", "Memory-map or offload it to flash/CPU and fetch rows per token, quantize it to 4-bit (a lookup tolerates it), and trim it with the vocabulary."],
+  cut_ple_h: ["mmap หรือ offload ไป flash/CPU แล้วดึงทีละแถว, ลอง precision ต่ำลง (ตารางนี้ถูกแค่ lookup ไม่ได้คูณ matrix แต่ต้องวัดคุณภาพ) และตัดไปพร้อมกับคำศัพท์", "Memory-map or offload it to flash/CPU and fetch rows per token, try a lower precision for it (it is only looked up, never multiplied; measure quality), and trim it with the vocabulary."],
   cut_tower_t: ["ถ้าส่งแค่ข้อความ ตัด{k}ออกได้", "Drop the {k} tower if you only send text"],
   cut_tower_d: ["{n}: {s} weight", "{n}: {s} weights."], cut_tower_h: ["export เฉพาะ language model (โหลด tower เฉพาะตอนที่ต้องใช้) เส้นทางข้อความไม่ได้อ่าน weight พวกนี้เลย", "Export only the language model (load the tower only when a request needs it); the text path never reads these weights."],
   cut_kvs_t: ["K/V projection ของชั้นที่แชร์ KV ซึ่งไม่ได้ใช้", "K/V projections that shared-KV layers do not use"],
-  cut_kvs_d: ["{n} ชั้นใช้ KV cache ของชั้นก่อนหน้า (num_kv_shared_layers) แต่ไฟล์ยังเก็บ k/v ของชั้นพวกนี้ไว้", "{n} layers reuse an earlier layer's KV cache (num_kv_shared_layers), yet the file still stores their k/v projections."],
-  cut_kvs_h: ["เช็กว่า runtime ข้ามส่วนนี้จริง แล้วไม่ต้อง export", "Check your runtime skips them, then leave them out of the export."],
+  cut_kvs_d: ["{n} ชั้นใช้ KV cache ของชั้นก่อนหน้า (num_kv_shared_layers) แต่ไฟล์ยังเก็บ k/v ของชั้นพวกนี้ไว้ ซึ่งจะถูกใช้เฉพาะตอนรันแบบไม่มี KV cache", "{n} layers reuse an earlier layer's KV cache (num_kv_shared_layers), yet the file still stores their k/v projections; they are read only when running without a KV cache."],
+  cut_kvs_h: ["เช็กว่า runtime รันแบบมี cache เสมอและข้ามส่วนนี้จริง แล้วค่อยตัดออกตอน export", "Check your runtime always runs with a cache and skips them, then leave them out of the export."],
   cut_ffn_t: ["quantize ส่วน feed-forward ก่อน", "Quantize the feed-forward blocks first"],
   cut_ffn_d: ["backbone มี weight ของ FFN {s} ({p}) · 8-bit ลดครึ่งจาก 16-bit, 4-bit เหลือหนึ่งในสี่", "{s} feed-forward weights in the backbone ({p}); 8-bit halves them versus 16-bit, 4-bit quarters them."],
   cut_ffn_h: ["weight-only int8/int4 พร้อม scale ต่อ channel หรือต่อกลุ่ม เก็บ norm, router และ embedding lookup ไว้ที่ precision สูงจนกว่าจะวัด", "Weight-only int8/int4 with per-channel or group scales; keep norms, router and embedding lookups higher until measured."],
+  cut_moe_t: ["Expert: ตัวที่ไม่ได้ใช้ไม่ต้องอยู่ในหน่วยความจำเร็ว", "Experts: keep the inactive ones off the fast memory"],
+  cut_moe_h: ["offload expert ไป CPU/flash แล้ว cache ตัวที่ใช้บ่อย, quantize expert แรงกว่า attention หรือตัด expert ที่ข้อมูลจริงไม่เคย route ไปถึง (วัด routing จากข้อมูลตัวเองก่อน)", "Offload experts to CPU/flash and cache the hot ones, quantize experts harder than attention, or prune experts your traffic never reaches (measure routing on your data first)."],
   cut_kv: ["KV cache: {c} จาก {l} ชั้นมี cache ของตัวเอง ({sh} ชั้นแชร์), {sl} ชั้นเลื่อนดูแค่ {w} token → {pt} ต่อ token + สูงสุด {cap} ไม่ใช่ {nv} ต่อ token อย่างที่คิดจากทุกชั้น", "KV cache: {c} of {l} layers keep their own ({sh} share), {sl} slide over {w} tokens → {pt} per token plus at most {cap}, not {nv} per token for every layer."],
   cut_sum: ["ถ้าตัดตามข้างบน (ไม่รวม quantize): {a} → {b} weight · {c} ที่ 16-bit · {d} ที่ 4-bit", "Cutting the structure above (before quantization): {a} → {b} weights · {c} at 16-bit · {d} at 4-bit"],
   cut_none: ["โมเดลนี้ไม่มีส่วนที่ตัดได้ชัดๆ จากโครงสร้าง ลองดูการ quantize", "No obvious structural cut for this model; look at quantization."],
@@ -1196,12 +1198,15 @@ function infer(manifest, opts = {}) {
     else if (/conv|patch|subsampl|feature_extractor/i.test(n) && t.kind === "other") t.kind = "conv";
   }
   // leftovers outside every home: attach by width (a [V, d] head next to a 'model' wrapper belongs to the d-wide component)
+  const embedTables = {};   // [rows, width] of the 2-D embedding tables each component holds, collected once
+  for (const [m, u] of Object.entries(out.tensors)) if (u.comp && u.kind === "embed" && T[m].shape.length === 2 && T[m].shape[0] >= 1000)
+    (embedTables[u.comp] = embedTables[u.comp] || []).push(T[m].shape);
   for (const [n, t] of Object.entries(out.tensors)) if (!t.comp) {
     const s = T[n].shape, w = s.length === 2 ? s[1] : s.length === 1 ? s[0] : null;
     const cand = comps.filter(c => c.d === w).sort((a, b) => b.stacks.reduce((x, y) => x + y.n, 0) - a.stacks.reduce((x, y) => x + y.n, 0));
     // a [V, d] output head goes to the component that holds the [V, d] token table (Whisper's proj_out sits next to
     // model.decoder, not next to the deeper model.encoder); otherwise the component with the most layers
-    const ownsTable = c => s.length === 2 && s[0] >= 1000 && Object.entries(out.tensors).some(([m, u]) => u.comp === c.id && u.kind === "embed" && T[m].shape.length === 2 && T[m].shape[0] === s[0] && T[m].shape[1] === s[1]);
+    const ownsTable = c => s.length === 2 && s[0] >= 1000 && (embedTables[c.id] || []).some(e => e[0] === s[0] && e[1] === s[1]);
     const c = cand.find(ownsTable) || cand[0];
     if (c && !out.joint) t.comp = c.id;
   }
@@ -1576,12 +1581,14 @@ if (typeof module !== "undefined") module.exports = api; else root.ArchInfer = a
 // plan(I, shapes, cfg, opt) -> {total, vocab, kv, levers[]}; vocabScripts(pieces, specials) -> token counts per script.
 const Plan = (() => {
   const prod = s => s.reduce((a, b) => a * b, 1);
+  const n0 = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");   // QuickJS has no locale formatting
   const tcfg = c => (c && (c.text_config || c.language_config || c.llm_config || c.thinker_config && c.thinker_config.text_config)) || c || {};
   const layerNo = n => { const m = n.match(/(?:layers?|blocks?|h|block)\.(\d+)\./); return m ? +m[1] : null; };
 
   // ---------------------------------------------------------------- KV cache, layer by layer
   function kvProfile(I, shapes, cfg, bits = 16) {
     const c = tcfg(cfg), back = (I.comps || []).find(x => x.role === "backbone"); if (!back) return null;
+    if ((I.hp && I.hp.kv_latent) || c.kv_lora_rank) return null;   // latent attention (MLA) caches a compressed vector, not k/v widths
     const by = {};
     for (const [n, t] of Object.entries(I.tensors || {})) {
       if (t.comp !== back.id || t.kind !== "attn" || !(t.role === "k" || t.role === "v") || !/weight$/.test(n)) continue;
@@ -1589,12 +1596,16 @@ const Plan = (() => {
       (by[L] = by[L] || {})[t.role] = s[0];
     }
     const Ls = Object.keys(by).map(Number).sort((a, b) => a - b); if (!Ls.length) return null;
-    const nL = c.num_hidden_layers || Ls.length, shared = c.num_kv_shared_layers || 0, types = c.layer_types || [];
+    const types = c.layer_types || [];
+    // layers past num_hidden_layers are extra (multi-token prediction); only num_kv_shared_layers marks shared caches
+    const nL = c.num_hidden_layers || Ls[Ls.length - 1] + 1, shared = c.num_kv_shared_layers || 0;
     const win = c.sliding_window || c.attention_window_size || null, B = bits / 8;
-    const rows = Ls.map(L => {
+    // linear-attention / state-space layers keep a fixed-size state, not a cache that grows with the context
+    const rows = Ls.filter(L => L < nL && !/linear|mamba|ssm|recurrent|conv/.test(types[L] || "")).map(L => {
       const w = (by[L].k || 0) + (by[L].v || by[L].k || 0), sliding = /sliding|local|chunk/.test(types[L] || "") && win;
       return {layer: L, kv_width: w, cached: L < nL - shared, sliding: !!sliding, window: sliding ? win : null};
     });
+    if (!rows.length) return null;
     const cached = rows.filter(r => r.cached), grow = cached.filter(r => !r.sliding), slide = cached.filter(r => r.sliding);
     const perTok = grow.reduce((a, r) => a + r.kv_width * B, 0), slidePerTok = slide.reduce((a, r) => a + r.kv_width * B, 0);
     const naive = rows.reduce((a, r) => a + r.kv_width * B, 0);
@@ -1609,20 +1620,31 @@ const Plan = (() => {
     const total = opt.total || comps.reduce((a, x) => a + (x.params || 0), 0) || 1, hp = I.hp || {};
     const V = hp.vocab || c.vocab_size, d = back && back.d;
     const T = Object.entries(I.tensors || {}).filter(([n]) => shapes[n]);
-    const tables = T.filter(([n, t]) => (t.kind === "embed" || t.kind === "head") && shapes[n].length === 2 && shapes[n][0] === V)
-      .map(([n, t]) => ({name: n, kind: t.kind, width: shapes[n][1], params: prod(shapes[n]),
-                         what: t.kind === "head" ? "output head" : shapes[n][1] === d ? "token embedding" : "per-layer embedding (PLE)"}));
+    // tables indexed by token id: the token embedding (width d, or a factorized narrower one), the output head, and
+    // per-layer embeddings (Gemma 3n / 4: width = layers x hidden_size_per_layer_input). Only for a text backbone.
+    const perL = c.hidden_size_per_layer_input || null, nLay = c.num_hidden_layers || (back && back.layers) || 0;
+    const isPLE = (n, w) => /per_layer/.test(n) || (perL && nLay && w === perL * nLay);
+    const textLM = back && back.modality === "text" && I.family !== "diffusion";
+    const tables = !textLM ? [] : T.filter(([n, t]) => t.comp === back.id && (t.kind === "embed" || t.kind === "head") && shapes[n].length === 2 && shapes[n][0] === V && !/position|pos_emb|wpe|token_type/i.test(n))
+      .map(([n, t]) => { let w = shapes[n][1]; const ple = t.kind === "embed" && isPLE(n, w);
+        // wider than d and not per-layer: packed quantized storage the normalizer could not unpack; count d values per row
+        if (!ple && d && w > d) w = d;
+        const what = t.kind === "head" ? "output head" : ple ? "per-layer embedding (PLE)" : w === d ? "token embedding" :
+          w >= 32 && /embed|wte|word|tok|shared/i.test(n) ? "token embedding (factorized)" : null;
+        return what && {name: n, kind: t.kind, width: w, params: V * w, what}; }).filter(Boolean);
+    if (!tables.some(x => x.kind === "embed" && !x.what.startsWith("per-layer"))) tables.length = 0;   // a classifier head alone is not a vocabulary
     const rowCost = tables.reduce((a, x) => a + x.width, 0), vocabParams = tables.reduce((a, x) => a + x.params, 0);
     const levers = [], pct = x => x / total;
     // 1. vocabulary: every row costs the width of every table indexed by token id
-    if (V && vocabParams && (V >= 32000 || vocabParams / total >= 0.05)) {
+    const pipe0 = comps.some(y => /(^|\.)(vae|unet|loras?|diffusion_models?)(\.|$)/i.test(y.id));
+    if (V && V >= 1000 && vocabParams && !pipe0 && (V >= 32000 || vocabParams / total >= 0.05)) {
       const keep = opt.keep_tokens || null;
       const cut = keep ? Math.max(V - keep, 0) * rowCost : null;
       levers.push({id: "vocab", title: "Trim the vocabulary to the languages you use", params: vocabParams, share: pct(vocabParams),
         saves: cut, saves_share: cut != null ? pct(cut) : null, row_cost: rowCost, vocab: V, keep_tokens: keep,
-        detail: `${V.toLocaleString("en-US")} tokens × ${rowCost.toLocaleString("en-US")} values per token (` + tables.map(x => `${x.what} ${x.width}`).join(" + ") +
-                `). Every token you drop removes ${rowCost.toLocaleString("en-US")} weights.` + (keep ? "" : " Count the tokens your languages need to see the saving."),
-        how: "Count tokenizer pieces by script, keep your scripts plus specials, bytes, digits and punctuation, remap the ids and slice every table above. Retest: rare words fall back to bytes."});
+        detail: `${n0(V)} tokens × ${n0(rowCost)} values per token (` + tables.map(x => `${x.what} ${x.width}`).join(" + ") +
+                `). Every token you drop removes ${n0(rowCost)} weights.` + (keep ? "" : " Count the tokens your languages need to see the saving."),
+        how: "Count tokenizer pieces by script, keep your scripts plus specials, bytes, digits and punctuation, remap the ids and slice every table above. Words you drop fall back to smaller pieces or bytes (if the tokenizer has byte fallback): retest quality."});
     }
     // 2. per-layer embeddings: a lookup, not compute
     const ple = tables.filter(x => x.what.startsWith("per-layer"));
@@ -1630,17 +1652,44 @@ const Plan = (() => {
       const p = ple.reduce((a, x) => a + x.params, 0);
       levers.push({id: "ple", title: "Per-layer embeddings: keep them out of fast memory", params: p, share: pct(p), saves: null,
         detail: `${ple.map(x => x.name).join(", ")} holds ${(p / 1e9).toFixed(2)}B weights (${(100 * pct(p)).toFixed(0)}% of the model), but each token reads only one row of ${ple[0].width} values.`,
-        how: "Memory-map or offload the table to flash/CPU and fetch rows per token, quantize it to 4-bit (a lookup tolerates it well), and trim it together with the vocabulary."});
+        how: "Memory-map or offload the table to flash/CPU and fetch rows per token, try a lower precision for it (it is only looked up, never multiplied; measure quality), and trim it together with the vocabulary."});
     }
     // 3. modality towers you may not need
     const edges = I.edges || [], fedBy = id => edges.filter(e => e.to === id).map(e => e.from);
     const isAdapterOf = (a, enc) => a.role === "adapter" && (a.id.startsWith(enc.id + ".") || fedBy(a.id).includes(enc.id));
     // an encoder read through cross-attention (Whisper, T5) is the model's input path, not an optional tower
     const crossFed = new Set(edges.filter(e => /cross/.test(e.via || e.label || e.kind || "")).map(e => e.from));
-    for (const x of comps.filter(x => (x.role === "encoder" || x.role === "adapter") && x.modality !== "text" && !crossFed.has(x.id) && I.family !== "encoder-decoder")) {
+    // an optional input tower: a vision or audio encoder that feeds the language model. Recognised by name, since
+    // width-based edges are not reliable enough here; generation pipelines (VAE, LoRA, denoiser), speech-output stacks
+    // (codec, vocoder, talker, acoustic decoder) and MTP heads are never offered.
+    const pipeline = comps.some(y => /vae|unet|lora|diffusion|(^|\.)(transformer|text_encoders?)(\.|$)/i.test(y.id));
+    // a language model that writes text: a [V, d] output head, or config.json saying the head is tied. hp.tie alone
+    // is not enough: a dual encoder's text tower (CLIP, SigLIP, CLAP) also has a token table and no head.
+    const generative = back && (tables.some(x => x.kind === "head") || c.tie_word_embeddings === true || (cfg || {}).tie_word_embeddings === true);
+    const INPUT = /vision|visual|image|vit\b|siglip|clip|(^|\.)sam|audio_tower|audio_encoder|audio_model|speech_encoder|whisper|embed_vision|embed_audio|mm_proj|multi_modal|projector/i;
+    const OUTPUT = /decoder|vocoder|codec|talker|acoustic|residual|feat_|token2wav|code_predictor|tokenizer|dit|mtp|draft|nextn|bigvgan|vae/i;
+    const modKind = id => /audio|speech|whisper|wav|clap/i.test(id) ? "audio" : "vision";
+    const towers = comps.filter(x => textLM && generative && tables.length && !pipeline && (x.role === "encoder" || x.role === "adapter") && x.modality !== "text" &&
+                                 !crossFed.has(x.id) && I.family !== "encoder-decoder" && INPUT.test(x.id) && !OUTPUT.test(x.id));
+    // the model's own purpose: a dual encoder (CLIP, SigLIP, CLAP) has no optional tower; an ASR model needs its audio
+    // tower and an OCR model its vision tower, whatever the request
+    const ident = JSON.stringify([(cfg || {}).model_type, (cfg || {}).architectures, opt.name || ""]).toLowerCase();
+    const dual = /clip|siglip|clap|align|owl|blip/.test(ident) && !/llava|vl|gemma|qwen/.test(ident);
+    const needs = k => k === "audio" ? /asr|transcri|speech|whisper|voxtral|stt/.test(ident) : /ocr/.test(ident);
+    const isProj = x => x.role === "adapter" || /projector|multi_modal|mm_proj|connector|embed_vision|embed_audio/i.test(x.id);
+    const encs = towers.filter(x => !isProj(x));
+    // with a single encoder tower every projector belongs to it; otherwise go by the projector's name
+    const mk = x => isProj(x) && encs.length === 1 ? modKind(encs[0].id) : modKind(x.id);
+    for (const x of towers) {
+      // a projector belongs to the tower of its modality (gemma-3: vision_tower + multi_modal_projector)
+      if (dual || needs(mk(x))) continue;
+      if (isProj(x) && encs.some(y => mk(y) === mk(x))) continue;
       if (x.role === "adapter" && comps.some(y => y.role === "encoder" && isAdapterOf(x, y))) continue;
-      const kids = comps.filter(y => y !== x && (y.id.startsWith(x.id + ".") || isAdapterOf(y, x))), p = (x.params || 0) + kids.reduce((a, y) => a + (y.params || 0), 0);
-      const kind = /vision|visual|image|siglip|vit/i.test(x.id) ? "vision" : /audio|speech|whisper|conformer/i.test(x.id) ? "audio" : x.modality;
+      const first = encs.find(y => mk(y) === mk(x)) === x;
+      const kids = comps.filter(y => y !== x && (y.id.startsWith(x.id + ".") || isAdapterOf(y, x) ||
+        (first && isProj(y) && towers.includes(y) && mk(y) === mk(x)))), p = (x.params || 0) + kids.reduce((a, y) => a + (y.params || 0), 0);
+      if (p > (back.params || 0)) continue;   // a "tower" larger than the language model is the main model (CLIP, detection, ...)
+      const kind = mk(x);
       levers.push({id: "tower:" + x.id, title: `Drop the ${kind} tower if you only send text`, params: p, share: pct(p), saves: p, saves_share: pct(p),
         detail: `${x.id}${kids.length ? " with " + kids.map(y => y.id).join(", ") : ""}: ${(p / 1e6).toFixed(1)}M weights.`,
         how: `Export only the language model (and the ${kind} tower when a request needs it); the text path never reads these weights.`});
@@ -1649,13 +1698,19 @@ const Plan = (() => {
     const kv = kvProfile(I, shapes, cfg);
     if (kv && kv.unused_kv_params) levers.push({id: "kv_shared", title: "K/V projections that shared-KV layers do not use", params: kv.unused_kv_params,
       share: pct(kv.unused_kv_params), saves: kv.unused_kv_params, saves_share: pct(kv.unused_kv_params),
-      detail: `${kv.shared} layers reuse the KV cache of earlier layers (num_kv_shared_layers), yet the file still stores their k/v projections.`,
-      how: "Check that your runtime skips them, then leave them out of the export."});
+      detail: `${kv.shared} layers reuse the KV cache of earlier layers (num_kv_shared_layers), yet the file still stores their k/v projections; they are read only when running without a KV cache.`,
+      how: "Check that your runtime always runs with a cache and skips them, then leave them out of the export."});
     // 5. where the compute weights sit
-    const ffn = opt.ffn_params != null ? opt.ffn_params : T.filter(([n, t]) => t.comp === (back && back.id) && t.kind === "ffn").reduce((a, [n]) => a + prod(shapes[n]), 0);
-    if (ffn) levers.push({id: "ffn", title: "Quantize the feed-forward blocks first", params: ffn, share: pct(ffn), saves: ffn / 2, saves_share: pct(ffn / 2),
+    const ffn = opt.ffn_params != null ? opt.ffn_params : T.filter(([n, t]) => t.comp === (back && back.id) && (t.kind === "ffn" || t.kind === "moe")).reduce((a, [n]) => a + prod(shapes[n]), 0);
+    if (ffn && ffn / total >= 0.05) levers.push({id: "ffn", title: hp.experts ? "Quantize the feed-forward and expert blocks first" : "Quantize the feed-forward blocks first", params: ffn, share: pct(ffn), saves: ffn / 2, saves_share: pct(ffn / 2),
       detail: `${(ffn / 1e9).toFixed(2)}B feed-forward weights in the backbone; 8-bit halves them versus 16-bit, 4-bit quarters them.`,
       how: "Weight-only int8/int4 on the FFN with per-channel or group scales; keep norms, router and the embedding row lookups at higher precision until measured."});
+    // 6. mixture of experts: all experts sit in memory, a token reads only top-k of them
+    const E = hp.experts, k = hp.experts_per_token || c.num_experts_per_tok || c.moe_topk || c.top_k_experts;
+    const moe = opt.moe_params != null ? opt.moe_params : T.filter(([n, t]) => t.comp === (back && back.id) && t.kind === "moe").reduce((a, [n]) => a + prod(shapes[n]), 0);
+    if (E && moe && moe / total >= 0.2) levers.push({id: "moe", title: "Experts: keep the inactive ones off the fast memory", params: moe, share: pct(moe), saves: null,
+      detail: `${E} experts per layer hold ${(moe / 1e9).toFixed(2)}B weights (${(100 * pct(moe)).toFixed(0)}%)` + (k ? `; each token uses ${k}, about ${(100 * k / E).toFixed(1)}% of them.` : "."),
+      how: "Offload experts to CPU/flash and cache the hot ones, quantize experts harder than attention, or prune experts your traffic never routes to (measure routing on your own data first)."});
     levers.sort((a, b) => (b.saves || b.params) - (a.saves || a.params));
     return {total, vocab: V ? {size: V, row_cost: rowCost, params: vocabParams, tables} : null, kv, levers};
   }
@@ -2346,7 +2401,7 @@ function renderHero() {
     <div class="tags"><span class="tag e">${t("fam_" + f)}</span><span class="tag d">${t("mod_" + mod)}</span><span class="tag">${t("src_" + M.kind)}</span></div></div>
     <div class="kpis">${[[fP(params), t("kpi_weights")], [fB(bytes), t("kpi_size")], [String(nL), t("kpi_layers")], ops != null ? [String(ops), t("kpi_ops")] : [M.meta.vocab ? M.meta.vocab.toLocaleString() : "–", t("kpi_vocab")]].map(([b, s]) => `<div class="kpi"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("")}</div>
     ${M.note ? `<p class="note">${esc(typeof M.note === "function" ? M.note() : M.note)}</p>` : ""}
-    ${/^[\w.-]+\/[\w.-]+$/.test(M.label || "") ? `<p class="note"><a href="${/\/en\/(index\.html)?$/.test(location.pathname) ? "../" : ""}census/?m=${encodeURIComponent(M.label)}">${t("census_cmp")}</a></p>` : ""}`;
+    ${/^[\w.-]+\/[\w.-]+$/.test(M.label || "") ? `<p class="note"><a href="${/\/(en|th)\/(index\.html)?$/.test(location.pathname) ? "../" : ""}census/?m=${encodeURIComponent(M.label)}">${t("census_cmp")}</a></p>` : ""}`;
   $("#navModel").textContent = M.short || M.label;
 }
 (function heroCanvas() {
@@ -2787,7 +2842,7 @@ function renderCut() {
   const total = (I.totals && I.totals.params) || I.comps.reduce((a, c) => a + c.params, 0);
   const st = M.cut || (M.cut = {langs: ["th", "en"], text: false, keep: null, counts: null, n: null, msg: ""});
   if (S.pendingTok && !st.pieces) { const j = S.pendingTok; S.pendingTok = null; setTimeout(() => { try { st.pieces = cutParse(j); const r = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}); st.n = r.total; st.keep = r.keep(st.langs); renderCut(); } catch (e) {} }, 0); }
-  let P; try { P = Plan.plan(I, shapes, M.cfg || {}, {total, keep_tokens: st.keep}); } catch (e) { box.style.display = "none"; return; }
+  let P; try { P = Plan.plan(I, shapes, M.cfg || {}, {total, keep_tokens: st.keep, name: M.label || ""}); } catch (e) { box.style.display = "none"; return; }
   const pc = x => (100 * x / total).toFixed(x / total < 0.01 ? 1 : 0) + "%", n0 = x => x.toLocaleString("en-US");
   const kind = id => /vision|visual|image|siglip|vit/i.test(id) ? L2("ส่วนภาพ (vision tower)", "vision") : /audio|speech|whisper|conformer/i.test(id) ? L2("ส่วนเสียง (audio tower)", "audio") : L2("ส่วนอินพุต", "input");
   let cut = 0;
@@ -2798,6 +2853,7 @@ function renderCut() {
     else if (l.id === "ple") { const tb = P.vocab.tables.filter(x => x.what.startsWith("per-layer")); title = t("cut_ple_t"); det = t("cut_ple_d", {n: tb.map(x => x.name).join(", "), s: fP(l.params), p: pc(l.params), w: n0(tb[0].width)}); how = t("cut_ple_h"); }
     else if (l.id.startsWith("tower:")) { const id = l.id.slice(6); title = t("cut_tower_t", {k: kind(id)}); det = t("cut_tower_d", {n: l.detail.split(":")[0].replace(" with ", " + "), s: fP(l.params)}); how = t("cut_tower_h"); if (!st.text) saves = null; }
     else if (l.id === "kv_shared") { title = t("cut_kvs_t"); det = t("cut_kvs_d", {n: P.kv.shared}); how = t("cut_kvs_h"); }
+    else if (l.id === "moe") { title = t("cut_moe_t"); det = l.detail; how = t("cut_moe_h"); }
     else if (l.id === "ffn") { title = t("cut_ffn_t"); det = t("cut_ffn_d", {s: fP(l.params), p: pc(l.params)}); how = t("cut_ffn_h"); }
     else { title = l.title; det = l.detail; how = l.how; }
     if (saves && l.id !== "ffn" && l.id !== "ple") cut += saves;
@@ -3042,6 +3098,18 @@ function wire() {
   if (PG.reh_static_enc) register({id: "reh-static", label: "Whisper rehearsal · static int8", short: "static int8", sub: ["ไฟล์ใหญ่ขึ้น?", "bigger file?"], group: "prec", graphs: [PG.reh_static_enc, PG.reh_static_dec], meta: rmeta, viz: RH.static_int8, note: () => t("n_reh_static")});
   if (PG.reh_int4_enc) register({id: "reh-int4", label: "Whisper rehearsal · dynamic int4", short: "dynamic int4", sub: ["int4", "int4"], group: "prec", graphs: [PG.reh_int4_enc, PG.reh_int4_dec], meta: rmeta, viz: RH.dyn_int4, note: () => t("n_reh_int4")});
 })();
+// English is the home page; a Thai browser that has not picked a language gets a one-line offer (no automatic redirect)
+(function thaiHint() { try {
+  if (window.PAGE_LANG !== "en" || !/^https?:$/.test(location.protocol) || localStorage.getItem("mx_lang")) return;
+  if (!(navigator.languages || [navigator.language || ""]).some(l => /^th/i.test(l))) return;
+  const a = document.createElement("a"); a.href = (window.PAGE_ALT || "th/") + location.hash; a.textContent = "อ่านเป็นภาษาไทย →"; a.id = "thHint";
+  a.style.cssText = "position:fixed;right:18px;bottom:18px;z-index:50;padding:10px 16px;border-radius:999px;background:#e8114a;color:#fff;font-weight:600;text-decoration:none;box-shadow:0 6px 20px rgba(0,0,0,.25)";
+  a.onclick = () => { try { localStorage.setItem("mx_lang", "th"); } catch (e) {} };
+  const x = document.createElement("button"); x.textContent = "×"; x.setAttribute("aria-label", "close");
+  x.style.cssText = "margin-left:10px;background:none;border:0;color:#fff;font-size:16px;cursor:pointer";
+  x.onclick = e => { e.preventDefault(); e.stopPropagation(); try { localStorage.setItem("mx_lang", "en"); } catch (err) {} a.remove(); };
+  a.appendChild(x); document.body.appendChild(a);
+} catch (e) {} })();
 wire();
 S.lens = pref("lens") || "weights";
 const h0 = location.hash.slice(1), last = pref("last");

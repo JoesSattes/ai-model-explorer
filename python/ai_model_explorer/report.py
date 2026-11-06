@@ -36,7 +36,7 @@ def write_report(model, path: str, theme: str = "light") -> str:
     src = model.data["source"]
     web = ""
     if src.get("kind") == "huggingface":
-        web = ("https://joessattes.github.io/ai-model-explorer/en/#hf=" + urllib.parse.quote(src["repo"], safe="/"))
+        web = ("https://joessattes.github.io/ai-model-explorer/#hf=" + urllib.parse.quote(src["repo"], safe="/"))
     facts = [("Family", model.family), ("Parameters", fmt_n(model.params)), ("Stored", fmt_b(model.stored_bytes)),
              ("Storage", ", ".join(model.data.get("quantization") or {}) or "unquantized"),
              ("Active per token", fmt_n(model.active_params) if hp.get("experts") and model.active_params else None),

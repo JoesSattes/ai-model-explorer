@@ -115,7 +115,7 @@ function renderHero() {
     <div class="tags"><span class="tag e">${t("fam_" + f)}</span><span class="tag d">${t("mod_" + mod)}</span><span class="tag">${t("src_" + M.kind)}</span></div></div>
     <div class="kpis">${[[fP(params), t("kpi_weights")], [fB(bytes), t("kpi_size")], [String(nL), t("kpi_layers")], ops != null ? [String(ops), t("kpi_ops")] : [M.meta.vocab ? M.meta.vocab.toLocaleString() : "–", t("kpi_vocab")]].map(([b, s]) => `<div class="kpi"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("")}</div>
     ${M.note ? `<p class="note">${esc(typeof M.note === "function" ? M.note() : M.note)}</p>` : ""}
-    ${/^[\w.-]+\/[\w.-]+$/.test(M.label || "") ? `<p class="note"><a href="${/\/en\/(index\.html)?$/.test(location.pathname) ? "../" : ""}census/?m=${encodeURIComponent(M.label)}">${t("census_cmp")}</a></p>` : ""}`;
+    ${/^[\w.-]+\/[\w.-]+$/.test(M.label || "") ? `<p class="note"><a href="${/\/(en|th)\/(index\.html)?$/.test(location.pathname) ? "../" : ""}census/?m=${encodeURIComponent(M.label)}">${t("census_cmp")}</a></p>` : ""}`;
   $("#navModel").textContent = M.short || M.label;
 }
 (function heroCanvas() {
@@ -556,7 +556,7 @@ function renderCut() {
   const total = (I.totals && I.totals.params) || I.comps.reduce((a, c) => a + c.params, 0);
   const st = M.cut || (M.cut = {langs: ["th", "en"], text: false, keep: null, counts: null, n: null, msg: ""});
   if (S.pendingTok && !st.pieces) { const j = S.pendingTok; S.pendingTok = null; setTimeout(() => { try { st.pieces = cutParse(j); const r = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}); st.n = r.total; st.keep = r.keep(st.langs); renderCut(); } catch (e) {} }, 0); }
-  let P; try { P = Plan.plan(I, shapes, M.cfg || {}, {total, keep_tokens: st.keep}); } catch (e) { box.style.display = "none"; return; }
+  let P; try { P = Plan.plan(I, shapes, M.cfg || {}, {total, keep_tokens: st.keep, name: M.label || ""}); } catch (e) { box.style.display = "none"; return; }
   const pc = x => (100 * x / total).toFixed(x / total < 0.01 ? 1 : 0) + "%", n0 = x => x.toLocaleString("en-US");
   const kind = id => /vision|visual|image|siglip|vit/i.test(id) ? L2("ส่วนภาพ (vision tower)", "vision") : /audio|speech|whisper|conformer/i.test(id) ? L2("ส่วนเสียง (audio tower)", "audio") : L2("ส่วนอินพุต", "input");
   let cut = 0;
@@ -567,6 +567,7 @@ function renderCut() {
     else if (l.id === "ple") { const tb = P.vocab.tables.filter(x => x.what.startsWith("per-layer")); title = t("cut_ple_t"); det = t("cut_ple_d", {n: tb.map(x => x.name).join(", "), s: fP(l.params), p: pc(l.params), w: n0(tb[0].width)}); how = t("cut_ple_h"); }
     else if (l.id.startsWith("tower:")) { const id = l.id.slice(6); title = t("cut_tower_t", {k: kind(id)}); det = t("cut_tower_d", {n: l.detail.split(":")[0].replace(" with ", " + "), s: fP(l.params)}); how = t("cut_tower_h"); if (!st.text) saves = null; }
     else if (l.id === "kv_shared") { title = t("cut_kvs_t"); det = t("cut_kvs_d", {n: P.kv.shared}); how = t("cut_kvs_h"); }
+    else if (l.id === "moe") { title = t("cut_moe_t"); det = l.detail; how = t("cut_moe_h"); }
     else if (l.id === "ffn") { title = t("cut_ffn_t"); det = t("cut_ffn_d", {s: fP(l.params), p: pc(l.params)}); how = t("cut_ffn_h"); }
     else { title = l.title; det = l.detail; how = l.how; }
     if (saves && l.id !== "ffn" && l.id !== "ple") cut += saves;
@@ -811,6 +812,18 @@ function wire() {
   if (PG.reh_static_enc) register({id: "reh-static", label: "Whisper rehearsal · static int8", short: "static int8", sub: ["ไฟล์ใหญ่ขึ้น?", "bigger file?"], group: "prec", graphs: [PG.reh_static_enc, PG.reh_static_dec], meta: rmeta, viz: RH.static_int8, note: () => t("n_reh_static")});
   if (PG.reh_int4_enc) register({id: "reh-int4", label: "Whisper rehearsal · dynamic int4", short: "dynamic int4", sub: ["int4", "int4"], group: "prec", graphs: [PG.reh_int4_enc, PG.reh_int4_dec], meta: rmeta, viz: RH.dyn_int4, note: () => t("n_reh_int4")});
 })();
+// English is the home page; a Thai browser that has not picked a language gets a one-line offer (no automatic redirect)
+(function thaiHint() { try {
+  if (window.PAGE_LANG !== "en" || !/^https?:$/.test(location.protocol) || localStorage.getItem("mx_lang")) return;
+  if (!(navigator.languages || [navigator.language || ""]).some(l => /^th/i.test(l))) return;
+  const a = document.createElement("a"); a.href = (window.PAGE_ALT || "th/") + location.hash; a.textContent = "อ่านเป็นภาษาไทย →"; a.id = "thHint";
+  a.style.cssText = "position:fixed;right:18px;bottom:18px;z-index:50;padding:10px 16px;border-radius:999px;background:#e8114a;color:#fff;font-weight:600;text-decoration:none;box-shadow:0 6px 20px rgba(0,0,0,.25)";
+  a.onclick = () => { try { localStorage.setItem("mx_lang", "th"); } catch (e) {} };
+  const x = document.createElement("button"); x.textContent = "×"; x.setAttribute("aria-label", "close");
+  x.style.cssText = "margin-left:10px;background:none;border:0;color:#fff;font-size:16px;cursor:pointer";
+  x.onclick = e => { e.preventDefault(); e.stopPropagation(); try { localStorage.setItem("mx_lang", "en"); } catch (err) {} a.remove(); };
+  a.appendChild(x); document.body.appendChild(a);
+} catch (e) {} })();
 wire();
 S.lens = pref("lens") || "weights";
 const h0 = location.hash.slice(1), last = pref("last");

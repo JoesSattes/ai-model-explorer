@@ -2,21 +2,18 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://joessattes.github.io/ai-model-explorer/</loc>
-    <xhtml:link rel="alternate" hreflang="th" href="https://joessattes.github.io/ai-model-explorer/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://joessattes.github.io/ai-model-explorer/en/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://joessattes.github.io/ai-model-explorer/en/"/>
-    <lastmod>2026-11-01</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://joessattes.github.io/ai-model-explorer/"/>
+    <xhtml:link rel="alternate" hreflang="th" href="https://joessattes.github.io/ai-model-explorer/th/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://joessattes.github.io/ai-model-explorer/"/>
+    <lastmod>2026-11-06</lastmod>
   </url>
   <url>
-    <loc>https://joessattes.github.io/ai-model-explorer/en/</loc>
-    <xhtml:link rel="alternate" hreflang="th" href="https://joessattes.github.io/ai-model-explorer/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://joessattes.github.io/ai-model-explorer/en/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://joessattes.github.io/ai-model-explorer/en/"/>
-    <lastmod>2026-11-01</lastmod>
+    <loc>https://joessattes.github.io/ai-model-explorer/th/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://joessattes.github.io/ai-model-explorer/"/>
+    <xhtml:link rel="alternate" hreflang="th" href="https://joessattes.github.io/ai-model-explorer/th/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://joessattes.github.io/ai-model-explorer/"/>
+    <lastmod>2026-11-06</lastmod>
   </url>
-  <url>
-    <loc>https://joessattes.github.io/ai-model-explorer/paper/manifest-anatomy-singkul-2026.pdf</loc>
-    <lastmod>2026-11-01</lastmod>
-  </url>
-  <url><loc>https://joessattes.github.io/ai-model-explorer/census/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://joessattes.github.io/ai-model-explorer/census/</loc><lastmod>2026-11-06</lastmod></url>
+  <url><loc>https://joessattes.github.io/ai-model-explorer/paper/manifest-anatomy-singkul-2026.pdf</loc><lastmod>2026-11-06</lastmod></url>
 </urlset>

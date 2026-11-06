@@ -6,7 +6,7 @@ The Space serves the same files as GitHub Pages; models are read from the Hub by
 import os, re, shutil, sys, tempfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-FILES = ["index.html", "en/index.html", "census/index.html", "census/data/insights.json", "census/data/models.json", "census/data/community.json", "census/data/board.json",
+FILES = ["index.html", "th/index.html", "en/index.html", "census/index.html", "census/data/insights.json", "census/data/models.json", "census/data/community.json", "census/data/board.json",
          "og.png", "LICENSE", "assets/logo.svg", "assets/logo-32.png", "assets/logo-180.png", "assets/logo-512.png"]
 
 README = """---
@@ -47,14 +47,9 @@ Also at https://joessattes.github.io/ai-model-explorer/ (Thai and English).
 """
 
 
-# The Space is served from the repository root. English is the landing page (index.html redirects to en/),
-# the Thai page moves to th.html, and every link names its index.html because the static host may not
-# resolve directory URLs.
-REDIRECT = ('<!doctype html><meta charset="utf-8"><title>AI Model Explorer</title>'
-            '<meta http-equiv="refresh" content="0; url=en/index.html">'
-            '<script>location.replace("en/index.html" + location.search + location.hash)</script>'
-            '<a href="en/index.html">AI Model Explorer</a>')
-DIR_LINK = re.compile(r'(["\'(}])((?:\.\./)?(?:census|en))/(?=["\'?#])')
+# The Space is served from the repository root, like GitHub Pages: English at index.html, Thai at th/, and en/ a
+# redirect kept for old links. Every link names its index.html because the static host may not resolve directory URLs.
+DIR_LINK = re.compile(r'(["\'(}])((?:\.\./)?(?:census|en|th))/(?=["\'?#])')
 
 
 def _fix(path, extra=()):
@@ -72,18 +67,18 @@ def main(repo, census, corpus):
         if os.path.exists(src):
             os.makedirs(os.path.dirname(os.path.join(tmp, f)), exist_ok=True)
             shutil.copy(src, os.path.join(tmp, f))
-    os.replace(os.path.join(tmp, "index.html"), os.path.join(tmp, "th.html"))
-    open(os.path.join(tmp, "index.html"), "w", encoding="utf-8").write(REDIRECT)
-    _fix(os.path.join(tmp, "th.html"))
-    _fix(os.path.join(tmp, "en", "index.html"), [('PAGE_ALT="../"', 'PAGE_ALT="../th.html"')])
-    _fix(os.path.join(tmp, "census", "index.html"), [('href="../"', 'href="../th.html"')])
+    _fix(os.path.join(tmp, "index.html"))
+    _fix(os.path.join(tmp, "th", "index.html"), [('PAGE_ALT="../"', 'PAGE_ALT="../index.html"')])
+    _fix(os.path.join(tmp, "census", "index.html"), [('href="../"', 'href="../index.html"'), (':"../",', ':"../index.html",'),
+                                                    (':"../";', ':"../index.html";')])
     open(os.path.join(tmp, "README.md"), "w", encoding="utf-8").write(README.format(census=census, corpus=corpus))
     if repo == "--dry":
         return tmp
     from huggingface_hub import HfApi
     api = HfApi(token=os.environ.get("HF_TOKEN"))
     api.create_repo(repo, repo_type="space", space_sdk="static", exist_ok=True)
-    api.upload_folder(repo_id=repo, repo_type="space", folder_path=tmp, commit_message="explorer from GitHub")
+    api.upload_folder(repo_id=repo, repo_type="space", folder_path=tmp, commit_message="explorer from GitHub",
+                      delete_patterns=["th.html"])
     print("space https://huggingface.co/spaces/" + repo)
 
 

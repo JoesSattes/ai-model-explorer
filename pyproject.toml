@@ -29,7 +29,7 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://joessattes.github.io/ai-model-explorer/en/"
+Homepage = "https://joessattes.github.io/ai-model-explorer/"
 Source = "https://github.com/JoesSattes/ai-model-explorer"
 Paper = "https://www.researchgate.net/publication/417293353"
 
@@ -48,11 +48,11 @@ packages = ["python/ai_model_explorer"]
 "src/enums.js" = "ai_model_explorer/js/enums.js"
 "src/plan.js" = "ai_model_explorer/js/plan.js"
 "index.html" = "ai_model_explorer/web/index.html"
-"en/index.html" = "ai_model_explorer/web/en/index.html"
+"th/index.html" = "ai_model_explorer/web/th/index.html"
 "og.png" = "ai_model_explorer/web/og.png"
 "assets/logo.svg" = "ai_model_explorer/web/assets/logo.svg"
 "assets/logo-32.png" = "ai_model_explorer/web/assets/logo-32.png"
 "assets/logo-180.png" = "ai_model_explorer/web/assets/logo-180.png"
 
 [tool.hatch.build.targets.sdist]
-include = ["python/", "src/infer.js", "src/loaders.js", "src/enums.js", "src/plan.js", "index.html", "en/index.html", "og.png", "assets/", "LICENSE", "pyproject.toml"]
+include = ["python/", "src/infer.js", "src/loaders.js", "src/enums.js", "src/plan.js", "index.html", "th/index.html", "og.png", "assets/", "LICENSE", "pyproject.toml"]
