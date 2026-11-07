@@ -51,8 +51,8 @@ window.I18N = {
   i_mtp: ["มี MTP head: ทาย token ล่วงหน้าเพิ่มได้ (speculative decoding) แลกกับ weight อีก {b}", "Has an MTP head: drafts extra tokens ahead (speculative decoding) for another {b} of weights."],
   i_prefix: ["encoder ส่งเวกเตอร์เข้า LLM เป็น token นำหน้า (ไม่ใช่ cross-attention) → ยิ่ง input ยาว prefill ยิ่งหนัก", "The encoder feeds the LLM as prefix tokens (not cross-attention) → longer inputs mean a heavier prefill."],
   big_h2_encoder: ["{n} ส่วน · หนึ่ง stack · รันครั้งเดียว", "{n} parts. One stack. One pass."],
-  big_lead: ["กด ▶ Play เพื่อเดินทีละส่วน: แต่ละส่วนรับอะไรเข้า ส่งอะไรออก และทำไปทำไม · คลิกส่วนไหนก็ได้เพื่อเปิดดูข้างใน · เปลี่ยน lens เพื่อดูว่า weight, compute, จำนวน op หรือ precision อยู่ตรงไหน", "Press ▶ Play to walk the parts: what goes in, what comes out, and why. Click any part to open it. Switch the lens to see where the weights, compute, ops or precision live."],
-  play: ["▶ Play", "▶ Play"], pause: ["❚❚ หยุด", "❚❚ Pause"], replay: ["↺ เล่นอีกครั้ง", "↺ Replay"], prev: ["‹ ก่อนหน้า", "‹ Prev"], next: ["ถัดไป ›", "Next ›"],
+  big_lead: ["กด ▶ เล่นทีละขั้น เพื่อเดินทีละส่วน: แต่ละส่วนรับอะไรเข้า ส่งอะไรออก และทำไปทำไม · คลิกส่วนไหนก็ได้เพื่อเปิดดูข้างใน · เปลี่ยน lens เพื่อดูว่า weight, compute, จำนวน op หรือ precision อยู่ตรงไหน", "Press ▶ Play to walk the parts: what goes in, what comes out, and why. Click any part to open it. Switch the lens to see where the weights, compute, ops or precision live."],
+  play: ["▶ เล่นทีละขั้น", "▶ Play"], pause: ["❚❚ หยุด", "❚❚ Pause"], replay: ["↺ เล่นอีกครั้ง", "↺ Replay"], prev: ["‹ ก่อนหน้า", "‹ Prev"], next: ["ถัดไป ›", "Next ›"],
   lens: ["lens", "lens"], lens_weights: ["Weights", "Weights"], lens_compute: ["Compute", "Compute"], lens_ops: ["TFLite ops", "TFLite ops"], lens_precision: ["Precision", "Precision"], lens_fragility: ["Fragility", "Fragility"],
   say_weights: ["ก้อนไหนกินพื้นที่ไฟล์ = เป้าของ quantization", "Where the file size lives = what quantization targets"],
   say_compute: ["encoder คิดต่อ input · decoder คิดต่อ token", "Encoder: per input · decoder: per token"],
@@ -76,7 +76,7 @@ window.I18N = {
   close: ["ปิด", "Close"],
   // detail facts
   f_weights: ["weights", "weights"], f_stored: ["เก็บเป็น", "stored as"], f_compute: ["compute", "compute"], f_ops: ["TFLite ops", "TFLite ops"], f_seams: ["seams", "seams"], f_frag: ["fragility (int4)", "fragility (int4)"],
-  tied_emb: ["ใช้ตารางร่วมกับ embedding", "tied → embedding"], est: ["(ประมาณ)", "(estimated)"],
+  tied_emb: ["ใช้ตารางร่วมกับ embedding", "tied → embedding"], tied_w: ["ใช้ร่วมกับ embedding · {b}", "shared with embedding · {b}"], est: ["(ประมาณ)", "(estimated)"],
   // map
   map_eyebrow: ["03 · Layer map", "03 · The layer map"], map_h2: ["ทุก layer วาดตามขนาดจริง คลิกเพื่อเปิด", "Every layer, drawn to scale. Click one to open it."],
   map_lead: ["ความกว้างของบล็อก = ค่าจริงของ lens ที่เลือก · แถวบน = encoder (ถ้ามี) · แถวล่าง = decoder (ถ้ามี)", "Block width = the real value of the chosen lens. Encoder row on top (if any), decoder row below (if any)."],

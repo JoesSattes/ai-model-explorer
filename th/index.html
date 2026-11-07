@@ -305,12 +305,12 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
 
 <section id="big"><div class="wrap">
   <h2 class="sec" id="bigH2"></h2>
-  <p class="lead" data-i="big_lead">กด ▶ Play เพื่อเดินทีละส่วน: แต่ละส่วนรับอะไรเข้า ส่งอะไรออก และทำไปทำไม · คลิกส่วนไหนก็ได้เพื่อเปิดดูข้างใน · เปลี่ยน lens เพื่อดูว่า weight, compute, จำนวน op หรือ precision อยู่ตรงไหน</p>
+  <p class="lead" data-i="big_lead">กด ▶ เล่นทีละขั้น เพื่อเดินทีละส่วน: แต่ละส่วนรับอะไรเข้า ส่งอะไรออก และทำไปทำไม · คลิกส่วนไหนก็ได้เพื่อเปิดดูข้างใน · เปลี่ยน lens เพื่อดูว่า weight, compute, จำนวน op หรือ precision อยู่ตรงไหน</p>
   <div class="xbar"><span class="xk" data-i="lens">lens</span>
     <button class="chip" data-xl="weights" data-i="lens_weights">Weights</button><button class="chip" data-xl="compute" data-i="lens_compute">Compute</button><button class="chip" data-xl="ops" data-i="lens_ops">TFLite ops</button><button class="chip" data-xl="precision" data-i="lens_precision">Precision</button><button class="chip" data-xl="fragility" data-i="lens_fragility">Fragility</button>
     <span class="xsay" id="lensSay"></span></div>
   <div class="panel ov"><div class="hscroll"><svg id="xsvg" viewBox="0 0 1600 520" role="img" aria-label="Model parts overview"></svg></div><div class="xstrip hscroll" id="xstrip"></div></div>
-  <div class="playbar"><button class="btn primary" id="bPlay" data-i="play">▶ Play</button><button class="btn sm" id="bPrev" data-i="prev">‹ ก่อนหน้า</button><button class="btn sm" id="bNext" data-i="next">ถัดไป ›</button><div id="bDots"></div>
+  <div class="playbar"><button class="btn primary" id="bPlay" data-i="play">▶ เล่นทีละขั้น</button><button class="btn sm" id="bPrev" data-i="prev">‹ ก่อนหน้า</button><button class="btn sm" id="bNext" data-i="next">ถัดไป ›</button><div id="bDots"></div>
     <label class="slider"><span data-i="tokens_per">token ต่อประโยค</span> <input type="range" id="tok" min="5" max="150" value="40"> <b id="tokV">40</b></label></div>
   <div class="panel" id="xio"></div>
   <div class="panel xdet" id="xdetail"></div>
@@ -443,8 +443,8 @@ window.I18N = {
   i_mtp: ["มี MTP head: ทาย token ล่วงหน้าเพิ่มได้ (speculative decoding) แลกกับ weight อีก {b}", "Has an MTP head: drafts extra tokens ahead (speculative decoding) for another {b} of weights."],
   i_prefix: ["encoder ส่งเวกเตอร์เข้า LLM เป็น token นำหน้า (ไม่ใช่ cross-attention) → ยิ่ง input ยาว prefill ยิ่งหนัก", "The encoder feeds the LLM as prefix tokens (not cross-attention) → longer inputs mean a heavier prefill."],
   big_h2_encoder: ["{n} ส่วน · หนึ่ง stack · รันครั้งเดียว", "{n} parts. One stack. One pass."],
-  big_lead: ["กด ▶ Play เพื่อเดินทีละส่วน: แต่ละส่วนรับอะไรเข้า ส่งอะไรออก และทำไปทำไม · คลิกส่วนไหนก็ได้เพื่อเปิดดูข้างใน · เปลี่ยน lens เพื่อดูว่า weight, compute, จำนวน op หรือ precision อยู่ตรงไหน", "Press ▶ Play to walk the parts: what goes in, what comes out, and why. Click any part to open it. Switch the lens to see where the weights, compute, ops or precision live."],
-  play: ["▶ Play", "▶ Play"], pause: ["❚❚ หยุด", "❚❚ Pause"], replay: ["↺ เล่นอีกครั้ง", "↺ Replay"], prev: ["‹ ก่อนหน้า", "‹ Prev"], next: ["ถัดไป ›", "Next ›"],
+  big_lead: ["กด ▶ เล่นทีละขั้น เพื่อเดินทีละส่วน: แต่ละส่วนรับอะไรเข้า ส่งอะไรออก และทำไปทำไม · คลิกส่วนไหนก็ได้เพื่อเปิดดูข้างใน · เปลี่ยน lens เพื่อดูว่า weight, compute, จำนวน op หรือ precision อยู่ตรงไหน", "Press ▶ Play to walk the parts: what goes in, what comes out, and why. Click any part to open it. Switch the lens to see where the weights, compute, ops or precision live."],
+  play: ["▶ เล่นทีละขั้น", "▶ Play"], pause: ["❚❚ หยุด", "❚❚ Pause"], replay: ["↺ เล่นอีกครั้ง", "↺ Replay"], prev: ["‹ ก่อนหน้า", "‹ Prev"], next: ["ถัดไป ›", "Next ›"],
   lens: ["lens", "lens"], lens_weights: ["Weights", "Weights"], lens_compute: ["Compute", "Compute"], lens_ops: ["TFLite ops", "TFLite ops"], lens_precision: ["Precision", "Precision"], lens_fragility: ["Fragility", "Fragility"],
   say_weights: ["ก้อนไหนกินพื้นที่ไฟล์ = เป้าของ quantization", "Where the file size lives = what quantization targets"],
   say_compute: ["encoder คิดต่อ input · decoder คิดต่อ token", "Encoder: per input · decoder: per token"],
@@ -468,7 +468,7 @@ window.I18N = {
   close: ["ปิด", "Close"],
   // detail facts
   f_weights: ["weights", "weights"], f_stored: ["เก็บเป็น", "stored as"], f_compute: ["compute", "compute"], f_ops: ["TFLite ops", "TFLite ops"], f_seams: ["seams", "seams"], f_frag: ["fragility (int4)", "fragility (int4)"],
-  tied_emb: ["ใช้ตารางร่วมกับ embedding", "tied → embedding"], est: ["(ประมาณ)", "(estimated)"],
+  tied_emb: ["ใช้ตารางร่วมกับ embedding", "tied → embedding"], tied_w: ["ใช้ร่วมกับ embedding · {b}", "shared with embedding · {b}"], est: ["(ประมาณ)", "(estimated)"],
   // map
   map_eyebrow: ["03 · Layer map", "03 · The layer map"], map_h2: ["ทุก layer วาดตามขนาดจริง คลิกเพื่อเปิด", "Every layer, drawn to scale. Click one to open it."],
   map_lead: ["ความกว้างของบล็อก = ค่าจริงของ lens ที่เลือก · แถวบน = encoder (ถ้ามี) · แถวล่าง = decoder (ถ้ามี)", "Block width = the real value of the chosen lens. Encoder row on top (if any), decoder row below (if any)."],
@@ -2413,7 +2413,7 @@ function renderHero() {
     <div class="tags"><span class="tag e">${t("fam_" + f)}</span><span class="tag d">${t("mod_" + mod)}</span><span class="tag">${t("src_" + M.kind)}</span></div></div>
     <div class="kpis">${[[fP(params), t("kpi_weights")], [fB(bytes), t("kpi_size")], [String(nL), t("kpi_layers")], ops != null ? [String(ops), t("kpi_ops")] : [M.meta.vocab ? M.meta.vocab.toLocaleString() : "–", t("kpi_vocab")]].map(([b, s]) => `<div class="kpi"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("")}</div>
     ${M.note ? `<p class="note">${esc(typeof M.note === "function" ? M.note() : M.note)}</p>` : ""}
-    ${/^[\w.-]+\/[\w.-]+$/.test(M.label || "") ? `<p class="note"><a href="${/\/(en|th)\/(index\.html)?$/.test(location.pathname) ? "../" : ""}census/?m=${encodeURIComponent(M.label)}">${t("census_cmp")}</a></p>` : ""}`;
+    ${M.group === "own" && /^[\w.-]+\/[\w.-]+$/.test(M.label || "") ? `<p class="note"><a href="${/\/(en|th)\/(index\.html)?$/.test(location.pathname) ? "../" : ""}census/?m=${encodeURIComponent(M.label)}">${t("census_cmp")}</a></p>` : ""}`;
   $("#navModel").textContent = M.short || M.label;
 }
 (function heroCanvas() {
@@ -2499,12 +2499,22 @@ function viz(kind, w = 210, h = 104) {
 
 // ================================================================== big picture
 const LENS = {
-  weights: {unit: p => fB(p.bytes), sub: p => fP(p.params) + " params", v: p => p.bytes},
+  weights: {unit: p => wB(p), sub: p => p.shared && !p.bytes ? t("tied_emb") : fP(p.params) + " params", v: p => p.bytes},
   compute: {unit: p => fF(p.flops) + (p.est ? "*" : ""), sub: p => p.ops ? p.ops + " ops" : "", v: p => p.flops},
   ops: {unit: p => p.ops + " ops", sub: p => Object.entries(p.types).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([k, v]) => k.replace("FULLY_CONNECTED", "FC").replace("BATCH_MATMUL", "BMM") + "×" + v).join(" "), v: p => p.ops},
   precision: {unit: p => dtLabel(p), sub: p => p.seams ? p.seams + " seams" : "", v: p => p.bytes},
   fragility: {unit: p => p._frag != null ? (p._frag * 100).toFixed(1) + "% err" : "–", sub: () => "int4 alone", v: p => p._frag || 0},
 };
+function ctxLen(M, D, encdec) {
+  const c = M.cfg || {}, g = k => [c, c.text_config || {}, c.decoder || {}, c.llm_config || {}].map(o => o[k]).find(v => typeof v === "number");
+  const v = encdec ? g("max_target_positions") || g("max_position_embeddings") : g("max_position_embeddings") || g("max_target_positions") || g("n_positions") || g("max_seq_len") || g("seq_length");
+  if (v) return v;
+  const t2 = D && D.stemTot ? D.stemTot.w.filter(w => w.shape.length === 2) : [], vmax = Math.max(0, ...t2.map(w => w.shape[0]));
+  const pw = t2.find(w => /pos|wpe/.test(w.n || w.name || "")) || (t2.length > 1 ? t2.find(w => w.shape[0] >= 64 && w.shape[0] < vmax && w.shape[1] === t2.find(x => x.shape[0] === vmax).shape[1]) : null);
+  return pw ? pw.shape[0] : 0;
+}
+function tiedTB() { const D = S.M && S.M.A && S.M.A.comps && S.M.A.comps.decoder; if (!D || !D.stemTot || !D.stemTot.params) return 0; const tw = D.stemTot.w.find(w => w.shape.length === 2 && w.shape[0] > 1000); return tw ? D.stemTot.bytes * (prod(tw.shape) / D.stemTot.params) : 0; }
+function wB(p) { const b = p.shared && !p.bytes ? tiedTB() : 0; return b ? t("tied_w", {b: fB(b)}) : fB(p.bytes); }
 function dtLabel(p) { const e = Object.entries(p.dt).sort((a, b) => b[1] - a[1]); if (!e.length) return p.shared ? t("tied_emb") : t("no_weights"); const tt = e.reduce((a, x) => a + x[1], 0); return e.map(([k, v]) => e.length > 1 ? `${k} ${Math.round(v / tt * 100)}%` : k).join(" · "); }
 function dtColor(p) { const e = Object.entries(p.dt).sort((a, b) => b[1] - a[1]); if (p.seams && !e.length) return K.neg; return e.length ? DTC[e[0][0]] || K.dim2 : K.active; }
 function lensFill(p, max) {
@@ -2662,7 +2672,7 @@ function renderIO() {
   const M = S.M, info = partInfo(st.col, M);
   let title = info.title, what = info.what, opt = info.opt, iv = info.i, ov = info.o, nums = "";
   const p = st.col.stack ? (st.col.comp === "encoder" ? M.A.comps.encoder.layersTot : M.A.comps.decoder.layersTot) : st.col.part;
-  if (p && p.has) nums = [[t("f_weights"), fB(p.bytes) + " · " + fP(p.params)], [t("f_stored"), dtLabel(p)], [t("f_compute"), fF(p.flops) + (p.est ? " " + t("est") : "") + (st.col.comp === "decoder" || /lmhead|embed_dec/.test(st.col.kind) ? " " + t("per_token") : "")], M.kind === "ops" ? [t("f_ops"), p.ops] : null].filter(Boolean).map(([k, v]) => `<div class="x3row"><span>${k}</span><b>${esc(String(v))}</b></div>`).join("");
+  if (p && p.has) nums = [[t("f_weights"), p.shared && !p.bytes ? wB(p) : fB(p.bytes) + " · " + fP(p.params)], [t("f_stored"), dtLabel(p)], [t("f_compute"), fF(p.flops) + (p.est ? " " + t("est") : "") + (st.col.comp === "decoder" || /lmhead|embed_dec/.test(st.col.kind) ? " " + t("per_token") : "")], M.kind === "ops" ? [t("f_ops"), p.ops] : null].filter(Boolean).map(([k, v]) => `<div class="x3row"><span>${k}</span><b>${esc(String(v))}</b></div>`).join("");
   if (st.type === "zoom") { const Cc = M.A.comps[st.col.comp], Lx = Cc.layers[st.col.comp === "encoder" ? S.el : S.dl];
     const steps = Object.keys(Lx.regions).map(rk => (ORDER[rk] || []).flat().filter(r => Lx.regions[rk][r] && Lx.regions[rk][r].has).map(r => stepName(r, true)).join(" → ")).join("  |  ");
     title = t("zoom_title"); what = t("zoom_text", {steps, n: Cc.layers.length}); iv = info.i; ov = info.o; }
@@ -2741,7 +2751,7 @@ function renderDetail() {
   const Lsel = reg ? (reg[1] === "e" ? E : D).layers[reg[1] === "e" ? S.el : S.dl] : null;
   const layerFacts = Lsel && Lsel.tot && Lsel.tot.has ? [[t("f_layer"), fB(Lsel.tot.bytes)], ...["self", "cross", "linear", "ffn", "moe"].filter(r => Lsel.regions[r] && Lsel.regions[r]._tot.has)
     .map(r => ["  " + (r === "ffn" || r === "moe" ? t("f_ffn") : r === "cross" ? "cross-attention" : t("f_attn")), fB(Lsel.regions[r]._tot.bytes)])] : [];
-  const facts = tot ? [[t("f_weights") + (Lsel ? " (" + esc(title) + ")" : ""), fB(tot.bytes) + " · " + fP(tot.params)], [t("f_stored"), dtLabel(tot)], [t("f_compute"), fF(tot.flops) + (tot.est ? " " + t("est") : "")], M.kind === "ops" ? [t("f_ops"), tot.ops] : null, M.kind === "ops" ? [t("f_seams"), tot.seams] : null, tot._frag != null ? [t("f_frag"), (tot._frag * 100).toFixed(1) + "%"] : null].filter(Boolean) : [];
+  const facts = tot ? [[t("f_weights") + (Lsel ? " (" + esc(title) + ")" : ""), (tot.shared && !tot.bytes ? wB(tot) : fB(tot.bytes) + " · " + fP(tot.params))], [t("f_stored"), dtLabel(tot)], [t("f_compute"), fF(tot.flops) + (tot.est ? " " + t("est") : "")], M.kind === "ops" ? [t("f_ops"), tot.ops] : null, M.kind === "ops" ? [t("f_seams"), tot.seams] : null, tot._frag != null ? [t("f_frag"), (tot._frag * 100).toFixed(1) + "%"] : null].filter(Boolean) : [];
   box.innerHTML = `<div class="xdh"><div><div class="xk">${esc(crumb)}</div><h3>${esc(title)}</h3>${what ? `<p>${esc(what)}</p>` : ""}</div><button class="btn sm" id="xclose">✕ ${t("close")}</button></div>
     <div class="xdg"><div><div class="hscroll xsteps">${svg || ""}</div><div class="xhov" id="xhov">${parts ? t("see_ops_note") : ""}</div></div>
     <div class="xfacts">${layerFacts.map(([k, v]) => `<div class="x3row"><span>${k}</span><b>${esc(String(v))}</b></div>`).join("")}${facts.map(([k, v]) => `<div class="x3row"><span>${k}</span><b>${esc(String(v))}</b></div>`).join("")}${opt ? `<div class="x3opt"><b>${t("opt_lens")}</b>${esc(opt)}</div>` : ""}</div></div>`;
@@ -3003,7 +3013,7 @@ function insights() {
   if (M.meta.family === "prefix") out.push([C.blueL, "i", t("i_prefix")]);
   if (D) { const lin = D.layers.filter(L => L.regions.linear).length, full = D.layers.filter(L => L.regions.self).length;
     const kvB = D.layers.reduce((a, L) => { const R = L.regions.self; if (!R) return a; const k = R.k && R.k.w[0] ? R.k.w[0].shape[0] : 0, v = R.v && R.v.w[0] ? R.v.w[0].shape[0] : k; return a + (k + v) * 2; }, 0);
-    if (kvB) { const n = M.meta.ctx ? Math.min(M.meta.ctx, 131072) : 32768; out.push([C.amber, "!", t("i_kv", {b: fB(kvB), c: fB(kvB * n), n: n.toLocaleString()})]); }
+    if (kvB) { const n = Math.min(ctxLen(M, D, !!E) || 32768, 131072); out.push([C.amber, "!", t("i_kv", {b: fB(kvB), c: fB(kvB * n), n: n.toLocaleString()})]); }
     if (lin) out.push([C.ok, "✓", t("i_hybrid", {l: lin, t: lin + full, f: full})]);
     if (D.head.mtp) out.push([C.blueL, "i", t("i_mtp", {b: fB(D.head.mtp.bytes)})]); }
   const m = M.meta;
@@ -3024,7 +3034,7 @@ function renderReport() {
   const tot = Object.values(M.A.comps).reduce((a, c) => merge(a, c.tot), part()), top = Object.entries(tot.types).sort((a, b) => b[1] - a[1]).slice(0, 12), mx = top.length ? top[0][1] : 1;
   $("#rOps").innerHTML = ops ? top.map(([k, n]) => `<div class="opbar"><span class="mono k" style="color:${/QUANT/.test(k) ? C.redL : C.soft}">${k}</span><div class="v" style="width:${n / mx * 240}px;background:${/QUANT/.test(k) ? C.red : /FULLY|CONV|EMBED|BATCH/.test(k) ? C.mag : C.blue}"></div><span class="mono" style="font-size:12.5px">${n}</span></div>`).join("") : `<p style="color:var(--dim)">${t("r_noops")}</p>`;
   const hdr = [t("th_part"), t("th_weights"), t("th_share"), t("th_stored"), t("th_compute") + (M.A.comps.decoder ? ` (${S.tokens} tok)` : ""), t("th_share"), t("th_read"), ...(ops ? [t("th_ops"), t("th_seams")] : [])];
-  const body = rows.map(r => [r.name, fB(r.p.bytes), pct(r.p.bytes, tb), dtLabel(r.p), fF(fl(r)) + (r.p.est ? "*" : ""), pct(fl(r), tf), fB(r.read), ...(ops ? [r.p.ops, r.p.seams || ""] : [])]);
+  const body = rows.map(r => [r.name, r.p.shared && !r.p.bytes ? wB(r.p) : fB(r.p.bytes), pct(r.p.bytes, tb), dtLabel(r.p), fF(fl(r)) + (r.p.est ? "*" : ""), pct(fl(r), tf), fB(r.read), ...(ops ? [r.p.ops, r.p.seams || ""] : [])]);
   const foot = [t("total"), fB(tb), "", "", fF(tf), "", fB(tr), ...(ops ? [rows.reduce((a, r) => a + r.p.ops, 0), ""] : [])];
   $("#rTable").innerHTML = `<div class="tscroll"><table class="t" style="min-width:760px"><tr>${hdr.map(h => `<th>${esc(h)}</th>`).join("")}</tr>${body.map((r, i) => `<tr>${r.map((c, j) => `<td${j ? "" : ` style="color:${rows[i].c === "e" ? C.blueL : C.magL}"`}>${esc(String(c))}</td>`).join("")}</tr>`).join("")}<tr style="font-weight:700">${foot.map(c => `<td>${esc(String(c))}</td>`).join("")}</tr></table></div>${rows.some(r => r.p.est) ? `<p class="note">* ${t("est")}</p>` : ""}`;
   S.md = `| ${hdr.join(" | ")} |\n|${hdr.map(() => "---").join("|")}|\n` + body.map(r => `| ${r.join(" | ")} |`).join("\n") + `\n| ${foot.join(" | ")} |\n\nModel: ${M.label} · Model Explorer by Sattaya Singkul`;
