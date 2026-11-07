@@ -7,7 +7,7 @@ const DT_BYTES = {fp32: 4, fp16: 2, bf16: 2, int8: 1, uint8: 1, int4: .5, fp8: 1
 
 function part() { return {ops: 0, flops: 0, bytes: 0, params: 0, dt: {}, seams: 0, w: [], out: null, types: {}, has: false}; }
 function merge(dst, src) { ["ops", "flops", "bytes", "params", "seams"].forEach(k => dst[k] += src[k] || 0); Object.entries(src.dt).forEach(([k, v]) => dst.dt[k] = (dst.dt[k] || 0) + v); Object.entries(src.types).forEach(([k, v]) => dst.types[k] = (dst.types[k] || 0) + v); dst.w.push(...src.w); dst.has = dst.has || src.has; if (src.shared) dst.shared = true; if (src.est) dst.est = true; if (src.out && !dst.out) dst.out = src.out; return dst; }
-const sumParts = obj => Object.values(obj || {}).reduce((a, p) => merge(a, p), part());
+const sumParts = obj => Object.entries(obj || {}).reduce((a, [k, p]) => k === "_tot" ? a : merge(a, p), part());   // never count a region total twice
 
 // ------------------------------------------------------------------ from .tflite ops
 function addOp(p, n, seen) {

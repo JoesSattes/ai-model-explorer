@@ -81,8 +81,10 @@ window.I18N = {
   map_eyebrow: ["03 · Layer map", "03 · The layer map"], map_h2: ["ทุก layer วาดตามขนาดจริง คลิกเพื่อเปิด", "Every layer, drawn to scale. Click one to open it."],
   map_lead: ["ความกว้างของบล็อก = ค่าจริงของ lens ที่เลือก · แถวบน = encoder (ถ้ามี) · แถวล่าง = decoder (ถ้ามี)", "Block width = the real value of the chosen lens. Encoder row on top (if any), decoder row below (if any)."],
   map_size: ["Size", "Size"], map_read: ["Bytes read", "Bytes read"], map_prec: ["Precision", "Precision"], map_frag: ["Fragility", "Fragility"],
-  map_read_note: ["byte ของ weight ที่ถูกอ่านต่อ 1 input (fp ตามไฟล์) — decoder อ่านซ้ำทุก token", "Weight bytes read for one input — the decoder re-reads its weights every token"],
-  map_light: ["ส่วนบนสีอ่อน = attention · ส่วนล่างสีเข้ม = feed-forward", "light top = attention · solid bottom = feed-forward"],
+  map_read_note: ["ตัวเลขในบล็อก = byte ของ weight ที่อ่านต่อ 1 input · decoder อ่าน weight ซ้ำทุก token จึงคูณด้วยจำนวน token (slider) · embedding ที่ใช้ร่วมกับ head ถูกอ่านทั้งตารางทุก token ตอนเลือกคำ", "Number in a block = weight bytes read for one input · the decoder re-reads its weights every token, so it is multiplied by the token count (slider) · an embedding shared with the head is read whole every token to pick the next word"],
+  map_light: ["ตัวเลขในบล็อก = ขนาดของ layer นั้น · ส่วนบนสีจาง = attention · ส่วนล่างสีทึบ = feed-forward · คลิกบล็อกเพื่อดูข้างใน", "Number in a block = that layer's size · faded top = attention · solid bottom = feed-forward · click a block to open it"],
+  f_layer: ["ทั้ง layer", "whole layer"], f_attn: ["attention", "attention"], f_ffn: ["feed-forward", "feed-forward"],
+  lab_conv: ["conv", "conv"], lab_embed: ["embedding", "embedding"], lab_tied: ["embedding (ใช้ร่วมกับ head)", "embedding (shared with head)"], lab_crosskv: ["cross K/V", "cross K/V"], lab_head: ["head", "head"],
   tokens_per: ["token ต่อประโยค", "tokens per sentence"], seq_len: ["ความยาว input (tokens)", "input length (tokens)"],
   // concepts
   c_eyebrow: ["04 · หกอย่างก่อนลงมือบีบ", "04 · Six ideas before you optimize"], c_h2: ["คำศัพท์ที่ต้องรู้ เป็นภาพเคลื่อนไหว", "Key terms, animated"],

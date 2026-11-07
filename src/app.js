@@ -440,10 +440,13 @@ function renderDetail() {
           <text x="${x + bw / 2}" y="${y + 62}" text-anchor="middle" class="xm" font-size="14">${esc(LENS[S.lens].unit(p))}</text><text x="${x + bw / 2}" y="${y + 78}" text-anchor="middle" class="xs">${p.ops ? p.ops + " op" + (p.ops > 1 ? "s" : "") : ""}${p.seams ? " · " + p.seams + " seam" : ""}</text></g>`; }); });
     svg += "</svg>";
   }
-  const facts = tot ? [[t("f_weights"), fB(tot.bytes) + " · " + fP(tot.params)], [t("f_stored"), dtLabel(tot)], [t("f_compute"), fF(tot.flops) + (tot.est ? " " + t("est") : "")], M.kind === "ops" ? [t("f_ops"), tot.ops] : null, M.kind === "ops" ? [t("f_seams"), tot.seams] : null, tot._frag != null ? [t("f_frag"), (tot._frag * 100).toFixed(1) + "%"] : null].filter(Boolean) : [];
+  const Lsel = reg ? (reg[1] === "e" ? E : D).layers[reg[1] === "e" ? S.el : S.dl] : null;
+  const layerFacts = Lsel && Lsel.tot && Lsel.tot.has ? [[t("f_layer"), fB(Lsel.tot.bytes)], ...["self", "cross", "linear", "ffn", "moe"].filter(r => Lsel.regions[r] && Lsel.regions[r]._tot.has)
+    .map(r => ["  " + (r === "ffn" || r === "moe" ? t("f_ffn") : r === "cross" ? "cross-attention" : t("f_attn")), fB(Lsel.regions[r]._tot.bytes)])] : [];
+  const facts = tot ? [[t("f_weights") + (Lsel ? " (" + esc(title) + ")" : ""), fB(tot.bytes) + " · " + fP(tot.params)], [t("f_stored"), dtLabel(tot)], [t("f_compute"), fF(tot.flops) + (tot.est ? " " + t("est") : "")], M.kind === "ops" ? [t("f_ops"), tot.ops] : null, M.kind === "ops" ? [t("f_seams"), tot.seams] : null, tot._frag != null ? [t("f_frag"), (tot._frag * 100).toFixed(1) + "%"] : null].filter(Boolean) : [];
   box.innerHTML = `<div class="xdh"><div><div class="xk">${esc(crumb)}</div><h3>${esc(title)}</h3>${what ? `<p>${esc(what)}</p>` : ""}</div><button class="btn sm" id="xclose">✕ ${t("close")}</button></div>
     <div class="xdg"><div><div class="hscroll xsteps">${svg || ""}</div><div class="xhov" id="xhov">${parts ? t("see_ops_note") : ""}</div></div>
-    <div class="xfacts">${facts.map(([k, v]) => `<div class="x3row"><span>${k}</span><b>${esc(String(v))}</b></div>`).join("")}${opt ? `<div class="x3opt"><b>${t("opt_lens")}</b>${esc(opt)}</div>` : ""}</div></div>`;
+    <div class="xfacts">${layerFacts.map(([k, v]) => `<div class="x3row"><span>${k}</span><b>${esc(String(v))}</b></div>`).join("")}${facts.map(([k, v]) => `<div class="x3row"><span>${k}</span><b>${esc(String(v))}</b></div>`).join("")}${opt ? `<div class="x3opt"><b>${t("opt_lens")}</b>${esc(opt)}</div>` : ""}</div></div>`;
   $("#xclose").onclick = () => { S.open = null; renderBig(); renderDetail(); };
   $$("#xdetail .xstep").forEach(g => g.onclick = g.onmouseenter = () => { const e = STEP[g.dataset.r] || [g.dataset.r, "", ""], p = parts[g.dataset.r]; const types = Object.entries(p.types).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}×${v}`).join(", ");
     $("#xhov").innerHTML = `<b>${esc(e[0])}</b> — ${esc(L2(e[1], e[2]))}${types ? `<br><span class="mono" style="font-size:12px;color:var(--dim)">${esc(types)}</span>` : ""}`; });
@@ -513,7 +516,12 @@ function summLabels(ls) { const runs = []; ls.forEach(l => { const r = runs[runs
 // ================================================================== layer map
 function renderMap() {
   const M = S.M, A = M.A, svg = $("#mapSvg"); const rows = [];
-  ["encoder", "decoder"].forEach(c => { const Cc = A.comps[c]; if (!Cc) return; rows.push({c, blocks: [{id: c + ".stem", p: Cc.stemTot, lab: "stem"}, ...Cc.layers.map(L => ({id: c + ".L" + L.idx, p: L.tot, L, lab: String(L.idx)})), {id: c + ".head", p: Cc.headTot, lab: "head"}].filter(b => b.p.has)}); });
+  ["encoder", "decoder"].forEach(c => { const Cc = A.comps[c]; if (!Cc) return; // name the blocks around the layers by what they hold, so "the 212 MB block" can be found
+    const has = (o, k) => o && Object.keys(o).some(x => x !== "_tot" && x.startsWith(k) && o[x].has);
+    const tiedHead = Cc.headTot && Cc.headTot.has && !Cc.headTot.bytes;
+    const stemLab = has(Cc.stem, "embed") ? (c === "decoder" && (tiedHead || has(Cc.stem, "embed") && !has(Cc.head, "logits")) ? t("lab_tied") : t("lab_embed")) : has(Cc.stem, "conv") ? t("lab_conv") : "stem";
+    const headLab = has(Cc.head, "crosskv") ? t("lab_crosskv") : t("lab_head");
+    rows.push({c, blocks: [{id: c + ".stem", p: Cc.stemTot, lab: stemLab}, ...Cc.layers.map(L => ({id: c + ".L" + L.idx, p: L.tot, L, lab: String(L.idx)})), {id: c + ".head", p: Cc.headTot, lab: headLab}].filter(b => b.p.has)}); });
   const rd = c => c === "decoder" ? S.tokens : 1;
   const wOf = (b, c) => S.mapLens === "read" ? b.p.bytes * rd(c) : S.mapLens === "frag" ? 1 : Math.max(b.p.bytes, b.p.params * 2, 1);
   const maxRow = Math.max(...rows.map(r => r.blocks.reduce((a, b) => a + wOf(b, r.c), 0))), padL = 190, px = (1280 - padL - 20) / maxRow;
@@ -530,7 +538,12 @@ function renderMap() {
         out += `<rect x="${x}" y="${y}" width="${w}" height="${h * fa}" rx="3" fill="${fill}" opacity=".55"/><rect x="${x}" y="${y + h * fa}" width="${w}" height="${h * (1 - fa)}" fill="${fill}"/>`; }
       else out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${fill}" opacity="${op}"/>`;
       out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="none" stroke="rgba(0,0,0,.3)"/>`;
-      if (w > b.lab.length * 7.5) out += `<text x="${x + w / 2}" y="${y - 7}" text-anchor="middle" class="ms">${b.lab}</text>`;
+      if (w > b.lab.length * 7.5) out += `<text x="${x + w / 2}" y="${y - 7}" text-anchor="middle" class="ms">${esc(b.lab)}</text>`;
+      else if (!b.L && w > 3 && b.p.bytes) out += `<text x="${x + w / 2}" y="${y + h + 15}" text-anchor="${x + w / 2 > 1150 ? "end" : x < padL + 30 ? "start" : "middle"}" class="ms">${esc(b.lab)}</text>`;
+      // the value itself, written in the block (sideways when the block is narrow)
+      if (S.mapLens === "size" || S.mapLens === "read") { const v = fB(S.mapLens === "read" ? b.p.bytes * rd(r.c) : b.p.bytes);
+        if (w > v.length * 7.2 + 6) out += `<text x="${x + w / 2}" y="${y + h - 10}" text-anchor="middle" class="mv">${v}</text>`;
+        else if (w >= 13) out += `<text transform="translate(${x + w / 2 + 4} ${y + h - 8}) rotate(-90)" class="mv">${v}</text>`; }
       if (S.mapLens === "frag" && b.p._frag > 0 && w > 30) out += `<text x="${x + w / 2}" y="${y + h / 2 + 5}" text-anchor="middle" class="mm" fill="#fff">${(b.p._frag * 100).toFixed(1)}</text>`;
       out += "</g>"; x += wOf(b, r.c) * px; });
     y += h + 40; });
