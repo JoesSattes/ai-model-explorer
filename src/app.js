@@ -506,9 +506,16 @@ function renderArch() {
         ${row(t("hp_heads"), heads && kvh ? heads + " / " + kvh + " kv" : null, heads ? hsrc : null)}${row("head_dim", hd, hd ? hsrc : null)}
         ${fz && fz.checked ? `<div class="x3row"><span>${t("hp_check")}</span><b>${cons}</b></div>` : ""}
         ${isB ? row("FFN", hp.ffn, "meas") : ""}${isB ? row(t("hp_experts"), hp.experts ? hp.experts + (m.topk ? ` · top-${m.topk}` : "") : null, hp.experts ? (m.topk ? "cfg" : "meas") : null) : ""}${isB ? row(t("hp_vocab"), hp.vocab, "meas") : ""}
-        ${isB ? row(t("hp_kv"), hp.kv_bytes_per_token_bf16 && /decoder|prefix|encdec/.test(fam(M)) ? fB(hp.kv_bytes_per_token_bf16) + " / token" : null, "meas") : ""}${row(t("hp_quant"), Object.keys(I.quant || {}).length ? Object.entries(I.quant).map(([k, v]) => k.toUpperCase() + " ×" + v).join(", ") : null, "meas")}
+        ${isB ? row(t("hp_kv"), kvText(M, I, hp), "meas") : ""}${row(t("hp_quant"), Object.keys(I.quant || {}).length ? Object.entries(I.quant).map(([k, v]) => k.toUpperCase() + " ×" + v).join(", ") : null, "meas")}
         <div class="ahead" style="margin-top:18px">${t("arch_ev")}</div><ul class="aev">${[...new Set([...I.evidence, ...comps.flatMap(c => (c.ev || []).filter(e => !I.evidence.some(x => x.includes(e))).map(e => c.id + ": " + e))])].slice(0, 8).map(e => `<li>${esc(e)}</li>`).join("") || `<li>${t("arch_ev_none")}</li>`}</ul></div></div>`;
   $$("#archSvg .acomp").forEach(g => { g.onclick = () => { S.archSel = g.dataset.c; renderArch(); }; g.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); S.archSel = g.dataset.c; renderArch(); } }; });
+}
+// KV cache per token: layer by layer (plan.js) when layers share caches or slide over a window, else the engine's value
+function kvText(M, I, hp) {
+  if (!(hp.kv_bytes_per_token_bf16 && /decoder|prefix|encdec/.test(fam(M)))) return null;
+  try { const sh = {}; for (const [n, x] of Object.entries(M.T || {})) sh[n] = x.shape; const K = Plan.kvProfile(I, sh, M.cfg || {});
+    if (K && (K.shared || K.sliding)) return fB(K.per_token) + " / token" + (K.sliding ? " + ≤" + fB(K.sliding_cap) : "") + ` (${K.cached}/${K.layers} layers)`; } catch (e) {}
+  return fB(hp.kv_bytes_per_token_bf16) + " / token";
 }
 function summLabels(ls) { const runs = []; ls.forEach(l => { const r = runs[runs.length - 1]; if (r && r[0] === l) r[1]++; else runs.push([l, 1]); }); const cnt = {}; ls.forEach(l => cnt[l] = (cnt[l] || 0) + 1);
   return runs.length > 6 ? Object.entries(cnt).map(([l, n]) => `${n}× ${l}`).join(" · ") : runs.map(([l, n]) => `${n}× ${l}`).join(" → "); }
