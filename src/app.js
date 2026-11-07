@@ -542,8 +542,8 @@ function renderMap() {
       else if (!b.L && w > 3 && b.p.bytes) out += `<text x="${x + w / 2}" y="${y + h + 15}" text-anchor="${x + w / 2 > 1150 ? "end" : x < padL + 30 ? "start" : "middle"}" class="ms">${esc(b.lab)}</text>`;
       // the value itself, written in the block (sideways when the block is narrow)
       if (S.mapLens === "size" || S.mapLens === "read") { const v = fB(S.mapLens === "read" ? b.p.bytes * rd(r.c) : b.p.bytes);
-        if (w > v.length * 7.2 + 6) out += `<text x="${x + w / 2}" y="${y + h - 10}" text-anchor="middle" class="mv">${v}</text>`;
-        else if (w >= 13) out += `<text transform="translate(${x + w / 2 + 4} ${y + h - 8}) rotate(-90)" class="mv">${v}</text>`; }
+        if (w > v.length * 9 + 10) out += `<text x="${x + w / 2}" y="${y + h / 2 + 6}" text-anchor="middle" class="mv mvb">${v}</text>`;
+        else if (w >= 13) out += `<text transform="translate(${x + w / 2 + 4.5} ${y + h - 8}) rotate(-90)" class="mv">${v}</text>`; }
       if (S.mapLens === "frag" && b.p._frag > 0 && w > 30) out += `<text x="${x + w / 2}" y="${y + h / 2 + 5}" text-anchor="middle" class="mm" fill="#fff">${(b.p._frag * 100).toFixed(1)}</text>`;
       out += "</g>"; x += wOf(b, r.c) * px; });
     y += h + 40; });
