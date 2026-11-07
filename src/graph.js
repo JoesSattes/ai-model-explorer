@@ -60,6 +60,7 @@ function graphFromTflite(p, component, label) {
     else if (w && /CONV/.test(o.type)) flops = 2 * prod(out) * prod(w.shape.slice(1));
     else if (o.type === "BATCH_MATMUL") { const a = p.tensors[o.inputs[0]].shape; flops = 2 * prod(out) * (a[a.length - 1] || 1); }
     else if (o.type === "EMBEDDING_LOOKUP") flops = prod(out);
+    else if (/^(RESHAPE|TRANSPOSE|SLICE|STRIDED_SLICE|CONCATENATION|GATHER|GATHER_ND|PAD|PADV2|SQUEEZE|EXPAND_DIMS|PACK|UNPACK|SPLIT|SPLIT_V|SHAPE|CAST|QUANTIZE|DEQUANTIZE|BROADCAST_TO|TILE|FILL|ZEROS_LIKE|ONES_LIKE|SELECT|SELECT_V2|DYNAMIC_UPDATE_SLICE|SCATTER_ND|RANGE|IDENTITY)$/.test(o.type)) flops = 0;
     else flops = prod(out);
     const wb = w ? (p.buffers[w.buffer] || 0) : 0;
     return {i: o.i, t: o.type, cat: opCat(o.type), path, li: layerIndex(path), lane: laneOf(path, o.type), out, ins, ext, flops,

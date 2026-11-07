@@ -3,7 +3,7 @@
 (function () {
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
-const fB = b => b >= 1e9 ? (b / 1e9).toFixed(2) + " GB" : b >= 1e6 ? (b / 1e6).toFixed(1) + " MB" : b >= 1e3 ? (b / 1e3).toFixed(0) + " KB" : Math.round(b) + " B";
+const fB = b => b >= 1e12 ? (b / 1e12).toFixed(2) + " TB" : b >= 1e9 ? (b / 1e9).toFixed(2) + " GB" : b >= 1e6 ? (b / 1e6).toFixed(1) + " MB" : b >= 1e3 ? (b / 1e3).toFixed(0) + " KB" : Math.round(b) + " B";
 const fP = p => p >= 1e9 ? (p / 1e9).toFixed(2) + " B" : p >= 1e6 ? (p / 1e6).toFixed(1) + " M" : p >= 1e3 ? (p / 1e3).toFixed(0) + " K" : String(Math.round(p));
 const fF = f => f >= 1e12 ? (f / 1e12).toFixed(2) + " TFLOP" : f >= 1e9 ? (f / 1e9).toFixed(1) + " GFLOP" : f >= 1e6 ? (f / 1e6).toFixed(1) + " MFLOP" : f >= 1e3 ? (f / 1e3).toFixed(0) + " KFLOP" : Math.round(f) + " FLOP";
 const pct = (a, b) => b ? (a / b * 100).toFixed(a / b < .1 ? 1 : 0) + "%" : "0%";
@@ -50,7 +50,7 @@ function build(def) {
     const I = ArchInfer.infer(def.tensors, {qhint: ArchInfer.quantHint(def.cfg)}); if (def.cfg) I.family = ArchInfer.familyFromConfig(I, def.cfg); const N = ArchInfer.normalize(def.tensors, ArchInfer.quantHint(def.cfg)).T, auto = metaFromIR(I, def.cfg || null, def.label);
     const meta = Object.assign({}, auto, def.meta || {}); if (I.family === "transducer" || I.family === "diffusion") meta.family = auto.family; ["layer_pattern", "irFamily", "quant", "joint", "timestep", "experts"].forEach(k => { if (auto[k] != null && auto[k] !== 0) meta[k] = auto[k]; });
     M = {A: anatomyFromIR(I, N, meta), meta, kind: def.kind || "tensors", IR: I, T: N}; }
-  M.id = def.id; M.label = def.label; M.note = def.note; M.viz = def.viz; M.group = def.group; M.cfg = def.cfg || null;
+  M.id = def.id; M.label = def.label; M.note = def.note; M.viz = def.viz; M.group = def.group; M.cat = def.cat; M.cfg = def.cfg || null;
   attachFragility(M);
   def.M = M; return M;
 }
@@ -188,20 +188,21 @@ function viz(kind, w = 210, h = 104) {
     toks.forEach((tk, i) => { const tw = Math.max(26, tk.length * 8.4 + 14); if (x + tw > w) { x = 6; y += 32; } const last = kind === "text" && i === toks.length - 1;
       s += `<rect x="${x}" y="${y - 17}" width="${tw}" height="24" rx="7" fill="${last ? `rgba(${K.okRGB},.14)` : `rgba(${K.ovRGB},0.056)`}" stroke="${last ? C.ok : `rgba(${K.ovRGB},0.160)`}"/><text x="${x + tw / 2}" y="${y}" text-anchor="middle" font-size="13" fill="${last ? C.ok : C.ink}">${esc(tk.trim() || "␣")}</text>`;
       if (kind === "tokens" && S.M.meta.modality !== "audio") s += `<text x="${x + tw / 2}" y="${y + 18}" text-anchor="middle" font-size="9.5" fill="${C.dim}" font-family="var(--mono)">${Math.floor(ab(r(i, 3)) * 30000)}</text>`; x += tw + 6; });
-    if (kind === "text" && S.M.meta.modality === "audio") s = `<text x="${w / 2}" y="${h / 2 + 8}" text-anchor="middle" font-size="22" font-weight="700" fill="${C.ok}">${EX.audio}</text>`; }
+    if (kind === "text" && S.M.meta.modality === "audio") { const ln = EX.audio === "วันนี้อากาศดีมาก" ? ["วันนี้", "อากาศดีมาก"] : [EX.audio], fs = Math.min(40, Math.max(22, w * 0.9 / (Math.max(...ln.map(l => l.length)) * 0.5))).toFixed(0); s = ln.map((l, i) => `<text x="${w / 2}" y="${h / 2 + 10 + (i - (ln.length - 1) / 2) * fs * 1.15}" text-anchor="middle" font-size="${fs}" font-weight="700" fill="${C.ok}">${l}</text>`).join(""); } }
   else if (kind === "image" || kind === "patches") { for (let i = 0; i < 14; i++) for (let j = 0; j < 7; j++) { const v = .5 + .5 * Math.sin(i * .45 + j * .6), c2 = `hsl(${30 + v * 30},${40 + 30 * v}%,${25 + 35 * v}%)`; s += `<rect x="${w / 2 - 98 + i * 14}" y="${4 + j * 14}" width="${kind === "patches" ? 12.5 : 14}" height="${kind === "patches" ? 12.5 : 14}" fill="${c2}"/>`; } }
   else if (kind === "mat" || kind === "mat2") { const cols = 30, rows = 9; for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) { const v = ab(r(i + (kind === "mat2" ? 7 : 0), j)); const c2 = kind === "mat2" ? `rgba(${K.blRGB},${(.15 + .8 * v).toFixed(2)})` : `rgba(${K.blRGB},${(.15 + .8 * v).toFixed(2)})`; s += `<rect x="${4 + i * 6.8}" y="${6 + j * 10.5}" width="6" height="9.5" rx="1.5" fill="${c2}"/>`; } }
   else if (kind === "kv") { ["K", "V"].forEach((l, k) => { for (let i = 0; i < 13; i++) for (let j = 0; j < 7; j++) s += `<rect x="${8 + k * 104 + i * 7}" y="${18 + j * 11}" width="6.2" height="10" rx="1.5" fill="rgba(${K.blRGB},${(.2 + .75 * ab(r(i + k * 9, j))).toFixed(2)})"/>`; s += `<text x="${54 + k * 104}" y="13" text-anchor="middle" font-size="12" font-weight="700" fill="${C.ink}">${l}</text>`; }); }
   else if (kind === "vec" || kind === "vec2") { for (let i = 0; i < 28; i++) { const v = ab(r(i + (kind === "vec2" ? 5 : 0), 2)); s += `<rect x="${6 + i * 7.2}" y="${h / 2 - 9}" width="6.4" height="18" rx="1.5" fill="${kind === "vec2" ? `rgba(${K.blRGB},${(.2 + .75 * v).toFixed(2)})` : `rgba(212,101,28,${(.2 + .75 * v).toFixed(2)})`}"/>`; } }
   else if (kind === "probs" || kind === "probs_img") { const lab = kind === "probs_img" ? EX.img : S.M.meta.modality === "audio" ? ["วันนี้", "วัน", "ทุก", "เมื่อ", "พรุ่ง"] : EX.textDecNext, pr = [.62, .14, .09, .05, .03];
     pr.forEach((v, i) => { s += `<text x="${w * .42}" y="${16 + i * 19}" text-anchor="end" font-size="12" fill="${i ? C.soft : C.ok}">${esc(lab[i].trim())}</text><rect x="${w * .45}" y="${6 + i * 19}" width="${v * w * .8}" height="13" rx="3" fill="${i ? C.mag : C.ok}" opacity="${i ? .55 : 1}"/><text x="${w * .45 + v * w * .8 + 4}" y="${16 + i * 19}" font-size="10" fill="${C.dim}" font-family="var(--mono)">${v.toFixed(2)}</text>`; }); }
+  else if (kind === "pred") s = `<text x="${w / 2}" y="${h / 2 - w * 0.02}" text-anchor="middle" font-size="${(w * 0.2).toFixed(0)}" font-weight="700" fill="${C.ok}">class 1</text><text x="${w / 2}" y="${h / 2 + w * 0.2}" text-anchor="middle" font-size="${(w * 0.16).toFixed(0)}" fill="${K.ink}">p = 0.87</text>`;
   else if (kind === "label") s = `<text x="${w / 2}" y="${h / 2 + 8}" text-anchor="middle" font-size="22" font-weight="700" fill="${C.ok}">${EX.img[0]}</text>`;
   return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="iov">${s}</svg>`;
 }
 
 // ================================================================== big picture
 const LENS = {
-  weights: {unit: p => wB(p), sub: p => p.shared && !p.bytes ? t("tied_emb") : fP(p.params) + " params", v: p => p.bytes},
+  weights: {unit: p => p.shared && !p.bytes && tiedTB() ? fB(tiedTB()) : fB(p.bytes), sub: p => p.shared && !p.bytes ? t("tied_emb") : fP(p.params) + " params", v: p => p.bytes},
   compute: {unit: p => fF(p.flops) + (p.est ? "*" : ""), sub: p => p.ops ? p.ops + " ops" : "", v: p => p.flops},
   ops: {unit: p => p.ops + " ops", sub: p => Object.entries(p.types).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([k, v]) => k.replace("FULLY_CONNECTED", "FC").replace("BATCH_MATMUL", "BMM") + "×" + v).join(" "), v: p => p.ops},
   precision: {unit: p => dtLabel(p), sub: p => p.seams ? p.seams + " seams" : "", v: p => p.bytes},
@@ -214,6 +215,11 @@ function ctxLen(M, D, encdec) {
   const t2 = D && D.stemTot ? D.stemTot.w.filter(w => w.shape.length === 2) : [], vmax = Math.max(0, ...t2.map(w => w.shape[0]));
   const pw = t2.find(w => /pos|wpe/.test(w.n || w.name || "")) || (t2.length > 1 ? t2.find(w => w.shape[0] >= 64 && w.shape[0] < vmax && w.shape[1] === t2.find(x => x.shape[0] === vmax).shape[1]) : null);
   return pw ? pw.shape[0] : 0;
+}
+function moeActive(M) { // fraction of routed-expert weights one token actually reads
+  const c = M.cfg || {}, g = k => [c, c.text_config || {}, c.llm_config || {}].map(o => o[k]).find(v => typeof v === "number");
+  const E = g("num_experts") || g("n_routed_experts") || g("num_local_experts") || g("moe_num_experts"), k = g("num_experts_per_tok") || g("moe_top_k") || g("top_k");
+  return E && k && k < E ? k / E : 0;
 }
 function tiedTB() { const D = S.M && S.M.A && S.M.A.comps && S.M.A.comps.decoder; if (!D || !D.stemTot || !D.stemTot.params) return 0; const tw = D.stemTot.w.find(w => w.shape.length === 2 && w.shape[0] > 1000); return tw ? D.stemTot.bytes * (prod(tw.shape) / D.stemTot.params) : 0; }
 function wB(p) { const b = p.shared && !p.bytes ? tiedTB() : 0; return b ? t("tied_w", {b: fB(b)}) : fB(p.bytes); }
@@ -251,7 +257,7 @@ function renderBig() {
   const M = S.M, A = M.A, E = A.comps.encoder, D = A.comps.decoder, F = fam(M);
   const cols = layoutCols(pipeline(M)); const y0 = 140, W = 1600, H = 520;
   const nE = E ? E.layers.length : 0, nD = D ? D.layers.length : 0;
-  $("#bigH2").textContent = t("big_h2_" + F, {n: cols.length});
+  $("#bigH2").textContent = t(M.cat === "embed" && F === "decoder" ? "big_h2_embed" : "big_h2_" + F, {n: cols.length});
   $$("[data-xl]").forEach(b => { b.classList.toggle("on", b.dataset.xl === S.lens); b.disabled = b.dataset.xl === "fragility" ? !M.hasFrag : b.dataset.xl === "ops" ? M.kind !== "ops" : false; });
   $("#lensSay").textContent = t("say_" + S.lens);
   const top = [E && E.stemTot, E && E.layersTot, E && E.headTot, D && D.stemTot, D && D.layersTot, D && D.headTot].filter(Boolean);
@@ -301,7 +307,7 @@ function renderBig() {
   };
   const embBelow = F === "encdec" || F === "prefix";
   cols.forEach(c => {
-    if (c.io) s += ioBox(c, {in_audio: "wave", in_text: "tokens", in_image: "image", mel: "spec", out_text: "text", out_vec: "vec2", out_class: "label", in_latent: "patches", out_latent: "patches", in_features: "mat", out_pred: "label"}[c.kind] || "mat");
+    if (c.io) s += ioBox(c, {in_audio: "wave", in_text: "tokens", in_image: "image", mel: "spec", out_text: "text", out_vec: "vec2", out_class: "label", in_latent: "patches", out_latent: "patches", in_features: "mat", out_pred: "pred"}[c.kind] || "mat");
     else if (c.stack) s += stack(c, c.comp === "encoder" ? E : D, c.comp === "encoder" ? Le : Ld, c.comp === "encoder" ? nE : nD, c.comp);
     else s += box(c.id, c.x, y0 + 40, c.w, 140, c.title || partInfo(c, M).title.replace("Encoder out → K/V", "K/V ×" + nD).replace("Token embedding", "Embed").replace("Patch embedding", "Patches").replace("Norm → logits", "→ logits").replace("Patchify + timestep", "Patchify + t").replace("Cell → row embedding", "Rows → vec").replace("Prediction + joint", "Pred + joint"), c.part, max);
   });
@@ -310,7 +316,7 @@ function renderBig() {
   if (D) {
     const dc = cols.find(c => c.kind === "dec"), hd = cols.find(c => c.kind === "lmhead"), out = cols.find(c => c.kind === "out_text");
     let emb = cols.find(c => c.kind === "embed_dec");
-    if (embBelow) { emb = {x: dc.x, w: Math.min(210, dc.w), id: "d_stem", below: true}; s += box("d_stem", emb.x, y0 + 296, emb.w, 64, L2("Token embed", "Token embed"), D.stemTot, max, true, "token id → vector"); s += `<path d="M${emb.x + 75} ${y0 + 296} V${y0 + 248}" stroke="${K.dec}" stroke-width="2" class="flowline" marker-end="url(#xa)"/>`; }
+    if (embBelow) { emb = {x: dc.x, w: Math.min(210, dc.w), id: "d_stem", below: true}; s += box("d_stem", emb.x, y0 + 296, emb.w, 64, L2("Token embed", "Token embed"), D.stemTot, max, true, "token id → vector"); s += `<path d="M${emb.x + 20} ${y0 + 296} V${y0 + 248}" stroke="${K.dec}" stroke-width="2" class="flowline" marker-end="url(#xa)"/>`; }
     const kv = cols.find(c => c.kind === "kv"); if (kv) s += `<path d="M${kv.x + kv.w} ${y0 + 110} C ${kv.x + kv.w + 30} ${y0 + 110}, ${dc.x - 30} ${y0 + 160}, ${dc.x} ${y0 + 160}" stroke="${K.enc}" stroke-width="3" fill="none" stroke-dasharray="6 6" class="flowline" marker-end="url(#xa)"/>`;
     const ex = emb.below ? emb.x + emb.w : emb.x + emb.w / 2, ey = emb.below ? y0 + 345 : y0 + 180;
     s += emb.below ? `<path d="M${out.x + out.w / 2} ${y0 + 180} V${y0 + 345} H${ex + 3}" stroke="${K.dec}" stroke-width="2" fill="none" stroke-dasharray="6 6" class="flowline loopline" marker-end="url(#xa)"/>`
@@ -339,7 +345,7 @@ function zoomSteps(Lx, x, y, w, comp) { // the inside of one layer, drawn small 
       <text x="${bx + (cw - 6) / 2}" y="${yy + 18 + (rh - 24) / 2 + 4}" text-anchor="middle" font-size="${cw < 70 ? 10 : 12}" fill="${C.ink}">${esc(stepName(r, true))}</text></g>`; });
     yy += rh + 6;
   });
-  o += `<circle r="5" fill="${K.ink}"><animateMotion dur="${1.6 * rows.length}s" repeatCount="indefinite" path="${rows.map((r, i) => `M${x + 18} ${y + 50 + 18 + (rh - 24) / 2 + i * (rh + 6)} H${x + 18 + r[1].length * (w - 36) / Math.max(r[1].length, 5) - 6}`).join(" ")}"/></circle>`;
+  o += `<circle r="4" fill="${K.ink}" opacity=".35" pointer-events="none"><animateMotion dur="${1.6 * rows.length}s" repeatCount="indefinite" path="${rows.map((r, i) => `M${x + 18} ${y + 50 + 18 + (rh - 24) / 2 + i * (rh + 6)} H${x + 18 + r[1].length * (w - 36) / Math.max(r[1].length, 5) - 6}`).join(" ")}"/></circle>`;
   return o;
 }
 
@@ -349,7 +355,7 @@ function buildPlay() {
   const cols = LAY.cols; PLAY = [];
   cols.forEach(c => { PLAY.push({id: c.stack ? c.id : c.io ? c.kind : c.id, col: c, type: c.io ? "io" : c.stack ? "stack" : "part"});
     if (c.stack && !PLAY.some(p => p.type === "zoom")) PLAY.push({id: c.id, col: c, type: "zoom"}); });
-  if (S.M.A.comps.decoder) PLAY.push({id: "out_text", col: cols.find(c => c.kind === "out_text"), type: "loop"});
+  if (S.M.A.comps.decoder && S.M.cat !== "embed") PLAY.push({id: "out_text", col: cols.find(c => c.kind === "out_text"), type: "loop"});
 }
 const DUR = {io: 3600, part: 4200, stack: 4600, zoom: 7600, loop: 5200};
 function goStep(i) {
@@ -357,7 +363,7 @@ function goStep(i) {
   if (i >= PLAY.length) { stopPlay(); S.step = PLAY.length - 1; $("#bPlay").textContent = t("replay"); return; }
   S.step = Math.max(0, i); S.open = null; const st = PLAY[S.step];
   if (st.type === "zoom") zoomTo(st.col); else if (S.zoom) zoomOut();
-  renderBig(); renderIO(); renderDetail(); centerCol(st.col);
+  renderBig(); renderIO(); renderDetail(); if (st.type !== "zoom") centerCol(st.col); else { const sc = $("#xsvg").parentElement; if (sc) sc.scrollTo({left: (sc.scrollWidth - sc.clientWidth) / 2}); }
   if (S.playing) playTimer = setTimeout(() => goStep(S.step + 1), DUR[st.type]);
 }
 function centerCol(col) { const sc = $("#xsvg").parentElement, svg = $("#xsvg"); if (!col || sc.scrollWidth <= sc.clientWidth + 4) return; const k = svg.clientWidth / LAY.W; sc.scrollTo({left: Math.max(0, (col.x + col.w / 2) * k - sc.clientWidth / 2), behavior: "smooth"}); }
@@ -365,7 +371,7 @@ function startPlay() { buildPlay(); S.playing = true; $("#bPlay").textContent = 
 function stopPlay() { S.playing = false; clearTimeout(playTimer); const b = $("#bPlay"); if (b) b.textContent = t("play"); }
 function animVB(to, done) { const svg = $("#xsvg"), from = svg.getAttribute("viewBox").split(" ").map(Number), tv = to.split(" ").map(Number), t0 = performance.now(); S.zoomAnim = true;
   (function f(now) { const k = Math.min(1, (now - t0) / 750), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; svg.setAttribute("viewBox", from.map((v, i) => (v + (tv[i] - v) * e).toFixed(1)).join(" ")); if (k < 1) requestAnimationFrame(f); else { S.zoomAnim = false; done && done(); } })(t0); }
-function zoomTo(col) { const zw = Math.max(col.w, 640), pad = 30, x = col.x + col.w / 2 - zw / 2 - pad, y = LAY.y0 - 40, w = zw + 2 * pad + 20, h = 300, ar = LAY.W / LAY.H; let W2 = Math.max(w, h * ar), H2 = W2 / ar; const vb = `${(x + w / 2 - W2 / 2).toFixed(0)} ${(y + h / 2 - H2 / 2).toFixed(0)} ${W2.toFixed(0)} ${H2.toFixed(0)}`; S.zoom = {comp: col.comp, vb}; animVB(vb); }
+function zoomTo(col) { const zw = Math.max(col.w, 640), pad = 30, x = col.x + col.w / 2 - zw / 2 - pad, y = LAY.y0 - 40, w = zw + 2 * pad + 20, h = 340, ar = LAY.W / LAY.H; let W2 = Math.max(w, h * ar), H2 = W2 / ar; const vb = `${(x + w / 2 - W2 / 2).toFixed(0)} ${(y + h / 2 - H2 / 2).toFixed(0)} ${W2.toFixed(0)} ${H2.toFixed(0)}`; S.zoom = {comp: col.comp, vb}; const sc = $("#xsvg").parentElement; if (sc) sc.scrollTo({left: (sc.scrollWidth - sc.clientWidth) / 2, behavior: "smooth"}); animVB(vb); }
 function zoomOut() { S.zoom = null; animVB(`0 0 ${LAY.W} ${LAY.H}`); }
 function renderIO() {
   const box = $("#xio"); const st = S.step >= 0 ? PLAY[S.step] : null;
@@ -373,8 +379,9 @@ function renderIO() {
   if (!st) { box.innerHTML = `<div class="xempty">${t("big_lead")}</div>`; return; }
   const M = S.M, info = partInfo(st.col, M);
   let title = info.title, what = info.what, opt = info.opt, iv = info.i, ov = info.o, nums = "";
-  const p = st.col.stack ? (st.col.comp === "encoder" ? M.A.comps.encoder.layersTot : M.A.comps.decoder.layersTot) : st.col.part;
-  if (p && p.has) nums = [[t("f_weights"), p.shared && !p.bytes ? wB(p) : fB(p.bytes) + " · " + fP(p.params)], [t("f_stored"), dtLabel(p)], [t("f_compute"), fF(p.flops) + (p.est ? " " + t("est") : "") + (st.col.comp === "decoder" || /lmhead|embed_dec/.test(st.col.kind) ? " " + t("per_token") : "")], M.kind === "ops" ? [t("f_ops"), p.ops] : null].filter(Boolean).map(([k, v]) => `<div class="x3row"><span>${k}</span><b>${esc(String(v))}</b></div>`).join("");
+  const zl = st.type === "zoom" ? M.A.comps[st.col.comp].layers[st.col.comp === "encoder" ? S.el : S.dl] : null;
+  const p = zl && zl.tot ? zl.tot : st.col.stack ? (st.col.comp === "encoder" ? M.A.comps.encoder.layersTot : M.A.comps.decoder.layersTot) : st.col.part;
+  if (p && p.has) nums = [[t("f_weights"), p.shared && !p.bytes ? wB(p) : fB(p.bytes) + " · " + fP(p.params)], [t("f_stored"), dtLabel(p)], [t("f_compute"), fF(p.flops) + (p.est ? " " + t("est") : "") + (st.col.comp === "decoder" || /lmhead|embed_dec/.test(st.col.kind) ? " " + t("per_token") : "") + (st.col.stack && st.col.comp === "decoder" && st.type !== "zoom" && M.A.comps.decoder.headTot && M.A.comps.decoder.headTot.flops ? " (+ logits " + fF(M.A.comps.decoder.headTot.flops) + ")" : "")], M.kind === "ops" ? [t("f_ops"), p.ops] : null].filter(Boolean).map(([k, v]) => `<div class="x3row"><span>${k}</span><b>${esc(String(v))}</b></div>`).join("");
   if (st.type === "zoom") { const Cc = M.A.comps[st.col.comp], Lx = Cc.layers[st.col.comp === "encoder" ? S.el : S.dl];
     const steps = Object.keys(Lx.regions).map(rk => (ORDER[rk] || []).flat().filter(r => Lx.regions[rk][r] && Lx.regions[rk][r].has).map(r => stepName(r, true)).join(" → ")).join("  |  ");
     title = t("zoom_title"); what = t("zoom_text", {steps, n: Cc.layers.length}); iv = info.i; ov = info.o; }
@@ -444,7 +451,7 @@ function renderDetail() {
     svg = `<svg viewBox="0 0 ${W} ${H}" style="min-width:${Math.round(W * .8)}px"><defs><marker id="xa2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="${K.dim2}"/></marker></defs>`;
     steps.forEach((g, i) => { const x = 20 + i * colW, yA = cy - (g.length * (bh + gap) - gap) / 2;
       if (i) svg += `<path d="M${x - colW + bw + 2} ${cy} H${x - 4}" stroke="${K.dim2}" stroke-width="2" class="flowline" marker-end="url(#xa2)"/>`;
-      g.forEach((r, k) => { const p = parts[r], y = yA + k * (bh + gap), f = lensFill(p, mx), nm = stepName(r), wt = p.w[0] ? p.w[0].shape.join("×") : (p.out ? `[${p.out.join(",")}]` : "");
+      g.forEach((r, k) => { const p = parts[r], y = yA + k * (bh + gap), f = lensFill(p, mx), nm = stepName(r), wt = p.w[0] ? (p.w.filter(w => w.shape.length > 1).length > 1 && p.w.every(w => w.shape.length < 2 || w.shape.join() === p.w.find(x => x.shape.length > 1).shape.join()) ? p.w.filter(w => w.shape.length > 1).length + "× " + p.w.find(x => x.shape.length > 1).shape.join("×") : p.w[0].shape.join("×")) : (p.out ? `[${p.out.join(",")}]` : "");
         svg += `<g class="xstep" data-r="${r}"><rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="12" fill="${f.fill}" stroke="${f.stroke || (p.seams ? K.neg : `rgba(${K.ovRGB},0.200)`)}" stroke-width="1.4"/>
           <text x="${x + bw / 2}" y="${y + 22}" text-anchor="middle" class="xt" font-size="${nm.length > 14 ? 12.5 : 14.5}">${esc(nm)}</text><text x="${x + bw / 2}" y="${y + 40}" text-anchor="middle" class="xs">${esc(wt)}</text>
           <text x="${x + bw / 2}" y="${y + 62}" text-anchor="middle" class="xm" font-size="14">${esc(LENS[S.lens].unit(p))}</text><text x="${x + bw / 2}" y="${y + 78}" text-anchor="middle" class="xs">${p.ops ? p.ops + " op" + (p.ops > 1 ? "s" : "") : ""}${p.seams ? " · " + p.seams + " seam" : ""}</text></g>`; }); });
@@ -538,8 +545,8 @@ function renderMap() {
     const tiedHead = Cc.headTot && Cc.headTot.has && !Cc.headTot.bytes;
     const stemLab = has(Cc.stem, "embed") ? (c === "decoder" && (tiedHead || has(Cc.stem, "embed") && !has(Cc.head, "logits")) ? t("lab_tied") : t("lab_embed")) : has(Cc.stem, "conv") ? t("lab_conv") : "stem";
     const headLab = has(Cc.head, "crosskv") ? t("lab_crosskv") : t("lab_head");
-    rows.push({c, blocks: [{id: c + ".stem", p: Cc.stemTot, lab: stemLab}, ...Cc.layers.map(L => ({id: c + ".L" + L.idx, p: L.tot, L, lab: String(L.idx)})), {id: c + ".head", p: Cc.headTot, lab: headLab}].filter(b => b.p.has)}); });
-  const rd = c => c === "decoder" ? S.tokens : 1;
+    rows.push({c, blocks: [{id: c + ".stem", p: Cc.stemTot, lab: stemLab}, ...Cc.layers.map(L => ({id: c + ".L" + L.idx, p: L.tot, L, lab: String(L.idx)})), {id: c + ".head", p: Cc.headTot, lab: headLab}].filter(b => b.p.has && !(b.id.endsWith(".head") && b.p.shared && !b.p.bytes))}); });
+  const rd = c => c === "decoder" && S.M.cat !== "embed" ? S.tokens : 1;
   const wOf = (b, c) => S.mapLens === "read" ? b.p.bytes * rd(c) : S.mapLens === "frag" ? 1 : Math.max(b.p.bytes, b.p.params * 2, 1);
   const maxRow = Math.max(...rows.map(r => r.blocks.reduce((a, b) => a + wOf(b, r.c), 0))), padL = 190, px = (1280 - padL - 20) / maxRow;
   const fr = rows.flatMap(r => r.blocks.map(b => b.p._frag || 0)).filter(x => x > 0), fmx = Math.max(...fr, 1e-9), fmn = Math.min(...fr, fmx);
@@ -570,7 +577,8 @@ function renderMap() {
     else S.open = g.dataset.id.endsWith("stem") ? (c === "encoder" ? "e_stem" : "d_stem") : (c === "encoder" ? "e_head" : "d_head");
     stopPlay(); S.step = -1; renderBig(); renderDetail(); renderIO(); $("#xdetail").scrollIntoView({behavior: "smooth", block: "center"}); });
   $$("[data-ml]").forEach(b => { b.classList.toggle("on", b.dataset.ml === S.mapLens); b.disabled = b.dataset.ml === "frag" && !M.hasFrag; });
-  $("#mapNote").textContent = S.mapLens === "read" ? t("map_read_note") : S.mapLens === "size" ? t("map_light") : "";
+  { const used = [...new Set(rows.flatMap(r => r.blocks.flatMap(b => Object.keys(b.p.dt || {}))))].filter(d => DTC[d]);
+    $("#mapNote").innerHTML = S.mapLens === "read" ? esc(t("map_read_note")) : S.mapLens === "size" ? esc(t("map_light")) : S.mapLens === "prec" ? esc(t("map_prec_note")) + " " + used.map(d => `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${DTC[d]};margin:0 4px 0 10px;vertical-align:-1px"></span>${d}`).join("") : S.mapLens === "frag" ? esc(t("map_frag_note")) : ""; }
 }
 
 // ================================================================== where to cut (src/plan.js, shared with the Python package)
@@ -685,18 +693,18 @@ function renderConcepts() {
 // ================================================================== report
 function shareRows() {
   const A = S.M.A, E = A.comps.encoder, D = A.comps.decoder, rows = [], tk = S.tokens;
-  const add = (name, p, per, c) => p && p.has && rows.push({name, p, per, c});
+  const emb1 = S.M.cat === "embed", add = (name, p, per, c, reg) => p && p.has && rows.push({name, p, per: emb1 && per === "tok" ? "in" : per, c, reg});
   const sumR = (Cc, r) => Cc.layers.reduce((a, L) => L.regions[r] ? merge(a, L.regions[r]._tot) : a, part());
   const nl = (Cc, r) => Cc.layers.filter(L => L.regions[r]).length;
   const F = fam(S.M), en = F === "diffusion" ? "Denoiser" : F === "transducer" ? "Encoder" : S.M.meta.family === "prefix" ? (S.M.meta.modality === "image" ? "Vision" : "Audio") : "Encoder", per = F === "diffusion" ? "step" : "in";
   if (E) { add(en + " · " + (F === "diffusion" ? "patchify + timestep" : S.M.meta.modality === "audio" ? "conv stem" : S.M.meta.modality === "image" ? "patch embedding" : "embedding"), E.stemTot, per, "e");
-    REG_ORDER.forEach(r => add(`${en} · ${regTitle(r).toLowerCase()} ×${nl(E, r)}`, sumR(E, r), per, "e"));
+    REG_ORDER.forEach(r => add(`${en} · ${regTitle(r).toLowerCase()} ×${nl(E, r)}`, sumR(E, r), per, "e", r));
     add(D ? (S.M.meta.family === "prefix" ? en + " · projector" : en + " · final norm / K,V") : en + " · head", E.headTot, per, "e"); }
   (S.M.A.extra || []).forEach(x => add(`${x.id} (${x.role})`, x.tot, F === "transducer" && /joint|prediction/.test(x.role) ? "tok" : "in", "e"));
   if (D) { const dn = S.M.meta.family === "prefix" ? "LLM" : "Decoder"; add(`${dn} · token embedding`, D.stemTot, "tok", "d");
-    REG_ORDER.forEach(r => add(`${dn} · ${regTitle(r).toLowerCase()} ×${nl(D, r)}`, sumR(D, r), "tok", "d"));
-    add(`${dn} · norm + logits${D.head.mtp ? " + MTP" : ""}`, D.headTot, "tok", "d"); }
-  rows.forEach(r => r.read = r.p.bytes * (r.per === "tok" || r.per === "step" ? tk : 1));
+    REG_ORDER.forEach(r => add(`${dn} · ${regTitle(r).toLowerCase()} ×${nl(D, r)}`, sumR(D, r), "tok", "d", r));
+    if (emb1 && D.headTot.bytes < 1e6) add(`${dn} · final norm`, Object.assign({}, D.headTot, {flops: 0}), "in", "d"); else add(`${dn} · norm + logits${D.head.mtp ? " + MTP" : ""}`, D.headTot, "tok", "d"); }
+  const ac = moeActive(S.M); rows.forEach(r => r.read = r.p.bytes * (r.per === "tok" || r.per === "step" ? tk : 1) * (ac && /moe|expert/i.test(r.reg || "") ? ac : 1));
   if (D && D.headTot.shared) { const emb = rows.find(r => / · token embedding/.test(r.name) && r.c === "d"), lg = rows.find(r => / · norm \+ logits/.test(r.name)); const tw = D.stemTot.w.find(w => w.shape.length === 2 && w.shape[0] > 1000);
     if (emb && lg && tw) { const tb = emb.p.bytes * (prod(tw.shape) / Math.max(1, emb.p.params)); emb.read = (emb.p.bytes - tb + tb / tw.shape[0]) * tk; lg.read = tb * tk; } }
   return rows;
@@ -715,7 +723,7 @@ function insights() {
   if (M.meta.family === "prefix") out.push([C.blueL, "i", t("i_prefix")]);
   if (D) { const lin = D.layers.filter(L => L.regions.linear).length, full = D.layers.filter(L => L.regions.self).length;
     const kvB = D.layers.reduce((a, L) => { const R = L.regions.self; if (!R) return a; const k = R.k && R.k.w[0] ? R.k.w[0].shape[0] : 0, v = R.v && R.v.w[0] ? R.v.w[0].shape[0] : k; return a + (k + v) * 2; }, 0);
-    if (kvB) { const n = Math.min(ctxLen(M, D, !!E) || 32768, 131072); out.push([C.amber, "!", t("i_kv", {b: fB(kvB), c: fB(kvB * n), n: n.toLocaleString()})]); }
+    if (kvB && M.cat !== "embed") { const n = Math.min(ctxLen(M, D, !!E) || 32768, 131072); out.push([C.amber, "!", t("i_kv", {b: fB(kvB), c: fB(kvB * n), n: n.toLocaleString()})]); }
     if (lin) out.push([C.ok, "✓", t("i_hybrid", {l: lin, t: lin + full, f: full})]);
     if (D.head.mtp) out.push([C.blueL, "i", t("i_mtp", {b: fB(D.head.mtp.bytes)})]); }
   const m = M.meta;
@@ -735,7 +743,7 @@ function renderReport() {
   $("#rIns").innerHTML = insights().map(([c, i, tx]) => `<div class="ins"><i style="background:${c}" aria-hidden="true"></i><div>${tx}</div></div>`).join("");
   const tot = Object.values(M.A.comps).reduce((a, c) => merge(a, c.tot), part()), top = Object.entries(tot.types).sort((a, b) => b[1] - a[1]).slice(0, 12), mx = top.length ? top[0][1] : 1;
   $("#rOps").innerHTML = ops ? top.map(([k, n]) => `<div class="opbar"><span class="mono k" style="color:${/QUANT/.test(k) ? C.redL : C.soft}">${k}</span><div class="v" style="width:${n / mx * 240}px;background:${/QUANT/.test(k) ? C.red : /FULLY|CONV|EMBED|BATCH/.test(k) ? C.mag : C.blue}"></div><span class="mono" style="font-size:12.5px">${n}</span></div>`).join("") : `<p style="color:var(--dim)">${t("r_noops")}</p>`;
-  const hdr = [t("th_part"), t("th_weights"), t("th_share"), t("th_stored"), t("th_compute") + (M.A.comps.decoder ? ` (${S.tokens} tok)` : ""), t("th_share"), t("th_read"), ...(ops ? [t("th_ops"), t("th_seams")] : [])];
+  const hdr = [t("th_part"), t("th_weights"), t("th_share_w"), t("th_stored"), t("th_compute") + (M.A.comps.decoder && M.cat !== "embed" ? ` (${S.tokens} tok)` : fam(M) === "diffusion" ? ` (${S.tokens} steps)` : ""), t("th_share_c"), t("th_read"), ...(ops ? [t("th_ops"), t("th_seams")] : [])];
   const body = rows.map(r => [r.name, r.p.shared && !r.p.bytes ? wB(r.p) : fB(r.p.bytes), pct(r.p.bytes, tb), dtLabel(r.p), fF(fl(r)) + (r.p.est ? "*" : ""), pct(fl(r), tf), fB(r.read), ...(ops ? [r.p.ops, r.p.seams || ""] : [])]);
   const foot = [t("total"), fB(tb), "", "", fF(tf), "", fB(tr), ...(ops ? [rows.reduce((a, r) => a + r.p.ops, 0), ""] : [])];
   $("#rTable").innerHTML = `<div class="tscroll"><table class="t" style="min-width:760px"><tr>${hdr.map(h => `<th>${esc(h)}</th>`).join("")}</tr>${body.map((r, i) => `<tr>${r.map((c, j) => `<td${j ? "" : ` style="color:${rows[i].c === "e" ? C.blueL : C.magL}"`}>${esc(String(c))}</td>`).join("")}</tr>`).join("")}<tr style="font-weight:700">${foot.map(c => `<td>${esc(String(c))}</td>`).join("")}</tr></table></div>${rows.some(r => r.p.est) ? `<p class="note">* ${t("est")}</p>` : ""}`;
@@ -788,7 +796,7 @@ function busy(stage, detail) { ownNote(`<span class="spin" aria-hidden="true"></
 function addOwn(r, short) { const id = "own-" + (r.label || "m").replace(/[^\w-]+/g, "-").slice(0, 40); const def = register({id, label: r.label, short: short || r.label.split("/").pop(), group: "own", ...r, note: () => t(r.noteKey, r.noteVars)}); def.M = null; persist(def); ownNote(t("saved_note")); setModel(id); }
 
 // ================================================================== everything
-function renderAll() { applyI18n(); renderPicker(); renderHero(); renderArch(); renderCut(); renderBig(); buildPlay(); renderIO(); renderDetail(); renderMap(); renderConcepts(); renderReport(); if (window.qRelabel) qRelabel(); $("#tokV").textContent = S.tokens; $("#tokV2").textContent = S.tokens; }
+function renderAll() { applyI18n(); $$('[data-i="tokens_per"]').forEach(e => e.textContent = t(fam(S.M) === "diffusion" ? "steps_per" : "tokens_per")); renderPicker(); renderHero(); renderArch(); renderCut(); renderBig(); buildPlay(); renderIO(); renderDetail(); renderMap(); renderConcepts(); renderReport(); if (window.qRelabel) qRelabel(); $("#tokV").textContent = S.tokens; $("#tokV2").textContent = S.tokens; }
 function wire() {
   { const tb = $("#themeBtn"); if (tb) { const lab = () => { const d = K.ink === PAL.dark.ink; tb.title = LANG === "th" ? (d ? "สลับเป็นธีมสว่าง" : "สลับเป็นธีมมืด") : (d ? "Switch to light theme" : "Switch to dark theme"); tb.setAttribute("aria-label", tb.title); };
     lab(); tb.onclick = () => { const nt = K.ink === PAL.dark.ink ? "light" : "dark"; setTheme(nt); try { localStorage.setItem("mx_theme", nt); } catch (e) {} renderAll(); lab(); }; } }
@@ -818,7 +826,7 @@ function wire() {
   const wmeta = {name: "distill-whisper-th-medium", model_type: "whisper", family: "encdec", modality: "audio", d: 1024, heads: 16, kv_heads: 16, ffn: 4096, vocab: 51865, tie: true, nmels: 80, seqEnc: 1500};
   if (PG.medium_enc) register({id: "whisper-th-medium", label: "biodatlab/distill-whisper-th-medium", short: "Whisper medium (Thai)", sub: ["เสียง → ข้อความ · .tflite จริง", "speech → text · real .tflite"], group: "tpl", cat: "speech", graphs: [PG.medium_enc, PG.medium_dec], meta: wmeta, note: () => t("n_whisper")});
   const TCAT = {"qwen3-asr-1-7b": "speech", "qwen3-8-27b": "vision", "llama-3-2-1b": "language", "gpt2": "language", "bert-base": "language", "vit-base": "vision"};
-  const tpl = (id, key, short, sub) => { const T = TT[key]; if (T) register({id, label: T.meta.name, short, sub, cat: TCAT[id], group: "tpl", tensors: T.tensors, meta: T.meta, cfg: T.cfg || {hidden_size: T.meta.d, num_attention_heads: T.meta.heads, num_key_value_heads: T.meta.kv_heads}, note: () => t(/qwen3_5|qwen3_asr/.test(T.meta.model_type) ? "n_cfgtpl" : "n_tensors", {name: T.meta.name})}); };
+  const tpl = (id, key, short, sub) => { const T = TT[key]; if (T) register({id, label: T.meta.name, short, sub, cat: TCAT[id], group: "tpl", tensors: T.tensors, meta: T.meta, cfg: T.cfg || {hidden_size: T.meta.d, num_attention_heads: T.meta.heads, num_key_value_heads: T.meta.kv_heads, max_position_embeddings: T.meta.ctx || {llama32_1b: 131072}[key]}, note: () => t(/qwen3_5|qwen3_asr/.test(T.meta.model_type) ? "n_cfgtpl" : "n_tensors", {name: T.meta.name})}); };
   tpl("qwen3-asr-1-7b", "qwen3_asr_17b", "Qwen3-ASR 1.7B", ["เสียง → LLM · ASR", "audio → LLM · ASR"]);
   tpl("qwen3-8-27b", "qwen38_27b", "Qwen3.8 27B", ["ภาพ+ข้อความ · hybrid attention", "vision + text · hybrid attention"]);
   tpl("llama-3-2-1b", "llama32_1b", "Llama 3.2 1B", ["LLM · decoder-only", "LLM · decoder-only"]);
