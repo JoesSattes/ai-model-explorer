@@ -85,6 +85,16 @@ def main(argv=None) -> int:
     pn.add_argument("--tokenizer", help="path to tokenizer.json (default: the model's own)")
     pn.add_argument("--json", action="store_true", help="print the plan as JSON")
 
+    tx = sub.add_parser("tax", help="vocabulary tax: token-table rows (and bytes) a set of languages never uses; one model or many")
+    tx.add_argument("models", nargs="*", help="Hub repo ids, folders, .safetensors or .gguf files")
+    tx.add_argument("--lang", required=True, help="languages you serve, e.g. th,en")
+    tx.add_argument("--file", help="text file with one model per line (for a batch)")
+    tx.add_argument("--tokenizer", help="tokenizer to use instead of the model's own (file, folder or Hub repo)")
+    tx.add_argument("--coverage", action="store_true", help="also tokenize bundled test sentences and count tokens that hit removed rows")
+    tx.add_argument("--json", action="store_true", help="print JSON (one object per model)")
+    tx.add_argument("-o", "--output", help="batch: write one JSON line per model to this file")
+    tx.add_argument("--token", help="Hugging Face token for gated/private repos")
+
     pl = sub.add_parser("plot", help="draw the anatomy to an image")
     _model_args(pl)
     pl.add_argument("-o", "--output", default="anatomy.png", help="output file: .png, .svg or .pdf (default anatomy.png)")
@@ -185,6 +195,34 @@ def main(argv=None) -> int:
                 print(f"wrote {a.output}: {len(rows) - bad} read, {bad} failed")
             else:
                 print(out, end="")
+            return 0
+        if a.cmd == "tax":
+            langs = [x.strip() for x in a.lang.split(",") if x.strip()]
+            ms = list(a.models) + ([l.strip() for l in open(a.file, encoding="utf-8") if l.strip() and not l.startswith("#")] if a.file else [])
+            if not ms:
+                print("error: give a model, or --file with one model per line", file=sys.stderr)
+                return 1
+            out = open(a.output, "w", encoding="utf-8") if a.output else None
+            ok = bad = 0
+            for i, m in enumerate(ms, 1):
+                try:
+                    md = explore(m, token=a.token)
+                    if len(ms) == 1 and not a.json and not out:
+                        print(md.vocab_tax_text(langs, tokenizer=a.tokenizer, token=a.token, coverage=a.coverage))
+                        return 0
+                    r = md.vocab_tax(langs, tokenizer=a.tokenizer, token=a.token, coverage=a.coverage)
+                    r["id"] = m; ok += 1
+                except Exception as e:
+                    r = {"id": m, "error": str(e)}; bad += 1
+                line = json.dumps(r, ensure_ascii=False)
+                if out:
+                    out.write(line + "\n"); out.flush()
+                    print(f"[{i}/{len(ms)}] {m}: " + (f"{r['share_of_bytes']:.1%} ({fmt_b(r['removable_bytes'])})" if "error" not in r else "error: " + r["error"][:80]), file=sys.stderr)
+                else:
+                    print(line)
+            if out:
+                out.close()
+                print(f"wrote {a.output}: {ok} ok, {bad} failed", file=sys.stderr)
             return 0
         if a.cmd == "fits":
             dev = float(a.device) if a.device.replace(".", "", 1).isdigit() else a.device

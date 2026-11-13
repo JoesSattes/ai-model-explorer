@@ -159,6 +159,13 @@ class Engine:
         return self._await(f'(function (r, L) {{ return {{total: r.total, counts: r.counts, keep: L ? r.keep(L) : null}}; }})'
                            f'(Plan.vocabScripts({self._put("vp", pieces)}, {{byte_level: {"true" if byte_level else "false"}}}), {self._put("vl", langs)})')
 
+    def vocab_mask(self, pieces: list, byte_level: bool, langs: list) -> str:
+        """'1'/'0' per tokenizer piece: kept for these languages or not (same rule as vocab_scripts)."""
+        return self._await(f'Plan.vocabScripts({self._put("mp", pieces)}, {{byte_level: {"true" if byte_level else "false"}}}).mask({self._put("ml", langs)})')
+
+    def languages(self) -> list:
+        return self._await("Object.keys(Plan.LANG)")
+
     def fuse(self, anatomy: dict, config: dict):
         slim = {"comps": anatomy.get("comps"), "hp": anatomy.get("hp"), "family": anatomy.get("family")}  # the per-tensor map is not needed
         return self._await(f'ArchInfer.fuseConfig({self._put("a", slim)}, {self._put("c", config)})')

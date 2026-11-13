@@ -43,6 +43,7 @@ deepseek-ai/DeepSeek-V3
 | `ai-model-explorer insights MODEL` | findings in plain language: active parameters per token, where the parameters sit, KV-cache cost, tied embeddings, hybrid layers |
 | `ai-model-explorer memory MODEL --context 32768 --weight-bits 4` | memory for the weights at any precision plus the KV cache |
 | `ai-model-explorer compare A B C` | side-by-side table (Markdown, `--csv` or `--json`) |
+| `ai-model-explorer tax MODEL --lang th,en --coverage` | vocabulary tax: the token-table rows (and bytes) your languages never use, for any model and any tokenizer format; `--file list.txt -o tax.jsonl` for many models |
 | `ai-model-explorer plot MODEL -o model.png` | the anatomy diagram as PNG, SVG or PDF (`--theme dark`) |
 | `ai-model-explorer report MODEL -o model.html` | one self-contained HTML report: diagram, insights, tables, memory |
 | `ai-model-explorer fits MODEL rtx-4090 --context 32768` | does it fit on a device (or `24` GB)? the longest context that fits, and the cheapest precision that would make it fit (`devices` lists the names) |
@@ -107,6 +108,20 @@ For Gemma 4 E2B the plan finds that every vocabulary row costs 10,496 weights (1
 in the per-layer embeddings), so trimming the vocabulary to the languages you serve is the largest cut, followed by the
 audio and vision towers for text-only use; it also reports that 20 of the 35 layers share an earlier layer's KV cache.
 The website shows the same plan under "Where to cut" (pick config.json and tokenizer.json together with the weights).
+
+The vocabulary tax works for any model with token tables and any common tokenizer format: `tokenizer.json`,
+SentencePiece `tokenizer.model`, `vocab.json`, `*.tiktoken`, Mistral `tekken.json` and llama.cpp `.gguf` (only the
+tokenizer file is downloaded, never the weights). `coverage=True` tokenizes bundled test sentences (Parallel UD
+treebanks in 21 languages, plus Thai social-media text) and counts the tokens that would land in the removed rows;
+it needs one of `tokenizers`, `sentencepiece`, `tiktoken` or `llama-cpp-python`.
+
+```python
+r = explore("Qwen/Qwen3-0.6B").vocab_tax(["th", "en"], coverage=True)
+r["removable_bytes"], r["share_of_bytes"], r["coverage"]["per_language"]["th"]["rate"]
+```
+
+Rows past the end of the tokenizer file are kept (they may be special tokens the file does not list), and a tokenizer
+with more pieces than the model has rows is reported as a mismatch.
 
 `.tflite` (LiteRT) files open the same way, so you can check what a quantization recipe actually stored:
 

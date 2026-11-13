@@ -1,0 +1,10 @@
+Test sentences used by `vocab_tax(..., coverage=True)` to check that trimming the vocabulary keeps every token real text needs.
+
+<lang>.txt (ar cs de en es fi fr gl hi id is it ja ko pl pt ru sv th tr zh)
+  The first 300 sentences of the Parallel Universal Dependencies (PUD) treebanks, the same sentences in every language.
+  Source: https://github.com/UniversalDependencies (UD_<Language>-PUD), text from Wikipedia, released by Google under CC BY-SA 3.0.
+  License: https://creativecommons.org/licenses/by-sa/3.0/  (these files are redistributed under the same license)
+
+th_social.txt
+  300 Thai social-media messages from the Wisesight Sentiment Corpus.
+  Source: https://github.com/PyThaiNLP/wisesight-sentiment  License: CC0 1.0

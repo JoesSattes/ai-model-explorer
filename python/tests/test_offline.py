@@ -121,3 +121,66 @@ def test_plan_vocabulary_and_scripts(tmp_path, llama):
     assert vs["keep"] == V - 2                         # drops 你好 and Привет; café stays (accented names and loanwords occur in English)
     cut = {x["id"]: x for x in m.plan(["th", "en"])}["vocab"]
     assert cut["saves"] == 2 * 2 * D
+
+
+def _pb_str(field, s):
+    b = s.encode()
+    return bytes([field << 3 | 2]) + _varint(len(b)) + b
+
+
+def _varint(n):
+    out = b""
+    while True:
+        c = n & 0x7F; n >>= 7
+        out += bytes([c | (0x80 if n else 0)])
+        if not n:
+            return out
+
+
+def test_tokenizer_formats(tmp_path):
+    """Every reader returns the same pieces in id order: SentencePiece, tiktoken, tekken, GGUF, vocab.json."""
+    import base64
+    import struct as st
+    from ai_model_explorer import _tok
+    words = ["<unk>", "▁the", "สวัสดี", "你好", "▁Привет"]
+    # SentencePiece ModelProto: repeated field 1 = {1: piece, 2: score, 3: type}; type 2 = unknown
+    sp = b""
+    for i, w in enumerate(words):
+        inner = _pb_str(1, w) + bytes([2 << 3 | 5]) + st.pack("<f", -i) + (bytes([3 << 3]) + _varint(2) if i == 0 else b"")
+        sp += bytes([1 << 3 | 2]) + _varint(len(inner)) + inner
+    (tmp_path / "tokenizer.model").write_bytes(sp)
+    assert _tok.load(str(tmp_path / "tokenizer.model")).pieces == ["<unk>"] + words[1:]
+    raw = [w.replace("▁", " ").encode() for w in words[1:]]
+    (tmp_path / "x.tiktoken").write_text("".join(f"{base64.b64encode(b).decode()} {i}\n" for i, b in enumerate(raw)))
+    assert _tok.load(str(tmp_path / "x.tiktoken")).pieces == [b.decode() for b in raw]
+    (tmp_path / "tekken.json").write_text(json.dumps({"config": {"default_num_special_tokens": 2, "default_vocab_size": 6},
+                                                      "vocab": [{"rank": i, "token_bytes": base64.b64encode(b).decode()} for i, b in enumerate(raw)]}))
+    tk = _tok.load(str(tmp_path / "tekken.json"))
+    assert len(tk) == 6 and tk.pieces[2:] == [b.decode() for b in raw]
+    def s(x):
+        b = x.encode(); return st.pack("<Q", len(b)) + b
+    g = b"GGUF" + st.pack("<I", 3) + st.pack("<Q", 0) + st.pack("<Q", 2)
+    g += s("tokenizer.ggml.model") + st.pack("<I", 8) + s("llama")
+    g += s("tokenizer.ggml.tokens") + st.pack("<I", 9) + st.pack("<I", 8) + st.pack("<Q", len(words)) + b"".join(s(w) for w in words)
+    (tmp_path / "v.gguf").write_bytes(g)
+    gg = _tok.load(str(tmp_path / "v.gguf"))
+    assert gg.pieces == words and gg.kind == "gguf" and not gg.byte_level
+    (tmp_path / "vocab.json").write_text(json.dumps({"Ġthe": 0, "à¸ª": 1}))
+    assert _tok.load(str(tmp_path / "vocab.json")).byte_level
+
+
+def test_vocab_tax(tmp_path, llama):
+    """The tax counts the rows a language set never uses, in every token table, priced at the stored dtype."""
+    import shutil
+    d = tmp_path / "m"
+    shutil.copytree(llama, d)
+    pieces = ["<pad>", "▁the", "▁สวัสดี", "你好", "▁Привет", "▁café"] + [f"▁w{i}" for i in range(V - 6)]
+    (d / "tokenizer.json").write_text(json.dumps({"model": {"type": "Unigram", "vocab": [[p, 0.0] for p in pieces]}}))
+    m = ame.explore(str(d), cache=False)
+    r = m.vocab_tax(["th", "en"])
+    assert r["removed_rows"] == 2 and r["kept_rows"] == V - 2
+    assert r["removable_params"] == 2 * 2 * D                    # embedding row + untied head row, per removed token
+    assert r["removable_bytes"] == 2 * 2 * D * 2                 # BF16
+    assert r["vocab_rows"] == V and r["padding_rows"] == 0
+    with pytest.raises(ValueError):
+        m.vocab_tax(["xx"])

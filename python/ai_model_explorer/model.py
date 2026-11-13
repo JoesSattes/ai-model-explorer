@@ -346,45 +346,16 @@ class Model:
         return out
 
     # ------------------------------------------------------------------ where to cut
+    def _tok(self, tokenizer=None, token: Optional[str] = None):
+        from . import _tok
+        return _tok.load(tokenizer, self.data.get("source") or {}, token)
+
     def _tokenizer(self, tokenizer=None, token: Optional[str] = None):
-        """Pieces of the tokenizer in id order and whether they are byte-level (GPT-2 style) strings."""
-        import os
-        j = None
-        if isinstance(tokenizer, dict):
-            j = tokenizer
-        else:
-            path = tokenizer
-            src = self.data.get("source") or {}
-            if path is None and src.get("path"):
-                base = src["path"] if os.path.isdir(src["path"]) else os.path.dirname(src["path"])
-                cand = os.path.join(base, "tokenizer.json")
-                path = cand if os.path.exists(cand) else None
-            if path is not None:
-                with open(path, encoding="utf-8") as f:
-                    j = json.load(f)
-            elif src.get("repo"):
-                from ._hub import Hub
-                st, body = Hub(token).get(f"https://huggingface.co/{src['repo']}/resolve/main/tokenizer.json")
-                if st != 200:
-                    raise RuntimeError(f"tokenizer.json not available for {src['repo']} (HTTP {st}); pass tokenizer=<path>")
-                j = json.loads(body)
-        if j is None:
-            raise RuntimeError("no tokenizer.json found; pass tokenizer=<path to tokenizer.json>")
-        v = (j.get("model") or {}).get("vocab")
-        if isinstance(v, dict):
-            pieces = [None] * (max(v.values()) + 1)
-            for k, i in v.items():
-                pieces[i] = k
-        else:
-            pieces = [x[0] if isinstance(x, list) else x for x in (v or [])]
-        for a in j.get("added_tokens") or []:
-            i = a.get("id")
-            while len(pieces) <= i:
-                pieces.append(None)
-            pieces[i] = "<" + a["content"].strip("<>") + ">" if a.get("special") else a["content"]
-        pieces = [p if p is not None else "<unused>" for p in pieces]
-        txt = json.dumps({k: j.get(k) for k in ("decoder", "pre_tokenizer")})
-        return pieces, "ByteLevel" in txt
+        """Pieces of the tokenizer in id order and whether they are byte-level (GPT-2 style) strings.
+        tokenizer: a path (tokenizer.json, tokenizer.model, vocab.json, *.tiktoken, tekken.json, .gguf, or a folder),
+        a Hub repo id, or a tokenizer.json dict. None reads the model's own folder or repo."""
+        t = self._tok(tokenizer, token)
+        return t.pieces, t.byte_level
 
     def vocab_scripts(self, languages: Optional[List[str]] = None, tokenizer=None, token: Optional[str] = None) -> dict:
         """Tokenizer pieces per writing system (Latin, Thai, Han, ...), and how many a set of languages needs.
@@ -395,6 +366,95 @@ class Model:
         r["counts"] = dict(sorted(r["counts"].items(), key=lambda kv: -kv[1]))
         r["byte_level"] = bl
         return r
+
+    def vocab_tax(self, languages: List[str], tokenizer=None, token: Optional[str] = None, coverage: bool = False) -> dict:
+        """What the vocabulary costs a user of these languages: the token-table rows they never use, in weights and bytes.
+        Works for any model whose manifest has token tables (embedding, untied output head, per-layer embeddings) and any
+        tokenizer format _tok reads. coverage=True also tokenizes bundled test sentences of each language and counts the
+        tokens that would fall in the removed rows (needs tokenizers / sentencepiece / tiktoken / llama_cpp installed)."""
+        from ._engine import Engine
+        from . import _tok
+        if isinstance(languages, str):
+            languages = [x.strip() for x in languages.split(",") if x.strip()]
+        eng = Engine()
+        known = set(eng.languages())
+        bad = [l for l in languages if l.lower() not in known]
+        if bad:
+            raise ValueError(f"unknown language code(s) {bad}; known: {', '.join(sorted(known))}")
+        voc = (self.data.get("plan") or {}).get("vocab") or {}
+        if not voc.get("tables"):
+            raise RuntimeError("no token tables found in this model (not a text model, or the vocabulary is not stored as a table)")
+        t = self._tok(tokenizer, token)
+        mask = eng.vocab_mask(t.pieces, t.byte_level, languages)
+        V = voc["size"]
+        n = min(V, len(mask))
+        removed = sum(1 for i in range(n) if mask[i] == "0")
+        kept = V - removed                     # rows past the tokenizer file are kept: they may be special tokens it does not list
+        bk = (self.data.get("breakdown") or {}).get("by_kind") or {}
+        bpp = {k: (bk[k]["bytes"] / bk[k]["params"]) if bk.get(k, {}).get("params") else 2.0 for k in ("embed", "head")}
+        tables, p_rm, b_rm, b_tab = [], 0, 0.0, 0.0
+        for x in voc["tables"]:
+            pb = bpp["head" if x["kind"] == "head" else "embed"]
+            rm = removed * x["width"]
+            tables.append({"name": x["name"], "what": x["what"], "width": x["width"], "params": x["params"],
+                           "bytes": x["params"] * pb, "removable_params": rm, "removable_bytes": rm * pb})
+            p_rm += rm; b_rm += rm * pb; b_tab += x["params"] * pb
+        tot_b = (self.data.get("totals") or {}).get("bytes") or sum(v["bytes"] for v in bk.values()) or 1
+        out = {"model": self.name, "languages": languages,
+               "tokenizer": {"format": t.kind, "pieces": len(t), "byte_level": t.byte_level, "path": t.path},
+               "vocab_rows": V, "padding_rows": max(V - len(t), 0), "kept_rows": kept, "removed_rows": removed,
+               "removed_share_of_rows": removed / V, "tables": tables, "table_bytes": b_tab,
+               "removable_params": p_rm, "removable_bytes": b_rm, "share_of_params": p_rm / (self.params or 1),
+               "share_of_bytes": b_rm / tot_b, "model_bytes": tot_b}
+        if len(t) > V:
+            out["warning"] = (f"the tokenizer has {len(t):,} pieces but the token tables have {V:,} rows: "
+                              "it does not belong to this model, so the numbers are not meaningful")
+        if coverage:
+            enc = t.encoder()
+            if enc is None:
+                out["coverage"] = {"error": f"install a library that can encode {t.kind} tokenizers "
+                                            "(pip install tokenizers / sentencepiece / tiktoken / llama-cpp-python)"}
+            else:
+                cov, fert = {}, {}
+                for l in sorted(set(languages) | {"en"}):
+                    sents = _tok.corpus(l.lower())
+                    if not sents:
+                        continue
+                    ids = [i for s_ in sents for i in enc(s_)]
+                    pud = _tok.corpus(l.lower())[:300]
+                    fert[l] = sum(len(enc(s_)) for s_ in pud) / max(len(pud), 1)
+                    if l in languages:
+                        miss = sum(1 for i in ids if i >= len(mask) or i >= V or mask[i] == "0")
+                        cov[l] = {"sentences": len(sents), "tokens": len(ids), "tokens_in_removed_rows": miss, "rate": miss / max(len(ids), 1)}
+                out["coverage"] = {"per_language": cov, "tokens_per_sentence": fert,
+                                   "tokens_vs_english": {l: fert[l] / fert["en"] for l in fert if "en" in fert and fert["en"]}}
+        return out
+
+    def vocab_tax_text(self, languages: List[str], **kw) -> str:
+        r = self.vocab_tax(languages, **kw)
+        L = "/".join(r["languages"])
+        lines = [f"{r['model']}: vocabulary tax for {L}",
+                 f"tokenizer: {r['tokenizer']['pieces']:,} pieces ({r['tokenizer']['format']}); the token tables have {r['vocab_rows']:,} rows"
+                 + (f" ({r['padding_rows']:,} rows past the tokenizer file are kept: padding or special tokens)" if r["padding_rows"] else ""),
+                 f"{L} needs {r['kept_rows']:,} rows; {r['removed_rows']:,} ({r['removed_share_of_rows']:.0%}) are never used"]
+        if r.get("warning"):
+            lines.append("WARNING: " + r["warning"])
+        for x in r["tables"]:
+            lines.append(f"  {x['what']:28s} {x['name']}: {fmt_b(x['bytes'])}, removable {fmt_b(x['removable_bytes'])}")
+        lines.append(f"tax: {fmt_b(r['removable_bytes'])} = {r['share_of_bytes']:.1%} of the model's {fmt_b(r['model_bytes'])} "
+                     f"({fmt_n(r['removable_params'])} weights, {r['share_of_params']:.1%})")
+        c = r.get("coverage")
+        if c and "error" in c:
+            lines.append("coverage: " + c["error"])
+        elif c:
+            for l, v in c["per_language"].items():
+                lines.append(f"coverage {l}: {v['tokens_in_removed_rows']} of {v['tokens']:,} tokens in {v['sentences']} test sentences "
+                             f"fall in removed rows ({v['rate']:.3%})")
+            if c["tokens_vs_english"]:
+                lines.append("tokens per sentence vs English: " + ", ".join(f"{l} x{v:.1f}" for l, v in c["tokens_vs_english"].items() if l != "en"))
+        lines.append("how: keep the kept rows in the embedding (and head / per-layer tables), remap token ids, keep the tokenizer as is "
+                     "(Ushio et al. 2023 showed accuracy holds for the target languages).")
+        return "\n".join(lines)
 
     def plan(self, languages: Optional[List[str]] = None, text_only: bool = False, tokenizer=None,
              token: Optional[str] = None, keep_tokens: Optional[int] = None) -> List[dict]:
@@ -415,7 +475,8 @@ class Model:
         for x in lev:
             if x["id"] == "vocab" and keep_tokens is not None and voc:
                 x["keep_tokens"] = keep_tokens
-                x["saves"] = max(voc["size"] - keep_tokens, 0) * voc["row_cost"]
+                n_pieces = min((getattr(self, "_last_scripts", None) or {}).get("total") or voc["size"], voc["size"])
+                x["saves"] = max(n_pieces - keep_tokens, 0) * voc["row_cost"]   # rows past the tokenizer file are kept
                 x["saves_share"] = x["saves"] / tot
                 x["detail"] += (f" Keeping {keep_tokens:,} tokens" + (f" for {'/'.join(languages)}" if languages else "")
                                 + f" removes {fmt_n(x['saves'])} weights ({x['saves_share']:.0%} of the model).")

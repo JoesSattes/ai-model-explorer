@@ -587,6 +587,44 @@ function cutParse(j) { const v = (j.model || {}).vocab; let list = [];
   (j.added_tokens || []).forEach(a => { list[a.id] = a.special ? "<" + a.content.replace(/^<|>$/g, "") + ">" : a.content; });
   for (let i = 0; i < list.length; i++) if (list[i] == null) list[i] = "<unused>";
   return {list, bl: /ByteLevel/.test(JSON.stringify([j.decoder, j.pre_tokenizer]))}; }
+// Any tokenizer file -> pieces in id order: tokenizer.json, tekken.json, vocab.json, SentencePiece .model, *.tiktoken, .gguf (header only)
+const TOK_FILES = ["tokenizer.json", "tekken.json", "tokenizer.model", "spiece.model", "sentencepiece.bpe.model", "vocab.json", "tiktoken.model", "qwen.tiktoken"];
+function tokFromBytes(name, buf) {
+  const u8 = new Uint8Array(buf), dec = new TextDecoder("utf-8"), n = name.toLowerCase(), b64 = s => { try { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); } catch (e) { return new Uint8Array(0); } };
+  const tik = () => { const list = []; dec.decode(u8).split("\n").forEach(l => { const [a, r] = l.trim().split(/\s+/); if (a && r != null) list[+r] = dec.decode(b64(a)); });
+    for (let i = 0; i < list.length; i++) if (list[i] == null) list[i] = "<unused>"; return {list, bl: false}; };
+  if (n.endsWith(".gguf")) {
+    const dv = new DataView(buf); if (dec.decode(u8.slice(0, 4)) !== "GGUF") throw new Error("not GGUF");
+    let o = 8; const u64 = () => { const v = Number(dv.getBigUint64(o, true)); o += 8; return v; }, str = () => { const L = u64(); const s = dec.decode(u8.subarray(o, o + L)); o += L; return s; };
+    const SZ = {0: 1, 1: 1, 2: 2, 3: 2, 4: 4, 5: 4, 6: 4, 7: 1, 10: 8, 11: 8, 12: 8}; o += 8; const nkv = u64(); let toks = null, model = null;
+    const val = t => { if (t === 8) return str(); if (t === 9) { const et = dv.getUint32(o, true); o += 4; const c = u64(); if (et === 8) { const a = []; for (let i = 0; i < c; i++) a.push(str()); return a; } if (SZ[et]) { o += SZ[et] * c; return null; } for (let i = 0; i < c; i++) val(et); return null; } o += SZ[t]; return null; };
+    for (let k = 0; k < nkv && !(toks && model); k++) { const key = str(); const t = dv.getUint32(o, true); o += 4; const v = val(t); if (key === "tokenizer.ggml.tokens") toks = v; if (key === "tokenizer.ggml.model") model = v; }
+    if (!toks) throw new Error("no tokens"); return {list: toks, bl: model === "gpt2"};
+  }
+  if (n.endsWith(".tiktoken") || n === "tiktoken.model") return tik();
+  if (n.endsWith(".model") || n.includes(".model.")) {
+    try { let i = 0; const vi = (b, p) => { let r = 0, s = 0, c; do { c = b[p.i++]; r += (c & 0x7f) * 2 ** s; s += 7; } while (c >= 0x80); return r; }; const P = {i: 0}, list = [];
+      while (P.i < u8.length) { const key = vi(u8, P), f = Math.floor(key / 8), w = key & 7;
+        if (w === 2) { const L = vi(u8, P), end = P.i + L; if (f === 1) { const Q = {i: P.i}; let piece = "", typ = 1;
+            while (Q.i < end) { const k2 = vi(u8, Q), f2 = Math.floor(k2 / 8), w2 = k2 & 7; if (w2 === 2) { const m = vi(u8, Q); if (f2 === 1) piece = dec.decode(u8.subarray(Q.i, Q.i + m)); Q.i += m; } else if (w2 === 5) Q.i += 4; else if (w2 === 1) Q.i += 8; else { const v = vi(u8, Q); if (f2 === 3) typ = v; } }
+            list.push(typ === 2 || typ === 3 ? "<" + piece.replace(/^<|>$/g, "") + ">" : piece); } P.i = end; }
+        else if (w === 0) vi(u8, P); else if (w === 5) P.i += 4; else if (w === 1) P.i += 8; else break; }
+      if (list.length) return {list, bl: false}; } catch (e) {}
+    return tik();
+  }
+  const j = JSON.parse(dec.decode(u8));
+  if (j.model || j.added_tokens) return cutParse(j);
+  if (j.config && Array.isArray(j.vocab)) { const ns = j.config.default_num_special_tokens || 0, size = j.config.default_vocab_size || ns + j.vocab.length;
+    return {list: Array(ns).fill("<special>").concat(j.vocab.slice(0, size - ns).map(x => dec.decode(b64(x.token_bytes)))), bl: false}; }
+  const list = []; for (const [k, i] of Object.entries(j)) list[i] = k; for (let i = 0; i < list.length; i++) if (list[i] == null) list[i] = "<unused>"; return {list, bl: true};
+}
+async function tokFromHub(repo) {
+  let names = TOK_FILES;
+  try { const r = await fetch(`https://huggingface.co/api/models/${repo}`); if (r.ok) { const sib = ((await r.json()).siblings || []).map(x => x.rfilename);
+    names = TOK_FILES.filter(x => sib.includes(x)).concat(sib.filter(x => x.endsWith(".tiktoken") && !x.includes("/"))); } } catch (e) {}
+  for (const nm of names) { try { const r = await fetch(`https://huggingface.co/${repo}/resolve/main/${nm}`); if (!r.ok) continue; return tokFromBytes(nm, await r.arrayBuffer()); } catch (e) {} }
+  throw new Error("no tokenizer");
+}
 function renderCut() {
   const box = $("#cutBox"); if (!box) return; const M = S.M, I = M.IR;
   if (!I || !M.T) { box.style.display = "none"; return; } box.style.display = "";
@@ -594,7 +632,7 @@ function renderCut() {
   const total = (I.totals && I.totals.params) || I.comps.reduce((a, c) => a + c.params, 0);
   const st = M.cut || (M.cut = {langs: ["th", "en"], text: false, keep: null, counts: null, n: null, msg: ""});
   if (S.pendingTok && !st.pieces) { const j = S.pendingTok; S.pendingTok = null; setTimeout(() => { try { st.pieces = cutParse(j); const r = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}); st.n = r.total; st.keep = r.keep(st.langs); renderCut(); } catch (e) {} }, 0); }
-  let P; try { P = Plan.plan(I, shapes, M.cfg || {}, {total, keep_tokens: st.keep, name: M.label || ""}); } catch (e) { box.style.display = "none"; return; }
+  let P; try { P = Plan.plan(I, shapes, M.cfg || {}, {total, keep_tokens: st.keep, tok_pieces: st.n, name: M.label || ""}); } catch (e) { box.style.display = "none"; return; }
   const pc = x => (100 * x / total).toFixed(x / total < 0.01 ? 1 : 0) + "%", n0 = x => x.toLocaleString("en-US");
   const kind = id => /vision|visual|image|siglip|vit/i.test(id) ? L2("ส่วนภาพ (vision tower)", "vision") : /audio|speech|whisper|conformer/i.test(id) ? L2("ส่วนเสียง (audio tower)", "audio") : L2("ส่วนอินพุต", "input");
   let cut = 0;
@@ -617,18 +655,19 @@ function renderCut() {
   const hasVocab = P.levers.some(l => l.id === "vocab"), hasTower = P.levers.some(l => l.id.startsWith("tower:"));
   box.innerHTML = `<h3>${esc(t("cut_h"))}</h3><p class="dim">${esc(t("cut_lead"))}</p>
     ${hasVocab ? `<div class="chips"><span>${esc(t("cut_langs"))}</span>${LS.map(l => `<button data-cl="${l}" class="${st.langs.includes(l) ? "on" : ""}">${l.toUpperCase()}</button>`).join("")}
-      ${repo ? `<button id="cutGo">${esc(t("cut_count"))}</button>` : ""}<label>${esc(t("cut_file"))}<input type="file" id="cutFile" accept=".json" hidden></label><span class="dim" id="cutMsg">${esc(st.msg)}</span></div>` : ""}
+      ${repo ? `<button id="cutGo">${esc(t("cut_count"))}</button>` : ""}<label>${esc(t("cut_file"))}<input type="file" id="cutFile" hidden></label><span class="dim" id="cutMsg">${esc(st.msg)}</span></div>` : ""}
     ${hasTower ? `<div class="chips"><label><input type="checkbox" id="cutText" ${st.text ? "checked" : ""}> ${esc(t("cut_text"))}</label></div>` : ""}
     ${items.length ? `<div class="cutl">${items.map(x => x.html).join("")}</div>` : `<p>${esc(t("cut_none"))}</p>`}
     ${cut ? `<div class="cutsum">${esc(t("cut_sum", {a: fP(total), b: fP(total - cut), c: fB((total - cut) * 2), d: fB((total - cut) / 2)}))}</div>` : ""}${kvLine}`;
+  if (st.n && P.vocab && st.n > P.vocab.size) { const m = $("#cutMsg"); if (m) m.textContent = t("cut_mismatch", {n: st.n.toLocaleString(), v: P.vocab.size.toLocaleString()}); }
   const count = pieces => { const r = Plan.vocabScripts(pieces.list, {byte_level: pieces.bl}); st.n = r.total; st.counts = r.counts; st.keep = r.keep(st.langs); st.msg = ""; st.pieces = pieces; renderCut(); };
   const parse = cutParse;
   $$("#cutBox [data-cl]").forEach(b => b.onclick = () => { const l = b.dataset.cl; st.langs = st.langs.includes(l) ? st.langs.filter(x => x !== l) : st.langs.concat(l);
     if (st.pieces) { st.keep = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}).keep(st.langs); } renderCut(); });
   const go = $("#cutGo"); if (go) go.onclick = async () => { st.msg = t("cut_loading"); $("#cutMsg").textContent = st.msg;
-    try { const r = await fetch(`https://huggingface.co/${repo}/resolve/main/tokenizer.json`); if (!r.ok) throw 0; count(parse(await r.json())); }
+    try { count(await tokFromHub(repo)); }
     catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
-  const f = $("#cutFile"); if (f) f.onchange = async () => { if (!f.files[0]) return; try { count(parse(JSON.parse(await f.files[0].text()))); } catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
+  const f = $("#cutFile"); if (f) f.onchange = async () => { const F = f.files[0]; if (!F) return; try { count(tokFromBytes(F.name, await (/\.gguf$/i.test(F.name) ? F.slice(0, 96 * 2 ** 20) : F).arrayBuffer())); } catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
   const tx = $("#cutText"); if (tx) tx.onchange = () => { st.text = tx.checked; renderCut(); };
 }
 

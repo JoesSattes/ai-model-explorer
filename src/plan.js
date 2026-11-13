@@ -61,7 +61,8 @@ const Plan = (() => {
     const pipe0 = comps.some(y => /(^|\.)(vae|unet|loras?|diffusion_models?)(\.|$)/i.test(y.id));
     if (V && V >= 1000 && vocabParams && !pipe0 && (V >= 32000 || vocabParams / total >= 0.05)) {
       const keep = opt.keep_tokens || null;
-      const cut = keep ? Math.max(V - keep, 0) * rowCost : null;
+      const pieces = Math.min(opt.tok_pieces || V, V);   // rows past the tokenizer file are kept: padding or special tokens it does not list
+      const cut = keep ? Math.max(pieces - keep, 0) * rowCost : null;
       levers.push({id: "vocab", title: "Trim the vocabulary to the languages you use", params: vocabParams, share: pct(vocabParams),
         saves: cut, saves_share: cut != null ? pct(cut) : null, row_cost: rowCost, vocab: V, keep_tokens: keep,
         detail: `${n0(V)} tokens × ${n0(rowCost)} values per token (` + tables.map(x => `${x.what} ${x.width}`).join(" + ") +
@@ -153,7 +154,10 @@ const Plan = (() => {
     ["Lao", /\p{Script=Lao}/u], ["Myanmar", /\p{Script=Myanmar}/u], ["Bengali", /\p{Script=Bengali}/u], ["Tamil", /\p{Script=Tamil}/u]];
   const LX = ["Latin-ASCII", "Latin-ext"];   // accented Latin is kept for English too: names and loanwords (González, café) appear in real English text
   const LANG = {en: LX, th: ["Thai"], zh: ["Han"], cn: ["Han"], ja: ["Han", "Hiragana", "Katakana"], ko: ["Hangul"], vi: LX, id: LX, ms: LX,
-    fr: LX, de: LX, es: LX, pt: LX, it: LX, nl: LX, tl: LX, ru: ["Cyrillic"], ar: ["Arabic"], hi: ["Devanagari"], km: ["Khmer"], lo: ["Lao"], my: ["Myanmar"]};
+    fr: LX, de: LX, es: LX, pt: LX, it: LX, nl: LX, tl: LX, cs: LX, pl: LX, fi: LX, sv: LX, da: LX, no: LX, is: LX, tr: LX, ro: LX, hu: LX, gl: LX,
+    ca: LX, et: LX, lt: LX, lv: LX, sk: LX, sl: LX, hr: LX, sw: LX, ru: ["Cyrillic"], uk: ["Cyrillic"], bg: ["Cyrillic"], sr: ["Cyrillic", "Latin-ASCII", "Latin-ext"],
+    kk: ["Cyrillic"], ar: ["Arabic"], fa: ["Arabic"], ur: ["Arabic"], hi: ["Devanagari"], mr: ["Devanagari"], ne: ["Devanagari"], bn: ["Bengali"], ta: ["Tamil"],
+    el: ["Greek"], he: ["Hebrew"], km: ["Khmer"], lo: ["Lao"], my: ["Myanmar"]};
   const B2U = (() => { const bs = []; for (let i = 33; i <= 126; i++) bs.push(i); for (let i = 161; i <= 172; i++) bs.push(i); for (let i = 174; i <= 255; i++) bs.push(i);
     const cs = bs.slice(); let n = 0; for (let b = 0; b < 256; b++) if (!bs.includes(b)) { bs.push(b); cs.push(256 + n++); }
     const m = {}; bs.forEach((b, i) => { m[String.fromCharCode(cs[i])] = b; }); return m; })();
@@ -185,7 +189,11 @@ const Plan = (() => {
       const ok = new Set(["special", "bytes", "common", "fragment"]); (langs || []).forEach(l => (LANG[l.toLowerCase()] || [l]).forEach(s => ok.add(s)));
       return per.reduce((a, s) => a + (s.split("+").every(x => ok.has(x)) ? 1 : 0), 0);
     };
-    return {total: pieces.length, counts, keep, keep_for: langs => keep(langs)};
+    const mask = langs => {   // "1" per kept piece, in id order
+      const ok = new Set(["special", "bytes", "common", "fragment"]); (langs || []).forEach(l => (LANG[l.toLowerCase()] || [l]).forEach(x => ok.add(x)));
+      return per.map(x => x.split("+").every(y => ok.has(y)) ? "1" : "0").join("");
+    };
+    return {total: pieces.length, counts, keep, keep_for: langs => keep(langs), mask};
   }
   return {plan, kvProfile, vocabScripts, scriptOf, LANG};
 })();
