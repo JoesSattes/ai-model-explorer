@@ -118,6 +118,6 @@ def test_plan_vocabulary_and_scripts(tmp_path, llama):
     assert lev["vocab"]["row_cost"] == 2 * D          # untied: embedding row + head row
     vs = m.vocab_scripts(["th", "en"])
     assert vs["counts"]["Thai"] == 2 and vs["counts"]["Han"] == 1 and vs["counts"]["Cyrillic"] == 1
-    assert vs["keep"] == V - 3                         # drops 你好, Привет and café (accented Latin is not English)
+    assert vs["keep"] == V - 2                         # drops 你好 and Привет; café stays (accented names and loanwords occur in English)
     cut = {x["id"]: x for x in m.plan(["th", "en"])}["vocab"]
-    assert cut["saves"] == 3 * 2 * D
+    assert cut["saves"] == 2 * 2 * D

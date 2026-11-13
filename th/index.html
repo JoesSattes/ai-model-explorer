@@ -1734,8 +1734,8 @@ const Plan = (() => {
     ["Hangul", /\p{Script=Hangul}/u], ["Latin", /\p{Script=Latin}/u], ["Cyrillic", /\p{Script=Cyrillic}/u], ["Arabic", /\p{Script=Arabic}/u],
     ["Devanagari", /\p{Script=Devanagari}/u], ["Greek", /\p{Script=Greek}/u], ["Hebrew", /\p{Script=Hebrew}/u], ["Khmer", /\p{Script=Khmer}/u],
     ["Lao", /\p{Script=Lao}/u], ["Myanmar", /\p{Script=Myanmar}/u], ["Bengali", /\p{Script=Bengali}/u], ["Tamil", /\p{Script=Tamil}/u]];
-  const LX = ["Latin-ASCII", "Latin-ext"];   // English needs only unaccented Latin letters; other Latin-script languages need both
-  const LANG = {en: ["Latin-ASCII"], th: ["Thai"], zh: ["Han"], cn: ["Han"], ja: ["Han", "Hiragana", "Katakana"], ko: ["Hangul"], vi: LX, id: LX, ms: LX,
+  const LX = ["Latin-ASCII", "Latin-ext"];   // accented Latin is kept for English too: names and loanwords (González, café) appear in real English text
+  const LANG = {en: LX, th: ["Thai"], zh: ["Han"], cn: ["Han"], ja: ["Han", "Hiragana", "Katakana"], ko: ["Hangul"], vi: LX, id: LX, ms: LX,
     fr: LX, de: LX, es: LX, pt: LX, it: LX, nl: LX, tl: LX, ru: ["Cyrillic"], ar: ["Arabic"], hi: ["Devanagari"], km: ["Khmer"], lo: ["Lao"], my: ["Myanmar"]};
   const B2U = (() => { const bs = []; for (let i = 33; i <= 126; i++) bs.push(i); for (let i = 161; i <= 172; i++) bs.push(i); for (let i = 174; i <= 255; i++) bs.push(i);
     const cs = bs.slice(); let n = 0; for (let b = 0; b < 256; b++) if (!bs.includes(b)) { bs.push(b); cs.push(256 + n++); }
@@ -1755,7 +1755,7 @@ const Plan = (() => {
     if (s.includes("�")) return "fragment";
     const found = new Set();
     for (const ch of s) {
-      if (/[\p{N}\p{P}\p{S}\p{Z}\p{M}]/u.test(ch)) continue;
+      if (/[\p{N}\p{P}\p{S}\p{Z}\p{M}\p{Cf}]/u.test(ch)) continue;   // Cf: zero-width space/joiner, common in Thai text and emoji
       const sc = (SCRIPTS.find(([, re]) => re.test(ch)) || ["other"])[0];
       found.add(sc === "Latin" ? (/[A-Za-z]/.test(ch) ? "Latin-ASCII" : "Latin-ext") : sc);
     }
