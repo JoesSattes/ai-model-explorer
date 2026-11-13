@@ -23,6 +23,57 @@ class Tok:
     def __len__(self):
         return len(self.pieces)
 
+    def merge_parents(self) -> dict:
+        """id -> (left id, right id): the last merge that builds each piece in BPE. A keep set must contain the parents
+        of every kept piece, or that piece can no longer be produced and its words are split further than its own
+        removal would. Empty for tokenizers without merges (Unigram, WordPiece)."""
+        if "_parents" in self.meta:
+            return self.meta["_parents"]
+        idx = {}
+        for i, q in enumerate(self.pieces):
+            idx.setdefault(q, i)
+        par = {}
+        try:
+            if self.kind == "hf":
+                with open(self.path, encoding="utf-8") as f:
+                    m = json.load(f).get("model") or {}
+                if m.get("type") == "BPE":
+                    for x in m.get("merges") or []:
+                        a, b = (x.split(" ", 1) if isinstance(x, str) else x)
+                        i = idx.get(a + b)
+                        if i is not None and i not in par and a in idx and b in idx:
+                            par[i] = (idx[a], idx[b])
+            elif self.kind == "gguf":
+                for x in _gguf_strings(self.path, "tokenizer.ggml.merges") or []:
+                    a, b = x.split(" ", 1)
+                    i = idx.get(a + b)
+                    if i is not None and i not in par and a in idx and b in idx:
+                        par[i] = (idx[a], idx[b])
+            elif self.kind in ("tiktoken", "tekken"):
+                ranks, off = self.meta["ranks"], self.meta.get("offset", 0)
+                for tb, r in ranks.items():
+                    if len(tb) < 2:
+                        continue
+                    parts = [tb[j:j + 1] for j in range(len(tb))]
+                    last = None
+                    while len(parts) > 1:
+                        best = None
+                        for j in range(len(parts) - 1):
+                            q = ranks.get(parts[j] + parts[j + 1])
+                            if q is not None and q <= r and (best is None or q < best[0]):
+                                best = (q, j)
+                        if best is None:
+                            break
+                        j = best[1]
+                        last = (parts[j], parts[j + 1])
+                        parts[j:j + 2] = [parts[j] + parts[j + 1]]
+                    if len(parts) == 1 and last and last[0] in ranks and last[1] in ranks:
+                        par[r + off] = (ranks[last[0]] + off, ranks[last[1]] + off)
+        except Exception:
+            par = {}
+        self.meta["_parents"] = par
+        return par
+
     def encoder(self) -> Optional[Callable[[str], List[int]]]:
         """A function text -> token ids, or None when no library for this format is installed."""
         p, k = self.path, self.kind
@@ -163,6 +214,48 @@ def _from_sentencepiece(path: str) -> Tok:
         else:
             break
     return Tok(pieces, False, "spm", path)
+
+
+def _gguf_strings(path: str, want: str):
+    """One string-array key from a GGUF header (used for tokenizer.ggml.merges)."""
+    with open(path, "rb") as f:
+        if f.read(4) != b"GGUF":
+            return None
+        ver = struct.unpack("<I", f.read(4))[0]
+        rd_n = (lambda: struct.unpack("<Q", f.read(8))[0]) if ver >= 2 else (lambda: struct.unpack("<I", f.read(4))[0])
+        f.read(8 if ver >= 2 else 4)
+        n_kv = rd_n()
+        SIZES = {0: 1, 1: 1, 2: 2, 3: 2, 4: 4, 5: 4, 6: 4, 7: 1, 10: 8, 11: 8, 12: 8}
+
+        def rd_str():
+            return f.read(rd_n()).decode("utf-8", errors="replace")
+
+        def rd_val(t, keep):
+            if t == 8:
+                return rd_str()
+            if t == 9:
+                et = struct.unpack("<I", f.read(4))[0]; n = rd_n()
+                if et == 8:
+                    if keep:
+                        return [rd_str() for _ in range(n)]
+                    for _ in range(n):
+                        f.seek(rd_n(), 1)
+                    return None
+                if et in SIZES:
+                    f.seek(SIZES[et] * n, 1)
+                else:
+                    for _ in range(n):
+                        rd_val(et, False)
+                return None
+            f.seek(SIZES[t], 1)
+            return None
+
+        for _ in range(n_kv):
+            key = rd_str(); t = struct.unpack("<I", f.read(4))[0]
+            v = rd_val(t, key == want)
+            if key == want:
+                return v
+    return None
 
 
 def _from_gguf(path: str) -> Tok:

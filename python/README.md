@@ -127,6 +127,13 @@ and only the pieces your text uses are kept, plus every single-character piece s
 The result reports, on a held-out 20% of your text, how many tokens would be split into smaller pieces. On 27k lines of
 Thai text this keeps 10-28% of a large multilingual vocabulary at a 0.1-0.6% re-split rate.
 
+For BPE tokenizers the keep set is **merge-closed**: the merge parents of every kept piece are kept too. Keeping pieces by
+how often they appear as tokens is not enough, because intermediate pieces that are always merged further never appear
+as tokens; dropping them makes the pieces built from them unreachable, so their rows are wasted and words are split
+further than intended. In our measurements this doubles to triples the real re-split rate (German on Qwen: 7.1% instead
+of 2.4%; English web text: about 25% instead of 9%); closing the set costs 2-30% more kept pieces and brings the real
+rate back to the estimate.
+
 Every corpus result also carries a **trim certificate**: a Good-Turing estimate, from your text alone, of the share of
 tokens that new text of the same kind will see re-split, and how many lines of text would bring that under a target
 (`target_resplit=0.01`, CLI `--target`). Across 20 languages and 5 tokenizer families the estimate is within 5% of the

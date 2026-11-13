@@ -230,6 +230,14 @@ def test_vocab_tax_with_corpus(tmp_path, llama):
     assert b["removed_rows"] > a["removed_rows"]
     assert b["rule"]["rule"] == "script + your text" and 0 <= b["rule"]["heldout_resplit_rate"] < 0.2
     assert 0 <= b["rule"]["predicted_resplit_rate"] < 0.2 and b["rule"]["certificate"] in ("ok", "add more text")
+    # the keep set is merge-closed: every kept piece can still be produced by the trimmed tokenizer
+    from ai_model_explorer._tok import read_file
+    tk = read_file(str(d / "tokenizer.json")); par = tk.merge_parents()
+    assert par
+    out = tmp_path / "trim"
+    r = m.trim_vocab(["th"], str(out), corpus=[str(tmp_path / "mine.txt")])
+    kept = set(json.load(open(out / "kept_ids.json")))
+    assert all(a in kept and b_ in kept for i, (a, b_) in par.items() if i in kept)
 
 
 def test_trim_certificate_good_turing():
