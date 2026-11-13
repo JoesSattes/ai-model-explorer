@@ -209,3 +209,23 @@ def test_trim_vocab_exact(tmp_path, llama):
         assert nt.decode(nt.encode(s).ids) == s
     s = "สวัสดีครับ Hello"
     assert [kept[i] for i in nt.encode(s).ids] == t.encode(s).ids
+
+
+def test_vocab_tax_with_corpus(tmp_path, llama):
+    """Your own text refines the keep set to the language level and reports the held-out re-split rate."""
+    tk = pytest.importorskip("tokenizers")
+    import shutil
+    from ai_model_explorer import _tok
+    t = tk.Tokenizer(tk.models.BPE(unk_token=None))
+    t.pre_tokenizer = tk.pre_tokenizers.ByteLevel(add_prefix_space=False)
+    t.train_from_iterator(_tok.corpus("th") + _tok.corpus("en") + _tok.corpus("de"),
+                          tk.trainers.BpeTrainer(vocab_size=V, initial_alphabet=tk.pre_tokenizers.ByteLevel.alphabet()))
+    d = tmp_path / "m"
+    shutil.copytree(llama, d)
+    t.save(str(d / "tokenizer.json"))
+    (tmp_path / "mine.txt").write_text("\n".join(_tok.corpus("th")), encoding="utf-8")
+    m = ame.explore(str(d), cache=False)
+    a = m.vocab_tax(["th"])
+    b = m.vocab_tax(["th"], corpus=[str(tmp_path / "mine.txt")])
+    assert b["removed_rows"] > a["removed_rows"]
+    assert b["rule"]["rule"] == "script + your text" and 0 <= b["rule"]["heldout_resplit_rate"] < 0.2

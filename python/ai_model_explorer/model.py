@@ -367,8 +367,59 @@ class Model:
         r["byte_level"] = bl
         return r
 
+    @staticmethod
+    def _read_corpus(corpus) -> List[str]:
+        import os
+        if corpus is None:
+            return []
+        items = [corpus] if isinstance(corpus, str) else list(corpus)
+        out = []
+        for c in items:
+            if isinstance(c, str) and os.path.exists(c):
+                with open(c, encoding="utf-8") as f:
+                    out += [l.strip() for l in f if l.strip()]
+            elif isinstance(c, str):
+                out.append(c)
+        return out
+
+    def _keep_mask(self, t, languages: List[str], corpus=None, min_count: int = 1) -> tuple:
+        """Script rule, refined to the language level by your own text when corpus is given.
+        Script rule: keep pieces whose letters are all in the languages' scripts (+ specials, bytes, digits, punctuation).
+        Corpus rule: among those, keep only pieces your text actually uses (>= min_count times), plus every single-character
+        piece so any unseen word can still be spelled. A held-out 20% of the text estimates how many tokens would be
+        re-split into smaller pieces (input changes); text never fails to encode either way."""
+        import collections
+        from ._engine import Engine
+        eng = Engine()
+        mask = eng.vocab_mask(t.pieces, t.byte_level, languages)
+        always = eng.vocab_mask(t.pieces, t.byte_level, [])
+        keep = [c == "1" for c in mask]
+        info = {"rule": "script", "kept": sum(keep)}
+        lines = self._read_corpus(corpus)
+        if not lines:
+            return keep, info
+        enc = t.encoder()
+        if enc is None:
+            raise RuntimeError(f"corpus refinement needs a library that can encode {t.kind} tokenizers "
+                               "(pip install tokenizers / sentencepiece / tiktoken / llama-cpp-python)")
+        def single(i):
+            q = t.pieces[i].replace("\u2581", "").replace("\u0120", "")
+            return len(q) <= 1
+        def build(sents):
+            cnt = collections.Counter(i for s_ in sents for i in enc(s_))
+            return [keep[i] and (always[i] == "1" or single(i) or cnt.get(i, 0) >= min_count) for i in range(len(keep))]
+        cut = max(1, len(lines) // 5)
+        held, train = lines[:cut], lines[cut:] or lines
+        k_tr = build(train)
+        ho = [i for s_ in held for i in enc(s_)]
+        resplit = sum(1 for i in ho if i < len(k_tr) and not k_tr[i]) / max(len(ho), 1)
+        k = build(lines)
+        info = {"rule": "script + your text", "kept": sum(k), "kept_script_only": sum(keep), "corpus_lines": len(lines),
+                "min_count": min_count, "heldout_tokens": len(ho), "heldout_resplit_rate": resplit}
+        return k, info
+
     def vocab_tax(self, languages: List[str], tokenizer=None, token: Optional[str] = None, coverage: bool = False,
-                  keep_latin: bool = True) -> dict:
+                  keep_latin: bool = True, corpus=None, min_count: int = 1) -> dict:
         """What the vocabulary costs a user of these languages: the token-table rows they never use, in weights and bytes.
         Works for any model whose manifest has token tables (embedding, untied output head, per-layer embeddings) and any
         tokenizer format _tok reads. coverage=True also tokenizes bundled test sentences of each language and counts the
@@ -389,7 +440,8 @@ class Model:
         if not voc.get("tables"):
             raise RuntimeError("no token tables found in this model (not a text model, or the vocabulary is not stored as a table)")
         t = self._tok(tokenizer, token)
-        mask = eng.vocab_mask(t.pieces, t.byte_level, languages)
+        kmask, rule = self._keep_mask(t, languages, corpus, min_count)
+        mask = "".join("1" if k else "0" for k in kmask)
         V = voc["size"]
         n = min(V, len(mask))
         removed = sum(1 for i in range(n) if mask[i] == "0")
@@ -404,7 +456,7 @@ class Model:
                            "bytes": x["params"] * pb, "removable_params": rm, "removable_bytes": rm * pb})
             p_rm += rm; b_rm += rm * pb; b_tab += x["params"] * pb
         tot_b = (self.data.get("totals") or {}).get("bytes") or sum(v["bytes"] for v in bk.values()) or 1
-        out = {"model": self.name, "languages": languages, "asked": asked, "latin_added": languages != asked,
+        out = {"model": self.name, "languages": languages, "asked": asked, "latin_added": languages != asked, "rule": rule,
                "tokenizer": {"format": t.kind, "pieces": len(t), "byte_level": t.byte_level, "path": t.path},
                "vocab_rows": V, "padding_rows": max(V - len(t), 0), "kept_rows": kept, "removed_rows": removed,
                "removed_share_of_rows": removed / V, "tables": tables, "table_bytes": b_tab,
@@ -443,6 +495,10 @@ class Model:
                  f"{L} needs {r['kept_rows']:,} rows; {r['removed_rows']:,} ({r['removed_share_of_rows']:.0%}) are never used"]
         if r.get("warning"):
             lines.append("WARNING: " + r["warning"])
+        ru = r.get("rule") or {}
+        if ru.get("rule") == "script + your text":
+            lines.append(f"refined with {ru['corpus_lines']:,} lines of your text: {ru['kept_script_only']:,} -> {ru['kept']:,} pieces kept; "
+                         f"on a held-out 20% of it, {ru['heldout_resplit_rate']:.3%} of tokens would be split into smaller pieces")
         for x in r["tables"]:
             lines.append(f"  {x['what']:28s} {x['name']}: {fmt_b(x['bytes'])}, removable {fmt_b(x['removable_bytes'])}")
         lines.append(f"tax: {fmt_b(r['removable_bytes'])} = {r['share_of_bytes']:.1%} of the model's {fmt_b(r['model_bytes'])} "
@@ -461,7 +517,7 @@ class Model:
         return "\n".join(lines)
 
     def trim_vocab(self, languages: List[str], out_dir: str, tokenizer=None, token: Optional[str] = None,
-                   keep_latin: bool = True) -> dict:
+                   keep_latin: bool = True, corpus=None, min_count: int = 1) -> dict:
         """Write a trimmed tokenizer (tokenizer.json or SentencePiece .model), kept_ids.json (old ids in new-id order) and
         slice_weights.py (how to slice the token tables). With the `tokenizers` / `sentencepiece` library installed it also
         checks that the bundled test sentences of every kept language tokenize to exactly the same pieces as before."""
@@ -472,8 +528,7 @@ class Model:
             languages = [x.strip() for x in languages.split(",") if x.strip()]
         langs = list(languages) + (["en"] if keep_latin and "en" not in [l.lower() for l in languages] else [])
         t = self._tok(tokenizer, token)
-        mask = Engine().vocab_mask(t.pieces, t.byte_level, langs)
-        keep = [c == "1" for c in mask]
+        keep, rule = self._keep_mask(t, langs, corpus, min_count)
         os.makedirs(out_dir, exist_ok=True)
         if t.kind == "hf":
             with open(t.path, encoding="utf-8") as f:
@@ -494,7 +549,7 @@ class Model:
             json.dump(kept, f)
         with open(os.path.join(out_dir, "slice_weights.py"), "w") as f:
             f.write(_trim.SLICE_SNIPPET)
-        rep = {"languages": langs, "pieces_before": len(t), "pieces_after": len(kept), "tokenizer": new_path, "verified": None}
+        rep = {"languages": langs, "rule": rule, "pieces_before": len(t), "pieces_after": len(kept), "tokenizer": new_path, "verified": None}
         nt = _tok.read_file(new_path)
         e0, e1 = t.encoder(), nt.encoder()
         if e0 and e1:
@@ -505,6 +560,8 @@ class Model:
                     b = [nt.pieces[i] for i in e1(s_)]
                     tot += 1; same += a == b
             rep["verified"] = {"sentences": tot, "identical": same}
+            if rule.get("rule") != "script":
+                rep["verified"]["note"] = "with your text as the rule, sentences unlike it may be split into smaller pieces"
         with open(os.path.join(out_dir, "trim_report.json"), "w") as f:
             json.dump(rep, f, indent=1)
         return rep

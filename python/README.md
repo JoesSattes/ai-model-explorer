@@ -120,6 +120,16 @@ r = explore("Qwen/Qwen3-0.6B").vocab_tax(["th", "en"], coverage=True)
 r["removable_bytes"], r["share_of_bytes"], r["coverage"]["per_language"]["th"]["rate"]
 ```
 
+By default the keep set is decided by writing system (with Latin always kept: names, numbers and code appear in every
+language), so text in the kept languages tokenizes exactly as before. Languages that share a script (English and German,
+Chinese and Japanese) can only be told apart by text: pass your own lines with `corpus=["mine.txt"]` (CLI `--corpus`)
+and only the pieces your text uses are kept, plus every single-character piece so unseen words can still be spelled.
+The result reports, on a held-out 20% of your text, how many tokens would be split into smaller pieces. On 27k lines of
+Thai text this keeps 10-28% of a large multilingual vocabulary at a 0.1-0.6% re-split rate.
+
+`trim_vocab(languages, "out/")` (CLI `tax ... --export out/`) writes the trimmed `tokenizer.json` or SentencePiece
+`.model`, `kept_ids.json` and `slice_weights.py`, and checks the bundled test sentences.
+
 Rows past the end of the tokenizer file are kept (they may be special tokens the file does not list), and a tokenizer
 with more pieces than the model has rows is reported as a mismatch.
 
