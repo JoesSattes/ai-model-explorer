@@ -229,3 +229,25 @@ def test_vocab_tax_with_corpus(tmp_path, llama):
     b = m.vocab_tax(["th"], corpus=[str(tmp_path / "mine.txt")])
     assert b["removed_rows"] > a["removed_rows"]
     assert b["rule"]["rule"] == "script + your text" and 0 <= b["rule"]["heldout_resplit_rate"] < 0.2
+    assert 0 <= b["rule"]["predicted_resplit_rate"] < 0.2 and b["rule"]["certificate"] in ("ok", "add more text")
+
+
+def test_trim_certificate_good_turing():
+    """The certificate's Good-Turing estimate equals the share of singleton tokens among removable pieces,
+    and the lines-needed extrapolation follows the fitted power law."""
+    import collections
+    from ai_model_explorer.model import Model
+    keep = [True] * 10; always = ["0"] * 10; single = lambda i: i == 0
+    # piece 0 is a single character (always kept); rare pieces 4,5,6 recur in the second half, 9 stays a singleton,
+    # so the unseen mass falls as text grows
+    lines = [[1, 2, 3, 0]] * 300 + [[4], [5], [6]] + [[1, 2, 3, 0]] * 300 + [[4], [5], [6], [9]]
+    cnt = collections.Counter(i for s in lines for i in s)
+    cand = lambda i: keep[i] and always[i] != "1" and not single(i)
+    p = Model._gt_unseen(cnt, sum(cnt.values()), cand, 1)
+    assert abs(p - 1 / sum(cnt.values())) < 1e-12           # only 9 is a singleton
+    c = Model._trim_certificate(Model, lines, keep, always, single, 1, 1e-4)
+    assert c["certificate"] == "add more text" and c["lines_needed_for_target"] > len(lines)
+    c2 = Model._trim_certificate(Model, lines, keep, always, single, 1, 0.5)
+    assert c2["certificate"] == "ok"
+    p2 = Model._gt_unseen(cnt, sum(cnt.values()), cand, 2)   # min_count 2 also removes pieces seen once: (1*N1 + 2*N2)/N
+    assert p2 >= p

@@ -97,6 +97,7 @@ def main(argv=None) -> int:
     tx.add_argument("--strict", action="store_true", help="do not keep English/Latin pieces automatically")
     tx.add_argument("--corpus", nargs="+", help="your own text files: keep only pieces your text uses (language-level trim within shared scripts)")
     tx.add_argument("--min-count", type=int, default=1, help="with --corpus: a piece must appear this many times to be kept (default 1)")
+    tx.add_argument("--target", type=float, default=0.01, help="with --corpus: acceptable share of tokens re-split in new text (default 0.01); the certificate says whether your text is enough and how many lines would be")
     tx.add_argument("--export", help="write a trimmed tokenizer, kept_ids.json and slice_weights.py to this folder (single model)")
 
     pl = sub.add_parser("plot", help="draw the anatomy to an image")
@@ -212,14 +213,14 @@ def main(argv=None) -> int:
                 try:
                     md = explore(m, token=a.token)
                     if len(ms) == 1 and not a.json and not out:
-                        print(md.vocab_tax_text(langs, tokenizer=a.tokenizer, token=a.token, coverage=a.coverage, keep_latin=not a.strict, corpus=a.corpus, min_count=a.min_count))
+                        print(md.vocab_tax_text(langs, tokenizer=a.tokenizer, token=a.token, coverage=a.coverage, keep_latin=not a.strict, corpus=a.corpus, min_count=a.min_count, target_resplit=a.target))
                         if a.export:
-                            rep = md.trim_vocab(langs, a.export, tokenizer=a.tokenizer, token=a.token, keep_latin=not a.strict, corpus=a.corpus, min_count=a.min_count)
+                            rep = md.trim_vocab(langs, a.export, tokenizer=a.tokenizer, token=a.token, keep_latin=not a.strict, corpus=a.corpus, min_count=a.min_count, target_resplit=a.target)
                             v = rep["verified"]
                             print(f"wrote {rep['tokenizer']} ({rep['pieces_before']:,} -> {rep['pieces_after']:,} pieces), kept_ids.json, slice_weights.py"
                                   + (f"; check: {v['identical']}/{v['sentences']} test sentences tokenize identically" if v else ""))
                         return 0
-                    r = md.vocab_tax(langs, tokenizer=a.tokenizer, token=a.token, coverage=a.coverage, keep_latin=not a.strict, corpus=a.corpus, min_count=a.min_count)
+                    r = md.vocab_tax(langs, tokenizer=a.tokenizer, token=a.token, coverage=a.coverage, keep_latin=not a.strict, corpus=a.corpus, min_count=a.min_count, target_resplit=a.target)
                     r["id"] = m; ok += 1
                 except Exception as e:
                     r = {"id": m, "error": str(e)}; bad += 1

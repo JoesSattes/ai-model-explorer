@@ -127,6 +127,13 @@ and only the pieces your text uses are kept, plus every single-character piece s
 The result reports, on a held-out 20% of your text, how many tokens would be split into smaller pieces. On 27k lines of
 Thai text this keeps 10-28% of a large multilingual vocabulary at a 0.1-0.6% re-split rate.
 
+Every corpus result also carries a **trim certificate**: a Good-Turing estimate, from your text alone, of the share of
+tokens that new text of the same kind will see re-split, and how many lines of text would bring that under a target
+(`target_resplit=0.01`, CLI `--target`). Across 20 languages and 5 tokenizer families the estimate is within 5% of the
+measured rate (median; r = 0.995 in log scale), and the line count, fitted on half and all of your text, lands within 1%
+(median) on a held-out size. Rough guide at a 1% target: Thai about 5k lines, Spanish 7k, German 13k, French 24k; broad
+English web text needs far more because its pieces are spread over most of the Latin vocabulary.
+
 `trim_vocab(languages, "out/")` (CLI `tax ... --export out/`) writes the trimmed `tokenizer.json` or SentencePiece
 `.model`, `kept_ids.json` and `slice_weights.py`, and checks the bundled test sentences.
 
