@@ -184,3 +184,28 @@ def test_vocab_tax(tmp_path, llama):
     assert r["vocab_rows"] == V and r["padding_rows"] == 0
     with pytest.raises(ValueError):
         m.vocab_tax(["xx"])
+
+
+def test_trim_vocab_exact(tmp_path, llama):
+    """A trimmed tokenizer.json tokenizes the kept languages exactly as before, and new ids map back to old ids."""
+    tk = pytest.importorskip("tokenizers")
+    import shutil
+    from ai_model_explorer import _tok
+    corpus = _tok.corpus("th") + _tok.corpus("en") + _tok.corpus("ru") + _tok.corpus("zh")
+    t = tk.Tokenizer(tk.models.BPE(unk_token=None))
+    t.pre_tokenizer = tk.pre_tokenizers.ByteLevel(add_prefix_space=False)
+    t.decoder = tk.decoders.ByteLevel()
+    t.train_from_iterator(corpus, tk.trainers.BpeTrainer(vocab_size=V, initial_alphabet=tk.pre_tokenizers.ByteLevel.alphabet()))
+    d = tmp_path / "m"
+    shutil.copytree(llama, d)
+    t.save(str(d / "tokenizer.json"))
+    m = ame.explore(str(d), cache=False)
+    rep = m.trim_vocab(["th"], str(tmp_path / "out"))          # English is added by default
+    assert rep["languages"] == ["th", "en"] and rep["pieces_after"] < rep["pieces_before"]
+    assert rep["verified"]["identical"] == rep["verified"]["sentences"]
+    kept = json.loads((tmp_path / "out" / "kept_ids.json").read_text())
+    nt = tk.Tokenizer.from_file(str(tmp_path / "out" / "tokenizer.json"))
+    for s in ["สวัสดีครับ วันนี้อากาศดี", "Hello world 2026", "Привет мир"]:   # Russian still encodes, through bytes
+        assert nt.decode(nt.encode(s).ids) == s
+    s = "สวัสดีครับ Hello"
+    assert [kept[i] for i in nt.encode(s).ids] == t.encode(s).ids

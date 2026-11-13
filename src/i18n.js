@@ -170,6 +170,7 @@ window.I18N = {
   cut_h: ["ลดขนาดตรงไหนได้บ้าง", "Where to cut"],
   cut_lead: ["วัดจากรูปทรงของ weight และ config.json: แต่ละข้อบอกว่าตัดได้กี่ weight เพราะอะไร และต้องทำอะไรต่อ", "Measured from the weights' shapes and config.json: what each step removes, why, and what to do next."],
   cut_langs: ["ภาษาที่ใช้งานจริง:", "Languages you use:"], cut_count: ["นับ token จาก tokenizer ของโมเดล", "Count tokens in the model's tokenizer"], cut_file: ["หรือเลือกไฟล์ tokenizer (.json, .model, .tiktoken, .gguf)", "or pick a tokenizer file (.json, .model, .tiktoken, .gguf)"],
+  cut_latin: ["เก็บ token ภาษาอังกฤษ/อักษรละตินไว้ให้เสมอ เพราะชื่อ ตัวเลข และโค้ดเป็นอักษรละตินในทุกภาษา (ทดสอบแล้ว: ตัดออกทำให้ token ในข้อความไทยหาย 1.7–6.5%)", "English/Latin pieces are always kept: names, numbers and code are written in Latin letters in every language (tested: dropping them loses 1.7–6.5% of the tokens in Thai text)"],
   cut_mismatch: ["tokenizer นี้มี {n} token แต่โมเดลมี {v} แถว ไม่ใช่ tokenizer ของโมเดลนี้", "This tokenizer has {n} pieces but the model has {v} rows: it is not this model's tokenizer"],
   cut_text: ["ใช้แค่ข้อความ (ไม่ใช้ภาพ/เสียง)", "Text only (no images or audio)"], cut_loading: ["กำลังอ่าน tokenizer…", "Reading the tokenizer…"], cut_notok: ["หาไฟล์ tokenizer ไม่เจอหรืออ่านไม่ได้ ลองเลือกไฟล์เอง", "No readable tokenizer file found; pick the file yourself"],
   cut_vocab_t: ["ตัดคำศัพท์ให้เหลือเฉพาะภาษาที่ใช้", "Trim the vocabulary to the languages you use"],

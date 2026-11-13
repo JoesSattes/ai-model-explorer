@@ -94,6 +94,8 @@ def main(argv=None) -> int:
     tx.add_argument("--json", action="store_true", help="print JSON (one object per model)")
     tx.add_argument("-o", "--output", help="batch: write one JSON line per model to this file")
     tx.add_argument("--token", help="Hugging Face token for gated/private repos")
+    tx.add_argument("--strict", action="store_true", help="do not keep English/Latin pieces automatically")
+    tx.add_argument("--export", help="write a trimmed tokenizer, kept_ids.json and slice_weights.py to this folder (single model)")
 
     pl = sub.add_parser("plot", help="draw the anatomy to an image")
     _model_args(pl)
@@ -208,9 +210,14 @@ def main(argv=None) -> int:
                 try:
                     md = explore(m, token=a.token)
                     if len(ms) == 1 and not a.json and not out:
-                        print(md.vocab_tax_text(langs, tokenizer=a.tokenizer, token=a.token, coverage=a.coverage))
+                        print(md.vocab_tax_text(langs, tokenizer=a.tokenizer, token=a.token, coverage=a.coverage, keep_latin=not a.strict))
+                        if a.export:
+                            rep = md.trim_vocab(langs, a.export, tokenizer=a.tokenizer, token=a.token, keep_latin=not a.strict)
+                            v = rep["verified"]
+                            print(f"wrote {rep['tokenizer']} ({rep['pieces_before']:,} -> {rep['pieces_after']:,} pieces), kept_ids.json, slice_weights.py"
+                                  + (f"; check: {v['identical']}/{v['sentences']} test sentences tokenize identically" if v else ""))
                         return 0
-                    r = md.vocab_tax(langs, tokenizer=a.tokenizer, token=a.token, coverage=a.coverage)
+                    r = md.vocab_tax(langs, tokenizer=a.tokenizer, token=a.token, coverage=a.coverage, keep_latin=not a.strict)
                     r["id"] = m; ok += 1
                 except Exception as e:
                     r = {"id": m, "error": str(e)}; bad += 1

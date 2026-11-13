@@ -367,7 +367,8 @@ class Model:
         r["byte_level"] = bl
         return r
 
-    def vocab_tax(self, languages: List[str], tokenizer=None, token: Optional[str] = None, coverage: bool = False) -> dict:
+    def vocab_tax(self, languages: List[str], tokenizer=None, token: Optional[str] = None, coverage: bool = False,
+                  keep_latin: bool = True) -> dict:
         """What the vocabulary costs a user of these languages: the token-table rows they never use, in weights and bytes.
         Works for any model whose manifest has token tables (embedding, untied output head, per-layer embeddings) and any
         tokenizer format _tok reads. coverage=True also tokenizes bundled test sentences of each language and counts the
@@ -377,6 +378,9 @@ class Model:
         if isinstance(languages, str):
             languages = [x.strip() for x in languages.split(",") if x.strip()]
         eng = Engine()
+        asked = list(languages)
+        if keep_latin and "en" not in [l.lower() for l in languages]:
+            languages = list(languages) + ["en"]   # names, numbers, code and loanwords in Latin letters appear in text of every language
         known = set(eng.languages())
         bad = [l for l in languages if l.lower() not in known]
         if bad:
@@ -400,7 +404,7 @@ class Model:
                            "bytes": x["params"] * pb, "removable_params": rm, "removable_bytes": rm * pb})
             p_rm += rm; b_rm += rm * pb; b_tab += x["params"] * pb
         tot_b = (self.data.get("totals") or {}).get("bytes") or sum(v["bytes"] for v in bk.values()) or 1
-        out = {"model": self.name, "languages": languages,
+        out = {"model": self.name, "languages": languages, "asked": asked, "latin_added": languages != asked,
                "tokenizer": {"format": t.kind, "pieces": len(t), "byte_level": t.byte_level, "path": t.path},
                "vocab_rows": V, "padding_rows": max(V - len(t), 0), "kept_rows": kept, "removed_rows": removed,
                "removed_share_of_rows": removed / V, "tables": tables, "table_bytes": b_tab,
@@ -432,7 +436,7 @@ class Model:
 
     def vocab_tax_text(self, languages: List[str], **kw) -> str:
         r = self.vocab_tax(languages, **kw)
-        L = "/".join(r["languages"])
+        L = "/".join(r["languages"]) + (" (English/Latin kept by default; keep_latin=False to drop it)" if r.get("latin_added") else "")
         lines = [f"{r['model']}: vocabulary tax for {L}",
                  f"tokenizer: {r['tokenizer']['pieces']:,} pieces ({r['tokenizer']['format']}); the token tables have {r['vocab_rows']:,} rows"
                  + (f" ({r['padding_rows']:,} rows past the tokenizer file are kept: padding or special tokens)" if r["padding_rows"] else ""),
@@ -455,6 +459,55 @@ class Model:
         lines.append("how: keep the kept rows in the embedding (and head / per-layer tables), remap token ids, keep the tokenizer as is "
                      "(Ushio et al. 2023 showed accuracy holds for the target languages).")
         return "\n".join(lines)
+
+    def trim_vocab(self, languages: List[str], out_dir: str, tokenizer=None, token: Optional[str] = None,
+                   keep_latin: bool = True) -> dict:
+        """Write a trimmed tokenizer (tokenizer.json or SentencePiece .model), kept_ids.json (old ids in new-id order) and
+        slice_weights.py (how to slice the token tables). With the `tokenizers` / `sentencepiece` library installed it also
+        checks that the bundled test sentences of every kept language tokenize to exactly the same pieces as before."""
+        import os
+        from . import _tok, _trim
+        from ._engine import Engine
+        if isinstance(languages, str):
+            languages = [x.strip() for x in languages.split(",") if x.strip()]
+        langs = list(languages) + (["en"] if keep_latin and "en" not in [l.lower() for l in languages] else [])
+        t = self._tok(tokenizer, token)
+        mask = Engine().vocab_mask(t.pieces, t.byte_level, langs)
+        keep = [c == "1" for c in mask]
+        os.makedirs(out_dir, exist_ok=True)
+        if t.kind == "hf":
+            with open(t.path, encoding="utf-8") as f:
+                j = json.load(f)
+            nj, kept = _trim.trim_tokenizer_json(j, keep)
+            new_path = os.path.join(out_dir, "tokenizer.json")
+            with open(new_path, "w", encoding="utf-8") as f:
+                json.dump(nj, f, ensure_ascii=False)
+        elif t.kind == "spm":
+            with open(t.path, "rb") as f:
+                nb, kept = _trim.trim_sentencepiece(f.read(), keep)
+            new_path = os.path.join(out_dir, os.path.basename(t.path))
+            with open(new_path, "wb") as f:
+                f.write(nb)
+        else:
+            raise NotImplementedError(f"trimming {t.kind} tokenizers is not supported yet; vocab_tax() still measures them")
+        with open(os.path.join(out_dir, "kept_ids.json"), "w") as f:
+            json.dump(kept, f)
+        with open(os.path.join(out_dir, "slice_weights.py"), "w") as f:
+            f.write(_trim.SLICE_SNIPPET)
+        rep = {"languages": langs, "pieces_before": len(t), "pieces_after": len(kept), "tokenizer": new_path, "verified": None}
+        nt = _tok.read_file(new_path)
+        e0, e1 = t.encoder(), nt.encoder()
+        if e0 and e1:
+            same = tot = 0
+            for l in langs:
+                for s_ in _tok.corpus(l.lower()):
+                    a = [t.pieces[i] for i in e0(s_)]
+                    b = [nt.pieces[i] for i in e1(s_)]
+                    tot += 1; same += a == b
+            rep["verified"] = {"sentences": tot, "identical": same}
+        with open(os.path.join(out_dir, "trim_report.json"), "w") as f:
+            json.dump(rep, f, indent=1)
+        return rep
 
     def plan(self, languages: Optional[List[str]] = None, text_only: bool = False, tokenizer=None,
              token: Optional[str] = None, keep_tokens: Optional[int] = None) -> List[dict]:

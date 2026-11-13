@@ -176,7 +176,7 @@ const Plan = (() => {
     if (s.includes("�")) return "fragment";
     const found = new Set();
     for (const ch of s) {
-      if (/[\p{N}\p{P}\p{S}\p{Z}\p{M}\p{Cf}]/u.test(ch)) continue;   // Cf: zero-width space/joiner, common in Thai text and emoji
+      if (/[\p{N}\p{P}\p{S}\p{Z}\p{M}\p{Cf}\p{Script=Common}\p{Script=Inherited}]/u.test(ch)) continue;   // Common/Inherited: shared marks such as the Japanese long vowel ー or the Arabic tatweel   // Cf: zero-width space/joiner, common in Thai text and emoji
       const sc = (SCRIPTS.find(([, re]) => re.test(ch)) || ["other"])[0];
       found.add(sc === "Latin" ? (/[A-Za-z]/.test(ch) ? "Latin-ASCII" : "Latin-ext") : sc);
     }

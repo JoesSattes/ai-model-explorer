@@ -631,7 +631,7 @@ function renderCut() {
   const shapes = {}; for (const [n, x] of Object.entries(M.T)) shapes[n] = x.shape;
   const total = (I.totals && I.totals.params) || I.comps.reduce((a, c) => a + c.params, 0);
   const st = M.cut || (M.cut = {langs: ["th", "en"], text: false, keep: null, counts: null, n: null, msg: ""});
-  if (S.pendingTok && !st.pieces) { const j = S.pendingTok; S.pendingTok = null; setTimeout(() => { try { st.pieces = cutParse(j); const r = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}); st.n = r.total; st.keep = r.keep(st.langs); renderCut(); } catch (e) {} }, 0); }
+  if (S.pendingTok && !st.pieces) { const j = S.pendingTok; S.pendingTok = null; setTimeout(() => { try { st.pieces = cutParse(j); const r = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}); st.n = r.total; st.keep = r.keep(st.langs.includes("en") ? st.langs : st.langs.concat("en")); renderCut(); } catch (e) {} }, 0); }
   let P; try { P = Plan.plan(I, shapes, M.cfg || {}, {total, keep_tokens: st.keep, tok_pieces: st.n, name: M.label || ""}); } catch (e) { box.style.display = "none"; return; }
   const pc = x => (100 * x / total).toFixed(x / total < 0.01 ? 1 : 0) + "%", n0 = x => x.toLocaleString("en-US");
   const kind = id => /vision|visual|image|siglip|vit/i.test(id) ? L2("ส่วนภาพ (vision tower)", "vision") : /audio|speech|whisper|conformer/i.test(id) ? L2("ส่วนเสียง (audio tower)", "audio") : L2("ส่วนอินพุต", "input");
@@ -655,15 +655,16 @@ function renderCut() {
   const hasVocab = P.levers.some(l => l.id === "vocab"), hasTower = P.levers.some(l => l.id.startsWith("tower:"));
   box.innerHTML = `<h3>${esc(t("cut_h"))}</h3><p class="dim">${esc(t("cut_lead"))}</p>
     ${hasVocab ? `<div class="chips"><span>${esc(t("cut_langs"))}</span>${LS.map(l => `<button data-cl="${l}" class="${st.langs.includes(l) ? "on" : ""}">${l.toUpperCase()}</button>`).join("")}
-      ${repo ? `<button id="cutGo">${esc(t("cut_count"))}</button>` : ""}<label>${esc(t("cut_file"))}<input type="file" id="cutFile" hidden></label><span class="dim" id="cutMsg">${esc(st.msg)}</span></div>` : ""}
+      ${repo ? `<button id="cutGo">${esc(t("cut_count"))}</button>` : ""}<label>${esc(t("cut_file"))}<input type="file" id="cutFile" hidden></label><span class="dim" id="cutMsg">${esc(st.msg)}</span></div>${st.langs.includes("en") ? "" : `<p class="note">${esc(t("cut_latin"))}</p>`}` : ""}
     ${hasTower ? `<div class="chips"><label><input type="checkbox" id="cutText" ${st.text ? "checked" : ""}> ${esc(t("cut_text"))}</label></div>` : ""}
     ${items.length ? `<div class="cutl">${items.map(x => x.html).join("")}</div>` : `<p>${esc(t("cut_none"))}</p>`}
     ${cut ? `<div class="cutsum">${esc(t("cut_sum", {a: fP(total), b: fP(total - cut), c: fB((total - cut) * 2), d: fB((total - cut) / 2)}))}</div>` : ""}${kvLine}`;
   if (st.n && P.vocab && st.n > P.vocab.size) { const m = $("#cutMsg"); if (m) m.textContent = t("cut_mismatch", {n: st.n.toLocaleString(), v: P.vocab.size.toLocaleString()}); }
-  const count = pieces => { const r = Plan.vocabScripts(pieces.list, {byte_level: pieces.bl}); st.n = r.total; st.counts = r.counts; st.keep = r.keep(st.langs); st.msg = ""; st.pieces = pieces; renderCut(); };
+  const withLatin = L => L.includes("en") ? L : L.concat("en");   // Latin names, numbers and code appear in text of every language
+  const count = pieces => { const r = Plan.vocabScripts(pieces.list, {byte_level: pieces.bl}); st.n = r.total; st.counts = r.counts; st.keep = r.keep(withLatin(st.langs)); st.msg = ""; st.pieces = pieces; renderCut(); };
   const parse = cutParse;
   $$("#cutBox [data-cl]").forEach(b => b.onclick = () => { const l = b.dataset.cl; st.langs = st.langs.includes(l) ? st.langs.filter(x => x !== l) : st.langs.concat(l);
-    if (st.pieces) { st.keep = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}).keep(st.langs); } renderCut(); });
+    if (st.pieces) { st.keep = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}).keep(withLatin(st.langs)); } renderCut(); });
   const go = $("#cutGo"); if (go) go.onclick = async () => { st.msg = t("cut_loading"); $("#cutMsg").textContent = st.msg;
     try { count(await tokFromHub(repo)); }
     catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
