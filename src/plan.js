@@ -151,13 +151,17 @@ const Plan = (() => {
   const SCRIPTS = [["Thai", /\p{Script=Thai}/u], ["Han", /\p{Script=Han}/u], ["Hiragana", /\p{Script=Hiragana}/u], ["Katakana", /\p{Script=Katakana}/u],
     ["Hangul", /\p{Script=Hangul}/u], ["Latin", /\p{Script=Latin}/u], ["Cyrillic", /\p{Script=Cyrillic}/u], ["Arabic", /\p{Script=Arabic}/u],
     ["Devanagari", /\p{Script=Devanagari}/u], ["Greek", /\p{Script=Greek}/u], ["Hebrew", /\p{Script=Hebrew}/u], ["Khmer", /\p{Script=Khmer}/u],
-    ["Lao", /\p{Script=Lao}/u], ["Myanmar", /\p{Script=Myanmar}/u], ["Bengali", /\p{Script=Bengali}/u], ["Tamil", /\p{Script=Tamil}/u]];
+    ["Lao", /\p{Script=Lao}/u], ["Myanmar", /\p{Script=Myanmar}/u], ["Bengali", /\p{Script=Bengali}/u], ["Tamil", /\p{Script=Tamil}/u],
+    ["Georgian", /\p{Script=Georgian}/u], ["Armenian", /\p{Script=Armenian}/u], ["Ethiopic", /\p{Script=Ethiopic}/u], ["Telugu", /\p{Script=Telugu}/u], ["Kannada", /\p{Script=Kannada}/u], ["Malayalam", /\p{Script=Malayalam}/u], ["Gujarati", /\p{Script=Gujarati}/u], ["Gurmukhi", /\p{Script=Gurmukhi}/u], ["Oriya", /\p{Script=Oriya}/u], ["Sinhala", /\p{Script=Sinhala}/u], ["Tibetan", /\p{Script=Tibetan}/u], ["Mongolian", /\p{Script=Mongolian}/u], ["Thaana", /\p{Script=Thaana}/u], ["Syriac", /\p{Script=Syriac}/u], ["Javanese", /\p{Script=Javanese}/u], ["Balinese", /\p{Script=Balinese}/u], ["Tifinagh", /\p{Script=Tifinagh}/u], ["Cherokee", /\p{Script=Cherokee}/u], ["Canadian_Aboriginal", /\p{Script=Canadian_Aboriginal}/u]];
   const LX = ["Latin-ASCII", "Latin-ext"];   // accented Latin is kept for English too: names and loanwords (González, café) appear in real English text
   const LANG = {en: LX, th: ["Thai"], zh: ["Han"], cn: ["Han"], ja: ["Han", "Hiragana", "Katakana"], ko: ["Hangul"], vi: LX, id: LX, ms: LX,
     fr: LX, de: LX, es: LX, pt: LX, it: LX, nl: LX, tl: LX, cs: LX, pl: LX, fi: LX, sv: LX, da: LX, no: LX, is: LX, tr: LX, ro: LX, hu: LX, gl: LX,
     ca: LX, et: LX, lt: LX, lv: LX, sk: LX, sl: LX, hr: LX, sw: LX, ru: ["Cyrillic"], uk: ["Cyrillic"], bg: ["Cyrillic"], sr: ["Cyrillic", "Latin-ASCII", "Latin-ext"],
     kk: ["Cyrillic"], ar: ["Arabic"], fa: ["Arabic"], ur: ["Arabic"], hi: ["Devanagari"], mr: ["Devanagari"], ne: ["Devanagari"], bn: ["Bengali"], ta: ["Tamil"],
-    el: ["Greek"], he: ["Hebrew"], km: ["Khmer"], lo: ["Lao"], my: ["Myanmar"]};
+    el: ["Greek"], he: ["Hebrew"], km: ["Khmer"], lo: ["Lao"], my: ["Myanmar"], ka: ["Georgian"], hy: ["Armenian"], am: ["Ethiopic"], ti: ["Ethiopic"],
+    te: ["Telugu"], kn: ["Kannada"], ml: ["Malayalam"], gu: ["Gujarati"], pa: ["Gurmukhi"], or: ["Oriya"], si: ["Sinhala"], bo: ["Tibetan"], dz: ["Tibetan"],
+    mn: ["Cyrillic"], dv: ["Thaana"], jv: LX, su: LX, ms_arab: ["Arabic"], ps: ["Arabic"], sd: ["Arabic"], ug: ["Arabic"], yi: ["Hebrew"], be: ["Cyrillic"],
+    mk: ["Cyrillic"], ky: ["Cyrillic"], tg: ["Cyrillic"], az: LX, uz: LX, ha: LX, yo: LX, ig: LX, zu: LX, xh: LX, af: LX, mt: LX, ga: LX, cy: LX, eu: LX, sq: LX, bs: LX};
   const B2U = (() => { const bs = []; for (let i = 33; i <= 126; i++) bs.push(i); for (let i = 161; i <= 172; i++) bs.push(i); for (let i = 174; i <= 255; i++) bs.push(i);
     const cs = bs.slice(); let n = 0; for (let b = 0; b < 256; b++) if (!bs.includes(b)) { bs.push(b); cs.push(256 + n++); }
     const m = {}; bs.forEach((b, i) => { m[String.fromCharCode(cs[i])] = b; }); return m; })();
