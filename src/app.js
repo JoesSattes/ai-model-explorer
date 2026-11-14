@@ -618,11 +618,12 @@ function tokFromBytes(name, buf) {
     return {list: Array(ns).fill("<special>").concat(j.vocab.slice(0, size - ns).map(x => dec.decode(b64(x.token_bytes)))), bl: false}; }
   const list = []; for (const [k, i] of Object.entries(j)) list[i] = k; for (let i = 0; i < list.length; i++) if (list[i] == null) list[i] = "<unused>"; return {list, bl: true};
 }
+function tokLoad(name, buf) { const p = tokFromBytes(name, buf); try { p.tt = TextTrim.load(name, buf); } catch (e) { p.tt = null; } return p; }
 async function tokFromHub(repo) {
   let names = TOK_FILES;
   try { const r = await fetch(`https://huggingface.co/api/models/${repo}`); if (r.ok) { const sib = ((await r.json()).siblings || []).map(x => x.rfilename);
     names = TOK_FILES.filter(x => sib.includes(x)).concat(sib.filter(x => x.endsWith(".tiktoken") && !x.includes("/"))); } } catch (e) {}
-  for (const nm of names) { try { const r = await fetch(`https://huggingface.co/${repo}/resolve/main/${nm}`); if (!r.ok) continue; return tokFromBytes(nm, await r.arrayBuffer()); } catch (e) {} }
+  for (const nm of names) { try { const r = await fetch(`https://huggingface.co/${repo}/resolve/main/${nm}`); if (!r.ok) continue; return tokLoad(nm, await r.arrayBuffer()); } catch (e) {} }
   throw new Error("no tokenizer");
 }
 function renderCut() {
@@ -631,15 +632,15 @@ function renderCut() {
   const shapes = {}; for (const [n, x] of Object.entries(M.T)) shapes[n] = x.shape;
   const total = (I.totals && I.totals.params) || I.comps.reduce((a, c) => a + c.params, 0);
   const st = M.cut || (M.cut = {langs: ["th", "en"], text: false, keep: null, counts: null, n: null, msg: ""});
-  if (S.pendingTok && !st.pieces) { const j = S.pendingTok; S.pendingTok = null; setTimeout(() => { try { st.pieces = cutParse(j); const r = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}); st.n = r.total; st.keep = r.keep(st.langs.includes("en") ? st.langs : st.langs.concat("en")); renderCut(); } catch (e) {} }, 0); }
-  let P; try { P = Plan.plan(I, shapes, M.cfg || {}, {total, keep_tokens: st.keep, tok_pieces: st.n, name: M.label || ""}); } catch (e) { box.style.display = "none"; return; }
+  if (S.pendingTok && !st.pieces) { const j = S.pendingTok; S.pendingTok = null; setTimeout(() => { try { st.pieces = cutParse(j); try { st.pieces.tt = TextTrim.loadJSON(j); } catch (e) {} const r = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}); st.n = r.total; st.keep = r.keep(st.langs.includes("en") ? st.langs : st.langs.concat("en")); renderCut(); } catch (e) {} }, 0); }
+  let P; try { P = Plan.plan(I, shapes, M.cfg || {}, {total, keep_tokens: st.corp ? st.corp.kept : st.keep, tok_pieces: st.n, name: M.label || ""}); } catch (e) { box.style.display = "none"; return; }
   const pc = x => (100 * x / total).toFixed(x / total < 0.01 ? 1 : 0) + "%", n0 = x => x.toLocaleString("en-US");
   const kind = id => /vision|visual|image|siglip|vit/i.test(id) ? L2("ส่วนภาพ (vision tower)", "vision") : /audio|speech|whisper|conformer/i.test(id) ? L2("ส่วนเสียง (audio tower)", "audio") : L2("ส่วนอินพุต", "input");
   let cut = 0;
   const items = P.levers.map(l => {
     let title, det, how, saves = l.saves;
     if (l.id === "vocab") { title = t("cut_vocab_t"); det = t("cut_vocab_d", {v: n0(l.vocab), r: n0(l.row_cost), parts: P.vocab.tables.map(x => `${x.what} ${n0(x.width)}`).join(" + ")});
-      if (st.keep != null) det += " " + t("cut_vocab_k", {n: n0(st.n), k: n0(st.keep), s: fP(saves), p: pc(saves)}); how = t("cut_vocab_h"); }
+      if (st.keep != null) det += " " + t(st.corp ? "cut_vocab_kc" : "cut_vocab_k", {n: n0(st.n), k: n0(st.corp ? st.corp.kept : st.keep), ks: n0(st.keep), s: fP(saves), p: pc(saves)}); how = t(st.corp ? "cut_vocab_hc" : "cut_vocab_h"); }
     else if (l.id === "ple") { const tb = P.vocab.tables.filter(x => x.what.startsWith("per-layer")); title = t("cut_ple_t"); det = t("cut_ple_d", {n: tb.map(x => x.name).join(", "), s: fP(l.params), p: pc(l.params), w: n0(tb[0].width)}); how = t("cut_ple_h"); }
     else if (l.id.startsWith("tower:")) { const id = l.id.slice(6); title = t("cut_tower_t", {k: kind(id)}); det = t("cut_tower_d", {n: l.detail.split(":")[0].replace(" with ", " + "), s: fP(l.params)}); how = t("cut_tower_h"); if (!st.text) saves = null; }
     else if (l.id === "kv_shared") { title = t("cut_kvs_t"); det = t("cut_kvs_d", {n: P.kv.shared}); how = t("cut_kvs_h"); }
@@ -655,21 +656,43 @@ function renderCut() {
   const hasVocab = P.levers.some(l => l.id === "vocab"), hasTower = P.levers.some(l => l.id.startsWith("tower:"));
   box.innerHTML = `<h3>${esc(t("cut_h"))}</h3><p class="dim">${esc(t("cut_lead"))}</p>
     ${hasVocab ? `<div class="chips"><span>${esc(t("cut_langs"))}</span>${LS.map(l => `<button data-cl="${l}" class="${st.langs.includes(l) ? "on" : ""}">${l.toUpperCase()}</button>`).join("")}
-      ${repo ? `<button id="cutGo">${esc(t("cut_count"))}</button>` : ""}<label>${esc(t("cut_file"))}<input type="file" id="cutFile" hidden></label><span class="dim" id="cutMsg">${esc(st.msg)}</span></div>${st.langs.includes("en") ? "" : `<p class="note">${esc(t("cut_latin"))}</p>`}` : ""}
+      ${repo ? `<button id="cutGo">${esc(t("cut_count"))}</button>` : ""}<label>${esc(t("cut_file"))}<input type="file" id="cutFile" hidden></label><span class="dim" id="cutMsg">${esc(st.msg)}</span></div>${st.langs.includes("en") ? "" : `<p class="note">${esc(t("cut_latin"))}</p>`}${st.pieces ? textBlock(st, repo) : ""}` : ""}
     ${hasTower ? `<div class="chips"><label><input type="checkbox" id="cutText" ${st.text ? "checked" : ""}> ${esc(t("cut_text"))}</label></div>` : ""}
     ${items.length ? `<div class="cutl">${items.map(x => x.html).join("")}</div>` : `<p>${esc(t("cut_none"))}</p>`}
     ${cut ? `<div class="cutsum">${esc(t("cut_sum", {a: fP(total), b: fP(total - cut), c: fB((total - cut) * 2), d: fB((total - cut) / 2)}))}</div>` : ""}${kvLine}`;
   if (st.n && P.vocab && st.n > P.vocab.size) { const m = $("#cutMsg"); if (m) m.textContent = t("cut_mismatch", {n: st.n.toLocaleString(), v: P.vocab.size.toLocaleString()}); }
   const withLatin = L => L.includes("en") ? L : L.concat("en");   // Latin names, numbers and code appear in text of every language
-  const count = pieces => { const r = Plan.vocabScripts(pieces.list, {byte_level: pieces.bl}); st.n = r.total; st.counts = r.counts; st.keep = r.keep(withLatin(st.langs)); st.msg = ""; st.pieces = pieces; renderCut(); };
+  const count = pieces => { const r = Plan.vocabScripts(pieces.list, {byte_level: pieces.bl}); st.n = r.total; st.counts = r.counts; st.keep = r.keep(withLatin(st.langs)); st.msg = ""; st.pieces = pieces; st.corp = null; st.rerun = !!st.corpLines; renderCut(); };
   const parse = cutParse;
   $$("#cutBox [data-cl]").forEach(b => b.onclick = () => { const l = b.dataset.cl; st.langs = st.langs.includes(l) ? st.langs.filter(x => x !== l) : st.langs.concat(l);
-    if (st.pieces) { st.keep = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}).keep(withLatin(st.langs)); } renderCut(); });
+    if (st.pieces) { st.keep = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}).keep(withLatin(st.langs)); } st.corp = null; st.rerun = !!st.corpLines; renderCut(); });
   const go = $("#cutGo"); if (go) go.onclick = async () => { st.msg = t("cut_loading"); $("#cutMsg").textContent = st.msg;
     try { count(await tokFromHub(repo)); }
     catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
-  const f = $("#cutFile"); if (f) f.onchange = async () => { const F = f.files[0]; if (!F) return; try { count(tokFromBytes(F.name, await (/\.gguf$/i.test(F.name) ? F.slice(0, 96 * 2 ** 20) : F).arrayBuffer())); } catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
+  const f = $("#cutFile"); if (f) f.onchange = async () => { const F = f.files[0]; if (!F) return; try { const isG = /\.gguf$/i.test(F.name); const buf = await (isG ? F.slice(0, 96 * 2 ** 20) : F).arrayBuffer(); count(isG ? tokFromBytes(F.name, buf) : tokLoad(F.name, buf)); } catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
   const tx = $("#cutText"); if (tx) tx.onchange = () => { st.text = tx.checked; renderCut(); };
+  const runText = lines => { lines = lines.map(x => x.trim()).filter(Boolean); if (!lines.length || !st.pieces || !st.pieces.tt) return;
+    st.corpLines = lines; const pcs = st.pieces.list, v = Plan.vocabScripts(pcs, {byte_level: st.pieces.bl}), al = v.mask([]);
+    const isA = i => al[i] === "1" || String(pcs[i] || "").replace(/\u2581|\u0120/g, "").length <= 1;
+    $("#ctMsg").textContent = t("cut_t_run"); setTimeout(() => { try { const r = TextTrim.corpusTrim(st.pieces.tt, lines, v.mask(withLatin(st.langs)), isA, {target: st.tau || 0.01}); delete r.keep; st.corp = r; } catch (e) { st.corp = null; $("#ctMsg").textContent = t("cut_t_err"); return; } renderCut(); }, 20); };
+  const tb = $("#ctGo"); if (tb) tb.onclick = () => runText($("#ctArea").value.split("\n"));
+  const tf = $("#ctFile"); if (tf) tf.onchange = async () => { const F = tf.files[0]; if (!F) return; const txt = await F.text(); $("#ctArea").value = txt.split("\n").slice(0, 200).join("\n"); runText(txt.split("\n")); };
+  const tc = $("#ctClear"); if (tc) tc.onclick = () => { st.corp = null; st.corpLines = null; renderCut(); };
+  const ts = $("#ctTau"); if (ts) ts.onchange = () => { st.tau = +ts.value; if (st.corpLines) runText(st.corpLines); };
+  if (st.rerun && st.corpLines && st.pieces && st.pieces.tt) { st.rerun = false; runText(st.corpLines); } else st.rerun = false;
+}
+function textBlock(st, repo) {
+  const r = st.corp, langs = (st.langs.includes("en") ? st.langs : st.langs.concat("en")).join(",");
+  if (!st.pieces.tt) return `<div class="ctext"><b>${esc(t("cut_t_h"))}</b><p class="dim">${esc(t("cut_t_nofmt"))}</p></div>`;
+  const pct = x => (100 * x).toFixed(x < 0.001 ? 3 : 2) + "%";
+  const res = r ? `<p>${esc(t("cut_t_res", {n: r.lines.toLocaleString(), seen: r.keptSeen.toLocaleString(), add: r.closureAdded.toLocaleString(), k: r.kept.toLocaleString()}))}</p>
+    <p class="cert ${r.ok ? "ok" : "no"}">${esc(t(r.ok ? "cut_t_ok" : "cut_t_more", {p: pct(r.predicted), tau: pct(r.target), need: r.linesNeeded ? r.linesNeeded.toLocaleString() : "?"}))}${r.lines < 1000 ? " " + esc(t("cut_t_few")) : ""}</p>
+    <p class="dim">${esc(t("cut_t_export"))}<br><code>pip install ai-model-explorer &amp;&amp; ai-model-explorer tax ${esc(repo || "REPO")} --lang ${esc(langs)} --corpus my_text.txt --target ${r.target} --export trimmed/</code></p>` : "";
+  return `<div class="ctext"><b>${esc(t("cut_t_h"))}</b><p class="dim">${esc(t("cut_t_lead"))}</p>
+    <textarea id="ctArea" placeholder="${esc(t("cut_t_ph"))}">${esc((st.corpLines || []).slice(0, 200).join("\n"))}</textarea>
+    <div class="chips"><button id="ctGo">${esc(t("cut_t_go"))}</button><label>${esc(t("cut_t_file"))}<input type="file" id="ctFile" accept=".txt,.csv,.jsonl,text/*" hidden></label>
+    <label>${esc(t("cut_t_tau"))} <select id="ctTau">${[0.005, 0.01, 0.02].map(x => `<option value="${x}" ${(st.tau || 0.01) === x ? "selected" : ""}>${x * 100}%</option>`).join("")}</select></label>
+    ${r ? `<button id="ctClear">${esc(t("cut_t_clear"))}</button>` : ""}<span class="dim" id="ctMsg"></span></div>${res}</div>`;
 }
 
 // ================================================================== concepts (numbers from the selected model)

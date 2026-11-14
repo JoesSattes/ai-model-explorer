@@ -263,7 +263,7 @@ footer .cite pre{background:var(--glass2);border:1px solid var(--line,rgba(127,1
 #cutBox .cutl>div{padding:12px 0;border-top:1px solid var(--line,#e2e2dc)}#cutBox .cutl b{font-size:15px}#cutBox .cutl p{margin:4px 0 0;font-size:13.5px;line-height:1.5}
 #cutBox .cutn{text-align:right;font-variant-numeric:tabular-nums}#cutBox .cutn big{display:block;font-size:20px;font-weight:700}#cutBox .cbar{height:6px;border-radius:3px;background:var(--line,#e2e2dc);margin-top:6px;overflow:hidden}
 #cutBox .cbar i{display:block;height:100%;background:#e8114a}#cutBox .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}#cutBox .chips button,#cutBox .chips label{font:inherit;font-size:13px;padding:5px 11px;border-radius:999px;border:1px solid var(--line,#ccc);background:transparent;color:inherit;cursor:pointer}
-#cutBox{padding:22px 26px;margin-top:18px}#cutBox .chips button.on{background:#e8114a;color:#fff;border-color:#e8114a}#cutBox .cutsum{margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(232,17,74,.07);font-size:14px}
+#cutBox{padding:22px 26px;margin-top:18px}#cutBox .ctext{margin-top:12px;padding:12px 14px;border:1px dashed var(--line,#ccc);border-radius:10px}#cutBox .ctext textarea{width:100%;min-height:84px;font:13px/1.45 inherit;margin:6px 0;box-sizing:border-box}#cutBox .ctext code{font-size:12px;word-break:break-all}#cutBox .cert.ok{color:#1a7f37}#cutBox .cert.no{color:#b5452f}#cutBox .chips button.on{background:#e8114a;color:#fff;border-color:#e8114a}#cutBox .cutsum{margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(232,17,74,.07);font-size:14px}
 #mapSvg .mvb{font-size:17px!important}#mapSvg .mv{font-size:12px;font-weight:600;fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.35);stroke-width:2px;font-variant-numeric:tabular-nums}
 </style>
 </head>
@@ -584,6 +584,19 @@ window.I18N = {
   cut_moe_h: ["offload expert ไป CPU/flash แล้ว cache ตัวที่ใช้บ่อย, quantize expert แรงกว่า attention หรือตัด expert ที่ข้อมูลจริงไม่เคย route ไปถึง (วัด routing จากข้อมูลตัวเองก่อน)", "Offload experts to CPU/flash and cache the hot ones, quantize experts harder than attention, or prune experts your traffic never reaches (measure routing on your data first)."],
   cut_kv: ["KV cache: {c} จาก {l} ชั้นมี cache ของตัวเอง ({sh} ชั้นแชร์), {sl} ชั้นเลื่อนดูแค่ {w} token → {pt} ต่อ token + สูงสุด {cap} ไม่ใช่ {nv} ต่อ token อย่างที่คิดจากทุกชั้น", "KV cache: {c} of {l} layers keep their own ({sh} share), {sl} slide over {w} tokens → {pt} per token plus at most {cap}, not {nv} per token for every layer."],
   cut_sum: ["ถ้าตัดตามข้างบน (ไม่รวม quantize): {a} → {b} weight · {c} ที่ 16-bit · {d} ที่ 4-bit", "Cutting the structure above (before quantization): {a} → {b} weights · {c} at 16-bit · {d} at 4-bit"],
+  cut_vocab_kc: ["ตามข้อความของคุณ ต้องเก็บ {k} ชิ้น (ตามตัวเขียนอย่างเดียว {ks}) → ตัดได้ {s} weight ({p})", "With your text you need {k} pieces (by script alone: {ks}) → removes {s} weights ({p})."],
+  cut_vocab_hc: ["เก็บเฉพาะชิ้นที่ข้อความของคุณใช้จริง + ตัวอักษรเดี่ยว + merge parent ของทุกชิ้นที่เก็บ (ไม่งั้น tokenizer สร้างชิ้นนั้นไม่ได้อีกและคำจะแตกมากกว่าที่ตั้งใจ 2-3 เท่า) แล้ว remap id และตัดทุกตารางข้างบน", "Keep only the pieces your text uses, single characters, and the merge parents of every kept piece (without them the tokenizer can no longer build those pieces and words split 2-3x more than intended); remap ids and slice every table above."],
+  cut_t_h: ["ตัดให้แคบลงด้วยข้อความของคุณเอง", "Trim further with your own text"],
+  cut_t_lead: ["วางตัวอย่างข้อความจากงานจริง (บรรทัดละหนึ่งตัวอย่าง) หรือเลือกไฟล์ .txt ทุกอย่างคำนวณในเบราว์เซอร์ ไม่ส่งข้อความออกไปไหน ยิ่งมากยิ่งแม่น แนะนำ 2,000 บรรทัดขึ้นไป", "Paste samples of the text you will serve (one per line) or pick a .txt file. Everything runs in your browser; the text is not sent anywhere. More is better: 2,000+ lines recommended."],
+  cut_t_ph: ["ข้อความตัวอย่าง บรรทัดละหนึ่งตัวอย่าง…", "Sample text, one example per line…"],
+  cut_t_go: ["คำนวณจากข้อความนี้", "Trim with this text"], cut_t_file: ["หรือเลือกไฟล์ข้อความ", "or pick a text file"], cut_t_tau: ["เป้าคำที่แตกชิ้นได้ไม่เกิน", "Re-split target"], cut_t_clear: ["ล้าง", "Clear"],
+  cut_t_run: ["กำลังตัดคำและคำนวณ…", "Tokenizing and estimating…"], cut_t_err: ["คำนวณไม่สำเร็จกับ tokenizer นี้", "Could not run on this tokenizer"],
+  cut_t_nofmt: ["ไฟล์ tokenizer แบบนี้ (SentencePiece .model / GGUF) ตัดด้วยข้อความในเบราว์เซอร์ไม่ได้ ใช้ Python: pip install ai-model-explorer แล้ว ai-model-explorer tax REPO --lang th --corpus my_text.txt", "This tokenizer format (SentencePiece .model / GGUF) cannot be trimmed with text in the browser. Use Python: pip install ai-model-explorer, then ai-model-explorer tax REPO --lang th --corpus my_text.txt"],
+  cut_t_res: ["{n} บรรทัด: ชิ้นที่ข้อความใช้ {seen} + merge parent ที่ต้องเก็บเพิ่ม {add} = เก็บ {k} ชิ้น", "{n} lines: {seen} pieces your text uses + {add} merge parents they need = {k} pieces kept"],
+  cut_t_ok: ["ใบรับรอง: ข้อความใหม่แบบเดียวกันจะมีคำที่ถูกแตกชิ้นต่างไปจากเดิมราว {p} ต่ำกว่าเป้า {tau} ใช้ได้", "Certificate: new text of this kind will see about {p} of tokens split differently, under the {tau} target. Safe to use."],
+  cut_t_more: ["ใบรับรอง: ข้อความใหม่แบบเดียวกันจะมีคำที่ถูกแตกชิ้นต่างไปราว {p} เกินเป้า {tau} ต้องใช้ข้อความราว {need} บรรทัด หรือใช้การตัดตามตัวเขียนข้างบนแทน (ไม่เปลี่ยนการตัดคำเลย)", "Certificate: new text of this kind will see about {p} of tokens split differently, over the {tau} target. About {need} lines would reach it; until then use the script-only trim above (it changes no tokenization)."],
+  cut_t_few: ["(ไม่ถึง 1,000 บรรทัด ค่าประมาณยังแกว่ง)", "(under 1,000 lines: the estimate is still noisy)"],
+  cut_t_export: ["ทำไฟล์ tokenizer ที่ตัดแล้ว + kept_ids.json + สคริปต์ตัด weight ด้วยคำสั่งนี้ (ใช้กฎเดียวกัน):", "Write the trimmed tokenizer, kept_ids.json and a weight-slicing script with the same rule:"],
   cut_none: ["โมเดลนี้ไม่มีส่วนที่ตัดได้ชัดๆ จากโครงสร้าง ลองดูการ quantize", "No obvious structural cut for this model; look at quantization."],
   arch_h2: ["โครงสร้างของโมเดล", "Anatomy"],
   arch_lead: ["แต่ละกล่องคือหนึ่งส่วนของโมเดล เรียงตามทางที่ข้อมูลไหล แถบสีคือชนิดของแต่ละ layer คลิกกล่องเพื่อดูว่าข้างในมีอะไร และค่าแต่ละค่ามาจากไหน", "Each box is one part of the model, in the order data flows through it. The strip shows the type of every layer. Click a box to see what is inside and where each value comes from."],
@@ -1788,6 +1801,133 @@ const Plan = (() => {
 })();
 if (typeof module !== "undefined") module.exports = Plan;
 </script>
+<script>// Trim the vocabulary with your own text, in the browser: a BPE encoder for tokenizer.json, tiktoken and Tekken files,
+// the corpus keep rule with merge closure, and the trim certificate (Good-Turing estimate of how much new text the
+// trimmed tokenizer splits differently, and how many lines would bring it under a target). Same rules as the Python
+// package (Model.trim_vocab / vocab_tax with corpus=...). SentencePiece .model and GGUF files: use the package.
+const TextTrim = (() => {
+  // GPT-2 byte <-> unicode table used by byte-level BPE
+  const B2U = (() => { const bs = []; for (let i = 33; i <= 126; i++) bs.push(i); for (let i = 161; i <= 172; i++) bs.push(i); for (let i = 174; i <= 255; i++) bs.push(i);
+    const cs = bs.slice(); let n = 0; for (let b = 0; b < 256; b++) if (!bs.includes(b)) { bs.push(b); cs.push(256 + n); n++; }
+    const m = {}; bs.forEach((b, i) => { m[b] = String.fromCharCode(cs[i]); }); return m; })();
+  const enc8 = new TextEncoder();
+  const byteStr = s => { let o = ""; for (const b of enc8.encode(s)) o += B2U[b]; return o; };
+  const GPT2_RE = "'s|'t|'re|'ve|'m|'ll|'d| ?\\p{L}+| ?\\p{N}+| ?[^\\s\\p{L}\\p{N}]+|\\s+(?!\\S)|\\s+";
+  const CL100K_RE = "(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\\r\\n\\p{L}\\p{N}]?\\p{L}+|\\p{N}{1,3}| ?[^\\s\\p{L}\\p{N}]+[\\r\\n]*|\\s*[\\r\\n]+|\\s+(?!\\S)|\\s+";
+  const O200K_RE = "[^\\r\\n\\p{L}\\p{N}]?[\\p{Lu}\\p{Lt}\\p{Lm}\\p{Lo}\\p{M}]*[\\p{Ll}\\p{Lm}\\p{Lo}\\p{M}]+(?i:'s|'t|'re|'ve|'m|'ll|'d)?|[^\\r\\n\\p{L}\\p{N}]?[\\p{Lu}\\p{Lt}\\p{Lm}\\p{Lo}\\p{M}]+[\\p{Ll}\\p{Lm}\\p{Lo}\\p{M}]*(?i:'s|'t|'re|'ve|'m|'ll|'d)?|\\p{N}{1,3}| ?[^\\s\\p{L}\\p{N}]+[\\r\\n/]*|\\s*[\\r\\n]+|\\s+(?!\\S)|\\s+";
+  // Rust/oniguruma regex -> JavaScript: drop possessive quantifiers, expand (?i:...) into case classes
+  function jsRegex(p) {
+    p = p.replace(/(\{\d+(?:,\d*)?\}|[?*+])\+/g, "$1");
+    p = p.replace(/\(\?i:((?:[^()\\]|\\.)*)\)/g, (_, body) => "(?:" + body.replace(/(\\.|\[[^\]]*\])|([A-Za-z])/g, (m, esc, ch) => esc ? esc : `[${ch.toLowerCase()}${ch.toUpperCase()}]`) + ")");
+    return new RegExp(p, "gu");
+  }
+  const split = (re, s) => { const out = []; let last = 0, m; re.lastIndex = 0;
+    while ((m = re.exec(s)) !== null) { if (m.index > last) out.push(s.slice(last, m.index)); if (m[0].length) out.push(m[0]); else re.lastIndex++; last = m.index + m[0].length; }
+    if (last < s.length) out.push(s.slice(last)); return out; };
+
+  // ---- tokenizer.json (Hugging Face BPE)
+  function fromHF(j) {
+    const M = j.model || {}; if (M.type !== "BPE" || !M.vocab || !M.merges) return null;
+    const vocab = new Map(Object.entries(M.vocab)), ranks = new Map(), parents = new Map();
+    M.merges.forEach((x, r) => { const [a, b] = Array.isArray(x) ? x : x.split(" "); ranks.set(a + "\u0000" + b, r);
+      const p = vocab.get(a + b); if (p != null && !parents.has(p) && vocab.has(a) && vocab.has(b)) parents.set(p, [vocab.get(a), vocab.get(b)]); });
+    let byteLevel = false, prefixSpace = false; const steps = [];
+    const norm = []; (function walkN(n) { if (!n) return; if (n.type === "Sequence") return (n.normalizers || []).forEach(walkN); norm.push(n); })(j.normalizer);
+    (function walkP(n) { if (!n) return; if (n.type === "Sequence") return (n.pretokenizers || []).forEach(walkP);
+      if (n.type === "ByteLevel") { byteLevel = true; if (n.add_prefix_space) prefixSpace = true; if (n.use_regex !== false) steps.push({re: jsRegex(GPT2_RE)}); }
+      else if (n.type === "Split") { const pat = n.pattern || {}; steps.push(pat.Regex != null ? {re: jsRegex(pat.Regex), behavior: n.behavior} : {str: pat.String, behavior: n.behavior}); }
+      else if (n.type === "Metaspace") steps.push({meta: n.replacement || "▁", prepend: n.prepend_scheme || (n.add_prefix_space ? "always" : "never"), splitOn: n.split !== false});
+      else if (n.type === "Digits") steps.push({digits: !!n.individual_digits});
+    })(j.pre_tokenizer);
+    if (/ByteLevel/.test(JSON.stringify(j.decoder || {}))) byteLevel = true;
+    const normalize = s => { for (const n of norm) {
+        if (n.type === "Replace") { const p = n.pattern || {}; s = p.String != null ? s.split(p.String).join(n.content) : s.replace(jsRegex(p.Regex), n.content); }
+        else if (n.type === "Prepend") s = n.prepend + s; else if (/^NF/.test(n.type)) s = s.normalize(n.type); else if (n.type === "Lowercase") s = s.toLowerCase(); }
+      return s; };
+    const pretok = s => { let parts = [s];
+      for (const st of steps) { const next = [];
+        for (const w of parts) {
+          if (st.re) next.push(...split(st.re, w));
+          else if (st.str != null) { const xs = w.split(st.str); xs.forEach((x, i) => { if (st.behavior === "MergedWithPrevious") { if (i < xs.length - 1) next.push(x + st.str); else if (x) next.push(x); } else if (st.behavior === "MergedWithNext") { next.push((i ? st.str : "") + x); } else { if (x) next.push(x); if (i < xs.length - 1 && st.behavior !== "Removed") next.push(st.str); } }); }
+          else if (st.meta) { let x = w.split(" ").join(st.meta); if (st.prepend === "always" && !x.startsWith(st.meta)) x = st.meta + x; if (st.splitOn) next.push(...x.split(new RegExp(`(?=${st.meta})`, "u")).filter(Boolean)); else next.push(x); }
+          else if (st.digits != null) next.push(...split(st.digits ? /\p{N}/gu : /\p{N}+/gu, w));
+          else next.push(w);
+        } parts = next; }
+      return parts; };
+    return {kind: "hf", vocab, ranks, parents, byteLevel, prefixSpace, normalize, pretok, ignoreMerges: !!M.ignore_merges, byteFallback: !!M.byte_fallback, unk: M.unk_token};
+  }
+  // ---- tiktoken / Tekken (ranks over bytes; merges are implied by the ranks)
+  function fromRanks(rankBytes, pattern, offset) {   // rankBytes: Array of Uint8Array indexed by rank
+    const vocab = new Map(); rankBytes.forEach((b, r) => { if (b) { let s = ""; for (const x of b) s += B2U[x]; vocab.set(s, r + offset); } });
+    return {kind: "ranks", vocab, byteLevel: true, normalize: s => s, pretok: s => split(jsRegex(pattern), s), offset, rankOf: s => { const v = vocab.get(s); return v == null ? null : v - offset; } };
+  }
+  function bpeWord(T, w) {
+    if (T.ignoreMerges && T.vocab.has(w)) return [w];
+    let sym = Array.from(w);
+    const rank = T.kind === "hf" ? (a, b) => T.ranks.get(a + "\u0000" + b) : (a, b) => T.rankOf(a + b);
+    while (sym.length > 1) { let best = null, bi = -1;
+      for (let i = 0; i < sym.length - 1; i++) { const r = rank(sym[i], sym[i + 1]); if (r != null && (best == null || r < best)) { best = r; bi = i; } }
+      if (bi < 0) break; sym.splice(bi, 2, sym[bi] + sym[bi + 1]); }
+    return sym;
+  }
+  function encode(T, text) {
+    const ids = []; let s = T.normalize(text);
+    if (T.prefixSpace && !s.startsWith(" ")) s = " " + s;
+    for (const piece of T.pretok(s)) {
+      const w = T.byteLevel ? byteStr(piece) : piece;
+      for (const x of bpeWord(T, w)) { const id = T.vocab.get(x);
+        if (id != null) ids.push(id);
+        else if (T.byteFallback) { for (const b of enc8.encode(x)) { const k = T.vocab.get("<0x" + b.toString(16).toUpperCase().padStart(2, "0") + ">"); if (k != null) ids.push(k); } }
+        else if (T.unk != null && T.vocab.has(T.unk)) ids.push(T.vocab.get(T.unk)); } }
+    return ids;
+  }
+  // parents for rank-based vocabularies: the last merge BPE performs when it encodes the piece on its own
+  function parentsOf(T) {
+    if (T.parents) return T.parents;
+    const P = new Map();
+    for (const [s, id] of T.vocab) { const r = id - T.offset; const ch = Array.from(s); if (ch.length < 2) continue;
+      let sym = ch, last = null;
+      while (sym.length > 1) { let best = null, bi = -1;
+        for (let i = 0; i < sym.length - 1; i++) { const q = T.rankOf(sym[i] + sym[i + 1]); if (q != null && q <= r && (best == null || q < best)) { best = q; bi = i; } }
+        if (bi < 0) break; last = [sym[bi], sym[bi + 1]]; sym.splice(bi, 2, sym[bi] + sym[bi + 1]); }
+      if (sym.length === 1 && last && T.vocab.has(last[0]) && T.vocab.has(last[1])) P.set(id, [T.vocab.get(last[0]), T.vocab.get(last[1])]); }
+    return (T.parents = P);
+  }
+  // Load from a tokenizer file's bytes. Returns null when the format has no in-browser encoder here.
+  function load(name, buf) {
+    const n = name.toLowerCase(), dec = new TextDecoder("utf-8"), u8 = new Uint8Array(buf);
+    const b64 = s => { try { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); } catch (e) { return null; } };
+    if (n.endsWith(".tiktoken") || n === "tiktoken.model") { const rb = []; dec.decode(u8).split("\n").forEach(l => { const [a, r] = l.trim().split(/\s+/); if (a && r != null) rb[+r] = b64(a); });
+      return fromRanks(rb, rb.length > 150000 ? O200K_RE : CL100K_RE, 0); }
+    if (!n.endsWith(".json")) return null;
+    const j = JSON.parse(dec.decode(u8));
+    if (j.config && Array.isArray(j.vocab)) { const ns = j.config.default_num_special_tokens || 0, size = j.config.default_vocab_size || ns + j.vocab.length;
+      return fromRanks(j.vocab.slice(0, size - ns).map(x => b64(x.token_bytes)), j.config.pattern || O200K_RE, ns); }
+    if (j.model) return fromHF(j);
+    return null;
+  }
+  // Corpus rule + merge closure + certificate. scriptKeep: '1'/'0' string or boolean array over pieces;
+  // isAlways(i): specials, bytes, single characters (kept regardless).
+  function corpusTrim(T, lines, scriptKeep, isAlways, opt = {}) {
+    const m = opt.minCount || 1, tau = opt.target || 0.01, V = scriptKeep.length, sk = i => scriptKeep[i] === "1" || scriptKeep[i] === true;
+    const encs = lines.map(l => encode(T, l));
+    const est = arr => { const cnt = new Map(); let N = 0; for (const e of arr) for (const i of e) { cnt.set(i, (cnt.get(i) || 0) + 1); N++; }
+      const nc = new Map(); for (const [i, c] of cnt) if (c <= m && i < V && sk(i) && !isAlways(i)) nc.set(c, (nc.get(c) || 0) + 1);
+      let r = 0; for (let c = 0; c < m; c++) r += (c + 1) * (nc.get(c + 1) || 0); return {cnt, r: N ? r / N : 0}; };
+    const full = est(encs), keep = new Uint8Array(V); let kept0 = 0;
+    for (let i = 0; i < V; i++) if (sk(i) && (isAlways(i) || (full.cnt.get(i) || 0) >= m)) { keep[i] = 1; kept0++; }
+    const P = parentsOf(T), st = []; let added = 0; for (let i = 0; i < V; i++) if (keep[i]) st.push(i);
+    while (st.length) { const i = st.pop(), p = P.get(i); if (!p) continue; for (const j of p) if (j < V && !keep[j]) { keep[j] = 1; added++; st.push(j); } }
+    let need = null; const n = lines.length;
+    if (n >= 200) { const half = est(encs.slice(0, n >> 1)).r;
+      if (full.r <= tau) need = n; else if (half > full.r && full.r > 0) need = Math.ceil(n * Math.pow(full.r / tau, 1 / (Math.log(half / full.r) / Math.log(n / (n >> 1))))); }
+    return {kept: kept0 + added, keptSeen: kept0, closureAdded: added, predicted: full.r, target: tau, linesNeeded: need, ok: full.r <= tau, lines: n, tokens: encs.reduce((a, e) => a + e.length, 0), keep};
+  }
+  const loadJSON = j => (j && j.config && Array.isArray(j.vocab)) ? null : (j && j.model ? fromHF(j) : null);
+  return {load, loadJSON, encode, corpusTrim, parentsOf, jsRegex};
+})();
+if (typeof module !== "undefined") module.exports = TextTrim;
+</script>
 <script>// loaders.js — read only what describes a model: safetensors headers and PyTorch checkpoint indexes, via HTTP Range.
 // Weights are never downloaded. (c) 2026 Sattaya Singkul · MIT
 // Method: S. Singkul, "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories", 2026 (paper/).
@@ -2932,11 +3072,12 @@ function tokFromBytes(name, buf) {
     return {list: Array(ns).fill("<special>").concat(j.vocab.slice(0, size - ns).map(x => dec.decode(b64(x.token_bytes)))), bl: false}; }
   const list = []; for (const [k, i] of Object.entries(j)) list[i] = k; for (let i = 0; i < list.length; i++) if (list[i] == null) list[i] = "<unused>"; return {list, bl: true};
 }
+function tokLoad(name, buf) { const p = tokFromBytes(name, buf); try { p.tt = TextTrim.load(name, buf); } catch (e) { p.tt = null; } return p; }
 async function tokFromHub(repo) {
   let names = TOK_FILES;
   try { const r = await fetch(`https://huggingface.co/api/models/${repo}`); if (r.ok) { const sib = ((await r.json()).siblings || []).map(x => x.rfilename);
     names = TOK_FILES.filter(x => sib.includes(x)).concat(sib.filter(x => x.endsWith(".tiktoken") && !x.includes("/"))); } } catch (e) {}
-  for (const nm of names) { try { const r = await fetch(`https://huggingface.co/${repo}/resolve/main/${nm}`); if (!r.ok) continue; return tokFromBytes(nm, await r.arrayBuffer()); } catch (e) {} }
+  for (const nm of names) { try { const r = await fetch(`https://huggingface.co/${repo}/resolve/main/${nm}`); if (!r.ok) continue; return tokLoad(nm, await r.arrayBuffer()); } catch (e) {} }
   throw new Error("no tokenizer");
 }
 function renderCut() {
@@ -2945,15 +3086,15 @@ function renderCut() {
   const shapes = {}; for (const [n, x] of Object.entries(M.T)) shapes[n] = x.shape;
   const total = (I.totals && I.totals.params) || I.comps.reduce((a, c) => a + c.params, 0);
   const st = M.cut || (M.cut = {langs: ["th", "en"], text: false, keep: null, counts: null, n: null, msg: ""});
-  if (S.pendingTok && !st.pieces) { const j = S.pendingTok; S.pendingTok = null; setTimeout(() => { try { st.pieces = cutParse(j); const r = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}); st.n = r.total; st.keep = r.keep(st.langs.includes("en") ? st.langs : st.langs.concat("en")); renderCut(); } catch (e) {} }, 0); }
-  let P; try { P = Plan.plan(I, shapes, M.cfg || {}, {total, keep_tokens: st.keep, tok_pieces: st.n, name: M.label || ""}); } catch (e) { box.style.display = "none"; return; }
+  if (S.pendingTok && !st.pieces) { const j = S.pendingTok; S.pendingTok = null; setTimeout(() => { try { st.pieces = cutParse(j); try { st.pieces.tt = TextTrim.loadJSON(j); } catch (e) {} const r = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}); st.n = r.total; st.keep = r.keep(st.langs.includes("en") ? st.langs : st.langs.concat("en")); renderCut(); } catch (e) {} }, 0); }
+  let P; try { P = Plan.plan(I, shapes, M.cfg || {}, {total, keep_tokens: st.corp ? st.corp.kept : st.keep, tok_pieces: st.n, name: M.label || ""}); } catch (e) { box.style.display = "none"; return; }
   const pc = x => (100 * x / total).toFixed(x / total < 0.01 ? 1 : 0) + "%", n0 = x => x.toLocaleString("en-US");
   const kind = id => /vision|visual|image|siglip|vit/i.test(id) ? L2("ส่วนภาพ (vision tower)", "vision") : /audio|speech|whisper|conformer/i.test(id) ? L2("ส่วนเสียง (audio tower)", "audio") : L2("ส่วนอินพุต", "input");
   let cut = 0;
   const items = P.levers.map(l => {
     let title, det, how, saves = l.saves;
     if (l.id === "vocab") { title = t("cut_vocab_t"); det = t("cut_vocab_d", {v: n0(l.vocab), r: n0(l.row_cost), parts: P.vocab.tables.map(x => `${x.what} ${n0(x.width)}`).join(" + ")});
-      if (st.keep != null) det += " " + t("cut_vocab_k", {n: n0(st.n), k: n0(st.keep), s: fP(saves), p: pc(saves)}); how = t("cut_vocab_h"); }
+      if (st.keep != null) det += " " + t(st.corp ? "cut_vocab_kc" : "cut_vocab_k", {n: n0(st.n), k: n0(st.corp ? st.corp.kept : st.keep), ks: n0(st.keep), s: fP(saves), p: pc(saves)}); how = t(st.corp ? "cut_vocab_hc" : "cut_vocab_h"); }
     else if (l.id === "ple") { const tb = P.vocab.tables.filter(x => x.what.startsWith("per-layer")); title = t("cut_ple_t"); det = t("cut_ple_d", {n: tb.map(x => x.name).join(", "), s: fP(l.params), p: pc(l.params), w: n0(tb[0].width)}); how = t("cut_ple_h"); }
     else if (l.id.startsWith("tower:")) { const id = l.id.slice(6); title = t("cut_tower_t", {k: kind(id)}); det = t("cut_tower_d", {n: l.detail.split(":")[0].replace(" with ", " + "), s: fP(l.params)}); how = t("cut_tower_h"); if (!st.text) saves = null; }
     else if (l.id === "kv_shared") { title = t("cut_kvs_t"); det = t("cut_kvs_d", {n: P.kv.shared}); how = t("cut_kvs_h"); }
@@ -2969,21 +3110,43 @@ function renderCut() {
   const hasVocab = P.levers.some(l => l.id === "vocab"), hasTower = P.levers.some(l => l.id.startsWith("tower:"));
   box.innerHTML = `<h3>${esc(t("cut_h"))}</h3><p class="dim">${esc(t("cut_lead"))}</p>
     ${hasVocab ? `<div class="chips"><span>${esc(t("cut_langs"))}</span>${LS.map(l => `<button data-cl="${l}" class="${st.langs.includes(l) ? "on" : ""}">${l.toUpperCase()}</button>`).join("")}
-      ${repo ? `<button id="cutGo">${esc(t("cut_count"))}</button>` : ""}<label>${esc(t("cut_file"))}<input type="file" id="cutFile" hidden></label><span class="dim" id="cutMsg">${esc(st.msg)}</span></div>${st.langs.includes("en") ? "" : `<p class="note">${esc(t("cut_latin"))}</p>`}` : ""}
+      ${repo ? `<button id="cutGo">${esc(t("cut_count"))}</button>` : ""}<label>${esc(t("cut_file"))}<input type="file" id="cutFile" hidden></label><span class="dim" id="cutMsg">${esc(st.msg)}</span></div>${st.langs.includes("en") ? "" : `<p class="note">${esc(t("cut_latin"))}</p>`}${st.pieces ? textBlock(st, repo) : ""}` : ""}
     ${hasTower ? `<div class="chips"><label><input type="checkbox" id="cutText" ${st.text ? "checked" : ""}> ${esc(t("cut_text"))}</label></div>` : ""}
     ${items.length ? `<div class="cutl">${items.map(x => x.html).join("")}</div>` : `<p>${esc(t("cut_none"))}</p>`}
     ${cut ? `<div class="cutsum">${esc(t("cut_sum", {a: fP(total), b: fP(total - cut), c: fB((total - cut) * 2), d: fB((total - cut) / 2)}))}</div>` : ""}${kvLine}`;
   if (st.n && P.vocab && st.n > P.vocab.size) { const m = $("#cutMsg"); if (m) m.textContent = t("cut_mismatch", {n: st.n.toLocaleString(), v: P.vocab.size.toLocaleString()}); }
   const withLatin = L => L.includes("en") ? L : L.concat("en");   // Latin names, numbers and code appear in text of every language
-  const count = pieces => { const r = Plan.vocabScripts(pieces.list, {byte_level: pieces.bl}); st.n = r.total; st.counts = r.counts; st.keep = r.keep(withLatin(st.langs)); st.msg = ""; st.pieces = pieces; renderCut(); };
+  const count = pieces => { const r = Plan.vocabScripts(pieces.list, {byte_level: pieces.bl}); st.n = r.total; st.counts = r.counts; st.keep = r.keep(withLatin(st.langs)); st.msg = ""; st.pieces = pieces; st.corp = null; st.rerun = !!st.corpLines; renderCut(); };
   const parse = cutParse;
   $$("#cutBox [data-cl]").forEach(b => b.onclick = () => { const l = b.dataset.cl; st.langs = st.langs.includes(l) ? st.langs.filter(x => x !== l) : st.langs.concat(l);
-    if (st.pieces) { st.keep = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}).keep(withLatin(st.langs)); } renderCut(); });
+    if (st.pieces) { st.keep = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}).keep(withLatin(st.langs)); } st.corp = null; st.rerun = !!st.corpLines; renderCut(); });
   const go = $("#cutGo"); if (go) go.onclick = async () => { st.msg = t("cut_loading"); $("#cutMsg").textContent = st.msg;
     try { count(await tokFromHub(repo)); }
     catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
-  const f = $("#cutFile"); if (f) f.onchange = async () => { const F = f.files[0]; if (!F) return; try { count(tokFromBytes(F.name, await (/\.gguf$/i.test(F.name) ? F.slice(0, 96 * 2 ** 20) : F).arrayBuffer())); } catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
+  const f = $("#cutFile"); if (f) f.onchange = async () => { const F = f.files[0]; if (!F) return; try { const isG = /\.gguf$/i.test(F.name); const buf = await (isG ? F.slice(0, 96 * 2 ** 20) : F).arrayBuffer(); count(isG ? tokFromBytes(F.name, buf) : tokLoad(F.name, buf)); } catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
   const tx = $("#cutText"); if (tx) tx.onchange = () => { st.text = tx.checked; renderCut(); };
+  const runText = lines => { lines = lines.map(x => x.trim()).filter(Boolean); if (!lines.length || !st.pieces || !st.pieces.tt) return;
+    st.corpLines = lines; const pcs = st.pieces.list, v = Plan.vocabScripts(pcs, {byte_level: st.pieces.bl}), al = v.mask([]);
+    const isA = i => al[i] === "1" || String(pcs[i] || "").replace(/\u2581|\u0120/g, "").length <= 1;
+    $("#ctMsg").textContent = t("cut_t_run"); setTimeout(() => { try { const r = TextTrim.corpusTrim(st.pieces.tt, lines, v.mask(withLatin(st.langs)), isA, {target: st.tau || 0.01}); delete r.keep; st.corp = r; } catch (e) { st.corp = null; $("#ctMsg").textContent = t("cut_t_err"); return; } renderCut(); }, 20); };
+  const tb = $("#ctGo"); if (tb) tb.onclick = () => runText($("#ctArea").value.split("\n"));
+  const tf = $("#ctFile"); if (tf) tf.onchange = async () => { const F = tf.files[0]; if (!F) return; const txt = await F.text(); $("#ctArea").value = txt.split("\n").slice(0, 200).join("\n"); runText(txt.split("\n")); };
+  const tc = $("#ctClear"); if (tc) tc.onclick = () => { st.corp = null; st.corpLines = null; renderCut(); };
+  const ts = $("#ctTau"); if (ts) ts.onchange = () => { st.tau = +ts.value; if (st.corpLines) runText(st.corpLines); };
+  if (st.rerun && st.corpLines && st.pieces && st.pieces.tt) { st.rerun = false; runText(st.corpLines); } else st.rerun = false;
+}
+function textBlock(st, repo) {
+  const r = st.corp, langs = (st.langs.includes("en") ? st.langs : st.langs.concat("en")).join(",");
+  if (!st.pieces.tt) return `<div class="ctext"><b>${esc(t("cut_t_h"))}</b><p class="dim">${esc(t("cut_t_nofmt"))}</p></div>`;
+  const pct = x => (100 * x).toFixed(x < 0.001 ? 3 : 2) + "%";
+  const res = r ? `<p>${esc(t("cut_t_res", {n: r.lines.toLocaleString(), seen: r.keptSeen.toLocaleString(), add: r.closureAdded.toLocaleString(), k: r.kept.toLocaleString()}))}</p>
+    <p class="cert ${r.ok ? "ok" : "no"}">${esc(t(r.ok ? "cut_t_ok" : "cut_t_more", {p: pct(r.predicted), tau: pct(r.target), need: r.linesNeeded ? r.linesNeeded.toLocaleString() : "?"}))}${r.lines < 1000 ? " " + esc(t("cut_t_few")) : ""}</p>
+    <p class="dim">${esc(t("cut_t_export"))}<br><code>pip install ai-model-explorer &amp;&amp; ai-model-explorer tax ${esc(repo || "REPO")} --lang ${esc(langs)} --corpus my_text.txt --target ${r.target} --export trimmed/</code></p>` : "";
+  return `<div class="ctext"><b>${esc(t("cut_t_h"))}</b><p class="dim">${esc(t("cut_t_lead"))}</p>
+    <textarea id="ctArea" placeholder="${esc(t("cut_t_ph"))}">${esc((st.corpLines || []).slice(0, 200).join("\n"))}</textarea>
+    <div class="chips"><button id="ctGo">${esc(t("cut_t_go"))}</button><label>${esc(t("cut_t_file"))}<input type="file" id="ctFile" accept=".txt,.csv,.jsonl,text/*" hidden></label>
+    <label>${esc(t("cut_t_tau"))} <select id="ctTau">${[0.005, 0.01, 0.02].map(x => `<option value="${x}" ${(st.tau || 0.01) === x ? "selected" : ""}>${x * 100}%</option>`).join("")}</select></label>
+    ${r ? `<button id="ctClear">${esc(t("cut_t_clear"))}</button>` : ""}<span class="dim" id="ctMsg"></span></div>${res}</div>`;
 }
 
 // ================================================================== concepts (numbers from the selected model)

@@ -151,6 +151,7 @@ The contributions, in short:
 | **Numbers** | width, layers, heads, KV heads, head size, FFN width, experts and active experts, vocabulary, KV-cache bytes per token, exact parameter count, bytes as stored |
 | **Provenance** | every value marked as measured from the weights, read from `config.json` and checked, or estimated |
 | **Web views** | anatomy, a numbered big picture with a play-through of each part's input and output, a layer map drawn to scale, lenses for weights, compute, TFLite ops, precision and fragility, and a copyable report |
+| **Where to cut** | size levers read from the weights (vocabulary, per-layer embeddings, unused towers, shared-KV projections, feed-forward, experts); vocabulary priced for the languages you serve from the model's tokenizer, and trimmed further with your own text in the browser: merge-closed keep set and a certificate of how much new text will be split differently (tokenizer.json, tiktoken and Tekken; the Python package also handles SentencePiece and GGUF and writes the trimmed tokenizer) |
 
 Inputs: a Hugging Face repo id or URL, `.safetensors` files, `.tflite` (LiteRT) files with their real op graph, or a pasted `config.json`. The interface is in English and Thai.
 
