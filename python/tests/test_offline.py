@@ -259,3 +259,15 @@ def test_trim_certificate_good_turing():
     assert c2["certificate"] == "ok"
     p2 = Model._gt_unseen(cnt, sum(cnt.values()), cand, 2)   # min_count 2 also removes pieces seen once: (1*N1 + 2*N2)/N
     assert p2 >= p
+
+
+def test_spm_bpe_merge_parents():
+    from ai_model_explorer._tok import _spm_bpe_parents
+    pieces = ["<unk>", "a", "b", "c", "ab", "bc", "abc", "\u2581", "\u2581ab"]
+    scores = [0, 0, 0, 0, -1.0, -2.0, -3.0, 0, -4.0]
+    types = [2, 1, 1, 1, 1, 1, 1, 1, 1]
+    par = _spm_bpe_parents(pieces, scores, types)
+    assert par[4] == (1, 2)          # ab = a + b
+    assert par[6] == (4, 3)          # abc: ab (score -1) beats bc (-2), then ab + c
+    assert par[8] == (7, 4)          # \u2581ab = \u2581 + ab
+    assert 5 in par and 0 not in par

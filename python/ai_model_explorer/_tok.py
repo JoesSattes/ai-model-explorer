@@ -49,6 +49,14 @@ class Tok:
                     i = idx.get(a + b)
                     if i is not None and i not in par and a in idx and b in idx:
                         par[i] = (idx[a], idx[b])
+            if self.kind in ("spm", "gguf") and not par:
+                sc, ty = self.meta.get("scores"), self.meta.get("types")
+                if self.kind == "gguf" and _gguf_strings(self.path, "tokenizer.ggml.model") == "llama":
+                    sc, ty = _gguf_strings(self.path, "tokenizer.ggml.scores"), _gguf_strings(self.path, "tokenizer.ggml.token_type")
+                elif self.kind == "spm" and not self.meta.get("spm_bpe"):
+                    sc = None  # Unigram: no merges, nothing to close
+                if sc:
+                    par = _spm_bpe_parents(self.pieces, sc, ty)
             elif self.kind in ("tiktoken", "tekken"):
                 ranks, off = self.meta["ranks"], self.meta.get("offset", 0)
                 for tb, r in ranks.items():
@@ -173,18 +181,62 @@ def _varint(b: bytes, i: int):
             return r, i
 
 
+def _spm_bpe_parents(pieces, scores, types=None) -> dict:
+    """SentencePiece BPE merges the adjacent pair with the highest piece score. The parents of a piece are the last
+    merge when the piece is encoded on its own; pieces that do not rebuild from their characters get none."""
+    norm = {}
+    for i, q in enumerate(pieces):
+        if (types is None or types[i] in (1, None)) and q not in norm:
+            norm[q] = i
+    par = {}
+    for q, i in norm.items():
+        if len(q) < 2:
+            continue
+        parts, last = list(q), None
+        while len(parts) > 1:
+            best, bj = None, -1
+            for j in range(len(parts) - 1):
+                k = norm.get(parts[j] + parts[j + 1])
+                if k is not None and (best is None or scores[k] > best):
+                    best, bj = scores[k], j
+            if bj < 0:
+                break
+            last = (parts[bj], parts[bj + 1])
+            parts[bj:bj + 2] = [parts[bj] + parts[bj + 1]]
+        if len(parts) == 1 and last and last[0] in norm and last[1] in norm:
+            par[i] = (norm[last[0]], norm[last[1]])
+    return par
+
+
 def _from_sentencepiece(path: str) -> Tok:
     """ModelProto: field 1 = repeated SentencePiece {1: piece, 2: score, 3: type}. Type 2/3/4/6 = unknown/control/user/byte."""
     with open(path, "rb") as f:
         b = f.read()
-    i, pieces = 0, []
+    i, pieces, scores, types, bpe = 0, [], [], [], False
     while i < len(b):
         key, i = _varint(b, i)
         fn, wt = key >> 3, key & 7
         if wt == 2:
             n, i = _varint(b, i)
+            if fn == 2:  # trainer_spec: field 3 = model_type (1 unigram, 2 bpe)
+                sub, j = b[i:i + n], 0
+                while j < len(sub):
+                    k2, j = _varint(sub, j)
+                    f2, w2 = k2 >> 3, k2 & 7
+                    if w2 == 0:
+                        val, j = _varint(sub, j)
+                        if f2 == 3:
+                            bpe = val == 2
+                    elif w2 == 2:
+                        m, j = _varint(sub, j); j += m
+                    elif w2 == 5:
+                        j += 4
+                    elif w2 == 1:
+                        j += 8
+                    else:
+                        break
             if fn == 1:
-                sub, j, piece, typ = b[i:i + n], 0, "", 1
+                sub, j, piece, typ, sc = b[i:i + n], 0, "", 1, 0.0
                 while j < len(sub):
                     k2, j = _varint(sub, j)
                     f2, w2 = k2 >> 3, k2 & 7
@@ -194,6 +246,8 @@ def _from_sentencepiece(path: str) -> Tok:
                             piece = sub[j:j + m].decode("utf-8", errors="replace")
                         j += m
                     elif w2 == 5:
+                        if f2 == 2:
+                            sc = struct.unpack("<f", sub[j:j + 4])[0]
                         j += 4
                     elif w2 == 0:
                         val, j = _varint(sub, j)
@@ -204,6 +258,7 @@ def _from_sentencepiece(path: str) -> Tok:
                     else:
                         break
                 pieces.append("<" + piece.strip("<>") + ">" if typ in (2, 3) else piece)
+                scores.append(sc); types.append(typ)
             i += n
         elif wt == 0:
             _, i = _varint(b, i)
@@ -213,11 +268,11 @@ def _from_sentencepiece(path: str) -> Tok:
             i += 8
         else:
             break
-    return Tok(pieces, False, "spm", path)
+    return Tok(pieces, False, "spm", path, {"scores": scores, "types": types, "spm_bpe": bpe})
 
 
 def _gguf_strings(path: str, want: str):
-    """One string-array key from a GGUF header (used for tokenizer.ggml.merges)."""
+    """One array or string key from a GGUF header (tokenizer.ggml.merges / .scores / .token_type / .model)."""
     with open(path, "rb") as f:
         if f.read(4) != b"GGUF":
             return None
@@ -242,6 +297,8 @@ def _gguf_strings(path: str, want: str):
                         f.seek(rd_n(), 1)
                     return None
                 if et in SIZES:
+                    if keep and et in (4, 5, 6):
+                        return list(struct.unpack("<" + {4: "I", 5: "i", 6: "f"}[et] * n, f.read(4 * n)))
                     f.seek(SIZES[et] * n, 1)
                 else:
                     for _ in range(n):

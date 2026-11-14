@@ -132,7 +132,9 @@ how often they appear as tokens is not enough, because intermediate pieces that 
 as tokens; dropping them makes the pieces built from them unreachable, so their rows are wasted and words are split
 further than intended. In our measurements this doubles to triples the real re-split rate (German on Qwen: 7.1% instead
 of 2.4%; English web text: about 25% instead of 9%); closing the set costs 2-30% more kept pieces and brings the real
-rate back to the estimate.
+rate back to the estimate. Merge parents are read from `tokenizer.json`, GGUF headers, tiktoken/Tekken ranks, and
+SentencePiece BPE models (`.model` files and GGUF `llama` vocabularies, where BPE merges the pair with the highest
+piece score). SentencePiece Unigram has no merges, so its keep sets need no closure.
 
 Every corpus result also carries a **trim certificate**: a Good-Turing estimate, from your text alone, of the share of
 tokens that new text of the same kind will see re-split, and how many lines of text would bring that under a target

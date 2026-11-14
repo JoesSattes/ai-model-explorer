@@ -669,7 +669,7 @@ function renderCut() {
   const go = $("#cutGo"); if (go) go.onclick = async () => { st.msg = t("cut_loading"); $("#cutMsg").textContent = st.msg;
     try { count(await tokFromHub(repo)); }
     catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
-  const f = $("#cutFile"); if (f) f.onchange = async () => { const F = f.files[0]; if (!F) return; try { const isG = /\.gguf$/i.test(F.name); const buf = await (isG ? F.slice(0, 96 * 2 ** 20) : F).arrayBuffer(); count(isG ? tokFromBytes(F.name, buf) : tokLoad(F.name, buf)); } catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
+  const f = $("#cutFile"); if (f) f.onchange = async () => { const F = f.files[0]; if (!F) return; try { const isG = /\.gguf$/i.test(F.name); const buf = await (isG ? F.slice(0, 96 * 2 ** 20) : F).arrayBuffer(); count(tokLoad(F.name, buf)); } catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
   const tx = $("#cutText"); if (tx) tx.onchange = () => { st.text = tx.checked; renderCut(); };
   const runText = lines => { lines = lines.map(x => x.trim()).filter(Boolean); if (!lines.length || !st.pieces || !st.pieces.tt) return;
     st.corpLines = lines; const pcs = st.pieces.list, v = Plan.vocabScripts(pcs, {byte_level: st.pieces.bl}), al = v.mask([]);
