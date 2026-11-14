@@ -506,7 +506,7 @@ class Model:
         bpp = {k: (bk[k]["bytes"] / bk[k]["params"]) if bk.get(k, {}).get("params") else 2.0 for k in ("embed", "head")}
         tables, p_rm, b_rm, b_tab = [], 0, 0.0, 0.0
         for x in voc["tables"]:
-            pb = bpp["head" if x["kind"] == "head" else "embed"]
+            pb = x.get("bpp") or bpp["head" if x["kind"] == "head" else "embed"]
             rm = removed * x["width"]
             tables.append({"name": x["name"], "what": x["what"], "width": x["width"], "params": x["params"],
                            "bytes": x["params"] * pb, "removable_params": rm, "removable_bytes": rm * pb})

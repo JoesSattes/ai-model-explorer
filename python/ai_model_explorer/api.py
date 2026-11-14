@@ -97,6 +97,82 @@ def _remote(repo: str, hub: Hub, info: Optional[dict] = None, cache: bool = True
     return mf["tensors"], cfg, mf["read"], mf["nfiles"], {"engine": eng, **extra_info, "duplicates_skipped": mf.get("duplicates") or None}
 
 
+# ggml tensor types: name, elements per block, bytes per block
+_GGML = {0: ("F32", 1, 4), 1: ("F16", 1, 2), 2: ("Q4_0", 32, 18), 3: ("Q4_1", 32, 20), 6: ("Q5_0", 32, 22), 7: ("Q5_1", 32, 24),
+         8: ("Q8_0", 32, 34), 9: ("Q8_1", 32, 36), 10: ("Q2_K", 256, 84), 11: ("Q3_K", 256, 110), 12: ("Q4_K", 256, 144),
+         13: ("Q5_K", 256, 176), 14: ("Q6_K", 256, 210), 15: ("Q8_K", 256, 292), 16: ("IQ2_XXS", 256, 66), 17: ("IQ2_XS", 256, 74),
+         18: ("IQ3_XXS", 256, 98), 19: ("IQ1_S", 256, 50), 20: ("IQ4_NL", 32, 18), 21: ("IQ3_S", 256, 110), 22: ("IQ2_S", 256, 82),
+         23: ("IQ4_XS", 256, 136), 24: ("I8", 1, 1), 25: ("I16", 1, 2), 26: ("I32", 1, 4), 27: ("I64", 1, 8), 28: ("F64", 1, 8),
+         29: ("IQ1_M", 256, 56), 30: ("BF16", 1, 2), 34: ("TQ1_0", 256, 54), 35: ("TQ2_0", 256, 66), 39: ("MXFP4", 32, 17)}
+
+
+def _gguf_inspect(path: Path) -> dict:
+    """The token tables and sizes of a GGUF file, from its header (tensor infos); no tensor data is read.
+    Enough for vocab_tax(): llama.cpp names the tables token_embd, output (absent when tied) and per_layer_token_embd."""
+    with open(path, "rb") as f:
+        if f.read(4) != b"GGUF":
+            raise ValueError(f"{path} is not a GGUF file")
+        ver = struct.unpack("<I", f.read(4))[0]
+        rn = (lambda: struct.unpack("<Q", f.read(8))[0]) if ver >= 2 else (lambda: struct.unpack("<I", f.read(4))[0])
+        n_t, n_kv = rn(), rn()
+        SZ = {0: 1, 1: 1, 2: 2, 3: 2, 4: 4, 5: 4, 6: 4, 7: 1, 10: 8, 11: 8, 12: 8}
+        rs = lambda: f.read(rn()).decode("utf-8", errors="replace")
+        kv = {}
+
+        def val(t):
+            if t == 8:
+                return rs()
+            if t == 9:
+                et, n = struct.unpack("<I", f.read(4))[0], rn()
+                if et == 8:
+                    for _ in range(n):
+                        f.seek(rn(), 1)
+                elif et == 9:
+                    for _ in range(n):
+                        val(9)
+                else:
+                    f.seek(SZ[et] * n, 1)
+                return None
+            b = f.read(SZ[t])
+            return struct.unpack("<" + {0: "B", 1: "b", 2: "H", 3: "h", 4: "I", 5: "i", 6: "f", 7: "?", 10: "Q", 11: "q", 12: "d"}[t], b)[0]
+        for _ in range(n_kv):
+            k = rs(); kv[k] = val(struct.unpack("<I", f.read(4))[0])
+        tens = []
+        for _ in range(n_t):
+            name = rs(); nd = struct.unpack("<I", f.read(4))[0]
+            dims = [rn() for _ in range(nd)]
+            typ = struct.unpack("<I", f.read(4))[0]; f.read(8)
+            tn, bs, bb = _GGML.get(typ, (f"type{typ}", 1, 2))
+            n = 1
+            for d in dims:
+                n *= d
+            tens.append({"name": name, "dims": dims, "dtype": tn, "params": n, "bytes": n // bs * bb})
+    arch = kv.get("general.architecture")
+    by = {t["name"]: t for t in tens}
+    emb = by.get("token_embd.weight")
+    tables, kinds = [], {"embed": {"params": 0, "bytes": 0}, "head": {"params": 0, "bytes": 0}, "other": {"params": 0, "bytes": 0}}
+    V = emb["dims"][1] if emb and len(emb["dims"]) > 1 else 0
+    for nm, kind, what in (("token_embd.weight", "embed", "input embedding"), ("output.weight", "head", "output head (untied)"),
+                           ("per_layer_token_embd.weight", "embed", "per-layer embeddings")):
+        t = by.get(nm)
+        if t and len(t["dims"]) > 1 and t["dims"][1] == V:
+            tables.append({"name": nm, "what": what, "kind": kind, "width": t["dims"][0], "params": t["params"],
+                           "dtype": t["dtype"], "bpp": t["bytes"] / t["params"]})
+    for t in tens:
+        k = next((x["kind"] for x in tables if x["name"] == t["name"]), "other")
+        kinds[k]["params"] += t["params"]; kinds[k]["bytes"] += t["bytes"]
+    dt = {}
+    for t in tens:
+        dt[t["dtype"]] = dt.get(t["dtype"], 0) + t["bytes"]
+    return {"source": {"kind": "local", "path": str(path.resolve()), "format": "gguf"}, "family": arch,
+            "name": kv.get("general.name"), "totals": {"params": sum(t["params"] for t in tens), "bytes": sum(t["bytes"] for t in tens)},
+            "breakdown": {"by_kind": {k: v for k, v in kinds.items() if v["params"]}},
+            "plan": {"vocab": {"size": V, "tables": tables, "tied": "output.weight" not in by}} if tables else {},
+            "quantization": {"gguf_types_by_bytes": dict(sorted(dt.items(), key=lambda x: -x[1]))},
+            "hyperparameters": {k.split(".", 1)[1]: v for k, v in kv.items() if arch and k.startswith(arch + ".") and isinstance(v, (int, float))},
+            "tensors_read": len(tens), "note": "GGUF: token tables and sizes from the header; the full anatomy reads safetensors"}
+
+
 def inspect(model: Union[str, os.PathLike], token: Optional[str] = None, config: Optional[dict] = None,
             include_tensors: bool = False, cache: bool = True) -> dict:
     """Recover a model's anatomy without downloading its weights.
@@ -109,6 +185,8 @@ def inspect(model: Union[str, os.PathLike], token: Optional[str] = None, config:
     types, edges between components, quantization, the config check, and how many bytes were read.
     """
     s = str(model)
+    if os.path.isfile(s) and s.lower().endswith(".gguf"):
+        return _gguf_inspect(Path(s))
     if os.path.exists(s):
         tensors, cfg, read, nfiles, extra = _local(Path(s))
         eng = Engine()

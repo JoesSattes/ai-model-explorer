@@ -111,7 +111,9 @@ The website shows the same plan under "Where to cut" (pick config.json and token
 
 The vocabulary tax works for any model with token tables and any common tokenizer format: `tokenizer.json`,
 SentencePiece `tokenizer.model`, `vocab.json`, `*.tiktoken`, Mistral `tekken.json` and llama.cpp `.gguf` (only the
-tokenizer file is downloaded, never the weights). `coverage=True` tokenizes bundled test sentences (Parallel UD
+tokenizer file is downloaded, never the weights). A local `.gguf` model works directly: its header gives the token tables
+with their storage types (Q4_K, Q8_0, F16, ...), so the tax is in the bytes the file actually holds
+(`ai-model-explorer tax model.gguf --lang th,en --corpus my_text.txt`). Writing a trimmed GGUF is not supported yet. `coverage=True` tokenizes bundled test sentences (Parallel UD
 treebanks in 21 languages, plus Thai social-media text) and counts the tokens that would land in the removed rows;
 it needs one of `tokenizers`, `sentencepiece`, `tiktoken` or `llama-cpp-python`.
 

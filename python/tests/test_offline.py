@@ -271,3 +271,31 @@ def test_spm_bpe_merge_parents():
     assert par[6] == (4, 3)          # abc: ab (score -1) beats bc (-2), then ab + c
     assert par[8] == (7, 4)          # \u2581ab = \u2581 + ab
     assert 5 in par and 0 not in par
+
+
+def _write_gguf(path, tensors):
+    import struct
+    def s(x):
+        b = x.encode()
+        return struct.pack("<Q", len(b)) + b
+    out = b"GGUF" + struct.pack("<IQQ", 3, len(tensors), 1) + s("general.architecture") + struct.pack("<I", 8) + s("llama")
+    for name, dims, typ in tensors:
+        out += s(name) + struct.pack("<I", len(dims)) + b"".join(struct.pack("<Q", d) for d in dims) + struct.pack("<IQ", typ, 0)
+    path.write_bytes(out)
+
+
+def test_gguf_vocab_tax(tmp_path):
+    from ai_model_explorer import explore
+    p = tmp_path / "m.gguf"
+    _write_gguf(p, [("token_embd.weight", [64, 100], 8), ("output.weight", [64, 100], 1), ("blk.0.attn_q.weight", [64, 64], 1)])
+    m = explore(str(p))
+    tabs = m.data["plan"]["vocab"]["tables"]
+    assert [t["name"] for t in tabs] == ["token_embd.weight", "output.weight"]
+    assert tabs[0]["bpp"] == 34 / 32 and tabs[1]["bpp"] == 2       # Q8_0 and F16
+    vocab = {f"a{i}": i for i in range(50)}
+    vocab.update({chr(0x0E01 + i): 50 + i for i in range(40)})        # Thai letters
+    vocab.update({chr(0x0410 + i): 90 + i for i in range(10)})        # Cyrillic letters
+    tok = {"model": {"type": "BPE", "vocab": vocab, "merges": []}}
+    r = m.vocab_tax(["th"], tokenizer=tok)
+    assert r["removed_rows"] == 10
+    assert abs(r["removable_bytes"] - 10 * 64 * (34 / 32 + 2)) < 1e-6
