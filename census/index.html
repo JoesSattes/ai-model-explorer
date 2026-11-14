@@ -164,7 +164,7 @@ html[data-theme=dark] tbody tr:hover td{background:rgba(255,255,255,.04)}
 <body>
 <nav class="top"><div class="wrap">
  <a class="brand" id="home" href="../"><img src="../assets/logo.svg" width="24" height="24" alt=""><span>AI Model Explorer</span></a>
- <a class="l" id="back" href="../">← <span data-t="nav_back">Explorer</span></a><a class="l" href="#board" data-t="bd_h">Deploy-Ready board</a><a class="l" href="#findings" data-t="nav_find">Findings</a><a class="l" href="#eco" data-t="nav_eco">Ecosystem</a><a class="l" href="#models" data-t="nav_models">Models</a><a class="l" href="#data" data-t="nav_data">Data</a>
+ <a class="l" id="back" href="../">← <span data-t="nav_back">Explorer</span></a><a class="l" href="#board" data-t="bd_h">Deploy-Ready board</a><a class="l" href="#findings" data-t="nav_find">Findings</a><a class="l" href="#eco" data-t="nav_eco">Ecosystem</a><a class="l" href="#vtax" data-t="nav_vt">Vocabulary tax</a><a class="l" href="#models" data-t="nav_models">Models</a><a class="l" href="#data" data-t="nav_data">Data</a>
  <span class="sp"></span>
  <button class="theme" id="themeBtn" type="button" aria-label="Theme"><svg class="sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
  <div class="lang" id="lang" role="group" aria-label="Language"><button data-l="th">TH</button><button data-l="en">EN</button></div>
@@ -219,6 +219,17 @@ html[data-theme=dark] tbody tr:hover td{background:rgba(255,255,255,.04)}
 </section>
 
 
+<section id="vtax" class="rv">
+ <h2 data-t="vt_h">The vocabulary tax</h2>
+ <p class="sub" data-t="vt_sub">Every user downloads the token tables for every language a model can write. The tax is the bytes in rows a deployment never uses, read from the weight headers and the tokenizer file, with no weights downloaded.</p>
+ <div class="icards" id="vtc"></div>
+ <div class="grid2" style="margin-top:16px">
+  <div class="card"><div class="ct" data-t="c5">Smaller models pay more</div><div class="cs" id="c5s"></div><div class="legend" id="lg5"></div><svg id="ch5" viewBox="0 0 560 300" width="100%"></svg></div>
+  <div class="card"><div class="ct" data-t="c6">Removable share, by language</div><div class="cs" id="c6s"></div><div class="legend" id="lg6"></div><svg id="ch6" viewBox="0 0 560 520" width="100%"></svg></div>
+ </div>
+ <p class="note" id="vtgo"></p>
+</section>
+
 <section id="models" class="rv">
  <h2 data-t="tbl_h">Models</h2>
  <p class="sub" data-t="tbl_sub">The most downloaded readable models in the census. Click a name to open its full anatomy.</p>
@@ -252,7 +263,7 @@ html[data-theme=dark] tbody tr:hover td{background:rgba(255,255,255,.04)}
 <div id="tip"></div>
 <script>
 const T={
- en:{eco_h:"The ecosystem in numbers",eco_sub:"What thousands of checkpoints show about how models are built, copied, stored and run. Shares come with a 95% confidence interval, and changes over time with a trend test. The method is in the paper; the code is under research/hub-census.",nav_eco:"Ecosystem",
+ en:{vt_h:"The vocabulary tax",vt_sub:"Every user downloads the token tables for every language a model can write. The tax is the bytes in rows a deployment never uses, read from the weight headers and the tokenizer file, with no weights downloaded.",c5:"Smaller models pay more",c6:"Removable share, by language",eco_h:"The ecosystem in numbers",eco_sub:"What thousands of checkpoints show about how models are built, copied, stored and run. Shares come with a 95% confidence interval, and changes over time with a trend test. The method is in the paper; the code is under research/hub-census.",nav_eco:"Ecosystem",nav_vt:"Vocabulary tax",
   e_copy_t:"Quantized copies get far more downloads than their share of repos",e_copy_w:(r,d,s)=>`Quantized copies are ${r} of Hub repositories but take ${d} of downloads; counting fine-tunes too, ${s} of downloads go to a derivative rather than an original release.`,
   e_same_t:"Most fine-tunes keep the anatomy",e_same_w:(q,v)=>`Same width, depth, heads, FFN and vocabulary as the parent; ${q} of quantized copies too. The most common change is the vocabulary (${v} of fine-tunes).`,
   e_lin_t:"One provider is the parent of nearly a quarter of derivatives",e_lin_w:(o,s)=>`${s} of the parent links among popular repos point to ${o} models, more than the next five providers combined. Counting repos therefore over-weights the design choices of a few providers.`,
@@ -297,7 +308,7 @@ const T={
   cols:["Model","Origin","Year","Family","Params","Storage","Width","Layers","Heads / KV","Experts","Vocab","KV/token","Config","Hub","Downloads"],
   moe:"mixture of experts",hybrid:"hybrid (state-space / linear attention)",gqa:"grouped-query attention",quantized:"published quantized",hd:"head size",vocab:"vocabulary (thousands)",
   gguf_only:"GGUF only (llama.cpp)",onnx_only:"ONNX only",no_weight_files:"no weight files",keras_or_other:"Keras / other",adapter:"adapter only",mlpackage_only:"Core ML only"},
- th:{eco_h:"ภาพรวม ecosystem",eco_sub:"checkpoint หลายพันตัวบอกอะไรเกี่ยวกับวิธีสร้าง ต่อยอด จัดเก็บ และรันโมเดล ค่าสัดส่วนแสดงช่วงความเชื่อมั่น 95% และการเปลี่ยนแปลงตามเวลามีการทดสอบแนวโน้มกำกับ วิธีการอยู่ใน paper ส่วนโค้ดอยู่ที่ research/hub-census",nav_eco:"ภาพรวม ecosystem",
+ th:{vt_h:"ภาษีคลังคำ (vocabulary tax)",vt_sub:"ผู้ใช้ทุกคนต้องโหลดตาราง token ของทุกภาษาที่โมเดลเขียนได้ ภาษีคือจำนวนไบต์ในแถวที่งานจริงไม่เคยใช้ วัดจาก header ของ weight กับไฟล์ tokenizer โดยไม่ต้องโหลด weight",c5:"โมเดลยิ่งเล็กยิ่งเสียมาก",c6:"สัดส่วนที่ตัดได้ แยกตามภาษา",eco_h:"ภาพรวม ecosystem",eco_sub:"checkpoint หลายพันตัวบอกอะไรเกี่ยวกับวิธีสร้าง ต่อยอด จัดเก็บ และรันโมเดล ค่าสัดส่วนแสดงช่วงความเชื่อมั่น 95% และการเปลี่ยนแปลงตามเวลามีการทดสอบแนวโน้มกำกับ วิธีการอยู่ใน paper ส่วนโค้ดอยู่ที่ research/hub-census",nav_eco:"ภาพรวม ecosystem",nav_vt:"ภาษีคลังคำ",
   e_copy_t:"ตัว quantize ได้ยอดดาวน์โหลดเกินสัดส่วนจำนวน repo",e_copy_w:(r,d,s)=>`repo ที่เป็นตัว quantize มีแค่ ${r} ของ Hub แต่มียอดดาวน์โหลด ${d} ของทั้งหมด เมื่อรวม fine-tune ด้วย ${s} ของยอดดาวน์โหลดไปที่โมเดลต่อยอด ไม่ใช่ตัวต้นฉบับ`,
   e_same_t:"Fine-tune ส่วนใหญ่ไม่เปลี่ยนโครงสร้าง",e_same_w:(q,v)=>`width, depth, heads, FFN และ vocabulary เท่ากับโมเดลต้นแบบทุกค่า (ตัว quantize: ${q}) ส่วนที่ถูกเปลี่ยนบ่อยที่สุดคือ vocabulary (${v} ของ fine-tune ทั้งหมด)`,
   e_lin_t:"ผู้พัฒนารายเดียวเป็นต้นแบบของโมเดลต่อยอดเกือบหนึ่งในสี่",e_lin_w:(o,s)=>`${s} ของลิงก์ไปยังโมเดลต้นแบบใน repo ยอดนิยมชี้ไปที่โมเดลของ ${o} มากกว่าอีก 5 รายถัดไปรวมกัน การนับ repo จึงสะท้อนการออกแบบของผู้พัฒนาไม่กี่รายมากเกินจริง`,
@@ -507,6 +518,30 @@ function charts(){const t=T[L],tr=I.trends.filter(r=>r.models>=30);
  lineChart($("#ch3a"),tr,[{k:"hd",c:"--s1",name:t.hd,v:r=>r.median_head_dim}],{yfmt:v=>String(v),H:220,W:280});
  lineChart($("#ch3b"),tr,[{k:"v",c:"--s1",name:t.vocab,v:r=>r.median_vocab/1000}],{yfmt:v=>String(v),H:220,W:280});
  const nw=Object.entries(I.no_weights_kind_popular||{}).sort((a,b)=>b[1]-a[1]);barChart($("#ch4"),nw.map(([k,v])=>({label:t[k]||k,v:Math.round(v*100),tip:`<b>${t[k]||k}</b>: ${pct(v)}%`})),{H:260})}
+let VT=null;
+const VLN={ar:["Arabic","อาหรับ"],cs:["Czech","เช็ก"],de:["German","เยอรมัน"],en:["English","อังกฤษ"],es:["Spanish","สเปน"],fa:["Persian","เปอร์เซีย"],fr:["French","ฝรั่งเศส"],he:["Hebrew","ฮีบรู"],hi:["Hindi","ฮินดี"],id:["Indonesian","อินโดนีเซีย"],it:["Italian","อิตาลี"],ja:["Japanese","ญี่ปุ่น"],ko:["Korean","เกาหลี"],nl:["Dutch","ดัตช์"],pl:["Polish","โปแลนด์"],pt:["Portuguese","โปรตุเกส"],ru:["Russian","รัสเซีย"],th:["Thai","ไทย"],tr:["Turkish","ตุรกี"],uk:["Ukrainian","ยูเครน"],ur:["Urdu","อูรดู"],zh:["Chinese","จีน"]};
+function vtax(){const el=$("#vtc");if(!VT||!el){if($("#vtax"))$("#vtax").style.display=VT?"":"none";return}$("#vtax").style.display="";
+ const th=L==="th",P1=VT.p1.bands,P2=VT.p2.bands,pc=v=>(v*100).toFixed(1)+"%",ls=VT.langs.slice().sort((a,b)=>b.text-a.text),tx=ls.map(x=>x.text),sc=VT.langs.filter(x=>x.l!=="zh"&&x.l!=="ja").map(x=>x.script),C=VT.closure,R=VT.cert;
+ const cards=[
+  {big:pc(P1[0].med),sub:th?"ของไบต์โมเดล ต่ำกว่า 0.5B":"of model bytes below 0.5B",t:th?"ภาษีถดถอย: โมเดลเล็กเสียสัดส่วนมากกว่า":"A regressive tax: small models lose the largest share",w:th?`งานไทย+อังกฤษ ใช้กฎตัวเขียน (ไม่เปลี่ยนการตัดคำเลย) ค่ามัธยฐานลดจาก ${pc(P1[0].med)} ในโมเดลต่ำกว่า 0.5B เหลือ ${pc(P1[3].med)} ในโมเดลเกิน 8B และ 10% ของโมเดลเล็กเสียเกิน ${pc(P1[0].p90)}`:`For a Thai and English deployment under the script rule, which changes no tokenization, the median falls from ${pc(P1[0].med)} below 0.5B parameters to ${pc(P1[3].med)} above 8B; one small model in ten loses more than ${pc(P1[0].p90)}.`,note:`95% CI [${pc(P1[0].ci[0])}, ${pc(P1[0].ci[1])}] · n = ${P1[0].n} · ${VT.p1.n.toLocaleString()} ${th?"โมเดล":"models"}`},
+  {big:pc(P2[0].text),sub:th?"ตัดได้ด้วยข้อความของคุณ":"removable with your own text",t:th?`ข้อความจริง 15,000 บรรทัดตัดได้มากกว่ากฎตัวเขียน ${Math.round(P2[0].text/P2[0].script)} เท่า`:`Your own text removes ${Math.round(P2[0].text/P2[0].script)}× more than the script rule`,w:th?`ตระกูล Gemma, Qwen, Llama 3, GPT-2 ต่ำกว่า 0.5B: กฎตัวเขียน ${pc(P2[0].script)} → เก็บเฉพาะชิ้นที่ข้อความใช้ ${pc(P2[0].text)} ทั้ง ${VT.langs.length} ภาษาได้ ${pc(Math.min(...tx))}–${pc(Math.max(...tx))} ที่ข้อความ 4,000 บรรทัด`:`Gemma, Qwen, Llama 3 and GPT-2 families below 0.5B: ${pc(P2[0].script)} by script, ${pc(P2[0].text)} keeping only the pieces the text uses. Across ${VT.langs.length} languages: ${pc(Math.min(...tx))}–${pc(Math.max(...tx))} with 4,000 lines.`,note:`n = ${P2[0].n} · ${VT.p2.n.toLocaleString()} ${th?"โมเดลในตระกูล BPE แบบ merge":"merge-based BPE models"}`},
+  {big:C.naive.toFixed(1)+"×",sub:th?"คำแตกจริง ÷ ที่คาด":"real ÷ expected re-split",t:th?"ต้องเก็บ merge parent ด้วย ไม่งั้นคำแตกเกินจริงเกือบสองเท่า":"Keep merge parents, or words split almost twice as often",w:th?`เก็บแค่ชิ้นที่เห็นในข้อความทำให้ชิ้นที่สร้างจากชิ้นกลางทางเกิดไม่ได้อีก คำแตกจริงสูงกว่าที่คาด ${C.naive.toFixed(1)} เท่า เก็บ parent ครบ (เพิ่มแถวราว ${pc(C.extra_rows)}) เหลือ ${C.closed} เท่า ใบรับรองทำนายอัตราคำแตกบนข้อความใหม่ได้ใกล้ของจริง (${R.ratio}×, r = ${R.r})`:`Keeping only the pieces seen in the text leaves pieces built from intermediates unreachable: the real re-split is ${C.naive.toFixed(1)}× the expected rate. Closing the set (about ${pc(C.extra_rows)} more rows) brings it to ${C.closed}×, and the trim certificate predicts the rate on new text (${R.ratio}×, r = ${R.r}).`,note:`n = ${C.n} ${th?"คู่โมเดล-ภาษา":"model-language pairs"} · ${th?"ใบรับรอง":"certificate"} n = ${R.n}`}];
+ el.innerHTML=cards.map(c=>`<div class="ic rv in"><div class="big">${c.big}<small>${c.sub}</small></div><h3>${c.t}</h3><p>${c.w}</p><p class="note" style="margin-top:0">${c.note}</p></div>`).join("");
+ const S=[{c:"--s3",name:th?"กฎตัวเขียน":"script rule"},{c:"--s1",name:th?"ข้อความของคุณ (merge-closed)":"your text (merge-closed)"}];
+ legend($("#lg5"),S);legend($("#lg6"),[{c:"--s3",name:th?"กฎตัวเขียน":"script rule"},{c:"--s1",name:th?"เพิ่มจากข้อความ 4,000 บรรทัด":"added by 4,000 lines of text"}]);
+ $("#c5s").textContent=th?"ค่ามัธยฐานของไบต์โมเดลที่ตัดได้ งานไทย+อังกฤษ แยกตามขนาดโมเดล (ข้อความ 15,000 บรรทัด)":"Median share of model bytes removable for Thai and English, by model size (15,000 lines of text)";
+ $("#c6s").textContent=th?"โมเดลต่ำกว่า 0.5B ชี้เพื่อดูอัตราคำที่แตกต่างไปบนข้อความใหม่":"Models below 0.5B parameters. Hover for the re-split rate on new text";
+ {const svg=$("#ch5"),W=560,H=300,Pd={l:44,r:12,t:16,b:34},top=Math.ceil(Math.max(...P2.map(b=>b.text))*10)/10,nt=Math.round(top*10),gw=(W-Pd.l-Pd.r)/P2.length,bw=Math.min(40,gw/2-10),Y=v=>H-Pd.b-(v/top)*(H-Pd.t-Pd.b);let o="";
+  for(let i=0;i<=nt;i++){const v=i/10,y=Y(v);o+=`<line class="gl" x1="${Pd.l}" x2="${W-Pd.r}" y1="${y}" y2="${y}"/><text x="${Pd.l-6}" y="${y+4}" text-anchor="end" font-size="11">${i*10}%</text>`}
+  P2.forEach((b,i)=>{const x0=Pd.l+i*gw+gw/2-bw-1;[[b.script,"--s3",S[0].name],[b.text,"--s1",S[1].name]].forEach(([v,c,nm],k)=>{const x=x0+k*(bw+2),y=Y(v),tip=`<b>${b.b}</b> · ${nm}: ${pc(v)}<br><span style='color:var(--dim)'>n = ${b.n}</span>`;
+   o+=`<path d="M${x},${H-Pd.b}V${y+4}a4,4 0 0 1 4,-4h${bw-8}a4,4 0 0 1 4,4V${H-Pd.b}Z" fill="${css(c)}" data-h="${encodeURIComponent(tip)}"/><rect x="${x-2}" y="${Pd.t}" width="${bw+4}" height="${H-Pd.t-Pd.b}" fill="transparent" data-h="${encodeURIComponent(tip)}"/><text x="${x+bw/2}" y="${y-6}" text-anchor="middle" font-size="11">${Math.round(v*100)}%</text>`});
+   o+=`<text x="${Pd.l+i*gw+gw/2}" y="${H-12}" text-anchor="middle" font-size="12">${b.b}</text>`});
+  svg.innerHTML=o;hover(svg)}
+ {const svg=$("#ch6"),W=560,rh=22,Pd={l:96,r:56,t:4,b:4},H=Pd.t+Pd.b+ls.length*rh,mx=Math.max(...tx)*1.05,X=v=>(v/mx)*(W-Pd.l-Pd.r);let o="";
+  ls.forEach((x,i)=>{const y=Pd.t+i*rh+4,bh=rh-8,ws=X(x.script),wt=X(x.text),nm=VLN[x.l]?VLN[x.l][th?1:0]:x.l,tip=`<b>${nm}</b><br>${S[0].name}: ${pc(x.script)}<br>${th?"ข้อความ 4,000 บรรทัด":"4,000 lines of text"}: ${pc(x.text)}<br>${th?"คำที่แตกต่างไปบนข้อความใหม่ (มัธยฐาน)":"re-split on new text (median)"}: ${(x.resplit*100).toFixed(2)}%`;
+   o+=`<text x="${Pd.l-8}" y="${y+bh/2+4}" text-anchor="end" font-size="12">${nm}</text><rect x="${Pd.l}" y="${y}" width="${Math.max(ws-1,1)}" height="${bh}" fill="${css("--s3")}"/><path d="M${Pd.l+ws+1},${y}h${Math.max(wt-ws-5,1)}a4,4 0 0 1 4,4v${bh-8}a4,4 0 0 1 -4,4h-${Math.max(wt-ws-5,1)}Z" fill="${css("--s1")}"/><rect x="${Pd.l}" y="${y-3}" width="${W-Pd.l-Pd.r}" height="${bh+6}" fill="transparent" data-h="${encodeURIComponent(tip)}"/><text x="${Pd.l+wt+6}" y="${y+bh/2+4}" font-size="11">${Math.round(x.text*100)}%</text>`});
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.innerHTML=o;hover(svg)}
+ $("#vtgo").innerHTML=th?`ลองกับโมเดลของคุณ: <a href="${link("Qwen/Qwen3-0.6B")}">เปิด Qwen3-0.6B</a> แล้วเลื่อนไปที่ “ลดขนาดตรงไหนได้บ้าง” วางข้อความจากงานจริง ทุกอย่างคำนวณในเบราว์เซอร์ หรือ <code>pip install ai-model-explorer</code> แล้ว <code>ai-model-explorer tax REPO --lang th --corpus my_text.txt --export trimmed/</code>`:`Try it on your model: <a href="${link("Qwen/Qwen3-0.6B")}">open Qwen3-0.6B</a> and scroll to “Where to cut”, then paste text from your workload; everything runs in the browser. Or <code>pip install ai-model-explorer</code> and <code>ai-model-explorer tax REPO --lang th --corpus my_text.txt --export trimmed/</code>.`}
 // ---- table
 const COLS=[["id",0],["origin",0],["y",1],["fam",0],["p",1],["q",0],["d",1],["L",1],["H",1],["E",1],["V",1],["kv",1],["cfg",0],["hub",1],["dl",1]];
 let sortK="dl",sortD=-1,page=0;const PS=50;
@@ -533,7 +568,7 @@ function filters(){const t=T[L],uniq=f=>[...new Set(M.map(f).filter(Boolean))],k
  $("#fk").innerHTML=`<option value="">${t.all_k}</option><option value="moe">${t.k_moe}</option><option value="hyb">${t.k_hyb}</option><option value="dense">${t.k_dense}</option><option value="lat">${t.k_lat} / GQA ≥ 8×</option><option value="nocfg">${t.k_nocfg}</option>`;
  ["#ffam","#fq","#fy","#fo","#fk","#fl"].forEach((x,i)=>$(x).value=keep[i]);
  $("#ids").innerHTML=M.map(m=>`<option value="${m.id}">`).join("")}
-function render(){POP=null;const pe=$("#prelim");pe.style.display=I.preliminary?"block":"none";pe.textContent=L==="th"?"ตัวเลขชุดนี้เป็นผลเบื้องต้น ระหว่างรอการรันรอบสุดท้ายที่แก้ข้อผิดพลาดแล้ว":"Preliminary numbers: the final run, with fixes to the recovery rules, is in progress.";kpis();countUp();board();findings();charts();memmap();filters();table();{const qm=new URLSearchParams(location.search).get("m");if(qm&&!$("#lookq").value){$("#lookq").value=qm;setTimeout(()=>$("#lookup").scrollIntoView({behavior:"smooth"}),300)}}if(!$("#lookq").value){const d=M.find(m=>/qwen3/i.test(m.id)&&isLM(m))||M[0];$("#lookq").value=d.id}lookup($("#lookq").value);const c=I.headline.crawled;$("#crawled").textContent=c?` · ${T[L].crawled} ${c}`:""}
+function render(){POP=null;const pe=$("#prelim");pe.style.display=I.preliminary?"block":"none";pe.textContent=L==="th"?"ตัวเลขชุดนี้เป็นผลเบื้องต้น ระหว่างรอการรันรอบสุดท้ายที่แก้ข้อผิดพลาดแล้ว":"Preliminary numbers: the final run, with fixes to the recovery rules, is in progress.";kpis();countUp();board();findings();charts();vtax();memmap();filters();table();{const qm=new URLSearchParams(location.search).get("m");if(qm&&!$("#lookq").value){$("#lookq").value=qm;setTimeout(()=>$("#lookup").scrollIntoView({behavior:"smooth"}),300)}}if(!$("#lookq").value){const d=M.find(m=>/qwen3/i.test(m.id)&&isLM(m))||M[0];$("#lookq").value=d.id}lookup($("#lookq").value);const c=I.headline.crawled;$("#crawled").textContent=c?` · ${T[L].crawled} ${c}`:""}
 document.querySelectorAll("#lang button").forEach(b=>b.onclick=()=>{L=b.dataset.l;applyLang()});
 $("#themeBtn").onclick=()=>theme(document.documentElement.dataset.theme==="dark"?"light":"dark");
 ["#q","#ffam","#fq","#fy","#fo","#fk","#fl"].forEach(s=>$(s).addEventListener("input",()=>{page=0;table()}));$("#bq").addEventListener("input",()=>{BALL=false;board()});
@@ -544,6 +579,7 @@ const getJ=u=>fetch(u).then(r=>r.ok?r.json():[]).catch(()=>[]);
 function toRow(b){return {id:b.id,dl:b.downloads||0,likes:b.likes||0,y:b.y||null,origin:b.origin||"original",lab:!!b.lab,th:b.th||null,pt:b.pt||"",src:b.src,fam:b.family,p:b.params,
  hub:b.checks&&b.checks["Hub parameter count correct"]?b.params:null,q:b.storage==="unquantized"?"":b.storage,d:b.d,L:b.layers,H:b.heads,KV:b.kv_heads,E:b.experts,V:b.vocab,kv:b.kv_bytes_per_token,
  ssm:b.ssm_layers||0,cfg:!!(b.checks&&b.checks["config.json"]),sb:b.stored_bytes,act:b.active,lat:false}}
+getJ("data/vocab_tax.json").then(v=>{VT=v&&v.p1?v:null;if(I&&M)vtax()});
 Promise.all([getJ("data/insights.json"),getJ("data/models.json"),getJ("data/board.json"),getJ("data/community.json")]).then(([a,b,bd,c])=>{I=a;M=b;
  const sub=(c||[]).map(x=>({...x,src:"submitted",groups:[...new Set([...(x.groups||[]),...((bd||[]).find(y=>y.id===x.id)||{}).groups||[]])]}));
  B=[...sub,...(bd||[]).filter(x=>!sub.some(y=>y.id===x.id))];
