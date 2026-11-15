@@ -11,7 +11,7 @@ authors:
 repository-code: "https://github.com/JoesSattes/ai-model-explorer"
 url: "https://joessattes.github.io/ai-model-explorer/"
 license: MIT
-version: 1.0.8
+version: 1.0.9
 date-released: 2026-11-15
 keywords: [model architecture, safetensors, Hugging Face Hub, model census, mixture-of-experts, quantization, KV cache, edge AI, tokenizer, vocabulary trimming, multilingual]
 preferred-citation:
