@@ -631,7 +631,8 @@ function renderCut() {
   if (!I || !M.T) { box.style.display = "none"; return; } box.style.display = "";
   const shapes = {}; for (const [n, x] of Object.entries(M.T)) shapes[n] = x.shape;
   const total = (I.totals && I.totals.params) || I.comps.reduce((a, c) => a + c.params, 0);
-  const st = M.cut || (M.cut = {langs: ["th", "en"], text: false, keep: null, counts: null, n: null, msg: ""});
+  const want = S.cutWant && S.cutWant.id === M.label ? S.cutWant : null; if (want) S.cutWant = null;
+  const st = M.cut || (M.cut = {langs: want ? [...new Set([want.lang, "en"])] : ["th", "en"], text: false, keep: null, counts: null, n: null, msg: ""});
   if (S.pendingTok && !st.pieces) { const j = S.pendingTok; S.pendingTok = null; setTimeout(() => { try { st.pieces = cutParse(j); try { st.pieces.tt = TextTrim.loadJSON(j); } catch (e) {} const r = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}); st.n = r.total; st.keep = r.keep(st.langs.includes("en") ? st.langs : st.langs.concat("en")); renderCut(); } catch (e) {} }, 0); }
   let P; try { P = Plan.plan(I, shapes, M.cfg || {}, {total, keep_tokens: st.corp ? st.corp.kept : st.keep, tok_pieces: st.n, name: M.label || ""}); } catch (e) { box.style.display = "none"; return; }
   const pc = x => (100 * x / total).toFixed(x / total < 0.01 ? 1 : 0) + "%", n0 = x => x.toLocaleString("en-US");
@@ -666,6 +667,7 @@ function renderCut() {
   const parse = cutParse;
   $$("#cutBox [data-cl]").forEach(b => b.onclick = () => { const l = b.dataset.cl; st.langs = st.langs.includes(l) ? st.langs.filter(x => x !== l) : st.langs.concat(l);
     if (st.pieces) { st.keep = Plan.vocabScripts(st.pieces.list, {byte_level: st.pieces.bl}).keep(withLatin(st.langs)); } st.corp = null; st.rerun = !!st.corpLines; renderCut(); });
+  if (want) setTimeout(() => { box.scrollIntoView({behavior: "smooth", block: "start"}); const g = $("#cutGo"); if (g && !st.n) g.click(); }, 300);
   const go = $("#cutGo"); if (go) go.onclick = async () => { st.msg = t("cut_loading"); $("#cutMsg").textContent = st.msg;
     try { count(await tokFromHub(repo)); }
     catch (e) { st.msg = t("cut_notok"); $("#cutMsg").textContent = st.msg; } };
@@ -929,7 +931,7 @@ wire();
 S.lens = pref("lens") || "weights";
 const h0 = location.hash.slice(1), last = pref("last");
 setModel(MODELS.some(m => m.id === h0) ? h0 : MODELS.some(m => m.id === last) ? last : MODELS[0].id, true);
-if (/^hf=/.test(h0)) { $("#hf").value = decodeURIComponent(h0.slice(3)); setTimeout(() => $("#hfGo").click(), 50); } // shareable link: #hf=owner/repo
+if (/^hf=/.test(h0)) { const [hr, cl] = h0.slice(3).split("&cut="); const id = decodeURIComponent(hr); if (cl) S.cutWant = {id, lang: decodeURIComponent(cl)}; $("#hf").value = id; setTimeout(() => $("#hfGo").click(), 50); } // shareable link: #hf=owner/repo, optional &cut=<lang> opens Where to cut for that language
 DB.all().then(list => { (list || []).sort((a, b) => b.savedAt - a.savedAt).forEach(o => { if (!MODELS.some(m => m.id === o.id)) register({...o, group: "own", note: () => t(o.noteKey || "n_upload", o.noteVars)}); });
   const want = MODELS.some(m => m.id === h0) ? h0 : last; if (want && S.M.id !== want && MODELS.some(m => m.id === want)) setModel(want, true); else renderPicker(); });
 })();
