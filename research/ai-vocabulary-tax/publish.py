@@ -102,6 +102,7 @@ If you use this dataset, please cite the paper ([ResearchGate](https://www.resea
   author = {{Singkul, Sattaya}},
   year   = {{2026}},
   note   = {{Preprint}},
+  doi    = {{10.13140/RG.2.2.19473.19048}},
   url    = {{https://www.researchgate.net/publication/417926447_Reading_the_Architecture_off_the_Weights_Manifest-Only_Model_Anatomy_and_a_Census_of_12974_Hugging_Face_Repositories}}
 }}
 ```

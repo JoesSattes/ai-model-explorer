@@ -252,7 +252,7 @@ with an MoE label) or `--gguf` (llama.cpp's tensor-name table, built by `python 
 Hub benchmark: `node research/realbench.js research/data/hub-bench-191.jsonl.gz corpus.jsonl`.
 
 ## Citation
-If you use AI Model Explorer or its recovery method, please cite the paper ([ResearchGate](https://www.researchgate.net/publication/417926447_Reading_the_Architecture_off_the_Weights_Manifest-Only_Model_Anatomy_and_a_Census_of_12974_Hugging_Face_Repositories), [PDF](paper/manifest-anatomy-singkul-2026.pdf)):
+If you use AI Model Explorer or its recovery method, please cite the paper ([DOI 10.13140/RG.2.2.19473.19048](https://doi.org/10.13140/RG.2.2.19473.19048), [ResearchGate](https://www.researchgate.net/publication/417926447_Reading_the_Architecture_off_the_Weights_Manifest-Only_Model_Anatomy_and_a_Census_of_12974_Hugging_Face_Repositories), [PDF](paper/manifest-anatomy-singkul-2026.pdf)):
 
 ```bibtex
 @misc{singkul2026reading,
@@ -261,6 +261,7 @@ If you use AI Model Explorer or its recovery method, please cite the paper ([Res
   year   = {2026},
   note   = {Preprint},
   howpublished = {ResearchGate},
+  doi    = {10.13140/RG.2.2.19473.19048},
   url    = {https://www.researchgate.net/publication/417926447_Reading_the_Architecture_off_the_Weights_Manifest-Only_Model_Anatomy_and_a_Census_of_12974_Hugging_Face_Repositories}
 }
 ```

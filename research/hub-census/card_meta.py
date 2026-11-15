@@ -37,6 +37,7 @@ If you use this dataset, please cite:
   author = {{Singkul, Sattaya}},
   year   = {{2026}},
   note   = {{Preprint}},
+  doi    = {{10.13140/RG.2.2.19473.19048}},
   url    = {{{PAPER_URL}}}
 }}
 ```

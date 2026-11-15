@@ -23,6 +23,7 @@ preferred-citation:
       given-names: Sattaya
       affiliation: "Independent Researcher, Bangkok, Thailand"
   year: 2026
+  doi: "10.13140/RG.2.2.19473.19048"
   url: "https://www.researchgate.net/publication/417926447_Reading_the_Architecture_off_the_Weights_Manifest-Only_Model_Anatomy_and_a_Census_of_12974_Hugging_Face_Repositories"
   repository: "https://github.com/JoesSattes/ai-model-explorer/blob/main/paper/manifest-anatomy-singkul-2026.pdf"
   notes: "arXiv identifier to be added when announced."

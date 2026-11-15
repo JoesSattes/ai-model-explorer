@@ -202,6 +202,6 @@ Vocabulary tax, merge closure and the trim certificate: Sattaya Singkul. 2026. *
 Unused Tokens from LLMs for On-Device Use.* Preprint, [ResearchGate](https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use).
 
 Architecture recovery and the Hub census: Sattaya Singkul. 2026. *Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories.*
-Preprint, [ResearchGate](https://www.researchgate.net/publication/417926447_Reading_the_Architecture_off_the_Weights_Manifest-Only_Model_Anatomy_and_a_Census_of_12974_Hugging_Face_Repositories).
+Preprint, [ResearchGate](https://www.researchgate.net/publication/417926447_Reading_the_Architecture_off_the_Weights_Manifest-Only_Model_Anatomy_and_a_Census_of_12974_Hugging_Face_Repositories), doi:10.13140/RG.2.2.19473.19048.
 
 MIT License © 2026 Sattaya Singkul
