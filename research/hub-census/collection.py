@@ -5,7 +5,7 @@ usage: python collection.py <owner> <type:repo> [<type:repo> ...]   e.g. space:m
 import os, sys
 
 TITLE = "AI Model Explorer"
-DESC = "Model architecture read from safetensors headers: the labelled corpus, the Hub Weight Census and the explorer."  # HF limit: 150 chars
+DESC = "Model anatomy from safetensors headers: labelled corpus, Hub Weight Census, vocabulary tax and the explorer."  # HF limit: 150 chars
 
 
 def main(owner, items):

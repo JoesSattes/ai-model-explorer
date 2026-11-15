@@ -7,6 +7,7 @@ import os, re, shutil, sys, tempfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 FILES = ["index.html", "th/index.html", "en/index.html", "census/index.html", "census/data/insights.json", "census/data/models.json", "census/data/community.json", "census/data/board.json",
+         "census/data/vocab_tax.json", "census/data/vocab_tax_models.json",
          "og.png", "LICENSE", "assets/logo.svg", "assets/logo-32.png", "assets/logo-180.png", "assets/logo-512.png"]
 
 README = """---
@@ -22,12 +23,15 @@ short_description: A model's architecture from its safetensors header
 datasets:
 - {census}
 - {corpus}
+- {vtax}
 tags:
 - model-architecture
 - visualization
 - safetensors
 - quantization
 - edge-ai
+- tokenizer
+- vocabulary-trimming
 ---
 
 # AI Model Explorer
@@ -38,6 +42,9 @@ safetensors headers are read (a few kilobytes to a few megabytes), never the wei
 
 - **Hub census**: the architecture of 12,974 Hub repositories, by release year: [`/census/`](census/index.html) ·
   dataset [{census}](https://huggingface.co/datasets/{census})
+- **Vocabulary tax**: how many token-table rows and bytes each model carries for languages you never use, for
+  2,000+ models and 41 languages, and how much can be trimmed safely: [`/census/#vtax`](census/index.html#vtax) ·
+  dataset [{vtax}](https://huggingface.co/datasets/{vtax})
 - **Labeled corpus** of 510 architectures with per-tensor ground truth: [{corpus}](https://huggingface.co/datasets/{corpus})
 - **Python**: `pip install ai-model-explorer` · **Code**: https://github.com/JoesSattes/ai-model-explorer
 - **Paper**: S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories*, 2026
@@ -60,7 +67,8 @@ def _fix(path, extra=()):
     open(path, "w", encoding="utf-8").write(s)
 
 
-def main(repo, census, corpus):
+def main(repo, census, corpus, vtax=None):
+    vtax = vtax or census.split("/")[0] + "/vocabulary-tax"
     tmp = tempfile.mkdtemp()
     for f in FILES:
         src = os.path.join(ROOT, f)
@@ -71,7 +79,7 @@ def main(repo, census, corpus):
     _fix(os.path.join(tmp, "th", "index.html"), [('PAGE_ALT="../"', 'PAGE_ALT="../index.html"')])
     _fix(os.path.join(tmp, "census", "index.html"), [('href="../"', 'href="../index.html"'), (':"../",', ':"../index.html",'),
                                                     (':"../";', ':"../index.html";')])
-    open(os.path.join(tmp, "README.md"), "w", encoding="utf-8").write(README.format(census=census, corpus=corpus))
+    open(os.path.join(tmp, "README.md"), "w", encoding="utf-8").write(README.format(census=census, corpus=corpus, vtax=vtax))
     if repo == "--dry":
         return tmp
     from huggingface_hub import HfApi
@@ -83,4 +91,4 @@ def main(repo, census, corpus):
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:4])
+    main(*sys.argv[1:5])

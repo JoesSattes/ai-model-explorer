@@ -1,0 +1,47 @@
+name: Publish vocabulary tax and Space
+
+# Publishes research/vocab-tax/data as the dataset <you>/vocabulary-tax, refreshes the explorer Space with the current
+# website (census page included), and adds both to the "AI Model Explorer" collection. No census run needed.
+# Needs the repository secret HF_WRITE_TOKEN (a Hugging Face token with write access). The owner is read from the token.
+on:
+  workflow_dispatch:
+    inputs:
+      dataset_name: { description: "Dataset name", default: "vocabulary-tax" }
+      space_name:   { description: "Hugging Face Space for the explorer (blank = skip)", default: "ai-model-explorer" }
+      census_name:  { description: "Census dataset linked from the Space", default: "hub-weight-census" }
+      corpus_name:  { description: "Corpus dataset linked from the Space", default: "manifest-anatomy-corpus" }
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HF_TOKEN: ${{ secrets.HF_WRITE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install
+        run: pip install pandas pyarrow huggingface_hub
+      - name: Hugging Face account
+        id: who
+        run: |
+          test -n "$HF_TOKEN" || { echo "::error::add the repository secret HF_WRITE_TOKEN (write access)"; exit 1; }
+          echo "owner=$(python -c 'from huggingface_hub import HfApi; print(HfApi().whoami()["name"])')" >> "$GITHUB_OUTPUT"
+      - name: Publish dataset
+        run: python research/vocab-tax/publish.py "${{ steps.who.outputs.owner }}/${{ inputs.dataset_name }}"
+      - name: Explorer as a Space
+        if: ${{ inputs.space_name != '' }}
+        working-directory: research/hub-census
+        env:
+          O: ${{ steps.who.outputs.owner }}
+        run: python space.py "$O/${{ inputs.space_name }}" "$O/${{ inputs.census_name }}" "$O/${{ inputs.corpus_name }}" "$O/${{ inputs.dataset_name }}"
+      - name: Collection on the profile
+        working-directory: research/hub-census
+        env:
+          O: ${{ steps.who.outputs.owner }}
+          SPACE: ${{ inputs.space_name != '' && format('space:{0}/{1}', steps.who.outputs.owner, inputs.space_name) || '' }}
+        run: python collection.py "$O" $SPACE "dataset:$O/${{ inputs.dataset_name }}"
