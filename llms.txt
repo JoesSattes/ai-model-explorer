@@ -34,7 +34,7 @@ Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Co
 
 ## Links
 - App: https://joessattes.github.io/ai-model-explorer/ (English) · https://joessattes.github.io/ai-model-explorer/th/ (Thai)
-- Python package: https://pypi.org/project/ai-model-explorer/ (`pip install ai-model-explorer`; CLI `ai-model-explorer inspect|insights|memory|compare|plot|report|open`; API `from ai_model_explorer import explore, compare`: active parameters, parameter breakdown, KV-cache and memory estimates, diagrams, HTML reports)
+- Python package: https://pypi.org/project/ai-model-explorer/ (`pip install ai-model-explorer`; CLI `ai-model-explorer inspect|insights|memory|compare|tax|plot|report|open`; API `from ai_model_explorer import explore, compare`: active parameters, parameter breakdown, KV-cache and memory estimates, diagrams, HTML reports)
 - Usage guide (web, CLI, Python, JSON fields): https://github.com/JoesSattes/ai-model-explorer/blob/main/docs/usage.md
 - How it works: https://github.com/JoesSattes/ai-model-explorer/blob/main/docs/how-it-works.md
 - Source: https://github.com/JoesSattes/ai-model-explorer
@@ -47,3 +47,10 @@ Cite: Sattaya Singkul. 2026. Reading the Architecture off the Weights: Manifest-
 
 ## Hub Weight Census
 - [Hub Weight Census](https://joessattes.github.io/ai-model-explorer/census/): thousands of Hugging Face models read from their safetensors headers only. Architecture trends by release year (mixture of experts, hybrid state-space, grouped-query attention, head size, vocabulary), storage formats, repos that ship no config.json, and storage formats where the Hub's own parameter count differs from the logical count. Searchable table of models. Code: https://github.com/JoesSattes/ai-model-explorer/tree/main/research/hub-census
+
+## Vocabulary tax
+- [Vocabulary tax](https://joessattes.github.io/ai-model-explorer/census/#vtax): for 2,061 Hugging Face models and any of 41 languages, the token-table rows and bytes a deployment never uses (input embedding, untied output head, per-layer embeddings), read from safetensors headers and tokenizer files. For Thai and English: a median 4.4% of model bytes below 0.5B parameters, 2.1% above 8B, 29% below 0.5B when trimmed with 15,000 lines of the user's own text; 1.93 GB in Gemma 4 E2B.
+- Trimming: script rule (exact for text in the kept scripts, Latin always kept) or the user's own text with merge closure (keeps the BPE merge parents of every kept piece; without it new text is split differently about 1.9 times as often as the usual check reports). A trim certificate (Good-Turing estimate) predicts from the trimming text alone how much new text will be split differently (correlation 0.996, 22 languages) and how many lines a 1% target needs. Quality on six models (270M-3B), 11 languages: bits per character change by at most 0.7% under the script rule and at most 2.0% when the certificate passes.
+- Web: "Where to cut" in the app tokenizes pasted text in the browser (tokenizer.json BPE/Unigram, tiktoken, Tekken, SentencePiece, GGUF). CLI: `ai-model-explorer tax MODEL --lang th --corpus my_text.txt --export out/`. Python: `explore(repo).vocab_tax(["th"], corpus=["my_text.txt"])`, `trim_vocab(...)`.
+- Dataset: https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax
+- Paper: S. Singkul, The Vocabulary Tax: Safely Trimming Unused Tokens from LLMs for On-Device Use, 2026 (preprint in preparation).

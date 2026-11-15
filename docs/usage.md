@@ -150,6 +150,33 @@ releases closest to it in size and cache.
 
 `ready`, `census` and `diff` accept `--json` to print the raw result.
 
+### `tax`: the vocabulary tax and trimming
+
+How many token-table rows (and bytes) the languages you serve never use, and a trimmed tokenizer that drops them.
+
+```bash
+ai-model-explorer tax Qwen/Qwen3-0.6B --lang th,en                  # script rule: exact for text in your scripts
+ai-model-explorer tax Qwen/Qwen3-0.6B --lang th --corpus mine.txt   # keep only the pieces your text uses (merge-closed)
+ai-model-explorer tax Qwen/Qwen3-0.6B --lang th --corpus mine.txt --target 0.01 --export out/
+ai-model-explorer tax model.gguf --lang th --corpus mine.txt        # a local GGUF: bytes at its own storage types
+ai-model-explorer tax --file models.txt --lang th -o tax.jsonl      # many models
+```
+
+| Option | Meaning |
+|---|---|
+| `--lang` | languages you serve; Latin (English) is always kept unless `--strict` |
+| `--corpus` | your own text files; only the pieces it uses are kept, plus single characters, closed under BPE merges |
+| `--min-count` | with `--corpus`, a piece must appear this many times (default 1) |
+| `--target` | acceptable share of new tokens split differently (default 0.01); the **trim certificate** says whether your text is enough and how many lines would be |
+| `--coverage` | also tokenize bundled test sentences in 21 languages and count tokens that land in removed rows |
+| `--tokenizer` | use another tokenizer file, folder or repo instead of the model's own |
+| `--export` | write the trimmed `tokenizer.json` or SentencePiece `.model`, `kept_ids.json` and `slice_weights.py` |
+
+Tokenizers: `tokenizer.json` (BPE and Unigram), SentencePiece `tokenizer.model`, `vocab.json`, `*.tiktoken`, Mistral
+`tekken.json` and GGUF. Python: `explore(repo).vocab_tax(languages, corpus=[...], target_resplit=0.01)` and
+`explore(repo).trim_vocab(languages, "out/", corpus=[...])`. The website does the same under *Where to cut*, in the
+browser, and the census page lists the tax of 2,061 models for any of 41 languages.
+
 ### `open`: run the website on your machine
 
 ```bash

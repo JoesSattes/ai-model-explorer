@@ -18,6 +18,7 @@
   <a href="https://joessattes.github.io/ai-model-explorer/">ภาษาไทย</a> ·
   <a href="#what-is-new-here">What is new</a> ·
   <a href="#hub-weight-census">Hub census</a> ·
+  <a href="#vocabulary-tax-trim-the-languages-you-do-not-use">Vocabulary tax</a> ·
   <a href="docs/usage.md">Docs</a> ·
   <a href="docs/how-it-works.md">How it works</a> ·
   <a href="https://www.researchgate.net/publication/417293353">Paper</a>
@@ -36,6 +37,7 @@ command-line tool and a Python library.
 - **Know a model before you download it.** DeepSeek-V3 is 689 GB of weights. Its anatomy takes 12 MB of headers and a few seconds.
 - **Plan quantization and edge deployment.** See which parts hold the parameters, which layers carry a KV cache, and how each tensor is already stored (FP8, NVFP4, GPTQ, AWQ, MXFP4, MLX, bitsandbytes).
 - **Understand new architectures quickly.** Hybrid attention / state-space / mixture-of-experts stacks, multi-token-prediction layers, vision and audio encoders feeding an LLM: each is labeled, with the evidence behind the label.
+- **Stop paying for languages you do not use.** Every model ships token tables for every language its vocabulary covers. The vocabulary tax shows how many rows and bytes your languages never use (up to half of Gemma 4 E2B), and the trimmer removes them safely, with a certificate of how much of your text would be split differently.
 - **Check what a model card or config claims.** Parameter totals come from the weights, and `config.json` is checked against them.
 - **Script it.** `pip install ai-model-explorer` gives a CLI and a Python API: insights, memory estimates, side-by-side comparisons, diagrams as PNG/SVG/PDF and HTML reports, with results as plain dicts or JSON for batch analysis.
 - **Local files stay local.** Files you open are parsed in your browser or on your machine and are never uploaded; Hub repos are read directly from Hugging Face.
@@ -69,6 +71,7 @@ More commands:
 | `ai-model-explorer insights MODEL` | plain-language findings: active parameters per token, where the parameters sit, KV-cache cost at 32k and 128k, tied embeddings, hybrid layers |
 | `ai-model-explorer memory MODEL --context 32768 --weight-bits 4` | memory for the weights at any precision plus the KV cache |
 | `ai-model-explorer compare A B C` | a side-by-side table (Markdown, `--csv` or `--json`) |
+| `ai-model-explorer tax MODEL --lang th --corpus my_text.txt` | vocabulary tax: token-table rows and bytes your languages never use, with a trim certificate; `--export out/` writes the trimmed tokenizer |
 | `ai-model-explorer plot MODEL -o model.png` | the diagram below, as PNG, SVG or PDF |
 | `ai-model-explorer report MODEL -o model.html` | one self-contained HTML report: diagram, insights, tables, memory |
 | `ai-model-explorer fits MODEL rtx-4090 --context 32768` | does it fit, the longest context that fits, and the cheapest setting that would |
@@ -90,6 +93,8 @@ m.breakdown("kind")              # parameters per part type
 m.memory(context=32768, weight_bits=4)
 m.insights()
 m.plot("deepseek.png"); m.report("deepseek.html")
+
+explore("Qwen/Qwen3-0.6B").vocab_tax(["th"], corpus=["my_text.txt"])   # rows/bytes you never use + certificate
 
 print(compare_table(compare(["Qwen/Qwen3-8B", "Qwen/Qwen3-30B-A3B-GPTQ-Int4"])))
 ```
@@ -114,11 +119,35 @@ repo. Results carry 95% intervals and trend tests: architecture adoption by rele
 precision, derivative releases, metadata reliability, and the smallest device each language model fits.
 
 - Browse: [census page](https://joessattes.github.io/ai-model-explorer/census/)
-- Datasets: [JoesSattes/hub-weight-census](https://huggingface.co/datasets/JoesSattes/hub-weight-census),
-  [JoesSattes/manifest-anatomy-corpus](https://huggingface.co/datasets/JoesSattes/manifest-anatomy-corpus) and
-  [JoesSattes/ai-vocabulary-tax](https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax) (per-model vocabulary tax, 41 languages)
-  (available once the *Publish datasets* workflow has run)
+- Datasets: [JoesSattes/hub-weight-census](https://huggingface.co/datasets/JoesSattes/hub-weight-census) and
+  [JoesSattes/manifest-anatomy-corpus](https://huggingface.co/datasets/JoesSattes/manifest-anatomy-corpus)
 - Method, sampling and statistics: [research/hub-census/README.md](research/hub-census/README.md)
+
+## Vocabulary tax: trim the languages you do not use
+An open model's vocabulary covers dozens of writing systems, and every table indexed by it (input embedding, untied
+output head, per-layer embeddings) has a row for every piece. A deployment that serves a few languages downloads and
+loads all of them. The vocabulary tax is the bytes in rows it never uses, read from the headers and the tokenizer file.
+
+- **For every model in the census**: pick your language and see rows, bytes and share for 2,061 models on the
+  [census page](https://joessattes.github.io/ai-model-explorer/census/#vtax). For Thai and English it is a median 4.4% of
+  model bytes below 0.5B parameters and 2.1% above 8B; trimming with your own text raises it to a median 29% below 0.5B;
+  Gemma 4 E2B carries 1.93 GB under the script rule alone.
+- **For your model and your text**: in the web app, *Where to cut* tokenizes text you paste, in the browser, with the
+  model's own tokenizer (`tokenizer.json` BPE and Unigram, tiktoken, Tekken, SentencePiece `.model`, GGUF), or run
+  `ai-model-explorer tax MODEL --lang th --corpus my_text.txt --export out/`.
+- **Two keep rules.** *Script*: keep the pieces of your writing systems plus Latin; text in those scripts tokenizes exactly
+  as before. *Your text*: keep only the pieces your text uses, **merge-closed** so every kept BPE piece stays reachable.
+  Without closure, the usual frequency rule leaves hundreds of rows unreachable and splits new text about twice as often as
+  its check reports.
+- **Trim certificate.** A Good-Turing estimate, from your text alone, of the share of new text the trimmed tokenizer will
+  split differently, and how many lines would bring it under a target (default 1%). It matches the real rate with
+  correlation 0.996 over 300 settings in 22 languages. Rough guide at 1%: about 4,000 lines or fewer for Arabic, Hebrew,
+  Hindi, Korean, Russian and Thai; 7,000-20,000 for Latin-script languages; far more for broad English web text.
+- **Quality.** On six models (270M-3B) in 11 languages, the script rule changes bits per character by at most 0.7%; where
+  the certificate passes, the text rule removes a median 90% of rows and raises bits per character by at most 2.0%.
+- **Data**: [JoesSattes/ai-vocabulary-tax](https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax): per-model tax for
+  41 languages, tokenizer families, trimmed-model quality, certificate and merge closure. Source: [research/ai-vocabulary-tax/](research/ai-vocabulary-tax/).
+  Python details: [python/README.md](python/README.md#vocabulary-tax).
 
 ## What is new here
 Reading a safetensors header is standard: the Hugging Face Hub does it to show parameter counts, and several viewers list tensor names and shapes. What this project adds is the **interpretation**: turning that list into an architecture without the model's config or code.
@@ -181,8 +210,9 @@ Run the Hub benchmark yourself at [bench.html](https://joessattes.github.io/ai-m
 | `bench/`, `bench.html` | the Hub checkpoint benchmark page |
 | `research/` | corpus builder, evaluation, baselines, results and the Hub export used in the paper |
 | `paper/` | the paper (PDF) |
-| `census/` | the census web page and its data (`insights.json`, `models.json`, `board.json`) |
+| `census/` | the census web page and its data (`insights.json`, `models.json`, `board.json`, `vocab_tax.json`, `vocab_tax_models.json`) |
 | `research/hub-census/` | census sampler, crawler, statistics and dataset publishing |
+| `research/ai-vocabulary-tax/` | vocabulary tax tables and the publisher of the `ai-vocabulary-tax` dataset |
 | `assets/` | logo and the example diagram |
 
 ## Built-in examples in the web app
@@ -232,6 +262,9 @@ If you use AI Model Explorer or its recovery method, please cite the paper ([Res
   url    = {https://www.researchgate.net/publication/417293353}
 }
 ```
+
+The vocabulary tax, merge-closed trimming and the trim certificate are described in *The Vocabulary Tax: Safely Trimming
+Unused Tokens from LLMs for On-Device Use* (S. Singkul, 2026, preprint in preparation).
 
 ## Credits
 Created by **[Sattaya Singkul](https://joessattes.github.io/Sattaya-AI-Website/)** for the workshop *Squeeze Until It Breaks — A Hands-On Edge Inference Contest*, AI Expo Thailand 2026.

@@ -109,7 +109,9 @@ in the per-layer embeddings), so trimming the vocabulary to the languages you se
 audio and vision towers for text-only use; it also reports that 20 of the 35 layers share an earlier layer's KV cache.
 The website shows the same plan under "Where to cut" (pick config.json and tokenizer.json together with the weights).
 
-The vocabulary tax works for any model with token tables and any common tokenizer format: `tokenizer.json`,
+### Vocabulary tax
+
+The vocabulary tax is the token-table rows (and bytes) that the languages you serve never use. It works for any model with token tables and any common tokenizer format: `tokenizer.json`,
 SentencePiece `tokenizer.model`, `vocab.json`, `*.tiktoken`, Mistral `tekken.json` and llama.cpp `.gguf` (only the
 tokenizer file is downloaded, never the weights). A local `.gguf` model works directly: its header gives the token tables
 with their storage types (Q4_K, Q8_0, F16, ...), so the tax is in the bytes the file actually holds
@@ -126,24 +128,31 @@ By default the keep set is decided by writing system (with Latin always kept: na
 language), so text in the kept languages tokenizes exactly as before. Languages that share a script (English and German,
 Chinese and Japanese) can only be told apart by text: pass your own lines with `corpus=["mine.txt"]` (CLI `--corpus`)
 and only the pieces your text uses are kept, plus every single-character piece so unseen words can still be spelled.
-The result reports, on a held-out 20% of your text, how many tokens would be split into smaller pieces. On 27k lines of
-Thai text this keeps 10-28% of a large multilingual vocabulary at a 0.1-0.6% re-split rate.
+With 15,000 lines of Thai text this removes 79-89% of the rows of the Gemma, Qwen, Llama 3 and GPT-2 vocabularies at a
+real re-split rate of 0.10-0.67%.
 
 For BPE tokenizers the keep set is **merge-closed**: the merge parents of every kept piece are kept too. Keeping pieces by
 how often they appear as tokens is not enough, because intermediate pieces that are always merged further never appear
 as tokens; dropping them makes the pieces built from them unreachable, so their rows are wasted and words are split
 further than intended. In our measurements this doubles to triples the real re-split rate (German on Qwen: 7.1% instead
-of 2.4%; English web text: about 25% instead of 9%); closing the set costs 2-30% more kept pieces and brings the real
-rate back to the estimate. Merge parents are read from `tokenizer.json`, GGUF headers, tiktoken/Tekken ranks, and
+of 2.4%; English web text: about 25% instead of 9%); closing the set costs a median 6% more kept pieces (up to 36% for English) and brings the
+real rate to or below the estimate. Merge parents are read from `tokenizer.json`, GGUF headers, tiktoken/Tekken ranks, and
 SentencePiece BPE models (`.model` files and GGUF `llama` vocabularies, where BPE merges the pair with the highest
 piece score). SentencePiece Unigram has no merges, so its keep sets need no closure.
 
 Every corpus result also carries a **trim certificate**: a Good-Turing estimate, from your text alone, of the share of
 tokens that new text of the same kind will see re-split, and how many lines of text would bring that under a target
-(`target_resplit=0.01`, CLI `--target`). Across 20 languages and 5 tokenizer families the estimate is within 5% of the
-measured rate (median; r = 0.995 in log scale), and the line count, fitted on half and all of your text, lands within 1%
-(median) on a held-out size. Rough guide at a 1% target: Thai about 5k lines, Spanish 7k, German 13k, French 24k; broad
-English web text needs far more because its pieces are spread over most of the Latin vocabulary.
+(`target_resplit=0.01`, CLI `--target`). Across 22 languages and four BPE families (300 settings) the estimate matches the
+real rate of rebuilt tokenizers with a median ratio of 1.01 (correlation 0.996 in log scale), and the line count, fitted
+on half and all of your text, predicts the rate at 15,000 lines with a median ratio of 1.03. Rough guide at a 1% target:
+about 4,000 lines or fewer for Arabic, Hebrew, Hindi, Korean, Russian and Thai; 5,000 for Japanese; 7,000-20,000 for the
+Latin-script languages (Spanish 7k, German 14k, French 20k); broad English web text needs far more because its pieces are
+spread over most of the Latin vocabulary.
+
+On six models (Gemma 3 270M and 1B, Qwen3 0.6B and 1.7B, Llama 3.2 1B, SmolLM3 3B) in 11 languages, the script rule
+changes bits per character by at most 0.7%; where the certificate passes, bits per character rise by at most 2.0% while a
+median 90% of rows is removed, and the loss is about 2.5 times the re-split rate. The tax of 2,061 Hub models for 41
+languages is in the dataset [JoesSattes/ai-vocabulary-tax](https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax).
 
 `trim_vocab(languages, "out/")` (CLI `tax ... --export out/`) writes the trimmed `tokenizer.json` or SentencePiece
 `.model`, `kept_ids.json` and `slice_weights.py`, and checks the bundled test sentences.
@@ -189,7 +198,10 @@ headers are cached (`~/.cache/ai-model-explorer`, or `$AME_CACHE`; `cache=False`
 is installed, large manifests are analyzed with it (DeepSeek-V3: about 5 s instead of 15; `AME_JS=quickjs` to opt out).
 
 ## Citation
-Sattaya Singkul. 2026. *Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories.*
+Vocabulary tax, merge closure and the trim certificate: Sattaya Singkul. 2026. *The Vocabulary Tax: Safely Trimming
+Unused Tokens from LLMs for On-Device Use.* Preprint in preparation.
+
+Architecture recovery and the Hub census: Sattaya Singkul. 2026. *Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories.*
 Preprint, [ResearchGate](https://www.researchgate.net/publication/417293353).
 
 MIT License © 2026 Sattaya Singkul
