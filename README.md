@@ -21,7 +21,8 @@
   <a href="#vocabulary-tax-trim-the-languages-you-do-not-use">Vocabulary tax</a> ·
   <a href="docs/usage.md">Docs</a> ·
   <a href="docs/how-it-works.md">How it works</a> ·
-  <a href="https://www.researchgate.net/publication/417293353">Paper</a>
+  <a href="https://www.researchgate.net/publication/417293353">Paper</a> ·
+  <a href="https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use">Vocabulary tax paper</a>
 </p>
 
 ![AI Model Explorer: Whisper split into its parts with real sizes](og.png)
@@ -145,6 +146,7 @@ loads all of them. The vocabulary tax is the bytes in rows it never uses, read f
   Hindi, Korean, Russian and Thai; 7,000-20,000 for Latin-script languages; far more for broad English web text.
 - **Quality.** On six models (270M-3B) in 11 languages, the script rule changes bits per character by at most 0.7%; where
   the certificate passes, the text rule removes a median 90% of rows and raises bits per character by at most 2.0%.
+- **Paper**: [The Vocabulary Tax: Safely Trimming Unused Tokens from LLMs for On-Device Use](https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use) (ResearchGate preprint).
 - **Data**: [JoesSattes/ai-vocabulary-tax](https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax): per-model tax for
   41 languages, tokenizer families, trimmed-model quality, certificate and merge closure. Source: [research/ai-vocabulary-tax/](research/ai-vocabulary-tax/).
   Python details: [python/README.md](python/README.md#vocabulary-tax).
@@ -263,15 +265,16 @@ If you use AI Model Explorer or its recovery method, please cite the paper ([Res
 }
 ```
 
-For the vocabulary tax, merge-closed trimming, the trim certificate or the [ai-vocabulary-tax](https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax) dataset:
+For the vocabulary tax, merge-closed trimming, the trim certificate or the [ai-vocabulary-tax](https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax) dataset, cite the [paper](https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use):
 
 ```bibtex
 @misc{singkul2026vocabtax,
   title  = {The Vocabulary Tax: Safely Trimming Unused Tokens from {LLMs} for On-Device Use},
   author = {Singkul, Sattaya},
   year   = {2026},
-  note   = {Preprint in preparation},
-  url    = {https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax}
+  note   = {Preprint},
+  howpublished = {ResearchGate},
+  url    = {https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use}
 }
 ```
 

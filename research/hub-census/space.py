@@ -44,7 +44,7 @@ safetensors headers are read (a few kilobytes to a few megabytes), never the wei
   dataset [{census}](https://huggingface.co/datasets/{census})
 - **Vocabulary tax**: how many token-table rows and bytes each model carries for languages you never use, for
   2,000+ models and 41 languages, and how much can be trimmed safely: [`/census/#vtax`](census/index.html#vtax) ·
-  dataset [{vtax}](https://huggingface.co/datasets/{vtax})
+  dataset [{vtax}](https://huggingface.co/datasets/{vtax}) · [paper](https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use)
 - **Labeled corpus** of 510 architectures with per-tensor ground truth: [{corpus}](https://huggingface.co/datasets/{corpus})
 - **Python**: `pip install ai-model-explorer` · **Code**: https://github.com/JoesSattes/ai-model-explorer
 - **Paper**: S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories*, 2026

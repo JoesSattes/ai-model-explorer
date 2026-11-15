@@ -85,15 +85,16 @@ under 1%, bits per character of the trimmed models rise by at most 2.0%.
 
 ## Citation
 
-If you use this dataset, please cite:
+If you use this dataset, please cite the paper ([ResearchGate](https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use)):
 
 ```bibtex
 @misc{{singkul2026vocabtax,
   title  = {{The Vocabulary Tax: Safely Trimming Unused Tokens from {{LLMs}} for On-Device Use}},
   author = {{Singkul, Sattaya}},
   year   = {{2026}},
-  note   = {{Preprint in preparation}},
-  url    = {{https://huggingface.co/datasets/{owner}/ai-vocabulary-tax}}
+  note   = {{Preprint}},
+  howpublished = {{ResearchGate}},
+  url    = {{https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use}}
 }}
 
 @misc{{singkul2026reading,
