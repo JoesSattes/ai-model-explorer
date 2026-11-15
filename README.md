@@ -275,6 +275,7 @@ For the vocabulary tax, merge-closed trimming, the trim certificate or the [ai-v
   year   = {2026},
   note   = {Preprint},
   howpublished = {ResearchGate},
+  doi    = {10.13140/RG.2.2.10665.15200},
   url    = {https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use}
 }
 ```

@@ -31,6 +31,7 @@ references:
   - type: article
     status: preprint
     title: "The Vocabulary Tax: Safely Trimming Unused Tokens from LLMs for On-Device Use"
+    doi: "10.13140/RG.2.2.10665.15200"
     authors:
       - family-names: Singkul
         given-names: Sattaya

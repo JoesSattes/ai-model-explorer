@@ -199,7 +199,7 @@ is installed, large manifests are analyzed with it (DeepSeek-V3: about 5 s inste
 
 ## Citation
 Vocabulary tax, merge closure and the trim certificate: Sattaya Singkul. 2026. *The Vocabulary Tax: Safely Trimming
-Unused Tokens from LLMs for On-Device Use.* Preprint, [ResearchGate](https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use).
+Unused Tokens from LLMs for On-Device Use.* Preprint, doi:10.13140/RG.2.2.10665.15200, [ResearchGate](https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use).
 
 Architecture recovery and the Hub census: Sattaya Singkul. 2026. *Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories.*
 Preprint, [ResearchGate](https://www.researchgate.net/publication/417926447_Reading_the_Architecture_off_the_Weights_Manifest-Only_Model_Anatomy_and_a_Census_of_12974_Hugging_Face_Repositories), doi:10.13140/RG.2.2.19473.19048.
