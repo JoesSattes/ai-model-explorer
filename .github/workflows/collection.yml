@@ -1,7 +1,7 @@
 name: HF cards, Space and collection
 
 # The quick part of "Publish datasets", without the census re-score: updates the dataset cards' metadata
-# and citation, republishes the explorer
+# and citation, republishes the vocabulary tax dataset, republishes the explorer
 # as a static Space and groups the datasets and the Space into the collection "AI Model Explorer"
 # on your Hugging Face profile. Needs HF_WRITE_TOKEN.
 on:
@@ -10,6 +10,7 @@ on:
       census_name: { description: "Census dataset name", default: "hub-weight-census" }
       corpus_name: { description: "Corpus dataset name", default: "manifest-anatomy-corpus" }
       space_name:  { description: "Space name (blank = none)", default: "ai-model-explorer" }
+      vtax_name:   { description: "Vocabulary tax dataset name", default: "ai-vocabulary-tax" }
 
 jobs:
   collection:
@@ -24,17 +25,19 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install huggingface_hub
+      - run: pip install huggingface_hub pandas pyarrow
       - name: Hugging Face account
         run: echo "OWNER=$(python -c 'from huggingface_hub import HfApi; print(HfApi().whoami()["name"])')" >> "$GITHUB_ENV"
       - name: Dataset cards (metadata and citation)
         run: |
           python card_update.py census "$OWNER/${{ inputs.census_name }}"
           python card_update.py corpus "$OWNER/${{ inputs.corpus_name }}"
+      - name: Vocabulary tax dataset
+        run: python ../ai-vocabulary-tax/publish.py "$OWNER/${{ inputs.vtax_name }}"
       - name: Explorer as a Space
         if: ${{ inputs.space_name != '' }}
-        run: python space.py "$OWNER/${{ inputs.space_name }}" "$OWNER/${{ inputs.census_name }}" "$OWNER/${{ inputs.corpus_name }}"
+        run: python space.py "$OWNER/${{ inputs.space_name }}" "$OWNER/${{ inputs.census_name }}" "$OWNER/${{ inputs.corpus_name }}" "$OWNER/${{ inputs.vtax_name }}"
       - name: Collection on the profile
         run: |
           SPACE=""; [ -n "${{ inputs.space_name }}" ] && SPACE="space:$OWNER/${{ inputs.space_name }}"
-          python collection.py "$OWNER" $SPACE "dataset:$OWNER/${{ inputs.census_name }}" "dataset:$OWNER/${{ inputs.corpus_name }}"
+          python collection.py "$OWNER" $SPACE "dataset:$OWNER/${{ inputs.census_name }}" "dataset:$OWNER/${{ inputs.corpus_name }}" "dataset:$OWNER/${{ inputs.vtax_name }}"

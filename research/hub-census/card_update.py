@@ -2,9 +2,9 @@
 
 usage: python card_update.py <census|corpus> <owner/dataset>     (needs HF_TOKEN with write access)
 """
-import os, sys
+import os, re, sys
 
-from card_meta import CITATION, CITE_LINE, META
+from card_meta import CITATION, CITE_LINE, META, PAPER_URL
 
 
 def update(card, kind):
@@ -16,6 +16,8 @@ def update(card, kind):
     if "**Citation.**" not in body:
         i = body.find("\n## ")
         body = body[:i] + "\n" + CITE_LINE + "\n" + body[i:]
+    # the paper moved to a new ResearchGate record; point every old link at it
+    body = re.sub(r"https?://www\.researchgate\.net/publication/417293353[\w.-]*", PAPER_URL, body)
     return "---\n" + "\n".join(keep) + "\n---\n" + body
 
 
