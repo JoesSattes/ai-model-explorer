@@ -18,7 +18,7 @@
 {"@context":"https://schema.org","@type":"Dataset","name":"Hub Weight Census","url":"https://joessattes.github.io/ai-model-explorer/census/",
  "description":"Architecture, storage and metadata quality of Hugging Face model repositories, recovered from safetensors headers without downloading weights.",
  "creator":{"@type":"Person","name":"Sattaya Singkul","url":"https://joessattes.github.io/Sattaya-AI-Website/"},"license":"https://opensource.org/licenses/MIT",
- "isBasedOn":"https://www.researchgate.net/publication/417293353",
+ "isBasedOn":["https://www.researchgate.net/publication/417293353","https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use"],
  "keywords":["Hugging Face","model architecture","mixture of experts","quantization","safetensors","census"]}
 </script>
 <style>
@@ -260,7 +260,9 @@ html[data-theme=dark] tbody tr:hover td{background:rgba(255,255,255,.04)}
  <div class="dl">
   <a class="pbtn" href="https://github.com/JoesSattes/ai-model-explorer/tree/main/research/hub-census" data-t="dl_code">Census code</a>
   <a class="pbtn primary" id="dsLink" href="https://huggingface.co/datasets/JoesSattes/hub-weight-census" data-t="dl_ds">Dataset on Hugging Face</a>
-  <a class="pbtn" href="https://www.researchgate.net/publication/417293353" data-t="dl_paper">Paper</a>
+  <a class="pbtn" href="https://www.researchgate.net/publication/417293353" data-t="dl_paper">Census paper</a>
+  <a class="pbtn" href="https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax" data-t="dl_vtds">Vocabulary tax dataset</a>
+  <a class="pbtn" href="https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use" data-t="dl_vtpaper">Vocabulary tax paper</a>
   <a class="pbtn" href="https://pypi.org/project/ai-model-explorer/">pip install ai-model-explorer</a>
  </div>
 </section>
@@ -309,7 +311,7 @@ const T={
   tbl_h:"Models",tbl_sub:"The most downloaded readable models in the census, every readable release from the leading providers, models built for Thai and models submitted to the board. Click a row to select it on the map; ↗ opens its full anatomy.",search:"Search models, e.g. qwen, whisper, deepseek",
   tbl_note:"Params: logical parameters (quantized storage unpacked). Hub: ✓ when the Hub's own count agrees within 0.1%, otherwise our count ÷ the Hub's. KV/token: bytes of KV cache per token at 16-bit.",
   data_h:"Data and method",data_sub:"For every repo, the dataset gives status, popularity, the architecture recovered from the weights, the values its config.json declares, the Hub's own parameter count and the raw manifest, so the results can be recomputed. The code and the fixed recovery rules are public.",
-  dl_code:"Census code",dl_ds:"Dataset on Hugging Face",dl_paper:"Paper",foot:"Read from public metadata only; no weights were downloaded.",crawled:"Crawled",
+  dl_code:"Census code",dl_ds:"Dataset on Hugging Face",dl_paper:"Census paper",dl_vtds:"Vocabulary tax dataset",dl_vtpaper:"Vocabulary tax paper",foot:"Read from public metadata only; no weights were downloaded.",crawled:"Crawled",
   all_fam:"All families",all_q:"Any storage",all_y:"Any year",all_o:"Originals and derivatives",o_orig:"Original releases",o_copy:"All derivatives",unq:"unquantized",
   cols:["Model","Origin","Year","Family","Params","Storage","Width","Layers","Heads / KV","Experts","Vocab","KV/token","Config","Hub","Downloads"],
   moe:"mixture of experts",hybrid:"hybrid (state-space / linear attention)",gqa:"grouped-query attention",quantized:"published quantized",hd:"head size",vocab:"vocabulary (thousands)",
@@ -354,7 +356,7 @@ const T={
   tbl_h:"โมเดล",tbl_sub:"โมเดลที่อ่านได้และดาวน์โหลดมากที่สุดใน census รวมทุกตัวที่ผู้พัฒนาหลักปล่อย โมเดลภาษาไทย และโมเดลที่ส่งขึ้น board กดแถวเพื่อเลือกบนแผนที่ ↗ เปิดดูโครงสร้างเต็ม",search:"ค้นหาโมเดล เช่น qwen, whisper, deepseek",
   tbl_note:"Params: จำนวน parameter เชิงตรรกะ (unpack ค่าที่ quantize แล้ว) · Hub: ✓ เมื่อตัวเลขของ Hub ตรงภายใน 0.1% มิฉะนั้นแสดงอัตราส่วนของเรา ÷ Hub · KV/token: ขนาด KV cache ต่อ token ที่ 16-bit",
   data_h:"ข้อมูลและวิธีการ",data_sub:"ทุก repo มีสถานะ ความนิยม สถาปัตยกรรมที่ถอดจาก weights ค่าที่ config.json ประกาศ ตัวเลขของ Hub และ manifest ดิบไว้ให้คำนวณซ้ำได้ โค้ดและกฎที่ล็อกไว้เปิดสาธารณะ",
-  dl_code:"โค้ด census",dl_ds:"Dataset บน Hugging Face",dl_paper:"Paper",foot:"อ่านจาก metadata สาธารณะเท่านั้น ไม่มีการโหลด weights",crawled:"เก็บข้อมูลเมื่อ",
+  dl_code:"โค้ด census",dl_ds:"Dataset บน Hugging Face",dl_paper:"เปเปอร์ census",dl_vtds:"ชุดข้อมูลภาษีคลังคำ",dl_vtpaper:"เปเปอร์ภาษีคลังคำ",foot:"อ่านจาก metadata สาธารณะเท่านั้น ไม่มีการโหลด weights",crawled:"เก็บข้อมูลเมื่อ",
   all_fam:"ทุกตระกูล",all_q:"ทุกรูปแบบการเก็บ",all_y:"ทุกปี",all_o:"ต้นฉบับและโมเดลต่อยอด",o_orig:"ต้นฉบับ",o_copy:"โมเดลต่อยอดทั้งหมด",unq:"ไม่ได้ quantize",
   cols:["โมเดล","ที่มา","ปี","ตระกูล","Params","การเก็บ","Width","Layers","Heads / KV","Experts","Vocab","KV/token","Config","Hub","ดาวน์โหลด"],
   moe:"mixture of experts",hybrid:"hybrid (state-space / linear attention)",gqa:"grouped-query attention",quantized:"ปล่อยแบบ quantize ตั้งแต่แรก",hd:"ขนาด head",vocab:"vocabulary (พัน)",
