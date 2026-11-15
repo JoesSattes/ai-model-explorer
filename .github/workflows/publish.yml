@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      exists: ${{ steps.v.outputs.exists }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,6 +21,19 @@ jobs:
         run: |
           v=$(python -c "import re;print(re.search(r'__version__ = \"(.+?)\"', open('python/ai_model_explorer/__init__.py').read()).group(1))")
           test "v$v" = "${GITHUB_REF_NAME}" || { echo "tag ${GITHUB_REF_NAME} != version $v"; exit 1; }
+      - name: Is this version already on PyPI?
+        id: v
+        run: |
+          v=$(python -c "import re;print(re.search(r'__version__ = \"(.+?)\"', open('python/ai_model_explorer/__init__.py').read()).group(1))")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          code=$(curl -s -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/ai-model-explorer/$v/json")
+          if [ "$code" = "200" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::ai-model-explorer $v is already on PyPI; nothing to publish. Raise __version__ in python/ai_model_explorer/__init__.py to release a new version."
+            echo "ai-model-explorer **$v** is already on PyPI, so this run only builds and tests it. Raise \`__version__\` to publish a new version." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
       - run: python -m pip install build
       - run: python -m build
       - name: Smoke test the wheel
@@ -34,6 +50,7 @@ jobs:
 
   publish:
     needs: build
+    if: needs.build.outputs.exists != 'true'
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -44,3 +61,5 @@ jobs:
           name: dist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
