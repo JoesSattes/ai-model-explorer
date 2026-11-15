@@ -85,9 +85,28 @@ under 1%, bits per character of the trimmed models rise by at most 2.0%.
 
 ## Citation
 
-S. Singkul, *The Vocabulary Tax: Safely Trimming Unused Tokens from LLMs for On-Device Use*, 2026 (preprint in preparation).
-Builds on S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974
-Hugging Face Repositories*, 2026 ([ResearchGate](https://www.researchgate.net/publication/417293353)).
+If you use this dataset, please cite:
+
+```bibtex
+@misc{{singkul2026vocabtax,
+  title  = {{The Vocabulary Tax: Safely Trimming Unused Tokens from {{LLMs}} for On-Device Use}},
+  author = {{Singkul, Sattaya}},
+  year   = {{2026}},
+  note   = {{Preprint in preparation}},
+  url    = {{https://huggingface.co/datasets/{owner}/ai-vocabulary-tax}}
+}}
+
+@misc{{singkul2026reading,
+  title  = {{Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 {{Hugging Face}} Repositories}},
+  author = {{Singkul, Sattaya}},
+  year   = {{2026}},
+  note   = {{Preprint}},
+  url    = {{https://www.researchgate.net/publication/417293353}}
+}}
+```
+
+The first paper describes the vocabulary tax, merge-closed trimming, the trim certificate and the quality evaluation;
+the second describes how token tables and model sizes are read from the safetensors headers (the Hub Weight Census).
 
 Code: https://github.com/JoesSattes/ai-model-explorer (MIT). Treebank text is not redistributed; only counts derived from it.
 """

@@ -263,8 +263,17 @@ If you use AI Model Explorer or its recovery method, please cite the paper ([Res
 }
 ```
 
-The vocabulary tax, merge-closed trimming and the trim certificate are described in *The Vocabulary Tax: Safely Trimming
-Unused Tokens from LLMs for On-Device Use* (S. Singkul, 2026, preprint in preparation).
+For the vocabulary tax, merge-closed trimming, the trim certificate or the [ai-vocabulary-tax](https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax) dataset:
+
+```bibtex
+@misc{singkul2026vocabtax,
+  title  = {The Vocabulary Tax: Safely Trimming Unused Tokens from {LLMs} for On-Device Use},
+  author = {Singkul, Sattaya},
+  year   = {2026},
+  note   = {Preprint in preparation},
+  url    = {https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax}
+}
+```
 
 ## Credits
 Created by **[Sattaya Singkul](https://joessattes.github.io/Sattaya-AI-Website/)** for the workshop *Squeeze Until It Breaks — A Hands-On Edge Inference Contest*, AI Expo Thailand 2026.
