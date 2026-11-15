@@ -85,7 +85,7 @@ under 1%, bits per character of the trimmed models rise by at most 2.0%.
 
 ## Citation
 
-If you use this dataset, please cite the paper ([ResearchGate](https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use)):
+If you use this dataset, please cite the paper ([ResearchGate](https://doi.org/10.13140/RG.2.2.10665.15200)):
 
 ```bibtex
 @misc{{singkul2026vocabtax,
@@ -95,7 +95,7 @@ If you use this dataset, please cite the paper ([ResearchGate](https://www.resea
   note   = {{Preprint}},
   howpublished = {{ResearchGate}},
   doi    = {{10.13140/RG.2.2.10665.15200}},
-  url    = {{https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use}}
+  url    = {{https://doi.org/10.13140/RG.2.2.10665.15200}}
 }}
 
 @misc{{singkul2026reading,
@@ -104,7 +104,7 @@ If you use this dataset, please cite the paper ([ResearchGate](https://www.resea
   year   = {{2026}},
   note   = {{Preprint}},
   doi    = {{10.13140/RG.2.2.19473.19048}},
-  url    = {{https://www.researchgate.net/publication/417926447_Reading_the_Architecture_off_the_Weights_Manifest-Only_Model_Anatomy_and_a_Census_of_12974_Hugging_Face_Repositories}}
+  url    = {{https://doi.org/10.13140/RG.2.2.19473.19048}}
 }}
 ```
 

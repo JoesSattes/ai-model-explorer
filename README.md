@@ -10,7 +10,7 @@
   <a href="https://pypi.org/project/ai-model-explorer/"><img src="https://img.shields.io/pypi/v/ai-model-explorer?color=8b96fa" alt="PyPI"></a>
   <a href="https://pypi.org/project/ai-model-explorer/"><img src="https://img.shields.io/pypi/pyversions/ai-model-explorer?color=8b96fa" alt="Python"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-ff6bb5" alt="MIT license"></a>
-  <a href="https://www.researchgate.net/publication/417926447_Reading_the_Architecture_off_the_Weights_Manifest-Only_Model_Anatomy_and_a_Census_of_12974_Hugging_Face_Repositories"><img src="https://img.shields.io/badge/paper-ResearchGate-ff6bb5" alt="Paper"></a>
+  <a href="https://doi.org/10.13140/RG.2.2.19473.19048"><img src="https://img.shields.io/badge/paper-ResearchGate-ff6bb5" alt="Paper"></a>
 </p>
 
 <p align="center">
@@ -21,8 +21,8 @@
   <a href="#vocabulary-tax-trim-the-languages-you-do-not-use">Vocabulary tax</a> ·
   <a href="docs/usage.md">Docs</a> ·
   <a href="docs/how-it-works.md">How it works</a> ·
-  <a href="https://www.researchgate.net/publication/417926447_Reading_the_Architecture_off_the_Weights_Manifest-Only_Model_Anatomy_and_a_Census_of_12974_Hugging_Face_Repositories">Paper</a> ·
-  <a href="https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use">Vocabulary tax paper</a>
+  <a href="https://doi.org/10.13140/RG.2.2.19473.19048">Paper</a> ·
+  <a href="https://doi.org/10.13140/RG.2.2.10665.15200">Vocabulary tax paper</a>
 </p>
 
 ![AI Model Explorer: Whisper split into its parts with real sizes](og.png)
@@ -146,7 +146,7 @@ loads all of them. The vocabulary tax is the bytes in rows it never uses, read f
   Hindi, Korean, Russian and Thai; 7,000-20,000 for Latin-script languages; far more for broad English web text.
 - **Quality.** On six models (270M-3B) in 11 languages, the script rule changes bits per character by at most 0.7%; where
   the certificate passes, the text rule removes a median 90% of rows and raises bits per character by at most 2.0%.
-- **Paper**: [The Vocabulary Tax: Safely Trimming Unused Tokens from LLMs for On-Device Use](https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use) (ResearchGate preprint).
+- **Paper**: [The Vocabulary Tax: Safely Trimming Unused Tokens from LLMs for On-Device Use](https://doi.org/10.13140/RG.2.2.10665.15200) (ResearchGate preprint).
 - **Data**: [JoesSattes/ai-vocabulary-tax](https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax): per-model tax for
   41 languages, tokenizer families, trimmed-model quality, certificate and merge closure. Source: [research/ai-vocabulary-tax/](research/ai-vocabulary-tax/).
   Python details: [python/README.md](python/README.md#vocabulary-tax).
@@ -196,7 +196,7 @@ Inputs: a Hugging Face repo id or URL, `.safetensors` files, `.tflite` (LiteRT) 
 | 191 popular Hugging Face checkpoints (DeepSeek-V3, Kimi K2, Qwen3, Llama 3.3, gpt-oss, Gemma 3, Whisper, SAM, SDXL, Wan, …) | totals agree with the Hub's own count for 149 of the 158 transformers-style checkpoints that show a count (allowing for the 0-d scalars the Hub skips); of the 9 differences, 5 are packed 4-bit releases (3 NVFP4, 2 bitsandbytes) where the Hub counts packed storage, 2 are side files the Hub does not count (a speech codec, Phi-4-multimodal LoRA folders), 1 is FP8 DeepSeek-V3.1, whose Hub count includes block scales, and 1 is a robotics policy off by 72 elements (unexplained); median 79 KB read per repo |
 | Hub Weight Census: 5,016 readable popular repos with a Hub count | the Hub's count differs from the weights for 12.2% (611); breakdown by storage format on the [census page](https://joessattes.github.io/ai-model-explorer/census/) |
 
-Method and full results: [docs/how-it-works.md](docs/how-it-works.md) and the [paper](https://www.researchgate.net/publication/417926447_Reading_the_Architecture_off_the_Weights_Manifest-Only_Model_Anatomy_and_a_Census_of_12974_Hugging_Face_Repositories).
+Method and full results: [docs/how-it-works.md](docs/how-it-works.md) and the [paper](https://doi.org/10.13140/RG.2.2.19473.19048).
 Run the Hub benchmark yourself at [bench.html](https://joessattes.github.io/ai-model-explorer/bench.html).
 
 ## Compared with other tools
@@ -252,7 +252,7 @@ with an MoE label) or `--gguf` (llama.cpp's tensor-name table, built by `python 
 Hub benchmark: `node research/realbench.js research/data/hub-bench-191.jsonl.gz corpus.jsonl`.
 
 ## Citation
-If you use AI Model Explorer or its recovery method, please cite the paper ([DOI 10.13140/RG.2.2.19473.19048](https://doi.org/10.13140/RG.2.2.19473.19048), [ResearchGate](https://www.researchgate.net/publication/417926447_Reading_the_Architecture_off_the_Weights_Manifest-Only_Model_Anatomy_and_a_Census_of_12974_Hugging_Face_Repositories), [PDF](paper/manifest-anatomy-singkul-2026.pdf)):
+If you use AI Model Explorer or its recovery method, please cite the paper ([DOI 10.13140/RG.2.2.19473.19048](https://doi.org/10.13140/RG.2.2.19473.19048), [ResearchGate](https://doi.org/10.13140/RG.2.2.19473.19048), [PDF](paper/manifest-anatomy-singkul-2026.pdf)):
 
 ```bibtex
 @misc{singkul2026reading,
@@ -262,11 +262,11 @@ If you use AI Model Explorer or its recovery method, please cite the paper ([DOI
   note   = {Preprint},
   howpublished = {ResearchGate},
   doi    = {10.13140/RG.2.2.19473.19048},
-  url    = {https://www.researchgate.net/publication/417926447_Reading_the_Architecture_off_the_Weights_Manifest-Only_Model_Anatomy_and_a_Census_of_12974_Hugging_Face_Repositories}
+  url    = {https://doi.org/10.13140/RG.2.2.19473.19048}
 }
 ```
 
-For the vocabulary tax, merge-closed trimming, the trim certificate or the [ai-vocabulary-tax](https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax) dataset, cite the [paper](https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use):
+For the vocabulary tax, merge-closed trimming, the trim certificate or the [ai-vocabulary-tax](https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax) dataset, cite the [paper](https://doi.org/10.13140/RG.2.2.10665.15200):
 
 ```bibtex
 @misc{singkul2026vocabtax,
@@ -276,7 +276,7 @@ For the vocabulary tax, merge-closed trimming, the trim certificate or the [ai-v
   note   = {Preprint},
   howpublished = {ResearchGate},
   doi    = {10.13140/RG.2.2.10665.15200},
-  url    = {https://www.researchgate.net/publication/417920701_The_Vocabulary_Tax_Safely_Trimming_Unused_Tokens_from_LLMs_for_On-Device_Use}
+  url    = {https://doi.org/10.13140/RG.2.2.10665.15200}
 }
 ```
 

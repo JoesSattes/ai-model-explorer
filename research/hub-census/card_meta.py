@@ -5,7 +5,7 @@ parameters or format from the header); the corpus labels every tensor name with 
 """
 
 PAPER = "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories"
-PAPER_URL = "https://www.researchgate.net/publication/417926447_Reading_the_Architecture_off_the_Weights_Manifest-Only_Model_Anatomy_and_a_Census_of_12974_Hugging_Face_Repositories"
+PAPER_URL = "https://doi.org/10.13140/RG.2.2.19473.19048"
 PDF_URL = "https://github.com/JoesSattes/ai-model-explorer/blob/main/paper/manifest-anatomy-singkul-2026.pdf"
 
 COMMON = {

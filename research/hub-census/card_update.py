@@ -16,8 +16,8 @@ def update(card, kind):
     if "**Citation.**" not in body:
         i = body.find("\n## ")
         body = body[:i] + "\n" + CITE_LINE + "\n" + body[i:]
-    # the paper moved to a new ResearchGate record; point every old link at it
-    body = re.sub(r"https?://www\.researchgate\.net/publication/417293353[\w.-]*", PAPER_URL, body)
+    # point every ResearchGate record link (old and current) at the paper's DOI
+    body = re.sub(r"https?://www\.researchgate\.net/publication/(417293353|417926447)[\w.-]*", PAPER_URL, body)
     return "---\n" + "\n".join(keep) + "\n---\n" + body
 
 
