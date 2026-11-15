@@ -1,4 +1,4 @@
-name: HF cards, Space and collection
+name: Update Hugging Face (all 3 datasets, Space, collection)
 
 # The quick part of "Publish datasets", without the census re-score: updates the dataset cards' metadata
 # and citation, republishes the vocabulary tax dataset, republishes the explorer
