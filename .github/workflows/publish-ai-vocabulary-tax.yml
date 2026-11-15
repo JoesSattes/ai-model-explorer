@@ -1,12 +1,12 @@
-name: Publish vocabulary tax and Space
+name: Publish AI vocabulary tax and Space
 
-# Publishes research/vocab-tax/data as the dataset <you>/vocabulary-tax, refreshes the explorer Space with the current
+# Publishes research/ai-vocabulary-tax/data as the dataset <you>/ai-vocabulary-tax, refreshes the explorer Space with the current
 # website (census page included), and adds both to the "AI Model Explorer" collection. No census run needed.
 # Needs the repository secret HF_WRITE_TOKEN (a Hugging Face token with write access). The owner is read from the token.
 on:
   workflow_dispatch:
     inputs:
-      dataset_name: { description: "Dataset name", default: "vocabulary-tax" }
+      dataset_name: { description: "Dataset name", default: "ai-vocabulary-tax" }
       space_name:   { description: "Hugging Face Space for the explorer (blank = skip)", default: "ai-model-explorer" }
       census_name:  { description: "Census dataset linked from the Space", default: "hub-weight-census" }
       corpus_name:  { description: "Corpus dataset linked from the Space", default: "manifest-anatomy-corpus" }
@@ -32,7 +32,7 @@ jobs:
           test -n "$HF_TOKEN" || { echo "::error::add the repository secret HF_WRITE_TOKEN (write access)"; exit 1; }
           echo "owner=$(python -c 'from huggingface_hub import HfApi; print(HfApi().whoami()["name"])')" >> "$GITHUB_OUTPUT"
       - name: Publish dataset
-        run: python research/vocab-tax/publish.py "${{ steps.who.outputs.owner }}/${{ inputs.dataset_name }}"
+        run: python research/ai-vocabulary-tax/publish.py "${{ steps.who.outputs.owner }}/${{ inputs.dataset_name }}"
       - name: Explorer as a Space
         if: ${{ inputs.space_name != '' }}
         working-directory: research/hub-census

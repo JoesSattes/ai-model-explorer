@@ -68,7 +68,7 @@ def _fix(path, extra=()):
 
 
 def main(repo, census, corpus, vtax=None):
-    vtax = vtax or census.split("/")[0] + "/vocabulary-tax"
+    vtax = vtax or census.split("/")[0] + "/ai-vocabulary-tax"
     tmp = tempfile.mkdtemp()
     for f in FILES:
         src = os.path.join(ROOT, f)

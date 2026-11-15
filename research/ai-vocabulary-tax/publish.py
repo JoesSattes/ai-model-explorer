@@ -12,7 +12,7 @@ D = os.path.join(HERE, "data")
 
 CARD = """---
 license: mit
-pretty_name: Vocabulary Tax
+pretty_name: AI Vocabulary Tax
 language: [en, th, zh, ja, ko, vi, id, ms, tl, fr, de, es, pt, it, nl, pl, cs, ru, uk, tr, ar, fa, ur, hi, bn, ta, te, mr, gu, kn, ml, pa, he, el, km, lo, my, am, sw, ka, hy]
 annotations_creators: [machine-generated]
 source_datasets: [original]
@@ -35,7 +35,7 @@ configs:
   data_files: merge_closure.parquet
 ---
 
-# Vocabulary Tax
+# AI Vocabulary Tax
 
 Open LLMs and speech models ship token tables (input embedding, untied output head, per-layer embeddings) for every
 language their vocabulary covers, and every user downloads them. The **vocabulary tax** is the bytes in rows a

@@ -1,7 +1,7 @@
-# Vocabulary tax
+# AI vocabulary tax
 
-Tables behind the census page's *Vocabulary tax* section, published as the Hugging Face dataset `vocabulary-tax` by the
-*Publish vocabulary tax and Space* workflow (`publish.py` writes the datasheet).
+Tables behind the census page's *Vocabulary tax* section, published as the Hugging Face dataset `ai-vocabulary-tax` by the
+*Publish AI vocabulary tax and Space* workflow (`publish.py` writes the datasheet).
 
 - `data/models.parquet`: one row per model (2,061), tokenizer family, token-table and total bytes, tax for Thai + English
 - `data/model_language.parquet`: model x language x rule (script, or your own text at 1k-15k lines)

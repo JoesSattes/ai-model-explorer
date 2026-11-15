@@ -116,7 +116,7 @@ precision, derivative releases, metadata reliability, and the smallest device ea
 - Browse: [census page](https://joessattes.github.io/ai-model-explorer/census/)
 - Datasets: [JoesSattes/hub-weight-census](https://huggingface.co/datasets/JoesSattes/hub-weight-census),
   [JoesSattes/manifest-anatomy-corpus](https://huggingface.co/datasets/JoesSattes/manifest-anatomy-corpus) and
-  [JoesSattes/vocabulary-tax](https://huggingface.co/datasets/JoesSattes/vocabulary-tax) (per-model vocabulary tax, 41 languages)
+  [JoesSattes/ai-vocabulary-tax](https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax) (per-model vocabulary tax, 41 languages)
   (available once the *Publish datasets* workflow has run)
 - Method, sampling and statistics: [research/hub-census/README.md](research/hub-census/README.md)
 
