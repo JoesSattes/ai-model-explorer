@@ -197,6 +197,10 @@ A typical model takes well under a second. Headers of a sharded model are fetche
 headers are cached (`~/.cache/ai-model-explorer`, or `$AME_CACHE`; `cache=False` or `AME_NO_CACHE=1` to skip). If Node.js
 is installed, large manifests are analyzed with it (DeepSeek-V3: about 5 s instead of 15; `AME_JS=quickjs` to opt out).
 
+## Read more
+- [How it works, with screenshots](https://joessattes.github.io/Sattaya-AI-Website/blog/reading-the-architecture-off-the-weights/)
+- [The vocabulary tax, explained](https://joessattes.github.io/Sattaya-AI-Website/blog/the-vocabulary-tax/)
+
 ## Citation
 Vocabulary tax, merge closure and the trim certificate: Sattaya Singkul. 2026. *The Vocabulary Tax: Safely Trimming
 Unused Tokens from LLMs for On-Device Use.* Preprint, doi:10.13140/RG.2.2.10665.15200, [ResearchGate](https://doi.org/10.13140/RG.2.2.10665.15200).

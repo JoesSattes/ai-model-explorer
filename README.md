@@ -280,6 +280,10 @@ For the vocabulary tax, merge-closed trimming, the trim certificate or the [ai-v
 }
 ```
 
+## Plain-language explainers
+- [Reading a model's architecture from its safetensors header, and what 12,974 Hugging Face models reveal](https://joessattes.github.io/Sattaya-AI-Website/blog/reading-the-architecture-off-the-weights/): how the method works, with annotated screenshots of the app.
+- [The vocabulary tax: the token tables your users never touch, and how to trim them safely](https://joessattes.github.io/Sattaya-AI-Website/blog/the-vocabulary-tax/): the trimming paper with interactive charts.
+
 ## Credits
 Created by **[Sattaya Singkul](https://joessattes.github.io/Sattaya-AI-Website/)** for the workshop *Squeeze Until It Breaks — A Hands-On Edge Inference Contest*, AI Expo Thailand 2026.
 

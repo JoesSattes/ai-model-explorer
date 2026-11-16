@@ -40,6 +40,7 @@ Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Co
 - Source: https://github.com/JoesSattes/ai-model-explorer
 - Paper: https://doi.org/10.13140/RG.2.2.19473.19048 (PDF: https://joessattes.github.io/ai-model-explorer/paper/manifest-anatomy-singkul-2026.pdf)
 - Full text for AI tools: https://joessattes.github.io/ai-model-explorer/llms-full.txt
+- Explainers by the author: https://joessattes.github.io/Sattaya-AI-Website/blog/reading-the-architecture-off-the-weights/ and https://joessattes.github.io/Sattaya-AI-Website/blog/the-vocabulary-tax/
 - Hub benchmark: https://joessattes.github.io/ai-model-explorer/bench.html
 - License: MIT, Copyright (c) 2026 Sattaya Singkul
 
