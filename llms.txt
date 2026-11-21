@@ -31,6 +31,7 @@ Evaluation: 96.8% per-tensor role accuracy on 510 transformers architectures (95
 ## Author
 Sattaya Singkul (Jo) — Independent Researcher, Bangkok, Thailand; speech and edge AI. Portfolio: https://joessattes.github.io/Sattaya-AI-Website/ · GitHub: https://github.com/JoesSattes
 Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Contest", AI Expo Thailand 2026.
+Part of AI Model Explorer Lab (https://joessattes.github.io/amelab/), an open, non-commercial research lab in Bangkok on model anatomy, on-device AI and Southeast Asian languages.
 
 ## Links
 - App: https://joessattes.github.io/ai-model-explorer/ (English) · https://joessattes.github.io/ai-model-explorer/th/ (Thai)
@@ -42,6 +43,7 @@ Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Co
 - Full text for AI tools: https://joessattes.github.io/ai-model-explorer/llms-full.txt
 - Explainers by the author: https://joessattes.github.io/Sattaya-AI-Website/blog/reading-the-architecture-off-the-weights/ and https://joessattes.github.io/Sattaya-AI-Website/blog/the-vocabulary-tax/
 - Hub benchmark: https://joessattes.github.io/ai-model-explorer/bench.html
+- Research lab: https://joessattes.github.io/amelab/ (Thai: https://joessattes.github.io/amelab/th/)
 - License: MIT, Copyright (c) 2026 Sattaya Singkul
 
 Cite: Sattaya Singkul. 2026. Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories. Preprint, SSRN. doi:10.2139/ssrn.7699619. https://doi.org/10.2139/ssrn.7699619

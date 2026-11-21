@@ -51,6 +51,8 @@ safetensors headers are read (a few kilobytes to a few megabytes), never the wei
   ([SSRN](https://doi.org/10.2139/ssrn.7699619))
 
 Also at https://joessattes.github.io/ai-model-explorer/ (Thai and English).
+
+Part of [AI Model Explorer Lab](https://joessattes.github.io/amelab/), an open, non-commercial research lab in Bangkok on model anatomy, on-device AI and Southeast Asian languages.
 """
 
 

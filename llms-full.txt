@@ -76,6 +76,7 @@ Netron and Google's Model Explorer draw the operator graph of a model file you a
 ## Author
 Sattaya Singkul (Jo), Independent Researcher, Bangkok, Thailand; speech and edge AI. Portfolio: https://joessattes.github.io/Sattaya-AI-Website/ · GitHub: https://github.com/JoesSattes
 Built for the workshop "Squeeze Until It Breaks — A Hands-On Edge Inference Contest", AI Expo Thailand 2026.
+Part of AI Model Explorer Lab (https://joessattes.github.io/amelab/), an open, non-commercial research lab in Bangkok on model anatomy, on-device AI and Southeast Asian languages.
 
 ## Links
 - App (Thai): https://joessattes.github.io/ai-model-explorer/th/

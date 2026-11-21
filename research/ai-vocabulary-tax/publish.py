@@ -114,6 +114,8 @@ The first paper describes the vocabulary tax, merge-closed trimming, the trim ce
 the second describes how token tables and model sizes are read from the safetensors headers (the Hub Weight Census).
 
 Code: https://github.com/JoesSattes/ai-model-explorer (MIT). Treebank text is not redistributed; only counts derived from it.
+
+Part of [AI Model Explorer Lab](https://joessattes.github.io/amelab/), an open, non-commercial research lab in Bangkok on model anatomy, on-device AI and Southeast Asian languages.
 """
 
 

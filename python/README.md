@@ -198,6 +198,7 @@ headers are cached (`~/.cache/ai-model-explorer`, or `$AME_CACHE`; `cache=False`
 is installed, large manifests are analyzed with it (DeepSeek-V3: about 5 s instead of 15; `AME_JS=quickjs` to opt out).
 
 ## Read more
+- Part of [AI Model Explorer Lab](https://joessattes.github.io/amelab/), an open, non-commercial research lab in Bangkok on model anatomy, on-device AI and Southeast Asian languages.
 - [How it works, with screenshots](https://joessattes.github.io/Sattaya-AI-Website/blog/reading-the-architecture-off-the-weights/)
 - [The vocabulary tax, explained](https://joessattes.github.io/Sattaya-AI-Website/blog/the-vocabulary-tax/)
 

@@ -25,6 +25,9 @@ META = {
     }),
 }
 
+LAB_URL = "https://joessattes.github.io/amelab/"
+LAB_LINE = "Part of [AI Model Explorer Lab](https://joessattes.github.io/amelab/), an open, non-commercial research lab in Bangkok on model anatomy, on-device AI and Southeast Asian languages."
+
 CITE_LINE = f"**Citation.** If you use this dataset, please cite the paper ([PDF]({PDF_URL}), [SSRN]({PAPER_URL})); BibTeX under [Citation](#citation)."
 
 CITATION = f"""## Citation
@@ -44,6 +47,8 @@ If you use this dataset, please cite:
 ```
 
 S. Singkul, *{PAPER}*, 2026. [PDF]({PDF_URL}) · [SSRN]({PAPER_URL}) · code: https://github.com/JoesSattes/ai-model-explorer
+
+{LAB_LINE}
 """
 
 

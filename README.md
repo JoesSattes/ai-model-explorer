@@ -288,6 +288,7 @@ For the vocabulary tax, merge-closed trimming, the trim certificate or the [ai-v
 
 ## Credits
 Created by **[Sattaya Singkul](https://joessattes.github.io/Sattaya-AI-Website/)** for the workshop *Squeeze Until It Breaks — A Hands-On Edge Inference Contest*, AI Expo Thailand 2026.
+Part of [AI Model Explorer Lab](https://joessattes.github.io/amelab/), an open, non-commercial research lab in Bangkok on model anatomy, on-device AI and Southeast Asian languages.
 
 ## License
 [MIT](LICENSE) © 2026 Sattaya Singkul. Keep the copyright notice when you reuse the code.
