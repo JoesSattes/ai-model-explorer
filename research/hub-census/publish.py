@@ -26,7 +26,7 @@ tensor names, shapes and dtypes with [ai-model-explorer](https://github.com/Joes
 it with the repo's config.json and with the Hub's own parameter count.
 
 Method: S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories*, 2026
-([paper](https://doi.org/10.13140/RG.2.2.19473.19048)).
+([paper](https://doi.org/10.2139/ssrn.7699619)).
 Explore it on the web: https://joessattes.github.io/ai-model-explorer/census/
 
 {cite_line}

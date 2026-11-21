@@ -10,7 +10,7 @@
   <a href="https://joessattes.github.io/ai-model-explorer/">Web app</a> ·
   <a href="https://github.com/JoesSattes/ai-model-explorer">GitHub</a> ·
   <a href="https://github.com/JoesSattes/ai-model-explorer/blob/main/docs/usage.md">Docs</a> ·
-  <a href="https://doi.org/10.13140/RG.2.2.19473.19048">Paper</a>
+  <a href="https://doi.org/10.2139/ssrn.7699619">Paper</a>
 </p>
 
 `ai-model-explorer` reads the safetensors header of a model (tensor names, shapes and types, a median of 80 KB across
@@ -203,9 +203,9 @@ is installed, large manifests are analyzed with it (DeepSeek-V3: about 5 s inste
 
 ## Citation
 Vocabulary tax, merge closure and the trim certificate: Sattaya Singkul. 2026. *The Vocabulary Tax: Safely Trimming
-Unused Tokens from LLMs for On-Device Use.* Preprint, doi:10.13140/RG.2.2.10665.15200, [ResearchGate](https://doi.org/10.13140/RG.2.2.10665.15200).
+Unused Tokens from LLMs for On-Device Use.* Preprint, doi:10.48550/arXiv.2611.19913, [arXiv](https://arxiv.org/abs/2611.19913).
 
 Architecture recovery and the Hub census: Sattaya Singkul. 2026. *Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories.*
-Preprint, [ResearchGate](https://doi.org/10.13140/RG.2.2.19473.19048), doi:10.13140/RG.2.2.19473.19048.
+Preprint, [SSRN](https://doi.org/10.2139/ssrn.7699619), doi:10.2139/ssrn.7699619.
 
 MIT License © 2026 Sattaya Singkul

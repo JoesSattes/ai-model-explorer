@@ -11,8 +11,8 @@ authors:
 repository-code: "https://github.com/JoesSattes/ai-model-explorer"
 url: "https://joessattes.github.io/ai-model-explorer/"
 license: MIT
-version: 1.0.10
-date-released: 2026-11-15
+version: 1.0.11
+date-released: 2026-11-21
 keywords: [model architecture, safetensors, Hugging Face Hub, model census, mixture-of-experts, quantization, KV cache, edge AI, tokenizer, vocabulary trimming, multilingual]
 preferred-citation:
   type: article
@@ -23,18 +23,18 @@ preferred-citation:
       given-names: Sattaya
       affiliation: "Independent Researcher, Bangkok, Thailand"
   year: 2026
-  doi: "10.13140/RG.2.2.19473.19048"
-  url: "https://doi.org/10.13140/RG.2.2.19473.19048"
+  doi: "10.2139/ssrn.7699619"
+  url: "https://doi.org/10.2139/ssrn.7699619"
   repository: "https://github.com/JoesSattes/ai-model-explorer/blob/main/paper/manifest-anatomy-singkul-2026.pdf"
   notes: "arXiv identifier to be added when announced."
 references:
   - type: article
     status: preprint
     title: "The Vocabulary Tax: Safely Trimming Unused Tokens from LLMs for On-Device Use"
-    doi: "10.13140/RG.2.2.10665.15200"
+    doi: "10.48550/arXiv.2611.19913"
     authors:
       - family-names: Singkul
         given-names: Sattaya
         affiliation: "Independent Researcher, Bangkok, Thailand"
     year: 2026
-    url: "https://doi.org/10.13140/RG.2.2.10665.15200"
+    url: "https://arxiv.org/abs/2611.19913"

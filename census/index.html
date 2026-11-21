@@ -18,7 +18,7 @@
 {"@context":"https://schema.org","@type":"Dataset","name":"Hub Weight Census","url":"https://joessattes.github.io/ai-model-explorer/census/",
  "description":"Architecture, storage and metadata quality of Hugging Face model repositories, recovered from safetensors headers without downloading weights.",
  "creator":{"@type":"Person","name":"Sattaya Singkul","url":"https://joessattes.github.io/Sattaya-AI-Website/"},"license":"https://opensource.org/licenses/MIT",
- "isBasedOn":["https://doi.org/10.13140/RG.2.2.19473.19048","https://doi.org/10.13140/RG.2.2.10665.15200"],
+ "isBasedOn":["https://doi.org/10.2139/ssrn.7699619","https://arxiv.org/abs/2611.19913"],
  "keywords":["Hugging Face","model architecture","mixture of experts","quantization","safetensors","census"]}
 </script>
 <style>
@@ -260,9 +260,9 @@ html[data-theme=dark] tbody tr:hover td{background:rgba(255,255,255,.04)}
  <div class="dl">
   <a class="pbtn" href="https://github.com/JoesSattes/ai-model-explorer/tree/main/research/hub-census" data-t="dl_code">Census code</a>
   <a class="pbtn primary" id="dsLink" href="https://huggingface.co/datasets/JoesSattes/hub-weight-census" data-t="dl_ds">Dataset on Hugging Face</a>
-  <a class="pbtn" href="https://doi.org/10.13140/RG.2.2.19473.19048" data-t="dl_paper">Census paper</a>
+  <a class="pbtn" href="https://doi.org/10.2139/ssrn.7699619" data-t="dl_paper">Census paper</a>
   <a class="pbtn" href="https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax" data-t="dl_vtds">Vocabulary tax dataset</a>
-  <a class="pbtn" href="https://doi.org/10.13140/RG.2.2.10665.15200" data-t="dl_vtpaper">Vocabulary tax paper</a>
+  <a class="pbtn" href="https://arxiv.org/abs/2611.19913" data-t="dl_vtpaper">Vocabulary tax paper</a>
   <a class="pbtn" href="https://pypi.org/project/ai-model-explorer/">pip install ai-model-explorer</a>
  </div>
 </section>
@@ -554,7 +554,7 @@ function vtTable(){if(!VTM||!$("#vtbody"))return;const th=L==="th",nm=l=>VTLN[l]
  const show=all.slice(0,VTN);
  $("#vtbody").innerHTML=show.length?show.map(x=>`<tr><td><a class="nm" href="${link(x.id)}&cut=${VTL}">${x.id}</a></td><td class="num">${x.p?fmtN(x.p):"–"}</td><td class="num">${x.V.toLocaleString()}</td><td class="num">${x.rows.toLocaleString()}</td><td class="num">${fmtB(x.bytes)}</td><td class="num">${pc(x.share)}<span class="sbar"><i style="width:${Math.min(100,x.share*200)}%"></i></span></td><td class="num">${x.how==="c"?`${(x.rs*100).toFixed(2)}%<div class="rs">${x.lines.toLocaleString()} ${th?"บรรทัด":"lines"}</div>`:`${th?"ไม่มี":"none"}<div class="rs">${th?"กฎตัวเขียน":"script rule"}</div>`}</td></tr>`).join(""):`<tr><td colspan="7" class="note">${th?"ไม่พบโมเดล":"No model matches"}</td></tr>`;
  const mo=$("#vtmore");mo.style.display=all.length>VTN?"":"none";mo.textContent=th?`แสดงเพิ่ม (${(all.length-VTN).toLocaleString()})`:`Show more (${(all.length-VTN).toLocaleString()})`;
- $("#vtnote").innerHTML=(th?"กดชื่อโมเดลเพื่อเปิดใน Explorer ที่ “ลดขนาดตรงไหนได้บ้าง” แล้ววางข้อความจากงานจริงของคุณ · ตารางเต็มทุกภาษา: ":"Click a model to open it in the explorer at “Where to cut” and paste text from your own workload · Full table, every language: ")+`<a href="https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax" target="_blank" rel="noopener">${th?"ชุดข้อมูลบน Hugging Face":"Hugging Face dataset"}</a> · <a href="https://doi.org/10.13140/RG.2.2.10665.15200" target="_blank" rel="noopener">${th?"เปเปอร์":"paper"}</a>`;
+ $("#vtnote").innerHTML=(th?"กดชื่อโมเดลเพื่อเปิดใน Explorer ที่ “ลดขนาดตรงไหนได้บ้าง” แล้ววางข้อความจากงานจริงของคุณ · ตารางเต็มทุกภาษา: ":"Click a model to open it in the explorer at “Where to cut” and paste text from your own workload · Full table, every language: ")+`<a href="https://huggingface.co/datasets/JoesSattes/ai-vocabulary-tax" target="_blank" rel="noopener">${th?"ชุดข้อมูลบน Hugging Face":"Hugging Face dataset"}</a> · <a href="https://arxiv.org/abs/2611.19913" target="_blank" rel="noopener">${th?"เปเปอร์":"paper"}</a>`;
  $("#vtl").onchange=e=>{VTL=e.target.value;VTN=25;vtTable();if(SEL)lookup(SEL)};
  $("#vtr").querySelectorAll("button").forEach(b=>b.onclick=()=>{VTR=b.dataset.k;vtTable()});
  $("#vtq").oninput=e=>{VTQ=e.target.value;VTN=25;vtTable()};$("#vtg").onchange=e=>{VTG=e.target.checked;VTN=25;vtTable()};

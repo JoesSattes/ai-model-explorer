@@ -16,8 +16,13 @@ def update(card, kind):
     if "**Citation.**" not in body:
         i = body.find("\n## ")
         body = body[:i] + "\n" + CITE_LINE + "\n" + body[i:]
+    else:
+        body = re.sub(r"^\*\*Citation\.\*\*.*$", lambda m: CITE_LINE, body, count=1, flags=re.M)
     # point every ResearchGate record link (old and current) at the paper's DOI
     body = re.sub(r"https?://www\.researchgate\.net/publication/(417293353|417926447)[\w.-]*", PAPER_URL, body)
+    # the ResearchGate DOIs used before the SSRN and arXiv records
+    body = body.replace("https://doi.org/10.13140/RG.2.2.19473.19048", PAPER_URL).replace("10.13140/RG.2.2.19473.19048", "10.2139/ssrn.7699619")
+    body = body.replace("https://doi.org/10.13140/RG.2.2.10665.15200", "https://arxiv.org/abs/2611.19913").replace("10.13140/RG.2.2.10665.15200", "10.48550/arXiv.2611.19913")
     return "---\n" + "\n".join(keep) + "\n---\n" + body
 
 

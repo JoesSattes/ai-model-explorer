@@ -5,7 +5,7 @@ parameters or format from the header); the corpus labels every tensor name with 
 """
 
 PAPER = "Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census of 12,974 Hugging Face Repositories"
-PAPER_URL = "https://doi.org/10.13140/RG.2.2.19473.19048"
+PAPER_URL = "https://doi.org/10.2139/ssrn.7699619"
 PDF_URL = "https://github.com/JoesSattes/ai-model-explorer/blob/main/paper/manifest-anatomy-singkul-2026.pdf"
 
 COMMON = {
@@ -25,7 +25,7 @@ META = {
     }),
 }
 
-CITE_LINE = f"**Citation.** If you use this dataset, please cite the paper ([PDF]({PDF_URL}), [ResearchGate]({PAPER_URL})); BibTeX under [Citation](#citation)."
+CITE_LINE = f"**Citation.** If you use this dataset, please cite the paper ([PDF]({PDF_URL}), [SSRN]({PAPER_URL})); BibTeX under [Citation](#citation)."
 
 CITATION = f"""## Citation
 
@@ -37,12 +37,13 @@ If you use this dataset, please cite:
   author = {{Singkul, Sattaya}},
   year   = {{2026}},
   note   = {{Preprint}},
-  doi    = {{10.13140/RG.2.2.19473.19048}},
+  howpublished = {{SSRN}},
+  doi    = {{10.2139/ssrn.7699619}},
   url    = {{{PAPER_URL}}}
 }}
 ```
 
-S. Singkul, *{PAPER}*, 2026. [PDF]({PDF_URL}) · [ResearchGate]({PAPER_URL}) · code: https://github.com/JoesSattes/ai-model-explorer
+S. Singkul, *{PAPER}*, 2026. [PDF]({PDF_URL}) · [SSRN]({PAPER_URL}) · code: https://github.com/JoesSattes/ai-model-explorer
 """
 
 

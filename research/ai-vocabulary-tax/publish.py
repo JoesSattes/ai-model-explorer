@@ -85,17 +85,18 @@ under 1%, bits per character of the trimmed models rise by at most 2.0%.
 
 ## Citation
 
-If you use this dataset, please cite the paper ([ResearchGate](https://doi.org/10.13140/RG.2.2.10665.15200)):
+If you use this dataset, please cite the paper ([arXiv](https://arxiv.org/abs/2611.19913)):
 
 ```bibtex
 @misc{{singkul2026vocabtax,
   title  = {{The Vocabulary Tax: Safely Trimming Unused Tokens from {{LLMs}} for On-Device Use}},
   author = {{Singkul, Sattaya}},
   year   = {{2026}},
-  note   = {{Preprint}},
-  howpublished = {{ResearchGate}},
-  doi    = {{10.13140/RG.2.2.10665.15200}},
-  url    = {{https://doi.org/10.13140/RG.2.2.10665.15200}}
+  eprint = {{2611.19913}},
+  archivePrefix = {{arXiv}},
+  primaryClass  = {{cs.CL}},
+  doi    = {{10.48550/arXiv.2611.19913}},
+  url    = {{https://arxiv.org/abs/2611.19913}}
 }}
 
 @misc{{singkul2026reading,
@@ -103,8 +104,9 @@ If you use this dataset, please cite the paper ([ResearchGate](https://doi.org/1
   author = {{Singkul, Sattaya}},
   year   = {{2026}},
   note   = {{Preprint}},
-  doi    = {{10.13140/RG.2.2.19473.19048}},
-  url    = {{https://doi.org/10.13140/RG.2.2.19473.19048}}
+  howpublished = {{SSRN}},
+  doi    = {{10.2139/ssrn.7699619}},
+  url    = {{https://doi.org/10.2139/ssrn.7699619}}
 }}
 ```
 

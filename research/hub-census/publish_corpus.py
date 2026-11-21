@@ -25,7 +25,7 @@ that a manifest reader never sees: the role of every tensor from the Python clas
 their block types, hyperparameters, and the configuration.
 
 It is the benchmark of S. Singkul, *Reading the Architecture off the Weights: Manifest-Only Model Anatomy and a Census
-of 12,974 Hugging Face Repositories*, 2026 ([paper](https://doi.org/10.13140/RG.2.2.19473.19048),
+of 12,974 Hugging Face Repositories*, 2026 ([paper](https://doi.org/10.2139/ssrn.7699619),
 [code](https://github.com/JoesSattes/ai-model-explorer), [web app](https://joessattes.github.io/ai-model-explorer/)).
 Its companion, [hub-weight-census](https://huggingface.co/datasets/{owner}/hub-weight-census), applies the same
 recovery to 12,974 Hub repositories and carries these labels over to them by model type.
